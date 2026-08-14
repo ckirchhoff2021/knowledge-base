@@ -4,206 +4,492 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OPD（在线策略蒸馏）技术完全指南</title>
-    <style>
-        /* 学术论文风格 CSS */
-.style-academic {
-    margin: 0;
-    padding: 0;
-    font-family: "Times New Roman", Times, "SimSun", serif;
-    background-color: #fff;
-    color: #000;
-    line-height: 1.5;
+    <style>/* tech-doc: 专业技术文档主题，对标GitBook/MkDocs Material */
+:root {
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --bg: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --border: #e2e8f0;
+  --code-bg: #f1f5f9;
+  --code-text: #ef4444;
+  --blockquote-border: var(--primary);
+  --blockquote-bg: #eff6ff;
+  --table-border: #e2e8f0;
+  --table-header-bg: #f8fafc;
+  --toc-bg: #f8fafc;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius: 8px;
+  --content-width: 900px;
+  --toc-width: 280px;
 }
 
-.style-academic .container {
-    max-width: 210mm;
-    margin: 20px auto;
-    padding: 25mm 20mm;
-    background-color: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    min-height: 297mm;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #3b82f6;
+    --primary-light: #60a5fa;
+    --primary-dark: #2563eb;
+    --bg: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --border: #334155;
+    --code-bg: #1e293b;
+    --code-text: #f87171;
+    --blockquote-border: var(--primary);
+    --blockquote-bg: #1e3a8a33;
+    --table-border: #334155;
+    --table-header-bg: #1e293b;
+    --toc-bg: #1e293b;
+  }
 }
 
-.style-academic .document-header {
-    text-align: center;
-    margin-bottom: 30px;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.style-academic .document-title {
-    font-size: 20pt;
-    font-weight: bold;
-    margin: 0 0 20px 0;
-    line-height: 1.3;
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
 }
 
-.style-academic .document-meta {
-    font-size: 12pt;
-    margin: 10px 0;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+  line-height: 1.7;
+  color: var(--text-primary);
+  background: var(--bg);
+  font-size: 16px;
 }
 
-.style-academic .document-meta span {
-    margin: 0 15px;
+/* 顶部导航栏 */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
 }
 
-.style-academic .toc-nav {
-    margin: 40px 0;
-    padding: 20px;
-    page-break-after: always;
+@media (prefers-color-scheme: dark) {
+  .header {
+    background: rgba(15, 23, 42, 0.85);
+  }
 }
 
-.style-academic .toc-title {
-    font-size: 14pt;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 20px;
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.style-academic .toc-nav ul {
-    list-style: none;
-    padding-left: 0;
+.header-title::before {
+  content: "📄";
+  font-size: 20px;
 }
 
-.style-academic .toc-nav li {
-    margin: 5px 0;
-    font-size: 12pt;
+/* 页面布局 */
+.container {
+  max-width: calc(var(--content-width) + var(--toc-width) + 100px);
+  margin: 0 auto;
+  padding: 80px 24px 40px;
+  display: grid;
+  grid-template-columns: var(--content-width) var(--toc-width);
+  gap: 60px;
 }
 
-.style-academic .toc-nav a {
-    color: #000;
-    text-decoration: none;
+/* 主内容区 */
+.content {
+  min-width: 0;
 }
 
-.style-academic .toc-nav a::after {
-    content: leader('.') target-counter(attr(href), page);
+/* 文档头部 */
+.doc-header {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
 }
 
-.style-academic .document-content h2 {
-    font-size: 16pt;
-    font-weight: bold;
-    margin: 30px 0 15px 0;
+.doc-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
 }
 
-.style-academic .document-content h3 {
-    font-size: 14pt;
-    font-weight: bold;
-    margin: 25px 0 12px 0;
+.doc-meta {
+  display: flex;
+  gap: 24px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  flex-wrap: wrap;
 }
 
-.style-academic .document-content h4 {
-    font-size: 12pt;
-    font-weight: bold;
-    font-style: italic;
-    margin: 20px 0 10px 0;
+.doc-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.style-academic .document-content p {
-    margin: 10px 0;
-    font-size: 12pt;
-    text-indent: 2em;
-    text-align: justify;
+/* 标题样式 */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 2.5em;
+  margin-bottom: 1em;
+  scroll-margin-top: 80px;
 }
 
-.style-academic .document-content ul, .style-academic .document-content ol {
-    padding-left: 2.5em;
-    margin: 10px 0;
-    font-size: 12pt;
+h1 {
+  font-size: 2rem;
+  margin-top: 0;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
 }
 
-.style-academic .document-content li {
-    margin: 5px 0;
+h2 {
+  font-size: 1.6rem;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+  position: relative;
 }
 
-.style-academic .document-content blockquote {
-    margin: 20px 30px;
-    padding: 10px 20px;
-    font-size: 11pt;
-    font-style: italic;
-    border-left: 2px solid #ccc;
+h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 80px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 2px;
 }
 
-.style-academic .document-content code {
-    font-family: "Courier New", monospace;
-    font-size: 10pt;
-    background-color: #f5f5f5;
-    padding: 1px 4px;
+h3 {
+  font-size: 1.3rem;
 }
 
-.style-academic .document-content pre {
-    background-color: #f5f5f5;
-    padding: 15px;
-    overflow-x: auto;
-    font-size: 10pt;
-    border: 1px solid #ddd;
-    margin: 15px 0;
+h4 {
+  font-size: 1.15rem;
 }
 
-.style-academic .document-content pre code {
-    background: none;
-    padding: 0;
+p {
+  margin-bottom: 1.2em;
+  color: var(--text-secondary);
 }
 
-.style-academic .document-content table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 10.5pt;
+strong {
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
-.style-academic .document-content th, .style-academic .document-content td {
-    border: 1px solid #000;
-    padding: 8px 10px;
-    text-align: left;
+/* 链接样式 */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  border-bottom: 1px solid transparent;
 }
 
-.style-academic .document-content th {
-    font-weight: bold;
-    background-color: #f0f0f0;
+a:hover {
+  color: var(--primary-dark);
+  border-bottom-color: var(--primary);
 }
 
-.style-academic .document-content img {
-    max-width: 80%;
-    display: block;
-    margin: 20px auto;
+/* 列表样式 */
+ul, ol {
+  margin-bottom: 1.2em;
+  padding-left: 1.8em;
+  color: var(--text-secondary);
 }
 
-.style-academic .document-content hr {
-    border: none;
-    border-top: 1px solid #000;
-    margin: 30px 0;
+li {
+  margin-bottom: 0.6em;
 }
 
-.style-academic .document-content .figure-caption {
-    text-align: center;
-    font-size: 10.5pt;
-    margin-top: -10px;
-    margin-bottom: 20px;
+li > ul, li > ol {
+  margin-top: 0.6em;
+  margin-bottom: 0;
 }
 
-.style-academic .document-footer {
-    margin-top: 50px;
-    padding-top: 20px;
-    border-top: 1px solid #ccc;
-    text-align: center;
-    font-size: 10pt;
-    color: #666;
+/* 代码样式 */
+code {
+  font-family: "JetBrains Mono", "Fira Code", Consolas, Monaco, monospace;
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: 4px;
+  font-weight: 500;
 }
 
-@media print {
-    .style-academic {
-        background: white;
-    }
-    .style-academic .container {
-        box-shadow: none;
-        margin: 0;
-        padding: 0;
-    }
+pre {
+  background: var(--code-bg);
+  border-radius: var(--radius);
+  padding: 1.2em 1.4em;
+  overflow-x: auto;
+  margin-bottom: 1.5em;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-primary);
+  font-weight: 400;
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+
+/* 代码块语言标识 */
+pre::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0.5em;
+  right: 1em;
+  font-size: 0.75em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* 引用块 */
+blockquote {
+  margin: 1.5em 0;
+  padding: 1em 1.4em;
+  border-left: 4px solid var(--blockquote-border);
+  background: var(--blockquote-bg);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--text-secondary);
+}
+
+blockquote p {
+  margin-bottom: 0;
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* 表格样式 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--table-border);
+}
+
+th, td {
+  padding: 0.8em 1.2em;
+  text-align: left;
+  border-bottom: 1px solid var(--table-border);
+  color: var(--text-secondary);
+}
+
+th {
+  background: var(--table-header-bg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background: var(--bg-secondary);
+}
+
+/* 图片样式 */
+img {
+  max-width: 100%;
+  border-radius: var(--radius);
+  margin: 1.5em 0;
+  box-shadow: var(--shadow-md);
+}
+
+/* 分割线 */
+hr {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 3em 0;
+}
+
+/* 目录侧边栏 */
+.toc {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--toc-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.toc-title {
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.toc ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.toc li {
+  margin-bottom: 8px;
+}
+
+.toc li li {
+  padding-left: 16px;
+  margin-bottom: 6px;
+}
+
+.toc a {
+  color: var(--text-secondary);
+  display: block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 2px solid transparent;
+  transition: all 0.2s ease;
+  line-height: 1.5;
+}
+
+.toc a:hover {
+  color: var(--primary);
+  background: var(--bg);
+  border-left-color: var(--primary);
+  text-decoration: none;
+}
+
+.toc a.active {
+  color: var(--primary);
+  background: var(--bg);
+  border-left-color: var(--primary);
+  font-weight: 500;
+}
+
+/* 公式样式 */
+.katex {
+  font-size: 1.1em;
+  margin: 1em 0;
+}
+
+/* Mermaid图样式 */
+.mermaid {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 2em 0;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+/* 响应式适配 */
+@media (max-width: 1200px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .toc {
+    position: static;
+    max-height: none;
+  }
 }
 
 @media (max-width: 768px) {
-    .style-academic .container {
-        padding: 20px;
-        margin: 10px;
-    }
+  body {
+    font-size: 15px;
+  }
+  .container {
+    padding: 72px 16px 30px;
+  }
+  .doc-title {
+    font-size: 1.8rem;
+  }
+  h1 {
+    font-size: 1.6rem;
+  }
+  h2 {
+    font-size: 1.4rem;
+  }
+  h3 {
+    font-size: 1.2rem;
+  }
+  pre {
+    padding: 1em;
+    margin: 1em -16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  table {
+    display: block;
+    overflow-x: auto;
+    margin: 1em -16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .header, .toc {
+    display: none;
+  }
+  .container {
+    display: block;
+    padding: 0;
+    max-width: 100%;
+  }
+  .content {
+    max-width: 100%;
+  }
+  pre, blockquote, table {
+    break-inside: avoid;
+  }
+  a {
+    color: inherit;
+    border-bottom: none;
+  }
 }
 
 pre { line-height: 125%; }
@@ -211,143 +497,169 @@ td.linenos .normal { color: inherit; background-color: transparent; padding-left
 span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
 td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
 span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
-.highlight .hll { background-color: #ffffcc }
-.highlight { background: #f8f8f8; }
-.highlight .c { color: #3D7B7B; font-style: italic } /* Comment */
-.highlight .err { border: 1px solid #F00 } /* Error */
-.highlight .k { color: #008000; font-weight: bold } /* Keyword */
-.highlight .o { color: #666 } /* Operator */
-.highlight .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
-.highlight .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
-.highlight .cp { color: #9C6500 } /* Comment.Preproc */
-.highlight .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
-.highlight .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
-.highlight .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
-.highlight .gd { color: #A00000 } /* Generic.Deleted */
-.highlight .ge { font-style: italic } /* Generic.Emph */
-.highlight .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
-.highlight .gr { color: #E40000 } /* Generic.Error */
-.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
-.highlight .gi { color: #008400 } /* Generic.Inserted */
-.highlight .go { color: #717171 } /* Generic.Output */
-.highlight .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
-.highlight .gs { font-weight: bold } /* Generic.Strong */
-.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
-.highlight .gt { color: #04D } /* Generic.Traceback */
-.highlight .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
-.highlight .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
-.highlight .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
-.highlight .kp { color: #008000 } /* Keyword.Pseudo */
-.highlight .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
-.highlight .kt { color: #B00040 } /* Keyword.Type */
-.highlight .m { color: #666 } /* Literal.Number */
-.highlight .s { color: #BA2121 } /* Literal.String */
-.highlight .na { color: #687822 } /* Name.Attribute */
-.highlight .nb { color: #008000 } /* Name.Builtin */
-.highlight .nc { color: #00F; font-weight: bold } /* Name.Class */
-.highlight .no { color: #800 } /* Name.Constant */
-.highlight .nd { color: #A2F } /* Name.Decorator */
-.highlight .ni { color: #717171; font-weight: bold } /* Name.Entity */
-.highlight .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
-.highlight .nf { color: #00F } /* Name.Function */
-.highlight .nl { color: #767600 } /* Name.Label */
-.highlight .nn { color: #00F; font-weight: bold } /* Name.Namespace */
-.highlight .nt { color: #008000; font-weight: bold } /* Name.Tag */
-.highlight .nv { color: #19177C } /* Name.Variable */
-.highlight .ow { color: #A2F; font-weight: bold } /* Operator.Word */
-.highlight .w { color: #BBB } /* Text.Whitespace */
-.highlight .mb { color: #666 } /* Literal.Number.Bin */
-.highlight .mf { color: #666 } /* Literal.Number.Float */
-.highlight .mh { color: #666 } /* Literal.Number.Hex */
-.highlight .mi { color: #666 } /* Literal.Number.Integer */
-.highlight .mo { color: #666 } /* Literal.Number.Oct */
-.highlight .sa { color: #BA2121 } /* Literal.String.Affix */
-.highlight .sb { color: #BA2121 } /* Literal.String.Backtick */
-.highlight .sc { color: #BA2121 } /* Literal.String.Char */
-.highlight .dl { color: #BA2121 } /* Literal.String.Delimiter */
-.highlight .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
-.highlight .s2 { color: #BA2121 } /* Literal.String.Double */
-.highlight .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
-.highlight .sh { color: #BA2121 } /* Literal.String.Heredoc */
-.highlight .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
-.highlight .sx { color: #008000 } /* Literal.String.Other */
-.highlight .sr { color: #A45A77 } /* Literal.String.Regex */
-.highlight .s1 { color: #BA2121 } /* Literal.String.Single */
-.highlight .ss { color: #19177C } /* Literal.String.Symbol */
-.highlight .bp { color: #008000 } /* Name.Builtin.Pseudo */
-.highlight .fm { color: #00F } /* Name.Function.Magic */
-.highlight .vc { color: #19177C } /* Name.Variable.Class */
-.highlight .vg { color: #19177C } /* Name.Variable.Global */
-.highlight .vi { color: #19177C } /* Name.Variable.Instance */
-.highlight .vm { color: #19177C } /* Name.Variable.Magic */
-.highlight .il { color: #666 } /* Literal.Number.Integer.Long */
-    </style>
+.highlight .hll { background-color: #49483e }
+.highlight { background: #272822; color: #F8F8F2 }
+.highlight .c { color: #959077 } /* Comment */
+.highlight .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.highlight .esc { color: #F8F8F2 } /* Escape */
+.highlight .g { color: #F8F8F2 } /* Generic */
+.highlight .k { color: #66D9EF } /* Keyword */
+.highlight .l { color: #AE81FF } /* Literal */
+.highlight .n { color: #F8F8F2 } /* Name */
+.highlight .o { color: #FF4689 } /* Operator */
+.highlight .x { color: #F8F8F2 } /* Other */
+.highlight .p { color: #F8F8F2 } /* Punctuation */
+.highlight .ch { color: #959077 } /* Comment.Hashbang */
+.highlight .cm { color: #959077 } /* Comment.Multiline */
+.highlight .cp { color: #959077 } /* Comment.Preproc */
+.highlight .cpf { color: #959077 } /* Comment.PreprocFile */
+.highlight .c1 { color: #959077 } /* Comment.Single */
+.highlight .cs { color: #959077 } /* Comment.Special */
+.highlight .gd { color: #FF4689 } /* Generic.Deleted */
+.highlight .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #F8F8F2 } /* Generic.Error */
+.highlight .gh { color: #F8F8F2 } /* Generic.Heading */
+.highlight .gi { color: #A6E22E } /* Generic.Inserted */
+.highlight .go { color: #66D9EF } /* Generic.Output */
+.highlight .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.highlight .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #959077 } /* Generic.Subheading */
+.highlight .gt { color: #F8F8F2 } /* Generic.Traceback */
+.highlight .kc { color: #66D9EF } /* Keyword.Constant */
+.highlight .kd { color: #66D9EF } /* Keyword.Declaration */
+.highlight .kn { color: #FF4689 } /* Keyword.Namespace */
+.highlight .kp { color: #66D9EF } /* Keyword.Pseudo */
+.highlight .kr { color: #66D9EF } /* Keyword.Reserved */
+.highlight .kt { color: #66D9EF } /* Keyword.Type */
+.highlight .ld { color: #E6DB74 } /* Literal.Date */
+.highlight .m { color: #AE81FF } /* Literal.Number */
+.highlight .s { color: #E6DB74 } /* Literal.String */
+.highlight .na { color: #A6E22E } /* Name.Attribute */
+.highlight .nb { color: #F8F8F2 } /* Name.Builtin */
+.highlight .nc { color: #A6E22E } /* Name.Class */
+.highlight .no { color: #66D9EF } /* Name.Constant */
+.highlight .nd { color: #A6E22E } /* Name.Decorator */
+.highlight .ni { color: #F8F8F2 } /* Name.Entity */
+.highlight .ne { color: #A6E22E } /* Name.Exception */
+.highlight .nf { color: #A6E22E } /* Name.Function */
+.highlight .nl { color: #F8F8F2 } /* Name.Label */
+.highlight .nn { color: #F8F8F2 } /* Name.Namespace */
+.highlight .nx { color: #A6E22E } /* Name.Other */
+.highlight .py { color: #F8F8F2 } /* Name.Property */
+.highlight .nt { color: #FF4689 } /* Name.Tag */
+.highlight .nv { color: #F8F8F2 } /* Name.Variable */
+.highlight .ow { color: #FF4689 } /* Operator.Word */
+.highlight .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.highlight .w { color: #F8F8F2 } /* Text.Whitespace */
+.highlight .mb { color: #AE81FF } /* Literal.Number.Bin */
+.highlight .mf { color: #AE81FF } /* Literal.Number.Float */
+.highlight .mh { color: #AE81FF } /* Literal.Number.Hex */
+.highlight .mi { color: #AE81FF } /* Literal.Number.Integer */
+.highlight .mo { color: #AE81FF } /* Literal.Number.Oct */
+.highlight .sa { color: #E6DB74 } /* Literal.String.Affix */
+.highlight .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.highlight .sc { color: #E6DB74 } /* Literal.String.Char */
+.highlight .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.highlight .sd { color: #E6DB74 } /* Literal.String.Doc */
+.highlight .s2 { color: #E6DB74 } /* Literal.String.Double */
+.highlight .se { color: #AE81FF } /* Literal.String.Escape */
+.highlight .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.highlight .si { color: #E6DB74 } /* Literal.String.Interpol */
+.highlight .sx { color: #E6DB74 } /* Literal.String.Other */
+.highlight .sr { color: #E6DB74 } /* Literal.String.Regex */
+.highlight .s1 { color: #E6DB74 } /* Literal.String.Single */
+.highlight .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.highlight .bp { color: #F8F8F2 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #A6E22E } /* Name.Function.Magic */
+.highlight .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.highlight .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.highlight .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.highlight .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.highlight .il { color: #AE81FF } /* Literal.Number.Integer.Long */</style>
     
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
         <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
             onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false}]});"></script>
         
+    <!-- Mermaid支持 -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+    <script>
+        // 自动识别系统深色模式
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            const newTheme = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            mermaid.initialize({ theme: newTheme === 'dark' ? 'dark' : 'default' });
+            // 重新渲染Mermaid图
+            document.querySelectorAll('.mermaid').forEach(el => {
+                el.removeAttribute('data-processed');
+            });
+            mermaid.init();
+        });
+        // TOC滚动高亮
+        document.addEventListener('DOMContentLoaded', function() {
+            // 代码块添加语言标识
+            document.querySelectorAll('div.highlight').forEach(el => {
+                const langClass = Array.from(el.classList).find(c => c.startsWith('language-'));
+                if (langClass) {
+                    const lang = langClass.replace('language-', '');
+                    el.setAttribute('data-lang', lang);
+                }
+            });
+            // Mermaid代码块替换
+            document.querySelectorAll('pre code.language-mermaid').forEach(code => {
+                const pre = code.parentElement;
+                const div = document.createElement('div');
+                div.className = 'mermaid';
+                div.textContent = code.textContent;
+                pre.replaceWith(div);
+            });
+            mermaid.init();
+            // 目录滚动高亮
+            const tocLinks = document.querySelectorAll('.toc a');
+            const headings = document.querySelectorAll('.content h2, .content h3');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                headings.forEach(heading => {
+                    const sectionTop = heading.offsetTop;
+                    if (window.scrollY >= sectionTop - 100) {
+                        current = heading.getAttribute('id');
+                    }
+                });
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + current) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
 </head>
-<body class="style-academic">
+<body>
+    <header class="header">
+        <div class="header-title">OPD（在线策略蒸馏）技术完全指南</div>
+    </header>
     <div class="container">
-        <header class="document-header">
-            <h1 class="document-title">OPD（在线策略蒸馏）技术完全指南</h1>
-            
-            <div class="document-meta">
-                <span class="author">作者：AI技术知识库</span>
-                <span class="date">2026-08-14</span>
+        <main class="content">
+            <div class="doc-header">
+                <h1 class="doc-title">OPD（在线策略蒸馏）技术完全指南</h1>
+                <div class="doc-meta">
+                    <span class="doc-meta-item">👤 AI技术知识库</span>
+                    <span class="doc-meta-item">📅 2026-08-14</span>
+                </div>
             </div>
-            
-        </header>
-
-        
-        <nav class="toc-nav">
-            <div class="toc-title">目录</div>
-            <div class="toc">
-<ul>
-<li><a href="#_1">问题背景</a></li>
-<li><a href="#_2">核心分析：数学原理与本质</a><ul>
-<li><a href="#1">1. 形式化定义</a><ul>
-<li><a href="#_3">符号定义</a></li>
-</ul>
-</li>
-<li><a href="#2">2. 目标函数的三种形式</a><ul>
-<li><a href="#21-full-vocabulary-opdopd">2.1 Full-Vocabulary OPD（全词表OPD）</a></li>
-<li><a href="#22-top-k-opdtop-kopd">2.2 Top-K OPD（Top-K截断OPD，工业界性价比首选）</a></li>
-<li><a href="#23-sampled-token-opdtoken-opd">2.3 Sampled-Token OPD（采样Token OPD，轻量版）</a></li>
-</ul>
-</li>
-<li><a href="#3-reverse-kl">3. 梯度推导（以Reverse KL为例）</a></li>
-<li><a href="#4">4. 与其他方法的数学本质区别</a></li>
-<li><a href="#2_1">2. 完整训练流程（工业界标准实现）</a></li>
-</ul>
-</li>
-<li><a href="#_4">算法伪代码与可运行实现</a><ul>
-<li><a href="#1-opd100">1. 最简版本OPD伪代码（100行以内可实现）</a></li>
-<li><a href="#2_2">2. 工业级实现优化点</a><ul>
-<li><a href="#1_1">（1）显存优化</a></li>
-<li><a href="#2_3">（2）训练稳定性优化</a></li>
-<li><a href="#3">（3）效率优化</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#_5">落地实现路径</a><ul>
-<li><a href="#1-2">阶段一：最小版本验证（1-2天）</a></li>
-<li><a href="#agent1-2">阶段二：工程优化适配Agent场景（1-2周）</a></li>
-<li><a href="#2-4">阶段三：工业级落地（2-4周）</a></li>
-<li><a href="#_6">开源实现参考</a></li>
-</ul>
-</li>
-</ul>
-</div>
-
-        </nav>
-        
-
-        <main class="document-content">
-            
             <h1 id="opd">OPD（在线策略蒸馏）技术完全指南</h1>
 <h2 id="_1">问题背景</h2>
 <p>大语言模型后训练阶段长期存在两类核心痛点，始终没有完美的解决方案：
@@ -1050,12 +1362,53 @@ $$
 </tr>
 </tbody>
 </table>
-            
         </main>
+        
+        <aside class="toc-container">
+            <div class="toc">
+                <div class="toc-title">目录</div>
+                <div class="toc">
+<ul>
+<li><a href="#_1">问题背景</a></li>
+<li><a href="#_2">核心分析：数学原理与本质</a><ul>
+<li><a href="#1">1. 形式化定义</a><ul>
+<li><a href="#_3">符号定义</a></li>
+</ul>
+</li>
+<li><a href="#2">2. 目标函数的三种形式</a><ul>
+<li><a href="#21-full-vocabulary-opdopd">2.1 Full-Vocabulary OPD（全词表OPD）</a></li>
+<li><a href="#22-top-k-opdtop-kopd">2.2 Top-K OPD（Top-K截断OPD，工业界性价比首选）</a></li>
+<li><a href="#23-sampled-token-opdtoken-opd">2.3 Sampled-Token OPD（采样Token OPD，轻量版）</a></li>
+</ul>
+</li>
+<li><a href="#3-reverse-kl">3. 梯度推导（以Reverse KL为例）</a></li>
+<li><a href="#4">4. 与其他方法的数学本质区别</a></li>
+<li><a href="#2_1">2. 完整训练流程（工业界标准实现）</a></li>
+</ul>
+</li>
+<li><a href="#_4">算法伪代码与可运行实现</a><ul>
+<li><a href="#1-opd100">1. 最简版本OPD伪代码（100行以内可实现）</a></li>
+<li><a href="#2_2">2. 工业级实现优化点</a><ul>
+<li><a href="#1_1">（1）显存优化</a></li>
+<li><a href="#2_3">（2）训练稳定性优化</a></li>
+<li><a href="#3">（3）效率优化</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#_5">落地实现路径</a><ul>
+<li><a href="#1-2">阶段一：最小版本验证（1-2天）</a></li>
+<li><a href="#agent1-2">阶段二：工程优化适配Agent场景（1-2周）</a></li>
+<li><a href="#2-4">阶段三：工业级落地（2-4周）</a></li>
+<li><a href="#_6">开源实现参考</a></li>
+</ul>
+</li>
+</ul>
+</div>
 
-        <footer class="document-footer">
-            <p>由 markdown-to-html 工具生成</p>
-        </footer>
+            </div>
+        </aside>
+        
     </div>
 </body>
 </html>
