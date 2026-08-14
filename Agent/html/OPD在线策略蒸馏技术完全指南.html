@@ -782,102 +782,26 @@ $$
 - 如果学生采样的token $y_t$ 教师认为概率低（$A_t(y_t) &lt; 0$），则降低该token的生成概率
 - 这完美解决了传统RL的信用分配问题：每一个token都有即时的密集奖励，不需要等整个序列结束才能计算奖励</p>
 <h3 id="4">4. 与其他方法的数学本质区别</h3>
-<table>
-<thead>
-<tr>
-<th>方法</th>
-<th>目标函数</th>
-<th>数据分布</th>
-<th>监督粒度</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>SFT</td>
-<td>最小化$- \log \pi_\theta(y^*_t</td>
-<td>s_t^*)$</td>
-<td>教师/人工生成的固定前缀$s_t^*$</td>
-</tr>
-<tr>
-<td>离线KD</td>
-<td>最小化$D(\pi_T(\cdot</td>
-<td>s_t^*) \parallel \pi_\theta(\cdot</td>
-<td>s_t^*))$</td>
-</tr>
-<tr>
-<td>DPO</td>
-<td>最大化偏好对相对概率</td>
-<td>离线偏好数据集</td>
-<td>序列级偏好</td>
-</tr>
-<tr>
-<td>PPO/GRPO</td>
-<td>最大化$\mathbb{E}[\sum_t R_t] - \beta D_{KL}$</td>
-<td>学生自生成轨迹</td>
-<td>稀疏标量奖励</td>
-</tr>
-<tr>
-<td>OPD</td>
-<td>最小化$\mathbb{E}<em>{y \sim \pi</em>\theta}[\sum_t D(\pi_\theta \parallel \pi_T)]$</td>
-<td>学生自生成轨迹</td>
-<td>Token分布级密集奖励</td>
-</tr>
-<tr>
-<td><strong>OPD的核心优势</strong>：既避免了离线方法的分布偏移，又解决了在线RL的奖励稀疏问题。</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>### 5. 为什么OPD训练效率极高？（EffOPD理论证明）</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>2026年EffOPD论文通过数学证明和实验验证了OPD训练高效的根本原因：</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>1. <strong>低秩更新特性</strong>：OPD的Hessian矩阵天然具有低秩结构，99%以上的参数更新能量集中在前1%的奇异方向上</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>2. <strong>早期锁定效应</strong>：训练开始几百步内，模型就会锁定正确的低秩更新方向，后续训练沿着这个方向稳定收敛，不会像RL那样剧烈震荡</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>3. <strong>梯度一致性</strong>：Token级密集监督使得梯度方向非常稳定，不需要像PPO那样做重要性采样裁剪、价值函数估计等复杂操作，训练稳定性大幅提升。</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>---</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>## 系统架构与核心流程</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>### 1. 整体架构图</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<p><img alt="OPD与其他后训练方法对比图" src="./assets/opd_comparison.jpg" />
+图2：OPD与其他后训练方法特性对比
+| 方法 | 目标函数 | 数据分布 | 监督粒度 | 分布偏移 | 训练稳定性 |
+|------|---------|---------|---------|----------|------------|
+| SFT | 最小化$- \log \pi_\theta(y^<em>_t|s_t^</em>)$ | 教师/人工生成的固定前缀$s_t^<em>$ | Token硬标签 | 高 | 极高 |
+| 离线KD | 最小化$D(\pi_T(\cdot|s_t^</em>) \parallel \pi_\theta(\cdot|s_t^<em>))$ | 教师/人工生成的固定前缀$s_t^</em>$ | Token分布级 | 高 | 高 |
+| DPO | 最大化偏好对相对概率 | 离线偏好数据集 | 序列级偏好 | 中 | 高 |
+| PPO/GRPO | 最大化$\mathbb{E}[\sum_t R_t] - \beta D_{KL}$ | 学生自生成轨迹 | 稀疏标量奖励 | 无 | 中 |
+| OPD | 最小化$\mathbb{E}<em>{y \sim \pi</em>\theta}[\sum_t D(\pi_\theta \parallel \pi_T)]$ | 学生自生成轨迹 | Token分布级密集奖励 | 无 | 高 |
+<strong>OPD的核心优势</strong>：既避免了离线方法的分布偏移，又解决了在线RL的奖励稀疏问题。</p>
+<h3 id="5-opdeffopd">5. 为什么OPD训练效率极高？（EffOPD理论证明）</h3>
+<p>2026年EffOPD论文通过数学证明和实验验证了OPD训练高效的根本原因：
+1. <strong>低秩更新特性</strong>：OPD的Hessian矩阵天然具有低秩结构，99%以上的参数更新能量集中在前1%的奇异方向上
+2. <strong>早期锁定效应</strong>：训练开始几百步内，模型就会锁定正确的低秩更新方向，后续训练沿着这个方向稳定收敛，不会像RL那样剧烈震荡
+3. <strong>梯度一致性</strong>：Token级密集监督使得梯度方向非常稳定，不需要像PPO那样做重要性采样裁剪、价值函数估计等复杂操作，训练稳定性大幅提升。</p>
+<hr />
+<h2 id="_4">系统架构与核心流程</h2>
+<h3 id="1_1">1. 整体架构图</h3>
+<p><img alt="OPD在线策略蒸馏系统架构图" src="./assets/opd_architecture.jpg" />
+图1：OPD三层系统架构</p>
 <div class="highlight"><pre><span></span><code><span class="n">flowchart</span><span class="w"> </span><span class="n">LR</span>
 <span class="w">    </span><span class="n">subgraph</span><span class="w"> </span><span class="n">数据采样层</span>
 <span class="w">        </span><span class="n">A</span><span class="o">[</span><span class="n">Prompt数据集D</span><span class="o">]</span><span class="w"> </span><span class="c1">--&gt; B[学生模型并行Rollout&lt;br&gt;生成多轮交互轨迹]</span>
@@ -901,35 +825,35 @@ $$
 </code></pre></div>
 
 <h3 id="2_1">2. 完整训练流程（工业界标准实现）</h3>
-<ol>
-<li><strong>初始化阶段</strong></li>
-<li>加载预训练学生模型，完成SFT warmup（必须先有基础能力，否则OPD训练不稳定）</li>
-<li>加载教师模型（通常量化为4bit/8bit节省显存，不保存梯度）</li>
-<li>初始化环境（工具沙箱、代码执行环境、搜索API等Agent交互环境）</li>
-<li>配置训练超参数（学习率、batch size、KL系数、Top-K大小等）</li>
-<li><strong>采样阶段</strong></li>
-<li>从Prompt池中采样一批输入$x$</li>
-<li>学生模型与环境交互，自回归生成完整轨迹，记录每一步的状态$s_t$和采样的token $y_t$</li>
-<li>对长轨迹做截断/过滤，剔除无效样本（如重复生成、格式错误）</li>
-<li><strong>教师监督阶段</strong></li>
-<li>教师模型在每一个学生生成的前缀$s_t$上做前向传播，输出logits</li>
-<li>对教师logits做Top-K截断，归一化得到概率分布</li>
-<li>（可选）对特殊token（如padding、工具返回结果）做mask，不计算损失</li>
-<li><strong>损失计算阶段</strong></li>
-<li>学生模型在相同的前缀$s_t$上做前向传播，输出logits</li>
-<li>计算每一步的RKL/FKL/JSD损失</li>
-<li>（可选）加入步级权重：长轨迹后半段权重适当降低，避免后期误差累积</li>
-<li>（可选）加入熵正则：鼓励适当探索，避免模式崩溃</li>
-<li><strong>更新阶段</strong></li>
-<li>反向传播计算梯度，做梯度裁剪防止梯度爆炸</li>
-<li>优化器（通常AdamW）更新学生模型参数</li>
-<li>周期性（如每100步）用学生模型EMA权重更新教师模型，或升级到更强的教师版本</li>
-<li><strong>评估阶段</strong></li>
-<li>周期性在验证集上评测任务成功率、准确率等指标</li>
-<li>早停：当验证集指标不再提升时停止训练，防止过拟合</li>
-</ol>
+<p><img alt="OPD训练流程图" src="./assets/opd_workflow.jpg" />
+图3：OPD标准训练流程
+1. <strong>初始化阶段</strong>
+   - 加载预训练学生模型，完成SFT warmup（必须先有基础能力，否则OPD训练不稳定）
+   - 加载教师模型（通常量化为4bit/8bit节省显存，不保存梯度）
+   - 初始化环境（工具沙箱、代码执行环境、搜索API等Agent交互环境）
+   - 配置训练超参数（学习率、batch size、KL系数、Top-K大小等）
+2. <strong>采样阶段</strong>
+   - 从Prompt池中采样一批输入$x$
+   - 学生模型与环境交互，自回归生成完整轨迹，记录每一步的状态$s_t$和采样的token $y_t$
+   - 对长轨迹做截断/过滤，剔除无效样本（如重复生成、格式错误）
+3. <strong>教师监督阶段</strong>
+   - 教师模型在每一个学生生成的前缀$s_t$上做前向传播，输出logits
+   - 对教师logits做Top-K截断，归一化得到概率分布
+   - （可选）对特殊token（如padding、工具返回结果）做mask，不计算损失
+4. <strong>损失计算阶段</strong>
+   - 学生模型在相同的前缀$s_t$上做前向传播，输出logits
+   - 计算每一步的RKL/FKL/JSD损失
+   - （可选）加入步级权重：长轨迹后半段权重适当降低，避免后期误差累积
+   - （可选）加入熵正则：鼓励适当探索，避免模式崩溃
+5. <strong>更新阶段</strong>
+   - 反向传播计算梯度，做梯度裁剪防止梯度爆炸
+   - 优化器（通常AdamW）更新学生模型参数
+   - 周期性（如每100步）用学生模型EMA权重更新教师模型，或升级到更强的教师版本
+6. <strong>评估阶段</strong>
+   - 周期性在验证集上评测任务成功率、准确率等指标
+   - 早停：当验证集指标不再提升时停止训练，防止过拟合</p>
 <hr />
-<h2 id="_4">算法伪代码与可运行实现</h2>
+<h2 id="_5">算法伪代码与可运行实现</h2>
 <h3 id="1-opd100">1. 最简版本OPD伪代码（100行以内可实现）</h3>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
@@ -1062,7 +986,7 @@ $$
 </code></pre></div>
 
 <h3 id="2_2">2. 工业级实现优化点</h3>
-<h4 id="1_1">（1）显存优化</h4>
+<h4 id="1_2">（1）显存优化</h4>
 <ul>
 <li>教师模型4bit/8bit量化，不存储梯度</li>
 <li>采用梯度检查点（Gradient Checkpointing），减少学生模型显存占用30%+</li>
@@ -1083,7 +1007,7 @@ $$
 <li>分布式训练：采用FSDP/DeepSpeed ZeRO-3做分布式训练，支持70B+大模型训练</li>
 </ul>
 <hr />
-<h2 id="_5">落地实现路径</h2>
+<h2 id="_6">落地实现路径</h2>
 <h3 id="1-2">阶段一：最小版本验证（1-2天）</h3>
 <p><strong>目标</strong>：跑通OPD核心流程，验证在小模型上的效果
 1. 基于HuggingFace Transformers实现最简版Top-K Reverse KL OPD
@@ -1115,7 +1039,7 @@ $$
 - 全词表OPD在大模型上成本过高，优先用Top-K（K=50/100）方案，性价比最高
 - 多教师场景下，按轨迹路由教师比按token路由教师更稳定，实现成本更低
 - 训练过程中必须持续监控验证集任务成功率，KL损失下降不代表效果提升</p>
-<h3 id="_6">开源实现参考</h3>
+<h3 id="_7">开源实现参考</h3>
 <table>
 <thead>
 <tr>
@@ -1383,24 +1307,29 @@ $$
 </li>
 <li><a href="#3-reverse-kl">3. 梯度推导（以Reverse KL为例）</a></li>
 <li><a href="#4">4. 与其他方法的数学本质区别</a></li>
+<li><a href="#5-opdeffopd">5. 为什么OPD训练效率极高？（EffOPD理论证明）</a></li>
+</ul>
+</li>
+<li><a href="#_4">系统架构与核心流程</a><ul>
+<li><a href="#1_1">1. 整体架构图</a></li>
 <li><a href="#2_1">2. 完整训练流程（工业界标准实现）</a></li>
 </ul>
 </li>
-<li><a href="#_4">算法伪代码与可运行实现</a><ul>
+<li><a href="#_5">算法伪代码与可运行实现</a><ul>
 <li><a href="#1-opd100">1. 最简版本OPD伪代码（100行以内可实现）</a></li>
 <li><a href="#2_2">2. 工业级实现优化点</a><ul>
-<li><a href="#1_1">（1）显存优化</a></li>
+<li><a href="#1_2">（1）显存优化</a></li>
 <li><a href="#2_3">（2）训练稳定性优化</a></li>
 <li><a href="#3">（3）效率优化</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#_5">落地实现路径</a><ul>
+<li><a href="#_6">落地实现路径</a><ul>
 <li><a href="#1-2">阶段一：最小版本验证（1-2天）</a></li>
 <li><a href="#agent1-2">阶段二：工程优化适配Agent场景（1-2周）</a></li>
 <li><a href="#2-4">阶段三：工业级落地（2-4周）</a></li>
-<li><a href="#_6">开源实现参考</a></li>
+<li><a href="#_7">开源实现参考</a></li>
 </ul>
 </li>
 </ul>

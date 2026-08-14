@@ -92,13 +92,15 @@ $$
 - 如果学生采样的token $y_t$ 教师认为概率低（$A_t(y_t) < 0$），则降低该token的生成概率
 - 这完美解决了传统RL的信用分配问题：每一个token都有即时的密集奖励，不需要等整个序列结束才能计算奖励
 ### 4. 与其他方法的数学本质区别
-| 方法 | 目标函数 | 数据分布 | 监督粒度 |
-|------|---------|---------|---------|
-| SFT | 最小化$- \log \pi_\theta(y^*_t|s_t^*)$ | 教师/人工生成的固定前缀$s_t^*$ | Token硬标签 |
-| 离线KD | 最小化$D(\pi_T(\cdot|s_t^*) \parallel \pi_\theta(\cdot|s_t^*))$ | 教师/人工生成的固定前缀$s_t^*$ | Token分布级 |
-| DPO | 最大化偏好对相对概率 | 离线偏好数据集 | 序列级偏好 |
-| PPO/GRPO | 最大化$\mathbb{E}[\sum_t R_t] - \beta D_{KL}$ | 学生自生成轨迹 | 稀疏标量奖励 |
-| OPD | 最小化$\mathbb{E}_{y \sim \pi_\theta}[\sum_t D(\pi_\theta \parallel \pi_T)]$ | 学生自生成轨迹 | Token分布级密集奖励 |
+![OPD与其他后训练方法对比图](./assets/opd_comparison.jpg)
+图2：OPD与其他后训练方法特性对比
+| 方法 | 目标函数 | 数据分布 | 监督粒度 | 分布偏移 | 训练稳定性 |
+|------|---------|---------|---------|----------|------------|
+| SFT | 最小化$- \log \pi_\theta(y^*_t|s_t^*)$ | 教师/人工生成的固定前缀$s_t^*$ | Token硬标签 | 高 | 极高 |
+| 离线KD | 最小化$D(\pi_T(\cdot|s_t^*) \parallel \pi_\theta(\cdot|s_t^*))$ | 教师/人工生成的固定前缀$s_t^*$ | Token分布级 | 高 | 高 |
+| DPO | 最大化偏好对相对概率 | 离线偏好数据集 | 序列级偏好 | 中 | 高 |
+| PPO/GRPO | 最大化$\mathbb{E}[\sum_t R_t] - \beta D_{KL}$ | 学生自生成轨迹 | 稀疏标量奖励 | 无 | 中 |
+| OPD | 最小化$\mathbb{E}_{y \sim \pi_\theta}[\sum_t D(\pi_\theta \parallel \pi_T)]$ | 学生自生成轨迹 | Token分布级密集奖励 | 无 | 高 |
 **OPD的核心优势**：既避免了离线方法的分布偏移，又解决了在线RL的奖励稀疏问题。
 ### 5. 为什么OPD训练效率极高？（EffOPD理论证明）
 2026年EffOPD论文通过数学证明和实验验证了OPD训练高效的根本原因：
@@ -108,6 +110,8 @@ $$
 ---
 ## 系统架构与核心流程
 ### 1. 整体架构图
+![OPD在线策略蒸馏系统架构图](./assets/opd_architecture.jpg)
+图1：OPD三层系统架构
 ```mermaid
 flowchart LR
     subgraph 数据采样层
@@ -130,7 +134,10 @@ flowchart LR
     end
     I --> B
 ```
+
 ### 2. 完整训练流程（工业界标准实现）
+![OPD训练流程图](./assets/opd_workflow.jpg)
+图3：OPD标准训练流程
 1. **初始化阶段**
    - 加载预训练学生模型，完成SFT warmup（必须先有基础能力，否则OPD训练不稳定）
    - 加载教师模型（通常量化为4bit/8bit节省显存，不保存梯度）
