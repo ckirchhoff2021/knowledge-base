@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPD（在线策略蒸馏）技术完全指南</title>
+    <style>
+        /* 学术论文风格 CSS */
+.style-academic {
+    margin: 0;
+    padding: 0;
+    font-family: "Times New Roman", Times, "SimSun", serif;
+    background-color: #fff;
+    color: #000;
+    line-height: 1.5;
+}
+
+.style-academic .container {
+    max-width: 210mm;
+    margin: 20px auto;
+    padding: 25mm 20mm;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    min-height: 297mm;
+}
+
+.style-academic .document-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.style-academic .document-title {
+    font-size: 20pt;
+    font-weight: bold;
+    margin: 0 0 20px 0;
+    line-height: 1.3;
+}
+
+.style-academic .document-meta {
+    font-size: 12pt;
+    margin: 10px 0;
+}
+
+.style-academic .document-meta span {
+    margin: 0 15px;
+}
+
+.style-academic .toc-nav {
+    margin: 40px 0;
+    padding: 20px;
+    page-break-after: always;
+}
+
+.style-academic .toc-title {
+    font-size: 14pt;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.style-academic .toc-nav ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.style-academic .toc-nav li {
+    margin: 5px 0;
+    font-size: 12pt;
+}
+
+.style-academic .toc-nav a {
+    color: #000;
+    text-decoration: none;
+}
+
+.style-academic .toc-nav a::after {
+    content: leader('.') target-counter(attr(href), page);
+}
+
+.style-academic .document-content h2 {
+    font-size: 16pt;
+    font-weight: bold;
+    margin: 30px 0 15px 0;
+}
+
+.style-academic .document-content h3 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin: 25px 0 12px 0;
+}
+
+.style-academic .document-content h4 {
+    font-size: 12pt;
+    font-weight: bold;
+    font-style: italic;
+    margin: 20px 0 10px 0;
+}
+
+.style-academic .document-content p {
+    margin: 10px 0;
+    font-size: 12pt;
+    text-indent: 2em;
+    text-align: justify;
+}
+
+.style-academic .document-content ul, .style-academic .document-content ol {
+    padding-left: 2.5em;
+    margin: 10px 0;
+    font-size: 12pt;
+}
+
+.style-academic .document-content li {
+    margin: 5px 0;
+}
+
+.style-academic .document-content blockquote {
+    margin: 20px 30px;
+    padding: 10px 20px;
+    font-size: 11pt;
+    font-style: italic;
+    border-left: 2px solid #ccc;
+}
+
+.style-academic .document-content code {
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    background-color: #f5f5f5;
+    padding: 1px 4px;
+}
+
+.style-academic .document-content pre {
+    background-color: #f5f5f5;
+    padding: 15px;
+    overflow-x: auto;
+    font-size: 10pt;
+    border: 1px solid #ddd;
+    margin: 15px 0;
+}
+
+.style-academic .document-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.style-academic .document-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 10.5pt;
+}
+
+.style-academic .document-content th, .style-academic .document-content td {
+    border: 1px solid #000;
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.style-academic .document-content th {
+    font-weight: bold;
+    background-color: #f0f0f0;
+}
+
+.style-academic .document-content img {
+    max-width: 80%;
+    display: block;
+    margin: 20px auto;
+}
+
+.style-academic .document-content hr {
+    border: none;
+    border-top: 1px solid #000;
+    margin: 30px 0;
+}
+
+.style-academic .document-content .figure-caption {
+    text-align: center;
+    font-size: 10.5pt;
+    margin-top: -10px;
+    margin-bottom: 20px;
+}
+
+.style-academic .document-footer {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid #ccc;
+    text-align: center;
+    font-size: 10pt;
+    color: #666;
+}
+
+@media print {
+    .style-academic {
+        background: white;
+    }
+    .style-academic .container {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .style-academic .container {
+        padding: 20px;
+        margin: 10px;
+    }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #ffffcc }
+.highlight { background: #f8f8f8; }
+.highlight .c { color: #3D7B7B; font-style: italic } /* Comment */
+.highlight .err { border: 1px solid #F00 } /* Error */
+.highlight .k { color: #008000; font-weight: bold } /* Keyword */
+.highlight .o { color: #666 } /* Operator */
+.highlight .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #9C6500 } /* Comment.Preproc */
+.highlight .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #A00000 } /* Generic.Deleted */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #E40000 } /* Generic.Error */
+.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #008400 } /* Generic.Inserted */
+.highlight .go { color: #717171 } /* Generic.Output */
+.highlight .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.highlight .gt { color: #04D } /* Generic.Traceback */
+.highlight .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.highlight .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.highlight .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.highlight .kp { color: #008000 } /* Keyword.Pseudo */
+.highlight .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.highlight .kt { color: #B00040 } /* Keyword.Type */
+.highlight .m { color: #666 } /* Literal.Number */
+.highlight .s { color: #BA2121 } /* Literal.String */
+.highlight .na { color: #687822 } /* Name.Attribute */
+.highlight .nb { color: #008000 } /* Name.Builtin */
+.highlight .nc { color: #00F; font-weight: bold } /* Name.Class */
+.highlight .no { color: #800 } /* Name.Constant */
+.highlight .nd { color: #A2F } /* Name.Decorator */
+.highlight .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.highlight .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #00F } /* Name.Function */
+.highlight .nl { color: #767600 } /* Name.Label */
+.highlight .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.highlight .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.highlight .nv { color: #19177C } /* Name.Variable */
+.highlight .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.highlight .w { color: #BBB } /* Text.Whitespace */
+.highlight .mb { color: #666 } /* Literal.Number.Bin */
+.highlight .mf { color: #666 } /* Literal.Number.Float */
+.highlight .mh { color: #666 } /* Literal.Number.Hex */
+.highlight .mi { color: #666 } /* Literal.Number.Integer */
+.highlight .mo { color: #666 } /* Literal.Number.Oct */
+.highlight .sa { color: #BA2121 } /* Literal.String.Affix */
+.highlight .sb { color: #BA2121 } /* Literal.String.Backtick */
+.highlight .sc { color: #BA2121 } /* Literal.String.Char */
+.highlight .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.highlight .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.highlight .s2 { color: #BA2121 } /* Literal.String.Double */
+.highlight .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.highlight .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.highlight .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.highlight .sx { color: #008000 } /* Literal.String.Other */
+.highlight .sr { color: #A45A77 } /* Literal.String.Regex */
+.highlight .s1 { color: #BA2121 } /* Literal.String.Single */
+.highlight .ss { color: #19177C } /* Literal.String.Symbol */
+.highlight .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #00F } /* Name.Function.Magic */
+.highlight .vc { color: #19177C } /* Name.Variable.Class */
+.highlight .vg { color: #19177C } /* Name.Variable.Global */
+.highlight .vi { color: #19177C } /* Name.Variable.Instance */
+.highlight .vm { color: #19177C } /* Name.Variable.Magic */
+.highlight .il { color: #666 } /* Literal.Number.Integer.Long */
+    </style>
+    
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+            onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false}]});"></script>
+        
+</head>
+<body class="style-academic">
+    <div class="container">
+        <header class="document-header">
+            <h1 class="document-title">OPD（在线策略蒸馏）技术完全指南</h1>
+            
+            <div class="document-meta">
+                <span class="author">作者：AI技术知识库</span>
+                <span class="date">2026-08-14</span>
+            </div>
+            
+        </header>
+
+        
+        <nav class="toc-nav">
+            <div class="toc-title">目录</div>
+            <div class="toc">
+<ul>
+<li><a href="#_1">问题背景</a></li>
+<li><a href="#_2">核心分析：数学原理与本质</a><ul>
+<li><a href="#1">1. 形式化定义</a><ul>
+<li><a href="#_3">符号定义</a></li>
+</ul>
+</li>
+<li><a href="#2">2. 目标函数的三种形式</a><ul>
+<li><a href="#21-full-vocabulary-opdopd">2.1 Full-Vocabulary OPD（全词表OPD）</a></li>
+<li><a href="#22-top-k-opdtop-kopd">2.2 Top-K OPD（Top-K截断OPD，工业界性价比首选）</a></li>
+<li><a href="#23-sampled-token-opdtoken-opd">2.3 Sampled-Token OPD（采样Token OPD，轻量版）</a></li>
+</ul>
+</li>
+<li><a href="#3-reverse-kl">3. 梯度推导（以Reverse KL为例）</a></li>
+<li><a href="#4">4. 与其他方法的数学本质区别</a></li>
+<li><a href="#2_1">2. 完整训练流程（工业界标准实现）</a></li>
+</ul>
+</li>
+<li><a href="#_4">算法伪代码与可运行实现</a><ul>
+<li><a href="#1-opd100">1. 最简版本OPD伪代码（100行以内可实现）</a></li>
+<li><a href="#2_2">2. 工业级实现优化点</a><ul>
+<li><a href="#1_1">（1）显存优化</a></li>
+<li><a href="#2_3">（2）训练稳定性优化</a></li>
+<li><a href="#3">（3）效率优化</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#_5">落地实现路径</a><ul>
+<li><a href="#1-2">阶段一：最小版本验证（1-2天）</a></li>
+<li><a href="#agent1-2">阶段二：工程优化适配Agent场景（1-2周）</a></li>
+<li><a href="#2-4">阶段三：工业级落地（2-4周）</a></li>
+<li><a href="#_6">开源实现参考</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+        </nav>
+        
+
+        <main class="document-content">
+            
+            <h1 id="opd">OPD（在线策略蒸馏）技术完全指南</h1>
+<h2 id="_1">问题背景</h2>
+<p>大语言模型后训练阶段长期存在两类核心痛点，始终没有完美的解决方案：
+1. <strong>离线方法的暴露偏差（Exposure Bias）</strong>：SFT、离线知识蒸馏、DPO等基于固定数据集训练的方法，训练时模型总是在完美的前缀（人工标注/教师生成的正确上下文）上学习，而推理时必须基于自己可能生成错误的前缀继续预测，训练和推理分布严重不一致，导致长程生成、多步工具调用、Agent交互场景下误差指数级累积。
+2. <strong>在线RL的稀疏奖励与信用分配问题</strong>：PPO、GRPO等在线强化学习方法虽然解决了分布偏移问题，但奖励信号通常是稀疏的（只有任务最终成功/失败的标量奖励），长程多步任务中无法定位到底哪一步决策出了问题，训练不稳定、样本利用率低、容易出现奖励黑客现象。</p>
+<p>OPD（On-Policy Distillation，在线策略蒸馏，部分文献也称Online Preference Distillation在线偏好蒸馏）是2023年提出、2026年成为工业界主流的大模型后训练技术，完美融合了知识蒸馏的密集Token级监督和在线RL的同策略分布对齐优势，被DeepSeek-V4等大模型作为核心后训练技术，尤其在Agent、代码生成、数学推理等长程交互场景效果远超传统方法。</p>
+<p>本文将从数学原理、架构设计、算法细节、工程实现、落地路径、调参指南全方面详细讲解OPD技术，内容包含完整的数学推导、架构图、可运行伪代码、工业界落地经验。</p>
+<hr />
+<h2 id="_2">核心分析：数学原理与本质</h2>
+<h3 id="1">1. 形式化定义</h3>
+<p>OPD的核心目标是：<strong>在学生模型自身生成的轨迹分布上，最小化学生策略与教师策略的KL散度</strong>。</p>
+<h4 id="_3">符号定义</h4>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>定义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$x$</td>
+<td>用户输入prompt/初始状态</td>
+</tr>
+<tr>
+<td>$y = (y_1, y_2, ..., y_T)$</td>
+<td>长度为T的生成轨迹/序列</td>
+</tr>
+<tr>
+<td>$\pi_\theta(y</td>
+<td>x)$</td>
+</tr>
+<tr>
+<td>$\pi_T(y</td>
+<td>x)$</td>
+</tr>
+<tr>
+<td>$s_t = (x, y_{&lt;t})$</td>
+<td>第t步的上下文状态，包含输入和前t-1步生成的前缀</td>
+</tr>
+<tr>
+<td>$V$</td>
+<td>词表大小</td>
+</tr>
+<tr>
+<td>$\pi_\theta(v</td>
+<td>s_t)$</td>
+</tr>
+<tr>
+<td>$\pi_T(v</td>
+<td>s_t)$</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2">2. 目标函数的三种形式</h3>
+<p>根据计算KL散度的词表范围和方向，OPD有三种主流的目标函数形式：</p>
+<h4 id="21-full-vocabulary-opdopd">2.1 Full-Vocabulary OPD（全词表OPD）</h4>
+<p>对词表所有token计算KL散度，是理论最完整、效果最好但计算成本最高的形式：
+$$
+\mathcal{L}<em _mathcal_D="\mathcal{D" _sim="\sim" x="x">{OPD}^{full}(\theta) = \mathbb{E}</em>^T D_{}, y \sim \pi_\theta} \left[ \sum_{t=1<em>}\left( \pi_\theta(\cdot|s_t) \parallel \pi_T(\cdot|s_t) \right) \right]
+$$
+其中$D_</em>$代表散度函数，根据KL方向分为三种：</p>
+<h5 id="1forward-klkl">（1）Forward KL（前向KL）</h5>
+<p>$$
+D_{FKL}(p \parallel q) = \sum_{v \in V} p(v) \log \frac{p(v)}{q(v)}
+$$
+- 期望权重来自教师分布$p=\pi_T, q=\pi_\theta$
+- 特性：Mode-Covering（模式覆盖），严厉惩罚"教师有概率但学生概率为0"的token，强制学生覆盖教师所有合理输出模式
+- 优点：多样性好，不会遗漏教师的知识
+- 缺点：当学生容量小于教师时，容易过度分散概率，生成内容平庸保守
+- 适用场景：多专家合并、创造性生成任务</p>
+<h5 id="2reverse-klkl">（2）Reverse KL（反向KL，工业界默认选择）</h5>
+<p>$$
+D_{RKL}(p \parallel q) = \sum_{v \in V} p(v) \log \frac{p(v)}{q(v)}
+$$
+- 期望权重来自学生分布$p=\pi_\theta, q=\pi_T$
+- 特性：Mode-Seeking（模式寻找），严厉惩罚"学生有高概率但教师概率极低"的token，强制学生只在教师认可的范围内生成
+- 优点：精度高、稳定性好，不会生成教师认为错误的内容，训练不易崩溃
+- 缺点：容易丢失多样性，极端情况会出现模式崩溃
+- 适用场景：代码生成、数学推理、Agent工具调用等对正确性要求高的任务（工业界90%以上场景选择RKL）</p>
+<h5 id="3generalized-jsdjensen-shannon">（3）Generalized JSD（广义Jensen-Shannon散度）</h5>
+<p>$$
+D_{JSD(\alpha)}(p \parallel q) = \alpha D_{FKL}(p \parallel \alpha p + (1-\alpha)q) + (1-\alpha) D_{RKL}(q \parallel \alpha p + (1-\alpha)q)
+$$
+- $\alpha \in [0,1]$：平衡系数，$\alpha=0$等价于RKL，$\alpha=1$等价于FKL，$\alpha=0.5$是标准JSD
+- 特性：在Mode-Covering和Mode-Seeking之间灵活平衡
+- 适用场景：需要同时兼顾正确性和多样性的场景</p>
+<h4 id="22-top-k-opdtop-kopd">2.2 Top-K OPD（Top-K截断OPD，工业界性价比首选）</h4>
+<p>全词表OPD需要计算教师所有V个token的logits，当词表大小为15万时，显存和计算成本很高，因此工业界通常采用Top-K截断：只对教师和学生概率最高的K个token计算KL散度，其余token的概率归一化后合并为一个"其他"类：
+$$
+\mathcal{L}<em _mathcal_D="\mathcal{D" _sim="\sim" x="x">{OPD}^{topk}(\theta) = \mathbb{E}</em>(\pi_T(\cdot|s_t), K) \right) \right]
+$$
+- K通常取20/50/100，计算成本仅为全词表的1/1000~1/3000
+- 效果损失小于2%，是目前工业界落地的首选方案
+- 注意：K不能太小，否则会丢失有价值的长尾token信号}, y \sim \pi_\theta} \left[ \sum_{t=1}^T D_{*}\left( \text{TopK}(\pi_\theta(\cdot|s_t), K) \parallel \text{TopK</p>
+<h4 id="23-sampled-token-opdtoken-opd">2.3 Sampled-Token OPD（采样Token OPD，轻量版）</h4>
+<p>最轻量化的形式，只对学生当前采样出来的那一个token计算对数概率差，不需要计算整个词表的分布：
+$$
+\mathcal{L}<em _mathcal_D="\mathcal{D" _sim="\sim" x="x">{OPD}^{sample}(\theta) = \mathbb{E}</em>^T \left( \log \pi_\theta(y_t|s_t) - \log \pi_T(y_t|s_t) \right) \right]
+$$
+- 计算成本最低，只需要教师输出单个token的对数概率
+- 缺点：梯度方差大，信号稀疏，需要更大的batch size
+- 适用场景：超大规模模型训练、算力极度受限的场景}, y \sim \pi_\theta} \left[ \sum_{t=1</p>
+<h3 id="3-reverse-kl">3. 梯度推导（以Reverse KL为例）</h3>
+<p>我们对Reverse KL损失求梯度，可以得到OPD更新的本质：
+首先展开单步RKL：
+$$
+D_{RKL}(\pi_\theta \parallel \pi_T) = \sum_v \pi_\theta(v|s_t) \log \pi_\theta(v|s_t) - \sum_v \pi_\theta(v|s_t) \log \pi_T(v|s_t)
+$$
+对参数$\theta$求梯度：
+$$
+\nabla_\theta D_{RKL} = \mathbb{E}<em>{v \sim \pi</em>\theta} \left[ \nabla_\theta \log \pi_\theta(v|s_t) \cdot \left( \log \frac{\pi_\theta(v|s_t)}{\pi_T(v|s_t)} + 1 \right) \right]
+$$
+令优势函数$A_t(v) = \log \pi_T(v|s_t) - \log \pi_\theta(v|s_t)$，则梯度可以写为策略梯度的形式：
+$$
+\nabla_\theta \mathcal{L}<em t="1">{OPD} = -\mathbb{E} \left[ \sum</em>^T \nabla_\theta \log \pi_\theta(y_t|s_t) \cdot A_t(y_t) \right]
+$$
+<strong>核心发现</strong>：OPD本质上是一个特殊的RL算法，其奖励信号就是教师模型在每一步给的Token级对数概率差$A_t(v)$：
+- 如果学生采样的token $y_t$ 教师认为概率高（$A_t(y_t) &gt; 0$），则提高该token的生成概率
+- 如果学生采样的token $y_t$ 教师认为概率低（$A_t(y_t) &lt; 0$），则降低该token的生成概率
+- 这完美解决了传统RL的信用分配问题：每一个token都有即时的密集奖励，不需要等整个序列结束才能计算奖励</p>
+<h3 id="4">4. 与其他方法的数学本质区别</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>目标函数</th>
+<th>数据分布</th>
+<th>监督粒度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT</td>
+<td>最小化$- \log \pi_\theta(y^*_t</td>
+<td>s_t^*)$</td>
+<td>教师/人工生成的固定前缀$s_t^*$</td>
+</tr>
+<tr>
+<td>离线KD</td>
+<td>最小化$D(\pi_T(\cdot</td>
+<td>s_t^*) \parallel \pi_\theta(\cdot</td>
+<td>s_t^*))$</td>
+</tr>
+<tr>
+<td>DPO</td>
+<td>最大化偏好对相对概率</td>
+<td>离线偏好数据集</td>
+<td>序列级偏好</td>
+</tr>
+<tr>
+<td>PPO/GRPO</td>
+<td>最大化$\mathbb{E}[\sum_t R_t] - \beta D_{KL}$</td>
+<td>学生自生成轨迹</td>
+<td>稀疏标量奖励</td>
+</tr>
+<tr>
+<td>OPD</td>
+<td>最小化$\mathbb{E}<em>{y \sim \pi</em>\theta}[\sum_t D(\pi_\theta \parallel \pi_T)]$</td>
+<td>学生自生成轨迹</td>
+<td>Token分布级密集奖励</td>
+</tr>
+<tr>
+<td><strong>OPD的核心优势</strong>：既避免了离线方法的分布偏移，又解决了在线RL的奖励稀疏问题。</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>### 5. 为什么OPD训练效率极高？（EffOPD理论证明）</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2026年EffOPD论文通过数学证明和实验验证了OPD训练高效的根本原因：</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>1. <strong>低秩更新特性</strong>：OPD的Hessian矩阵天然具有低秩结构，99%以上的参数更新能量集中在前1%的奇异方向上</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2. <strong>早期锁定效应</strong>：训练开始几百步内，模型就会锁定正确的低秩更新方向，后续训练沿着这个方向稳定收敛，不会像RL那样剧烈震荡</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>3. <strong>梯度一致性</strong>：Token级密集监督使得梯度方向非常稳定，不需要像PPO那样做重要性采样裁剪、价值函数估计等复杂操作，训练稳定性大幅提升。</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>---</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>## 系统架构与核心流程</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>### 1. 整体架构图</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="n">flowchart</span><span class="w"> </span><span class="n">LR</span>
+<span class="w">    </span><span class="n">subgraph</span><span class="w"> </span><span class="n">数据采样层</span>
+<span class="w">        </span><span class="n">A</span><span class="o">[</span><span class="n">Prompt数据集D</span><span class="o">]</span><span class="w"> </span><span class="c1">--&gt; B[学生模型并行Rollout&lt;br&gt;生成多轮交互轨迹]</span>
+<span class="w">        </span><span class="n">B</span><span class="w"> </span><span class="c1">--&gt; C{环境交互&lt;br&gt;工具调用/代码执行/搜索}</span>
+<span class="w">        </span><span class="n">C</span><span class="w"> </span><span class="c1">--&gt;|环境反馈| B</span>
+<span class="w">        </span><span class="n">B</span><span class="w"> </span><span class="c1">--&gt; D[完整学生轨迹&lt;br&gt;(s_1,y_1,s_2,y_2,...,s_T,y_T)]</span>
+<span class="w">    </span><span class="k">end</span>
+<span class="w">    </span><span class="n">subgraph</span><span class="w"> </span><span class="n">教师监督层</span>
+<span class="w">        </span><span class="n">D</span><span class="w"> </span><span class="c1">--&gt; E[教师模型前向&lt;br&gt;在每个学生前缀s_t上输出logits]</span>
+<span class="w">        </span><span class="n">E</span><span class="w"> </span><span class="c1">--&gt; F[Top-K截断/归一化&lt;br&gt;得到教师分布π_T(·|s_t)]</span>
+<span class="w">    </span><span class="k">end</span>
+<span class="w">    </span><span class="n">subgraph</span><span class="w"> </span><span class="n">训练更新层</span>
+<span class="w">        </span><span class="n">D</span><span class="w"> </span><span class="c1">--&gt; G[学生模型前向&lt;br&gt;在每个前缀s_t上输出logits]</span>
+<span class="w">        </span><span class="n">F</span><span class="w"> </span><span class="c1">--&gt; H[损失计算&lt;br&gt;Reverse KL/Top-K/采样Token]</span>
+<span class="w">        </span><span class="n">G</span><span class="w"> </span><span class="c1">--&gt; H</span>
+<span class="w">        </span><span class="n">H</span><span class="w"> </span><span class="c1">--&gt; I[反向传播更新学生参数θ]</span>
+<span class="w">        </span><span class="n">I</span><span class="w"> </span><span class="c1">--&gt;|周期性更新| J[教师模型更新&lt;br&gt;EMA/硬拷贝/升级强模型]</span>
+<span class="w">        </span><span class="n">J</span><span class="w"> </span><span class="c1">--&gt; E</span>
+<span class="w">    </span><span class="k">end</span>
+<span class="w">    </span><span class="n">I</span><span class="w"> </span><span class="c1">--&gt; B</span>
+</code></pre></div>
+
+<h3 id="2_1">2. 完整训练流程（工业界标准实现）</h3>
+<ol>
+<li><strong>初始化阶段</strong></li>
+<li>加载预训练学生模型，完成SFT warmup（必须先有基础能力，否则OPD训练不稳定）</li>
+<li>加载教师模型（通常量化为4bit/8bit节省显存，不保存梯度）</li>
+<li>初始化环境（工具沙箱、代码执行环境、搜索API等Agent交互环境）</li>
+<li>配置训练超参数（学习率、batch size、KL系数、Top-K大小等）</li>
+<li><strong>采样阶段</strong></li>
+<li>从Prompt池中采样一批输入$x$</li>
+<li>学生模型与环境交互，自回归生成完整轨迹，记录每一步的状态$s_t$和采样的token $y_t$</li>
+<li>对长轨迹做截断/过滤，剔除无效样本（如重复生成、格式错误）</li>
+<li><strong>教师监督阶段</strong></li>
+<li>教师模型在每一个学生生成的前缀$s_t$上做前向传播，输出logits</li>
+<li>对教师logits做Top-K截断，归一化得到概率分布</li>
+<li>（可选）对特殊token（如padding、工具返回结果）做mask，不计算损失</li>
+<li><strong>损失计算阶段</strong></li>
+<li>学生模型在相同的前缀$s_t$上做前向传播，输出logits</li>
+<li>计算每一步的RKL/FKL/JSD损失</li>
+<li>（可选）加入步级权重：长轨迹后半段权重适当降低，避免后期误差累积</li>
+<li>（可选）加入熵正则：鼓励适当探索，避免模式崩溃</li>
+<li><strong>更新阶段</strong></li>
+<li>反向传播计算梯度，做梯度裁剪防止梯度爆炸</li>
+<li>优化器（通常AdamW）更新学生模型参数</li>
+<li>周期性（如每100步）用学生模型EMA权重更新教师模型，或升级到更强的教师版本</li>
+<li><strong>评估阶段</strong></li>
+<li>周期性在验证集上评测任务成功率、准确率等指标</li>
+<li>早停：当验证集指标不再提升时停止训练，防止过拟合</li>
+</ol>
+<hr />
+<h2 id="_4">算法伪代码与可运行实现</h2>
+<h3 id="1-opd100">1. 最简版本OPD伪代码（100行以内可实现）</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdamW</span>
+<span class="c1"># -------------------------- 初始化 --------------------------</span>
+<span class="c1"># 加载模型：学生模型fp16/bf16，教师模型4bit量化节省显存</span>
+<span class="n">student</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="s2">&quot;Qwen/Qwen2.5-0.8B-Instruct&quot;</span><span class="p">,</span>
+    <span class="n">torch_dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bfloat16</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>
+<span class="p">)</span>
+<span class="n">teacher</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="s2">&quot;Qwen/Qwen2.5-7B-Instruct&quot;</span><span class="p">,</span>  <span class="c1"># 教师用更大的模型</span>
+    <span class="n">load_in_4bit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>
+<span class="p">)</span>
+<span class="n">teacher</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># 教师模型不需要梯度</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;Qwen/Qwen2.5-0.8B-Instruct&quot;</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">AdamW</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">2e-5</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;max_seq_len&quot;</span><span class="p">:</span> <span class="mi">2048</span><span class="p">,</span>
+    <span class="s2">&quot;top_k&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>  <span class="c1"># Top-K OPD的K值</span>
+    <span class="s2">&quot;kl_type&quot;</span><span class="p">:</span> <span class="s2">&quot;rkl&quot;</span><span class="p">,</span>  <span class="c1"># 默认用Reverse KL</span>
+    <span class="s2">&quot;grad_clip&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="s2">&quot;entropy_coeff&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># 熵正则系数，避免模式崩溃</span>
+<span class="p">}</span>
+<span class="c1"># -------------------------- 核心函数 --------------------------</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_topk_dist</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取Top-K截断后的概率分布&quot;&quot;&quot;</span>
+    <span class="n">topk_logits</span><span class="p">,</span> <span class="n">topk_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">topk_probs</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">topk_logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># 构造稀疏分布：不在Top-K中的token概率为0</span>
+    <span class="n">full_probs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">topk_indices</span><span class="p">,</span> <span class="n">topk_probs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">full_probs</span><span class="p">,</span> <span class="n">topk_indices</span><span class="p">,</span> <span class="n">topk_probs</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">opd_loss</span><span class="p">(</span><span class="n">student_logits</span><span class="p">,</span> <span class="n">teacher_logits</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;计算OPD的Reverse KL损失&quot;&quot;&quot;</span>
+    <span class="c1"># 对齐长度：学生/教师logits都是[bsz, seq_len, vocab_size]</span>
+    <span class="n">seq_len</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">student_logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">teacher_logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">student_logits</span> <span class="o">=</span> <span class="n">student_logits</span><span class="p">[:,</span> <span class="p">:</span><span class="n">seq_len</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">teacher_logits</span> <span class="o">=</span> <span class="n">teacher_logits</span><span class="p">[:,</span> <span class="p">:</span><span class="n">seq_len</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[:,</span> <span class="p">:</span><span class="n">seq_len</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># 计算Top-K分布</span>
+    <span class="n">student_probs</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_topk_dist</span><span class="p">(</span><span class="n">student_logits</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;top_k&quot;</span><span class="p">])</span>
+    <span class="n">teacher_probs</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_topk_dist</span><span class="p">(</span><span class="n">teacher_logits</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;top_k&quot;</span><span class="p">])</span>
+    <span class="c1"># 计算Reverse KL: sum_v p(v) log(p(v)/q(v)), p=student, q=teacher</span>
+    <span class="c1"># 加epsilon防止log(0)</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-8</span>
+    <span class="n">rkl</span> <span class="o">=</span> <span class="n">student_probs</span> <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">student_probs</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">teacher_probs</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span>
+    <span class="n">rkl</span> <span class="o">=</span> <span class="n">rkl</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># 熵正则：鼓励探索，防止模式崩溃</span>
+    <span class="n">entropy</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">student_probs</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">student_probs</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">rkl</span> <span class="o">-</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;entropy_coeff&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">entropy</span>
+    <span class="c1"># mask掉不需要计算损失的位置（如padding、tool返回）</span>
+    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="p">(</span><span class="n">loss</span> <span class="o">*</span> <span class="n">mask</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">rkl</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">entropy</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">rollout</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;学生模型与环境交互生成轨迹&quot;&quot;&quot;</span>
+    <span class="n">messages</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}]</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">trajectory</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">done</span> <span class="ow">and</span> <span class="n">steps</span> <span class="o">&lt;</span> <span class="n">max_steps</span><span class="p">:</span>
+        <span class="c1"># 学生模型生成下一步动作</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">apply_chat_template</span><span class="p">(</span>
+            <span class="n">messages</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">,</span> <span class="n">add_generation_prompt</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">student</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+            <span class="n">inputs</span><span class="p">,</span>
+            <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+            <span class="n">do_sample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+            <span class="n">pad_token_id</span><span class="o">=</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">eos_token_id</span>
+        <span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:],</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">response</span><span class="p">})</span>
+        <span class="n">trajectory</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="n">response</span><span class="p">))</span>
+        <span class="c1"># 环境执行动作，获取反馈</span>
+        <span class="n">obs</span><span class="p">,</span> <span class="n">done</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;tool&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">obs</span><span class="p">})</span>
+            <span class="n">trajectory</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;tool&quot;</span><span class="p">,</span> <span class="n">obs</span><span class="p">))</span>
+        <span class="n">steps</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="c1"># 构造模型输入，准备计算logits</span>
+    <span class="n">full_inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">apply_chat_template</span><span class="p">(</span>
+        <span class="n">messages</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="c1"># 生成mask：tool返回内容、user输入不计算损失，只有assistant生成内容计算</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">full_inputs</span><span class="p">)</span>
+    <span class="c1"># 这里省略mask构造的细节，实际实现需要根据chat template标记assistant token位置</span>
+    <span class="k">return</span> <span class="n">full_inputs</span><span class="p">,</span> <span class="n">mask</span>
+<span class="c1"># -------------------------- 训练循环 --------------------------</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_step</span><span class="p">(</span><span class="n">prompts</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+    <span class="n">student</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="n">total_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">all_inputs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">all_masks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># 1. 采样轨迹</span>
+    <span class="k">for</span> <span class="n">prompt</span> <span class="ow">in</span> <span class="n">prompts</span><span class="p">:</span>
+        <span class="n">inputs</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">rollout</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">env</span><span class="p">)</span>
+        <span class="n">all_inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">all_masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+    <span class="c1"># padding到相同长度</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">pad_sequence</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">all_inputs</span><span class="p">],</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token_id</span>
+    <span class="p">)</span>
+    <span class="n">masks</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">pad_sequence</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">all_masks</span><span class="p">],</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="c1"># 2. 学生前向</span>
+    <span class="n">student_outputs</span> <span class="o">=</span> <span class="n">student</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+    <span class="n">student_logits</span> <span class="o">=</span> <span class="n">student_outputs</span><span class="o">.</span><span class="n">logits</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>  <span class="c1"># 移位，预测下一个token</span>
+    <span class="c1"># 3. 教师前向（no_grad）</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">teacher_outputs</span> <span class="o">=</span> <span class="n">teacher</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">teacher_logits</span> <span class="o">=</span> <span class="n">teacher_outputs</span><span class="o">.</span><span class="n">logits</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+    <span class="c1"># 4. 计算损失</span>
+    <span class="n">loss</span><span class="p">,</span> <span class="n">rkl</span><span class="p">,</span> <span class="n">entropy</span> <span class="o">=</span> <span class="n">opd_loss</span><span class="p">(</span><span class="n">student_logits</span><span class="p">,</span> <span class="n">teacher_logits</span><span class="p">,</span> <span class="n">masks</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:])</span>
+    <span class="c1"># 5. 反向传播更新</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">student</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;grad_clip&quot;</span><span class="p">])</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">rkl</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">entropy</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+</code></pre></div>
+
+<h3 id="2_2">2. 工业级实现优化点</h3>
+<h4 id="1_1">（1）显存优化</h4>
+<ul>
+<li>教师模型4bit/8bit量化，不存储梯度</li>
+<li>采用梯度检查点（Gradient Checkpointing），减少学生模型显存占用30%+</li>
+<li>采用FlashAttention-2/3加速注意力计算，减少显存碎片</li>
+<li>离线缓存教师logits（Lightning OPD方案）：对于不需要实时更新教师的场景，提前生成所有轨迹和教师logits，训练时不需要跑教师前向，速度提升10倍</li>
+</ul>
+<h4 id="2_3">（2）训练稳定性优化</h4>
+<ul>
+<li><strong>步级归一化</strong>：对每一步的KL损失做归一化，防止长序列梯度爆炸，StepOPSD论文证明这可以将训练稳定性提升40%</li>
+<li><strong>Prefix Drift Gate</strong>：当学生生成的前缀偏离教师分布太远时（KL超过阈值），降低该步的损失权重，避免教师在坏前缀上给出不可靠的监督信号</li>
+<li><strong>EMA教师更新</strong>：不直接硬拷贝学生参数到教师，而是用指数移动平均更新教师参数：$\theta_T = \tau \theta_T + (1-\tau)\theta_\theta$，$\tau$通常取0.99/0.999，大幅提升训练稳定性</li>
+<li><strong>特殊Token Mask</strong>：对padding、工具返回结果、思考标签等不需要学习的token做mask，不计算损失</li>
+</ul>
+<h4 id="3">（3）效率优化</h4>
+<ul>
+<li>多环境并行采样：128-256个环境并行生成轨迹，提升采样吞吐量</li>
+<li>序列打包（Sequence Packing）：将多个短轨迹打包到同一个batch，提升GPU利用率</li>
+<li>分布式训练：采用FSDP/DeepSpeed ZeRO-3做分布式训练，支持70B+大模型训练</li>
+</ul>
+<hr />
+<h2 id="_5">落地实现路径</h2>
+<h3 id="1-2">阶段一：最小版本验证（1-2天）</h3>
+<p><strong>目标</strong>：跑通OPD核心流程，验证在小模型上的效果
+1. 基于HuggingFace Transformers实现最简版Top-K Reverse KL OPD
+2. 用单卡GPU在0.5B/1.8B模型上做测试，任务选择简单的单轮数学/代码任务
+3. 对比SFT基线，验证OPD在分布外测试集上的效果提升
+<strong>避坑点</strong>：
+- 必须先做SFT warmup，从base模型直接开始OPD训练大概率会崩
+- 学习率设为SFT的1/2~1/5，太大容易发散
+- 初始Top-K设为50，熵正则系数0.01</p>
+<h3 id="agent1-2">阶段二：工程优化适配Agent场景（1-2周）</h3>
+<p><strong>目标</strong>：支持多轮工具调用、长程Agent任务训练
+1. 集成Agent环境（代码沙箱、搜索API、文件操作工具等）
+2. 实现多轮对话mask逻辑，只对assistant生成的内容计算损失，工具返回结果自动mask
+3. 加入步级归一化、EMA教师、Prefix Drift Gate等稳定性优化
+4. 实现多环境并行采样，提升训练效率
+5. 在工具调用基准（如ToolBench、ALFWorld）上测试效果
+<strong>避坑点</strong>：
+- 长轨迹（&gt;10步）必须加位置权重，后期步的权重适当降低，避免误差累积
+- 教师必须和学生使用相同的chat template，否则会出现分布不匹配
+- 工具调用格式必须严格对齐，否则模型容易学不会正确的工具调用语法</p>
+<h3 id="2-4">阶段三：工业级落地（2-4周）</h3>
+<p><strong>目标</strong>：支持大模型训练、多教师合并、生产环境部署
+1. 集成分布式训练框架（FSDP/DeepSpeed、Megatron-LM）
+2. 支持多教师OPD：不同领域的专家教师，根据路由策略选择对应教师监督，适合多能力模型合并
+3. 实现Lightning OPD离线缓存方案，降低训练成本
+4. 加入完善的监控指标：每步KL、熵、教师-学生token重叠率、任务成功率等
+5. 自动化流水线：数据采样→训练→评估→模型导出全链路自动化
+<strong>避坑点</strong>：
+- 全词表OPD在大模型上成本过高，优先用Top-K（K=50/100）方案，性价比最高
+- 多教师场景下，按轨迹路由教师比按token路由教师更稳定，实现成本更低
+- 训练过程中必须持续监控验证集任务成功率，KL损失下降不代表效果提升</p>
+<h3 id="_6">开源实现参考</h3>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>OPD支持情况</th>
+<th>地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>verl（字节跳动）</td>
+<td>原生支持Full/Top-K/Sampled OPD，支持分布式训练</td>
+<td>https://github.com/volcengine/verl</td>
+</tr>
+<tr>
+<td>ms-swift（魔搭）</td>
+<td>支持GKD/OPD训练，开箱即用</td>
+<td>https://github.com/modelscope/ms-swift</td>
+</tr>
+<tr>
+<td>OpenClaw-RL</td>
+<td>Agent场景OPD实现，支持多环境交互</td>
+<td>https://github.com/openclaw/OpenClaw-RL</td>
+</tr>
+<tr>
+<td>StepOPSD</td>
+<td>步骤级OPD官方实现，支持多步Agent</td>
+<td>论文arXiv:2605.27140</td>
+</tr>
+<tr>
+<td>---</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>## 调参指南与常见问题</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>### 1. 超参数选择表</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>超参数</td>
+<td>推荐值</td>
+<td>调整方向</td>
+</tr>
+<tr>
+<td>--------</td>
+<td>--------</td>
+<td>---------</td>
+</tr>
+<tr>
+<td>学习率</td>
+<td>1e-5 ~ 5e-5</td>
+<td>小模型用大学习率，大模型用小学习率；训练不稳定调小</td>
+</tr>
+<tr>
+<td>Batch size</td>
+<td>32 ~ 256</td>
+<td>越大梯度越稳定，根据显存调整，显存不够用梯度累积</td>
+</tr>
+<tr>
+<td>Top-K</td>
+<td>50 ~ 100</td>
+<td>任务越复杂K越大，计算资源不足调小到20</td>
+</tr>
+<tr>
+<td>KL类型</td>
+<td>Reverse KL</td>
+<td>默认RKL，需要多样性时用JSD(α=0.3)，多专家合并用FKL</td>
+</tr>
+<tr>
+<td>熵正则系数</td>
+<td>0.001 ~ 0.05</td>
+<td>模式崩溃/输出单调查大，输出太乱/有错误调小</td>
+</tr>
+<tr>
+<td>EMA教师系数τ</td>
+<td>0.99 ~ 0.999</td>
+<td>训练不稳定调大（接近1），希望教师更新快调小</td>
+</tr>
+<tr>
+<td>梯度裁剪</td>
+<td>0.5 ~ 1.0</td>
+<td>训练不稳定/梯度爆炸调小</td>
+</tr>
+<tr>
+<td>SFT warmup步数</td>
+<td>100 ~ 500步</td>
+<td>从base模型开始训练时warmup步数要足够，从SFT模型开始可以减少</td>
+</tr>
+<tr>
+<td>### 2. 常见问题排查</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>问题现象</td>
+<td>原因</td>
+<td>解决方案</td>
+</tr>
+<tr>
+<td>----------</td>
+<td>------</td>
+<td>---------</td>
+</tr>
+<tr>
+<td>训练loss震荡不收敛</td>
+<td>学习率太大/教师模型太弱/没有SFT warmup</td>
+<td>降低学习率；换更强的教师；增加SFT warmup步数</td>
+</tr>
+<tr>
+<td>生成内容重复/模式崩溃</td>
+<td>熵正则太小/长时间训练/RKL太强</td>
+<td>增大熵正则系数；加入FKL混合；早停；降低训练轮数</td>
+</tr>
+<tr>
+<td>输出存在明显错误/幻觉</td>
+<td>教师在坏前缀上给出错误监督/K值太小</td>
+<td>增大Top-K；加入Prefix Drift Gate；提升教师模型能力</td>
+</tr>
+<tr>
+<td>长任务效果差/误差累积</td>
+<td>长序列梯度爆炸/后期步权重太高</td>
+<td>加入步级归一化；对后半段步降权；分段训练</td>
+</tr>
+<tr>
+<td>训练速度太慢</td>
+<td>教师前向占比太高/采样效率低</td>
+<td>用量化教师；离线缓存教师logits；增加并行环境数；用Top-K替代全词表</td>
+</tr>
+<tr>
+<td>工具调用格式错误</td>
+<td>没有对工具调用mask/教师模板不匹配</td>
+<td>正确实现assistant mask；确保学生和教师用相同的chat template</td>
+</tr>
+<tr>
+<td>---</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>## 前沿变体与未来方向</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>1. <strong>StepOPSD（步骤级OPD）</strong>：将轨迹拆解为以动作为中心的步骤片段，利用后见之明（最终结果）给每个步骤重新打分，解决长程Agent任务的细粒度信用分配问题，在ALFWorld等多步任务上效果提升15%+</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2. <strong>OPRD（表示空间OPD）</strong>：不监督输出层logits，改为监督中间层隐藏状态，跨架构/跨分词器场景下也能蒸馏，显存占用更低，训练更快</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>3. <strong>Direct OPD/弱到强OPD</strong>：打破教师必须强于学生的限制，弱模型也可以作为教师监督强模型，甚至模型可以自我蒸馏持续进化</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>4. <strong>Lightning OPD</strong>：将在线OPD离线化，缓存教师logits，训练速度提升10倍，精度损失小于2%，适合工业界大规模落地</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>5. <strong>GRM+OPD（DeepSeek-V4方案）</strong>：用生成式奖励模型（输出结构化评价文本而非标量分数）作为教师，同时学习输出分布和评价能力，在Agent场景下效果显著优于传统标量奖励RL</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>---</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>## 参考资料</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>1. MiniLLM: On-Policy Distillation of Large Language Models (arXiv:2306.08543, 2023)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2. On-policy Distillation of Language Models: Learning from Self-Generated Mistakes (ICLR 2024)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>3. StepOPSD: Step-Aware Online Preference Distillation for Agent Reinforcement Learning (arXiv:2605.27140, 2026)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>4. EffOPD: Efficient On-Policy Distillation via Early Low-Rank Lock-in (2026)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>5. OPRD: On-Policy Representation Distillation (2026)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>6. DeepSeek-V4 Technical Report (2026)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>7. Verl Documentation: On-Policy Distillation (字节跳动, 2026)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>8. ModelScope Swift: GKD/OPD Trainer Documentation (阿里魔搭, 2026)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>9. 从SFT/RL到OPD: 给LLM Post-training初学者的直觉指南（知乎@Chase, 2026）</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>10. On-Policy Distillation原理、损失函数与工程实现详解（知乎@Orient, 2026）</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>11. OPD深度解析: 从数学推导到DeepSeek V4、SWIFT与verl实践（知乎@banana, 2026）</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>12. 三万字长文精讲2026上半年的On-Policy Distillation（知乎@Lei Tian, 2026）</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+            
+        </main>
+
+        <footer class="document-footer">
+            <p>由 markdown-to-html 工具生成</p>
+        </footer>
+    </div>
+</body>
+</html>
