@@ -1,6 +1,10 @@
 # AI技术知识库
 个人AI技术调研、论文分析、Agent技术、技能开发相关的文档知识库，所有文档同时提供Markdown源文件和精排版HTML文件，方便阅读和编辑。
-
+---
+## 🌐 在线预览
+所有文档已开启GitHub Pages在线预览，无需下载直接访问：
+- 知识库首页：https://ckirchhoff2021.github.io/knowledge-base/
+- 文档访问规则：`https://ckirchhoff2021.github.io/knowledge-base/[目录]/html/[文件名].html`
 ---
 ## 📁 目录结构
 ```
@@ -22,15 +26,15 @@ knowledge-base/
 ---
 ## ✨ 内容列表
 ### PT 大模型技术
-| 文档名称 | 类型 | 更新时间 |
-|---------|------|---------|
-| [2605.23904-SkillOpt技术分析报告](./PT/html/2605.23904-SkillOpt技术分析报告.html) | arXiv论文分析 | 2026-06-03 |
+| 文档名称 | 类型 | 更新时间 | 在线预览 |
+|---------|------|---------|----------|
+| 2605.23904-SkillOpt技术分析报告 | arXiv论文分析 | 2026-06-03 | [🔗 在线查看](https://ckirchhoff2021.github.io/knowledge-base/PT/html/2605.23904-SkillOpt技术分析报告.html) |
 
 ### Agent 智能体技术
-| 文档名称 | 类型 | 更新时间 | 字数 |
-|---------|------|---------|------|
-| [OPD-OPSD技术调研报告](./Agent/html/OPD-OPSD-技术调研报告.html) | 技术调研 | 2026-08-18 | ~3万字（StepOPSD步骤级蒸馏、Agent RL核心方案解析） |
-| [OPD在线策略蒸馏技术完全指南](./Agent/html/OPD在线策略蒸馏技术完全指南.html) | 技术调研 | 2026-08-14 | ~25000字（含数学推导、架构图、伪代码、实现路径、调参指南） |
+| 文档名称 | 类型 | 更新时间 | 字数 | 在线预览 |
+|---------|------|---------|------|----------|
+| OPD-OPSD技术调研报告 | 技术调研 | 2026-08-18 | ~3万字（StepOPSD步骤级蒸馏、Agent RL核心方案解析） | [🔗 在线查看](https://ckirchhoff2021.github.io/knowledge-base/Agent/html/OPD-OPSD-技术调研报告.html) |
+| OPD在线策略蒸馏技术完全指南 | 技术调研 | 2026-08-14 | ~25000字（含数学推导、架构图、伪代码、实现路径、调参指南） | [🔗 在线查看](https://ckirchhoff2021.github.io/knowledge-base/Agent/html/OPD在线策略蒸馏技术完全指南.html) |
 
 ### Skills 技能开发
 暂无内容，持续更新中...
