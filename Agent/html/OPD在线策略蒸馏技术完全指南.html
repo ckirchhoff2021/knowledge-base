@@ -301,11 +301,12 @@ table {
   border-collapse: collapse;
   margin: 1.5em 0;
   border-radius: var(--radius);
-  overflow: hidden;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--table-border);
-  display: block;
+  /* 表格布局自动，单元格宽度自适应内容 */
+  table-layout: auto;
   overflow-x: auto;
+  display: block;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -314,7 +315,10 @@ th, td {
   text-align: left;
   border-bottom: 1px solid var(--table-border);
   color: var(--text-secondary);
-  white-space: nowrap;
+  /* 单元格内容允许换行，避免公式/长文本被拆散 */
+  white-space: normal;
+  word-break: break-word;
+  vertical-align: top;
 }
 
 th {
