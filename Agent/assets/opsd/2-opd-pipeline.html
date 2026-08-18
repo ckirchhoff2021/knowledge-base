@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>OPD 训练流水线架构</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#34d399; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .rose{background:#fb7185;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>OPD 训练流水线：学生采样 → 教师打分 → 逐 token 更新</h1></div>
+<div class="subtitle">学生 πθ 在自己采样的轨迹上，由教师 ν 在每个前缀给出 next-token 分布，按 reverse-KL / 策略梯度更新</div>
+<div class="card">
+<svg viewBox="0 0 1040 700" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowE" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#34d399" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#fb7185" stroke-width="1.2"/>
+    </marker>
+  </defs>
+  <rect width="1040" height="700" fill="url(#grid)"/>
+
+  <!-- Prompt -->
+  <rect x="40" y="80" width="150" height="60" rx="6" fill="#0f172a"/>
+  <rect x="40" y="80" width="150" height="60" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="115" y="105" fill="#e2e8f0" font-size="12" font-weight="600" text-anchor="middle">Prompt x</text>
+  <text x="115" y="125" fill="#94a3b8" font-size="9" text-anchor="middle">题目 / 指令</text>
+
+  <!-- Student block -->
+  <rect x="270" y="60" width="240" height="100" rx="6" fill="#0f172a"/>
+  <rect x="270" y="60" width="240" height="100" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="390" y="88" fill="#34d399" font-size="13" font-weight="600" text-anchor="middle">学生策略 πθ（可训练）</text>
+  <text x="390" y="110" fill="#94a3b8" font-size="9" text-anchor="middle">① 自回归采样 rollout</text>
+  <text x="390" y="128" fill="#94a3b8" font-size="9" text-anchor="middle">ŷ = (y₁,…,y_T) ~ πθ(·|x)</text>
+  <text x="390" y="146" fill="#64748b" font-size="8" text-anchor="middle">on-policy，训练状态来自学生自己</text>
+
+  <line x1="190" y1="110" x2="270" y2="110" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- trajectory -->
+  <rect x="270" y="220" width="460" height="70" rx="6" fill="#0f172a"/>
+  <rect x="270" y="220" width="460" height="70" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="500" y="245" fill="#22d3ee" font-size="12" font-weight="600" text-anchor="middle">学生轨迹（含错误前缀）</text>
+  <text x="500" y="268" fill="#e2e8f0" font-size="10" text-anchor="middle">y₁  y₂  …  y_t  …  y_T</text>
+  <line x1="390" y1="160" x2="430" y2="220" stroke="#34d399" stroke-width="1.2" marker-end="url(#arrowE)"/>
+  <text x="395" y="195" fill="#34d399" font-size="9">轨迹（含走错的路）</text>
+
+  <!-- Teacher block -->
+  <rect x="790" y="220" width="210" height="120" rx="6" fill="#0f172a"/>
+  <rect x="790" y="220" width="210" height="120" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="895" y="246" fill="#fbbf24" font-size="12" font-weight="600" text-anchor="middle">教师 ν（冻结）</text>
+  <text x="895" y="268" fill="#94a3b8" font-size="9" text-anchor="middle">② 读取学生每个前缀 y_&lt;t</text>
+  <text x="895" y="286" fill="#94a3b8" font-size="9" text-anchor="middle">输出 next-token 分布 q_t</text>
+  <text x="895" y="308" fill="#64748b" font-size="8" text-anchor="middle">"学生走到哪，老师批到哪"</text>
+  <text x="895" y="326" fill="#64748b" font-size="8" text-anchor="middle">不生成新轨迹，只打分</text>
+  <line x1="730" y1="255" x2="790" y2="255" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- signal comparison -->
+  <rect x="270" y="400" width="460" height="110" rx="6" fill="#0f172a"/>
+  <rect x="270" y="400" width="460" height="110" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="500" y="428" fill="#a78bfa" font-size="12" font-weight="600" text-anchor="middle">③ 构造训练信号（逐 token）</text>
+  <text x="500" y="452" fill="#e2e8f0" font-size="10" text-anchor="middle">A_t = log ν(y_t|y_&lt;t) − log πθ(y_t|y_&lt;t)</text>
+  <text x="500" y="472" fill="#94a3b8" font-size="9" text-anchor="middle">教师比学生更认可该 token → 正信号（提概率）</text>
+  <text x="500" y="490" fill="#94a3b8" font-size="9" text-anchor="middle">教师不认可 → 负信号（降概率）</text>
+  <line x1="500" y1="290" x2="500" y2="400" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <path d="M 895 340 C 895 420, 760 440, 730 450" fill="none" stroke="#fbbf24" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- update -->
+  <rect x="270" y="570" width="460" height="80" rx="6" fill="#0f172a"/>
+  <rect x="270" y="570" width="460" height="80" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="500" y="598" fill="#fb7185" font-size="12" font-weight="600" text-anchor="middle">④ 更新学生 θ</text>
+  <text x="500" y="620" fill="#e2e8f0" font-size="10" text-anchor="middle">L = −E[ Σ_t A_t · log πθ(y_t|y_&lt;t) ] （策略梯度）</text>
+  <text x="500" y="638" fill="#94a3b8" font-size="9" text-anchor="middle">或最小化 student/teacher 分布的 reverse-KL / JSD</text>
+  <line x1="500" y1="510" x2="500" y2="570" stroke="#fb7185" stroke-width="1.2" marker-end="url(#arrowR)"/>
+
+  <!-- feedback loop back to student -->
+  <path d="M 270 610 C 120 610, 90 300, 250 130" fill="none" stroke="#34d399" stroke-width="1.2" stroke-dasharray="6,4" marker-end="url(#arrowE)"/>
+  <text x="70" y="380" fill="#34d399" font-size="9" transform="rotate(-90 70 380)">参数更新，进入下一轮采样</text>
+
+  <!-- variant callout -->
+  <rect x="790" y="400" width="210" height="150" rx="6" fill="#0f172a"/>
+  <rect x="790" y="400" width="210" height="150" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="895" y="424" fill="#e2e8f0" font-size="11" font-weight="600" text-anchor="middle">监督粒度变体</text>
+  <text x="800" y="448" fill="#22d3ee" font-size="9">sampled-token：只看采样到的 token（最省）</text>
+  <text x="800" y="472" fill="#22d3ee" font-size="9">top-k：对 top-16 子集算 KL</text>
+  <text x="800" y="496" fill="#22d3ee" font-size="9">full-vocab：整词表 KL（最贵 O(B·T·V)）</text>
+  <text x="800" y="524" fill="#64748b" font-size="8">Rethinking OPD 主实验用 top-k；</text>
+  <text x="800" y="538" fill="#64748b" font-size="8">OPSD 论文中 full-vocab 略优于 sampled</text>
+</svg>
+</div>
+<div class="cards">
+  <div class="info-card"><h3><div class="card-dot emerald"></div>关键设计</h3><ul>
+    <li>• 学生负责走到自己真实会遇到的状态</li>
+    <li>• 教师负责评价"这一步走得对不对"</li>
+    <li>• on-policy 采样协议 + KL/PG 优化协议分离</li></ul></div>
+  <div class="info-card"><h3><div class="card-dot cyan"></div>监督密度</h3><ul>
+    <li>• 1000-token 轨迹 → 数百~上千个 next-token 信号</li>
+    <li>• 教师分布含风格、不确定性、多路径信息</li>
+    <li>• 比 RL 的序列级标量奖励稠密得多</li></ul></div>
+  <div class="info-card"><h3><div class="card-dot rose"></div>实现要点</h3><ul>
+    <li>• 在带 KL 正则的 RL 脚本上改一行即可</li>
+    <li>• 正则的 reference model 换成 teacher</li>
+    <li>• 复用 PPO/GRPO 的 rollout 与 importance sampling</li></ul></div>
+</div>
+<div class="footer">OPD/OPSD 技术调研报告 · 图 2/3 · 2026-08-18</div>
+</body>
+</html>

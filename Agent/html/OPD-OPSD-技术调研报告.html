@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大模型后训练技术调研报告：OPD 与 OPSD</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:960px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:32px; }
+  h1 { font-size:28px; line-height:1.4; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .meta span { margin-right:16px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin-right:8px; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); color:var(--text); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  h4 { font-size:15px; margin:20px 0 8px; }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  .formula { background:#0a0e14; border-left:3px solid var(--purple); padding:12px 18px; margin:14px 0; border-radius:0 8px 8px 0; font-family:Menlo,monospace; font-size:14px; overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); white-space:nowrap; }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  .callout { border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin:18px 0; background:var(--panel); }
+  .callout.warn { border-color:var(--amber); }
+  .callout.key { border-color:var(--green); }
+  .callout .title { font-weight:600; margin-bottom:6px; font-size:14px; }
+  .callout.key .title { color:var(--green); }
+  .callout.warn .title { color:var(--amber); }
+  figure { margin:24px 0; }
+  figure iframe { width:100%; height:760px; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+  .strong-green { color:var(--green); font-weight:600; }
+  .strong-rose { color:var(--rose); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>大模型后训练技术调研报告：OPD 与 OPSD</h1>
+  <div>
+    <span class="badge">On-Policy Distillation</span>
+    <span class="badge">On-Policy Self-Distillation</span>
+    <span class="badge">后训练 / 蒸馏 / RL 融合</span>
+  </div>
+  <div class="meta" style="margin-top:10px">
+    <span>调研来源：知乎开放平台（20+ 篇深度文章）+ 原始论文交叉验证</span>
+    <span>报告日期：2026-08-18</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#sec1">背景：后训练的三元困境</a></li>
+    <li><a href="#sec2">OPD 原理详解</a></li>
+    <li><a href="#sec3">OPSD 原理详解</a></li>
+    <li><a href="#sec4">Loss 函数全景</a></li>
+    <li><a href="#sec5">伪代码</a></li>
+    <li><a href="#sec6">方法演进谱系</a></li>
+    <li><a href="#sec7">结论与选型建议</a></li>
+    <li><a href="#sec8">参考资料</a></li>
+  </ol>
+</nav>
+
+<!-- ============ 1 背景 ============ -->
+<h2 id="sec1">一、背景：后训练的三元困境</h2>
+
+<h3>1.1 从"预训练 → SFT → RL"流水线说起</h3>
+<p>大模型能力来自三阶段叠加：<strong>预训练</strong>教语言与世界知识，<strong>中期训练</strong>注入领域知识，<strong>后训练</strong>激发目标行为（指令遵循、推理、对话）。后训练长期由两条路线主导：</p>
+
+<table>
+  <tr><th>路线</th><th>监督信号</th><th>采样来源</th><th>核心缺陷</th></tr>
+  <tr><td><strong>SFT / 离线蒸馏</strong></td><td>固定轨迹上的 hard label / 教师 logits（逐 token 稠密）</td><td>off-policy（外部数据）</td><td><span class="strong-rose">暴露偏差</span>：训练见教师前缀，推理见自己前缀，分布失配；上限被教师轨迹锁死</td></tr>
+  <tr><td><strong>RLVR / GRPO / PPO</strong></td><td>结果级标量奖励（对/错、单元测试）</td><td>on-policy（学生自己 rollout）</td><td><span class="strong-rose">信号稀疏</span>：每回合固定信息量，与 token 数无关；credit assignment 瓶颈——知道答错，不知道错在哪一步</td></tr>
+</table>
+
+<p>两条路线在「<strong>采样相关性</strong>」和「<strong>监督密度</strong>」两个维度上恰好互补，又各有硬伤：</p>
+<ul>
+  <li><strong>SFT 的暴露偏差（exposure bias）</strong>：训练时第 t 步上下文是数据中的正确前缀，推理时却是模型自己生成的前缀。一旦某步生成训练集罕见的 token，后续所有条件分布都进入未覆盖状态，误差沿序列累积。</li>
+  <li><strong>RL 的稀疏奖励</strong>：RLVR 把整条答案的 advantage 均摊到每个 token，但一条推理轨迹里只有少数关键 token（数字、符号、逻辑转折词）真正决定对错，大量"载体 token"（标点、连词）不该收到梯度，均摊稀释了有效信号。</li>
+</ul>
+
+<h3>1.2 OPD 的定位</h3>
+<div class="callout key">
+  <div class="title">核心定位</div>
+  <strong>OPD（On-Policy Distillation）= 学生自己采样（on-policy 相关性）+ 教师逐 token 分布监督（dense supervision）</strong>，两头好处都占。一条 1000-token 轨迹在 RL 里只有 1 个序列奖励，在 OPD 里却能产生<strong>数百到上千个教师 next-token 信号</strong>。
+</div>
+
+<p>用一个下棋类比（Thinking Machines Lab）：</p>
+<table>
+  <tr><th>训练方式</th><th>类比</th><th>反馈密度</th><th>贴合学生状态</th></tr>
+  <tr><td>RL</td><td>自己下棋没人教，赢/输一局才给一个反馈</td><td>稀疏（每局 O(1) bit）</td><td>✅</td></tr>
+  <tr><td>SFT / 离线蒸馏</td><td>看大师下棋，每步都精彩</td><td>密集</td><td>❌ 大师走的是新手遇不到的局面</td></tr>
+  <tr><td><strong>OPD</strong></td><td><strong>自己下棋，引擎给每步打分（blunder/brilliant）</strong></td><td><strong>密集（每 token）</strong></td><td>✅</td></tr>
+</table>
+
+<h3>1.3 关键出处</h3>
+<ul>
+  <li><strong>GKD</strong>（Agarwal et al., 2024）与 <strong>MiniLLM</strong>（Gu et al., ICLR 2024）：OPD 的学术源头。GKD 把离线蒸馏重新表述为 interactive imitation learning（DAgger 思想）；MiniLLM 强调 reverse-KL。</li>
+  <li><strong>Thinking Machines Lab 博客《On-Policy Distillation》</strong>（Kevin Lu et al., 2025-10-27，DOI:10.64434/tml.20251026）：被引用最广的"标准参考"，用 Tinker 复现 Qwen3 报告的 OPD recipe。<span class="strong-green">结论：用 RL 约 1/10 的算力，AIME'24 反超 6.8 个点</span>。博客明确受 Qwen 团队启发（全文提及 "Qwen" 38 次）。</li>
+  <li><strong>工业标配</strong>：Qwen3、GLM-5、MiMo-v2-flash、DeepSeek-V4 等技术报告均使用 OPD（或多教师变体 MOPD）做后训练收尾。</li>
+  <li><strong>OPSD 开山</strong>：<em>Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models</em>（arXiv:2601.18734，UCLA/HKU/Meta，2026-01）。</li>
+</ul>
+
+<figure>
+  <iframe src="diagrams/1-paradigm-positioning.html" loading="lazy"></iframe>
+  <figcaption>图 1 · 后训练范式定位：采样来源 × 监督密度（可交互缩放需本地打开 diagrams/1-paradigm-positioning.html）</figcaption>
+</figure>
+
+<!-- ============ 2 OPD ============ -->
+<h2 id="sec2">二、OPD 原理详解</h2>
+
+<h3>2.1 形式化定义</h3>
+<p>语言模型学习条件分布 π<sub>θ</sub>(y|x) = ∏<sub>t</sub> π<sub>θ</sub>(y<sub>t</sub> | x, y<sub>&lt;t</sub>)。给定 prompt x：</p>
+<ol>
+  <li><strong>学生采样</strong>：ŷ = (y₁,…,y_T) ~ π<sub>θ</sub>(·|x)（on-policy rollout）；</li>
+  <li><strong>教师打分</strong>：教师 ν（冻结）在学生轨迹的每个前缀 y<sub>&lt;t</sub> 上输出 next-token 分布 q<sub>t</sub> = ν(·|x, y<sub>&lt;t</sub>)；</li>
+  <li><strong>优化</strong>：最小化学生轨迹上的分布距离。</li>
+</ol>
+<p><strong>标准目标（reverse-KL）</strong>：</p>
+<div class="formula">L_OPD(θ) = E<sub>ŷ~πθ(·|x)</sub> [ Σ<sub>t</sub> KL( π<sub>θ</sub>(·|x,y<sub>&lt;t</sub>) ‖ ν(·|x,y<sub>&lt;t</sub>) ) ]</div>
+<p>reverse-KL 可以写成学生分布上的期望：</p>
+<div class="formula">KL(π<sub>θ</sub>‖ν) = E<sub>y~πθ</sub> [ log π<sub>θ</sub>(y) − log ν(y) ]</div>
+<p>这正是 Monte Carlo 可估计的形式——学生采样出一个 token y<sub>t</sub>，<code>log πθ(y_t) − log ν(y_t)</code> 就是对该位置 KL 的一次随机估计。这是 sampled-token OPD 在理论上成立的根基。</p>
+
+<div class="callout">
+  <div class="title">为什么是 reverse-KL 而不是 forward-KL？</div>
+  <ul>
+    <li><strong>Forward KL</strong>（mode-covering）等价于在教师分布上采样做期望——需要教师自己采样或拿到完整/top-k 分布才能构造无偏估计；sampled-token 场景下只有学生 token 对应的教师 log-prob，强行替代<strong>有偏</strong>。所以 forward-KL 很难做出合理的 sampled-token 版本，工业上只能 full-vocab 或 top-k。</li>
+    <li><strong>Reverse KL</strong>（mode-seeking）天然在学生分布上求期望，与 on-policy 采样自洽；且学生不会去拟合教师那些自己根本到不了的分布区域，避免被拉向遥远外部分布。</li>
+  </ul>
+</div>
+
+<h3>2.2 两种优化协议：GKD 路线 vs PG-OPD 路线</h3>
+<p>关键澄清：<strong>OPD 是一种采样与监督协议，KL、直接反传、policy gradient 才是具体的优化协议</strong>。把教师意见变成训练信号有两条主路线：</p>
+<p><strong>路线 A：GKD（广义知识蒸馏）式——分布对齐</strong>。教师告诉学生"下一个 token 的完整分布应该是什么样"：</p>
+<div class="formula">L_GKD = E<sub>y_&lt;t ~ 混合轨迹</sub> [ D( π<sub>θ</sub>(·|y<sub>&lt;t</sub>) ‖ ν(·|y<sub>&lt;t</sub>) ) ]，D ∈ { FKL, RKL, JSD }<br>轨迹来源：教师固定轨迹与学生 rollout 按 λ 混合（λ=1 为严格 on-policy）</div>
+<p><strong>路线 B：PG-OPD（策略梯度式）——把师生分歧当 advantage</strong>。教师只评价学生已采样出的 token：</p>
+<div class="formula">A<sub>t</sub> = log ν(y<sub>t</sub> | x, y<sub>&lt;t</sub>) − log π<sub>θ</sub>(y<sub>t</sub> | x, y<sub>&lt;t</sub>)</div>
+<ul>
+  <li>A<sub>t</sub> &gt; 0：教师比学生更认可该 token → 提高其概率；A<sub>t</sub> &lt; 0：学生自信过头而教师不认可 → 抑制。</li>
+  <li>例：学生对"检查"给 0.2、教师给 0.6 → 正信号；学生给 0.5、教师只给 0.1 → 负信号。</li>
+  <li>然后走 PPO/GRPO 式的 importance-sampling 策略梯度。<strong>工程上相当于在带 KL 正则的 RL 脚本上改一行——把正则项的 reference model 换成 teacher。</strong></li>
+</ul>
+
+<h3>2.3 监督粒度的三个变体</h3>
+<table>
+  <tr><th>变体</th><th>计算范围</th><th>成本</th><th>特点</th></tr>
+  <tr><td><strong>sampled-token</strong></td><td>只看学生采样到的那 1 个 token</td><td>最省</td><td>业界最常用；LLM 分布尖锐，高概率 token 被反复采到，长期信息量接近 top-k</td></tr>
+  <tr><td><strong>top-k</strong></td><td>每位置对 top-16 token 子集算 KL</td><td>中</td><td>Rethinking OPD（清华 THUNLP）主实验用；注意未归一化会引入梯度偏差</td></tr>
+  <tr><td><strong>full-vocabulary</strong></td><td>每位置整词表算 KL</td><td>最贵 O(B·T·V)</td><td>监督最完整；OPSD 论文实验显示优于 sampled-token</td></tr>
+</table>
+
+<h3>2.4 为什么 OPD 能"学到真东西"：机制解释</h3>
+<ol>
+  <li><strong>纠正发生在学生的错误上</strong>。传统蒸馏在教师轨迹上训练，学生的错误不一定是教师的错误，监督覆盖不到学生真实会走错的地方。OPD 让教师在学生的错误前缀上提高"检查展开""这里应为 2x−6"等<strong>修正方向</strong>的概率——学生学到的不只是复述标准答案，还包括"按自己的方式走到这里以后，怎样回到合理方向"。</li>
+  <li><strong>KL 匹配 ≠ 单序列复刻</strong>。教师 logits 分布里包含风格、不确定性、多种后续可能、推理结构的信息，匹配分布是在<strong>重塑整个采样行为</strong>。</li>
+  <li><strong>on-policy 约束保护学生</strong>。最优策略集合存在无数可行分布，RL/OPD 都只在当前采样邻域内寻优，自动选择与原始模型 KL 距离最小的解。即使教师退化/偏科，学生也不会完全复刻教师的缺陷分布——<strong>教师告诉学生往哪走，但学生自己的 on-policy 数据决定了从哪里出发、在哪里接受纠正</strong>。</li>
+  <li><strong>RL 是在策略空间做搜索，OPD 是学习的捷径</strong>：一旦好策略被 RL 找到，蒸馏就是低成本复制。博客还展示 OPD 用于<strong>持续学习</strong>——用"更早的自己"当教师，恢复被后续微调破坏的行为，遗忘远小于 SFT。</li>
+</ol>
+
+<figure>
+  <iframe src="diagrams/2-opd-pipeline.html" loading="lazy"></iframe>
+  <figcaption>图 2 · OPD 训练流水线：学生采样 → 教师打分 → 逐 token 更新</figcaption>
+</figure>
+
+<!-- ============ 3 OPSD ============ -->
+<h2 id="sec3">三、OPSD 原理详解</h2>
+
+<h3>3.1 核心思想：信息不对称的自蒸馏</h3>
+<p>OPSD（arXiv:2601.18734）把 OPD 的外部教师替换为<strong>"持有特权信息（Privileged Information, PI）的自己"</strong>，在单一模型内部构建师生角色：</p>
+<ul>
+  <li><strong>教师策略</strong> π<sub>θ</sub>(·| x, <strong>PI</strong>, y<sub>&lt;t</sub>)：同一组权重，上下文里额外注入参考答案或验证过的推理轨迹 → "开卷的自己"；</li>
+  <li><strong>学生策略</strong> π<sub>θ</sub>(·| x, y<sub>&lt;t</sub>)：同权重、不看答案，仅凭题目作答 → "闭卷的自己"；</li>
+  <li>训练时学生 on-policy 采样轨迹，教师在学生前缀上给分布，最小化两者距离。<strong>教师分支 stop-gradient，且教师固定为初始策略</strong>（隐式正则化）。</li>
+</ul>
+<div class="callout key">
+  <div class="title">一句话</div>
+  用"带答案的自己"训练"不带答案的自己"。推理时学生条件与训练时完全一致，特权信息不泄漏到部署。
+</div>
+
+<h3>3.2 与 OPD 的关系及消歧</h3>
+<ul>
+  <li>OPSD 本质是 OPD 框架的一个实例化：<strong>teacher 不是独立大模型，而是同 θ + PI</strong>。</li>
+  <li><strong>同名消歧（重要）</strong>：π-Distill 论文中也有叫 "OPSD" 的模块，但其 PI 来自 frontier action trajectory（强模型的动作轨迹），而 Self-Distilled Reasoner 的 PI 来自 ground truth answer。两者目标相同（reverse-KL、on-policy、教师 stop-gradient），PI 来源不同。</li>
+  <li>相比外部教师 OPD：① 无需更大的教师模型，省在线推理成本；② 免除"师生必须共享词表才能对齐 logits"的约束；③ 师生同源只差一份答案，监督信号"难度恰好"。</li>
+</ul>
+
+<h3>3.3 目标函数</h3>
+<div class="formula">L_OPSD(θ) = E<sub>ŷ~πθ(·|x)</sub> [ Σ<sub>t</sub> D( π<sub>θ</sub>(·|x, y<sub>&lt;t</sub>) ‖ sg[ π<sub>θ</sub>(·|x, PI, y<sub>&lt;t</sub>) ] ) ]<br>D ∈ { forward-KL, reverse-KL, JSD }，sg = stop-gradient</div>
+
+<h3>3.4 关键实验结论</h3>
+<p>论文（Qwen3 系，OpenThoughts 数学子集训练，AIME24/25 + HMMT25 均分）：</p>
+<table>
+  <tr><th>模型</th><th>Base</th><th>SFT</th><th>GRPO</th><th>OPSD</th></tr>
+  <tr><td>Qwen3-8B</td><td>61.8</td><td>59.8</td><td>64.0</td><td><strong>64.8</strong></td></tr>
+  <tr><td>Qwen3-4B</td><td>61.2</td><td>58.6</td><td>62.7</td><td><strong>63.6</strong></td></tr>
+  <tr><td>Qwen3-1.7B</td><td>37.1</td><td>35.8</td><td>37.7</td><td><strong>43.4</strong></td></tr>
+</table>
+<ul>
+  <li><strong>三个尺度均优于 SFT，匹配或超过 GRPO</strong>；1.7B 小模型提升最猛（+6.3）。</li>
+  <li><strong>SFT 反而退化</strong>：参考解风格简洁，直接模仿会缩短推理长度、损害泛化；OPSD 不模仿那条轨迹，只把它转成 dense supervision。</li>
+  <li><strong>full-vocab &gt; sampled-token</strong>（Qwen3-4B, 2048 长度）：AIME25/HMMT25 分别 84.1/60.0 vs 82.1/57.3。</li>
+  <li><strong>token 效率约为 GRPO 的 8–12 倍</strong>；无需奖励模型/价值函数。</li>
+  <li><strong>局限</strong>：① 模型容量是门槛（过小模型自蒸馏收益受限）；② 未显式利用答案正确性验证信号；③ 超纲题教师失效；④ full-vocab 峰值显存更高。</li>
+  <li>生成长度消融：4096 不稳定优于 1024——早期 token 更像"推理分支点"，前缀变长后教师的边际学习价值下降。</li>
+</ul>
+
+<figure>
+  <iframe src="diagrams/3-opsd-architecture.html" loading="lazy"></iframe>
+  <figcaption>图 3 · OPSD 架构：同一模型、两种条件、信息不对称（含已知病理与修复方向）</figcaption>
+</figure>
+
+<!-- ============ 4 Loss ============ -->
+<h2 id="sec4">四、Loss 函数全景</h2>
+
+<h3>4.1 基础散度家族</h3>
+<p>设学生分布 p = π<sub>θ</sub>(·|y<sub>&lt;t</sub>)，教师分布 q = ν(·|y<sub>&lt;t</sub>)：</p>
+<pre><code>Forward-KL:   KL(q‖p) = Σ_v q(v) log [ q(v)/p(v) ]     # mode-covering，需教师分布采样
+Reverse-KL:   KL(p‖q) = Σ_v p(v) log [ p(v)/q(v) ]     # mode-seeking，学生分布上可 MC 估计
+JSD:          ½KL(p‖m) + ½KL(q‖m),  m = (p+q)/2        # 对称、有界，GKD 推荐默认</code></pre>
+<p><strong>GKD</strong>：D 可在 FKL/RKL/JSD 中切换，轨迹按 λ 混合。<strong>MiniLLM</strong>：序列级 reverse-KL + 策略梯度 + teacher-mixed sampling。<strong>DistiLLM</strong>：skew-KL / skew-RKL + 学生输出 replay。</p>
+
+<h3>4.2 TML / PG-OPD 的 token 级 surrogate</h3>
+<pre><code>A_t = log ν(y_t|y_&lt;t) − log πθ_old(y_t|y_&lt;t)          # token 级 advantage
+ρ_t = πθ(y_t|y_&lt;t) / πθ_old(y_t|y_&lt;t)                  # importance ratio
+
+L = − E [ Σ_t min( ρ_t·A_t, clip(ρ_t, 1−ε, 1+ε)·A_t ) ]</code></pre>
+
+<h3>4.3 已知病理与对应的 loss 修复（重要）</h3>
+<p>来自《The Many Faces of On-Policy Distillation》（arXiv:2605.11182）、《Demystifying On-Policy Distillation》（arXiv:2607.13399，港中文+腾讯 AI Lab）、《Rethinking OPD》（清华 THUNLP，arXiv:2604.13016）等：</p>
+<table>
+  <tr><th>病理</th><th>机理</th><th>修复</th></tr>
+  <tr><td><strong>学生前缀扭曲教师分布</strong></td><td>学生早期写歪，教师在歪前缀上被迫给 "Wait/But" 式纠偏 token，与正常推理语义冲突</td><td>SFT 冷启动：先在教师轨迹上短期 SFT 再上 OPD</td></tr>
+  <tr><td><strong>Top-K reverse-KL 梯度偏差</strong></td><td>截断未重归一化 → 隐藏偏差项 → 梯度不稳、模型崩溃（重复/乱码）</td><td>stop-gradient 或重归一化变体</td></tr>
+  <tr><td><strong>OPSD 特权信息归纳困境</strong></td><td>实例特定 PI 测试时不可得，强行聚合学出"平庸共识"</td><td>教师适配（选分布与学生接近的教师）</td></tr>
+  <tr><td><strong>更强教师反而更差</strong></td><td>OPD 是"探索催化剂"不是"能力灌注器"：不抬高能力上限；师生差距过大时逐 token 打分起负作用</td><td>硬裁剪（hard clip）+ 对数压缩（log-compression）两个零开销信号调控（该文方案：4B 教师反超 30B 教师 SOTA）</td></tr>
+  <tr><td><strong>改长度刷分后门</strong></td><td>目标函数结构性漏洞：调整输出长度即可刷分</td><td>同上调控手段</td></tr>
+  <tr><td><strong>OPSD 风格偏移（RLCSD，智源+清华）</strong></td><td>"特权诱导的风格偏移"：拿到答案后倾向更短更直接的表达，信号被风格 token 主导</td><td>对比正确提示与错误提示下的师生分布差异，抵消风格偏移</td></tr>
+  <tr><td><strong>OPSD 死记硬背（Purified OPSD, arXiv:2607.02234, 浙大+通义）</strong></td><td>长 CoT 模型上批改信号被参考答案双重主导——Qwen3-8B 反思词崩塌（wait 27K→10K），R1-Distill-7B 单一 "Wait" 畸形爆炸（34K→83K）</td><td>"只看答案不看题"的对照教师分离死记信号 + PMI 提取可迁移残差</td></tr>
+  <tr><td><strong>轨迹绑死（Rubric-SD）</strong></td><td>监督绑定单条参考路径：稍偏离即被鼓励全局重写，推理链反复重算</td><td>用 rubric（"好答案应满足的条件"）替代单条参考解作为教师条件</td></tr>
+  <tr><td><strong>输出空间信号饱和（OPRD, arXiv:2606.06021）</strong></td><td>所有 OPD 变体都在 LM head 之后算损失；训练后期梯度信噪比崩塌，准确率平台期</td><td>蒸馏搬到隐藏状态空间：中间层 MSE 对齐（训练快 1.44×，显存省 54%）</td></tr>
+</table>
+
+<h3>4.4 RL 与 OPD 的数学统一</h3>
+<p>G-OPD/ExOPD 证明 <strong>OPD 与 KL 正则化 RL 可严格等价</strong>——teacher log-ratio <code>log ν(y_t) − log π_ref(y_t)</code> 可视为隐式奖励，用 λ 调节权重，λ&gt;1 即 reward extrapolation。这解释了"OPD 是蒸馏还是 RL"之争：<strong>形式上是知识蒸馏（教师分布为目标），运行上是带 dense token 级奖励的 on-policy RL</strong>。</p>
+
+<!-- ============ 5 伪代码 ============ -->
+<h2 id="sec5">五、伪代码</h2>
+
+<h3>5.1 OPD（sampled-token，策略梯度形式）</h3>
+<pre><code>def opd_train(student, teacher, dataset, optimizer, steps):
+    """
+    On-Policy Distillation (Thinking Machines recipe, sampled-token PG 形式)
+    student: 可训练学生模型 πθ
+    teacher: 冻结教师模型 ν（白盒，需返回 token log-prob）
+    """
+    teacher.eval()
+    for step in range(steps):
+        # ---- 阶段 1: rollout（学生自己采样，on-policy）----
+        batch = []
+        for x in dataset.sample_prompts(batch_size=B):
+            y = student.generate(x, sampling=True, max_len=T)   # ŷ ~ πθ(·|x)
+            batch.append((x, y))
+
+        # ---- 阶段 2: 教师逐 token 打分（在学生轨迹的每个前缀上）----
+        for (x, y) in batch:
+            with torch.no_grad():
+                logp_teacher = teacher.logprob(x, y)            # [T]  log ν(y_t|x,y_&lt;t)
+            logp_student_old = student.logprob(x, y).detach()   # 采样时策略
+
+            # token 级 dense advantage：教师相对学生的认可差
+            A = logp_teacher - logp_student_old                 # [T]
+            # 可选：hard clip / log-compression 防师生差距过大
+            A = clip_signal(A, bound=CLIP_BOUND)
+
+            # ---- 阶段 3: importance-sampling 策略梯度更新 ----
+            logp_student = student.logprob(x, y)                # 当前策略
+            ratio = torch.exp(logp_student - logp_student_old)  # ρ_t
+            surr1 = ratio * A
+            surr2 = torch.clamp(ratio, 1 - EPS, 1 + EPS) * A
+            loss = -torch.minimum(surr1, surr2).sum()           # PPO-clip 风格
+            loss.backward()
+
+        optimizer.step(); optimizer.zero_grad()</code></pre>
+
+<h3>5.2 OPD（full-vocab / top-k，GKD 分布对齐形式）</h3>
+<pre><code>def gkd_opd_step(student, teacher, x, lam=1.0, divergence="rkl", topk=None):
+    """
+    GKD 式 OPD：轨迹按 λ 混合，分布距离可选 FKL/RKL/JSD
+    lam=1.0 → 严格 on-policy（学生轨迹）
+    """
+    y = student.generate(x) if random.random() &lt; lam else teacher.generate(x)
+
+    p_logits = student.forward(x, y[:, :-1])          # 学生：每个位置的下一 token 分布
+    with torch.no_grad():
+        q_logits = teacher.forward(x, y[:, :-1])      # 教师：同前缀上的分布
+
+    if topk:  # 只保留教师 top-k 支撑集；注意重归一化，否则梯度有偏
+        idx = q_logits.topk(topk).indices
+        p = student_dist(p_logits).restrict(idx, renormalize=True)
+        q = teacher_dist(q_logits).restrict(idx, renormalize=True)
+    else:
+        p, q = softmax(p_logits), softmax(q_logits)   # full-vocab，O(B·T·V) 显存
+
+    if divergence == "rkl":
+        loss = (p * (p.log() - q.log())).sum(-1)      # KL(p‖q)
+    elif divergence == "fkl":
+        loss = (q * (q.log() - p.log())).sum(-1)      # KL(q‖p)
+    else:  # jsd
+        m = 0.5 * (p + q)
+        loss = 0.5*(p*(p.log()-m.log())).sum(-1) + 0.5*(q*(q.log()-m.log())).sum(-1)
+    return loss.mean()</code></pre>
+
+<h3>5.3 OPSD（Self-Distilled Reasoner）</h3>
+<pre><code>def opsd_train(model, dataset, optimizer, steps):
+    """
+    OPSD: 同一模型两种条件 —— 教师看答案（开卷），学生只看题（闭卷）
+    教师分支 stop-gradient；teacher_policy 固定为初始策略（隐式正则化）
+    """
+    teacher_ref = snapshot(model)                      # 冻结的初始策略（教师）
+    for step in range(steps):
+        for (x, answer_gt) in dataset.sample(batch_size=B):
+            # ---- ① 学生闭卷采样轨迹（on-policy）----
+            y = model.generate(x, sampling=True, max_len=T)    # ŷ ~ πθ(·|x)
+
+            # ---- ② 构造特权上下文 ----
+            teacher_ctx = f"Question: {x}\nReference answer: {answer_gt}\n"
+
+            # ---- ③ 在学生轨迹的每个前缀上取两个分布 ----
+            p_logits = model.forward(x, y[:, :-1])             # 学生：闭卷
+            with torch.no_grad():
+                q_logits = teacher_ref.forward(teacher_ctx, y[:, :-1])  # 教师：开卷
+
+            # ---- ④ 最小化分布距离（论文主实验用 full-vocab）----
+            loss = divergence_loss(p_logits, q_logits, kind="fkl")  # FKL/RKL/JSD
+            loss.backward()
+        optimizer.step(); optimizer.zero_grad()</code></pre>
+
+<h3>5.4 对照变体：SDPO（特权信息 = 环境反馈）</h3>
+<pre><code># 学生答错时：
+attempt = model.sample(question)
+success, feedback = env.evaluate(question, attempt)      # 代码评测器/单元测试
+if not success:
+    teacher_input = f"Question: {question}\nYour attempt: {attempt}\n" \
+                    f"Feedback: {feedback}\nCorrect solution:"
+    for t in range(len(attempt)):
+        student_dist = model.forward(question, attempt[:t])
+        teacher_dist = model.forward(teacher_input, attempt[:t])  # "自省教师"
+        loss += KL(teacher_dist, student_dist)           # 定位关键错误 token</code></pre>
+
+<!-- ============ 6 演进 ============ -->
+<h2 id="sec6">六、OPD 方法演进谱系</h2>
+<table>
+  <tr><th>阶段</th><th>时间</th><th>代表工作</th><th>解决的问题</th><th>核心改进</th></tr>
+  <tr><td>奠基</td><td>2023–2024</td><td><strong>GKD、MiniLLM</strong></td><td>离线蒸馏的 exposure bias</td><td>学生生成轨迹，教师在学生状态上监督；MiniLLM 强调 reverse-KL</td></tr>
+  <tr><td>工程化基线</td><td>2025.10</td><td><strong>TML OPD、Qwen3 实践</strong></td><td>RL 稀疏、SFT off-policy</td><td>sampled-token + reverse-KL surrogate，成本 ~RL 的 1/10</td></tr>
+  <tr><td>去除外部教师</td><td>2026.01</td><td><strong>OPSD / Self-Distilled Reasoner</strong></td><td>大教师在线推理昂贵、要求同词表</td><td>教师 = 同模型 + 特权信息</td></tr>
+  <tr><td>反馈解释错误</td><td>2026.01</td><td><strong>SDPO</strong></td><td>终局 0/1 奖励无法定位错误 token</td><td>教师条件化环境反馈/成功 sibling rollout</td></tr>
+  <tr><td>按样本路由</td><td>2026.04</td><td><strong>SRPO</strong></td><td>正确样本上路径歧义、后期坍缩</td><td>正确轨迹走 GRPO，错误轨迹走 SDPO，按教师熵动态加权</td></tr>
+  <tr><td>方向/强度解耦</td><td>2026.04</td><td><strong>RLSD</strong></td><td>特权教师直接决定梯度方向 → 信息泄漏</td><td>verifier 决定更新正负，teacher 概率比只调幅度</td></tr>
+  <tr><td>离线化</td><td>2026.04</td><td><strong>Lightning OPD</strong></td><td>在线教师服务的算力/系统开销</td><td>teacher consistency 下缓存教师 log-prob</td></tr>
+  <tr><td>上下文自蒸馏</td><td>2026.04</td><td><strong>OPSDL</strong></td><td>长上下文无关信息干扰推理</td><td>PI 从"答案"换成"相关短上下文"</td></tr>
+  <tr><td>多教师合并</td><td>2026</td><td><strong>MiMo-MOPD</strong></td><td>多领域专家合并回统一模型</td><td>领域路由 + RKL + outcome RL 混合</td></tr>
+  <tr><td>机理与修复</td><td>2026</td><td><strong>Rethinking OPD、REOPOLD、OPRD、Purified OPSD、RLCSD、d-OPSD</strong></td><td>更强教师反而更差、风格偏移、死记硬背、平台期</td><td>成功条件刻画、信号调控、表示空间蒸馏、PMI 提纯、对比信号</td></tr>
+</table>
+<div class="callout">
+  <div class="title">工业实践认知</div>
+  OPD 常放在后训练<strong>最后阶段</strong>做"能力合并与收尾"——RL 分别训练数学/代码/Agent 专家（可以偏科），再用 OPD 把专家能力迁回基础模型；老师可以偏科，学生不必继承老师的副作用。
+</div>
+
+<!-- ============ 7 结论 ============ -->
+<h2 id="sec7">七、结论与选型建议</h2>
+
+<h3>7.1 结论</h3>
+<ol>
+  <li><strong>OPD 不是新算法，而是"采样协议 × 监督协议"的组合</strong>：on-policy 采样解决暴露偏差，教师 token 级分布解决信号稀疏。形式上是蒸馏、运行上是带 dense 奖励的 RL，与 KL 正则化 RL 可数学统一。</li>
+  <li><strong>OPSD 是 OPD 的去外部教师版本</strong>：用信息不对称（开卷/闭卷）构造自教师，免词表约束、省推理成本，在 ≤8B 规模匹配或超过 GRPO 且 token 效率 8–12×；但受模型容量与 PI 质量双重约束。</li>
+  <li><strong>OPD 是"探索催化剂"而非"能力灌注器"</strong>：加速学生找到够得着的路径，不抬高能力上限。"更强教师→更好学生"不成立，师生分布相容性比教师绝对强度更重要。</li>
+  <li><strong>稠密信号是双刃剑</strong>：标点、风格、长度都会进入目标，需 clip、mask、loss 系数、对比信号、PMI 提纯等手段控制模仿强度；长 CoT 模型的反思/自纠错行为尤其脆弱。</li>
+  <li><strong>适用性分界</strong>：数学/代码有可验证奖励，RL 信号可靠；创作/知识类任务难写低偏差 reward，教师蒸馏（OPD/OPSD）更实用。理想方法应同时具备蒸馏的稠密 token 信号 + RLVR 的低偏差目标 + on-policy 数据——目前尚无标准答案。</li>
+</ol>
+
+<h3>7.2 工程落地 checklist</h3>
+<ul>
+  <li>☐ 先 SFT 冷启动拉近师生分布，再上 OPD（防前缀扭曲）</li>
+  <li>☐ sampled-token 起步（性价比最高），追求上限再上 top-k / full-vocab</li>
+  <li>☐ top-k 必须重归一化或加 stop-gradient</li>
+  <li>☐ 对 advantage 信号做 hard clip / log-compression（防强教师负迁移、防刷长度）</li>
+  <li>☐ OPSD 教师固定为初始策略 + stop-gradient</li>
+  <li>☐ 监控生成中认知标记词（wait/maybe 等）数量，防反思行为崩塌</li>
+  <li>☐ 复用现有 PPO/GRPO 框架：rollout 组件不动，只替换奖励来源为教师 log-prob 差</li>
+</ul>
+
+<h3>7.3 注意事项</h3>
+<div class="callout warn">
+  <div class="title">可信度声明</div>
+  <ul>
+    <li>本报告中的 arXiv 编号、实验数据均来自知乎文章转述（多数文章注明了论文出处），建议引用前按第八章原始链接二次核对；个别 2026 年论文编号未能全部独立验证，已如实标注来源。</li>
+    <li>OPSD 存在同名歧义（Self-Distilled Reasoner vs π-Distill 的 OPSD 模块），引用时务必带上 arXiv 号或 PI 来源说明。</li>
+    <li>Thinking Machines 博客是工程博客而非同行评审论文，但其 recipe 被学术界反复引用为事实基线。</li>
+  </ul>
+</div>
+
+<!-- ============ 8 参考 ============ -->
+<h2 id="sec8">八、参考资料</h2>
+<h4>原始出处</h4>
+<ol>
+  <li>Kevin Lu et al., <em>On-Policy Distillation</em>, Thinking Machines Lab Blog, 2025-10-27 — <a href="https://thinkingmachines.ai/blog/on-policy-distillation/">thinkingmachines.ai/blog/on-policy-distillation</a>（代码：Tinker cookbook, recipes/distillation）</li>
+  <li>Agarwal et al., <em>On-Policy Distillation of Language Models: Learning from Self-Generated Mistakes (GKD)</em>, 2024</li>
+  <li>Gu et al., <em>MiniLLM: Knowledge Distillation of Large Language Models</em>, ICLR 2024</li>
+  <li><em>Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models (OPSD)</em>, arXiv:2601.18734</li>
+</ol>
+<h4>机理 / 病理研究</h4>
+<ol start="5">
+  <li>清华 THUNLP, <em>Rethinking On-Policy Distillation of LLMs: Phenomenology, Mechanism, and Recipe</em>, arXiv:2604.13016（代码 thunlp/OPD）</li>
+  <li>港中文 + 腾讯 AI Lab, <em>Demystifying On-Policy Distillation: Roles, Pathologies, and Regulations</em>, arXiv:2607.13399</li>
+  <li><em>The Many Faces of On-Policy Distillation: Pitfalls, Mechanisms, and Fixes</em>, arXiv:2605.11182</li>
+  <li><em>OPRD: On-Policy Representation Distillation</em>, arXiv:2606.06021</li>
+  <li>浙大 + 阿里通义等, <em>Purified OPSD: On-Policy Self-Distillation Without Losing How to Think</em>, arXiv:2607.02234</li>
+  <li>智源 + 清华, <em>RLCSD: Reinforcement Learning with Contrastive On-Policy Self-Distillation</em></li>
+</ol>
+<h4>知乎主要参考文章（检索时间 2026-08-18）</h4>
+<ol start="11">
+  <li>姚远（哈工大博士）《LLM后训练｜从监督信号的视角理解 SFT、RL 到 OPD 与 OPSD》— <a href="https://zhuanlan.zhihu.com/p/2065369932192338649">zhuanlan.zhihu.com/p/2065369932192338649</a></li>
+  <li>jamin《OPD系列：方法演进与SFT/RL的数学边界》— <a href="https://zhuanlan.zhihu.com/p/2069531934863122559">zhuanlan.zhihu.com/p/2069531934863122559</a></li>
+  <li>Cyril-KI《On-Policy Distillation(OPD)：一些工程实践与训练认知》— <a href="https://zhuanlan.zhihu.com/p/2070927698294317227">zhuanlan.zhihu.com/p/2070927698294317227</a></li>
+  <li>模力AILab《为什么大模型后训练要在学生自己的轨迹上蒸馏?》— <a href="https://zhuanlan.zhihu.com/p/2069863120466715393">zhuanlan.zhihu.com/p/2069863120466715393</a></li>
+  <li>Ferry《Policy Gradient 视角下的 OPD》— <a href="https://zhuanlan.zhihu.com/p/2058368749707776341">zhuanlan.zhihu.com/p/2058368749707776341</a></li>
+  <li>欠阿贝尔两块钱《从分布视角解释LLM后训练：SFT、RL、OPD的差异》— <a href="https://zhuanlan.zhihu.com/p/2070328173166866733">zhuanlan.zhihu.com/p/2070328173166866733</a></li>
+  <li>wuxiaojun（粤港澳大湾区数字经济研究院）《SFT、RL 和 OPD 原来是一家人》— <a href="https://zhuanlan.zhihu.com/p/2072657717714499210">zhuanlan.zhihu.com/p/2072657717714499210</a></li>
+  <li>zklink《Rethinking On-Policy Distillation of LLMs 解读》— <a href="https://zhuanlan.zhihu.com/p/2067769832960008241">zhuanlan.zhihu.com/p/2067769832960008241</a></li>
+  <li>秋水黑刀《OPRD：把OPD蒸馏拉回到表示空间》— <a href="https://zhuanlan.zhihu.com/p/2062916803983102197">zhuanlan.zhihu.com/p/2062916803983102197</a></li>
+  <li>机器之心《2026开年关键词：Self-Distillation》— <a href="https://zhuanlan.zhihu.com/p/2004574638794089414">zhuanlan.zhihu.com/p/2004574638794089414</a></li>
+  <li>CVHub《OPSD：让同一个模型用"带答案的自己"训练"不带答案的自己"》— <a href="https://zhuanlan.zhihu.com/p/2051773072194135172">zhuanlan.zhihu.com/p/2051773072194135172</a></li>
+  <li>Frog《On-Policy Self-Distillation 202603（OPSD 论文精读）》— <a href="https://zhuanlan.zhihu.com/p/2014642833177466144">zhuanlan.zhihu.com/p/2014642833177466144</a></li>
+  <li>Leezhou《LLM 后训练蒸馏技术演进梳理：自蒸馏与RL的融合》— <a href="https://zhuanlan.zhihu.com/p/2067197522330776365">zhuanlan.zhihu.com/p/2067197522330776365</a></li>
+  <li>《On-Policy Distillation 方法演进》— <a href="https://zhuanlan.zhihu.com/p/2062918960367120976">zhuanlan.zhihu.com/p/2062918960367120976</a></li>
+  <li>小何同学冷泡茶《大模型在线蒸馏｜Notes》（含 SDPO 伪代码）— <a href="https://zhuanlan.zhihu.com/p/2023189391883936284">zhuanlan.zhihu.com/p/2023189391883936284</a></li>
+  <li>姜富春《OPD(On-Policy Distillation)》（TML 博客全文翻译+注解）— <a href="https://zhuanlan.zhihu.com/p/2045821729470260443">zhuanlan.zhihu.com/p/2045821729470260443</a></li>
+  <li>落蓝飞雪《[OPD系列] OPD最初标注参考文献 Thinking Machines Lab出品》— <a href="https://zhuanlan.zhihu.com/p/2058190705093238808">zhuanlan.zhihu.com/p/2058190705093238808</a></li>
+  <li>《π-Distill：用 privileged information 做联合蒸馏》— <a href="https://zhuanlan.zhihu.com/p/2045079309610701829">zhuanlan.zhihu.com/p/2045079309610701829</a></li>
+  <li>机器之心《你的自教师模型还在用参考解吗？d-OPSD》— <a href="https://zhuanlan.zhihu.com/p/2058624019235076091">zhuanlan.zhihu.com/p/2058624019235076091</a></li>
+  <li>算法大作手《推理大模型后训练方案：Rubric引导的自蒸馏》— <a href="https://zhuanlan.zhihu.com/p/2051329130172507642">zhuanlan.zhihu.com/p/2051329130172507642</a></li>
+</ol>
+
+<div class="footer">
+  OPD/OPSD 技术调研报告 · 由知乎开放平台检索结果整理 · 2026-08-18 · 配套架构图见 diagrams/ 目录
+</div>
+
+</div>
+</body>
+</html>
