@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>论文技术报告：SkillOpt - 自进化Agent技能的执行策略</title>
+    <title>2605.23904-SkillOpt技术分析报告</title>
     <style>/* tech-doc: 专业技术文档主题，对标GitBook/MkDocs Material */
 :root {
   --primary: #2563eb;
@@ -304,6 +304,9 @@ table {
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--table-border);
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 th, td {
@@ -311,6 +314,7 @@ th, td {
   text-align: left;
   border-bottom: 1px solid var(--table-border);
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 th {
@@ -323,8 +327,33 @@ tr:last-child td {
   border-bottom: none;
 }
 
-tr:hover td {
+tr:nth-child(even) td {
   background: var(--bg-secondary);
+}
+
+tr:hover td {
+  background: var(--bg-tertiary);
+}
+
+/* 数学公式样式 */
+.katex-display {
+  margin: 1.5em 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1em 0;
+}
+.katex {
+  font-size: 1.15em !important;
+}
+:root[data-theme="dark"] .katex .mord,
+:root[data-theme="dark"] .katex .mbin,
+:root[data-theme="dark"] .katex .mrel,
+:root[data-theme="dark"] .katex .mop,
+:root[data-theme="dark"] .katex .mopen,
+:root[data-theme="dark"] .katex .mclose,
+:root[data-theme="dark"] .katex .mpunct,
+:root[data-theme="dark"] .katex .malpha {
+  color: var(--text-primary) !important;
 }
 
 /* 图片样式 */
@@ -649,15 +678,15 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </head>
 <body>
     <header class="header">
-        <div class="header-title">论文技术报告：SkillOpt - 自进化Agent技能的执行策略</div>
+        <div class="header-title">2605.23904-SkillOpt技术分析报告</div>
     </header>
     <div class="container">
         <main class="content">
             <div class="doc-header">
-                <h1 class="doc-title">论文技术报告：SkillOpt - 自进化Agent技能的执行策略</h1>
+                <h1 class="doc-title">2605.23904-SkillOpt技术分析报告</h1>
                 <div class="doc-meta">
                     <span class="doc-meta-item">👤 AI技术知识库</span>
-                    <span class="doc-meta-item">📅 2026-08-14</span>
+                    <span class="doc-meta-item">📅 2026-08-18</span>
                 </div>
             </div>
             <h1 id="skillopt-agent">论文技术报告：SkillOpt - 自进化Agent技能的执行策略</h1>
