@@ -709,16 +709,45 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <p>SkillOpt是首个系统性的、可控的Agent技能文本空间优化器，通过独立的优化器模型将打分后的执行轨迹转换为技能文档的增删改操作，只有当编辑在验证集上严格提升效果时才会被接受，实现了稳定的技能迭代。</p>
 <h2 id="_2">二、核心技术架构与创新点</h2>
 <h3 id="21">2.1 整体架构（类比深度学习优化流程）</h3>
-<p>SkillOpt的设计完全对标深度学习训练流程，实现了文本空间的可控优化：
-| 深度学习概念 | SkillOpt对应实现 |
-|--------------|------------------|
-| 模型参数 | 技能文档（skill.md） |
-| 梯度方向 | 从执行轨迹推导的编辑方向 |
-| 学习率 | 每轮允许的最大编辑数量（编辑预算） |
-| 验证集 | 独立的选择拆分（selection split），用于验证编辑效果 |
-| 优化器 | 独立的大模型（通常是更强的前沿模型），负责生成编辑建议 |
-| 动量项 | 跨周期慢更新（epoch-wise slow/meta update） |
-| 批量训练 | 执行批量（rollout batch）、反射小批量（reflection minibatch） |</p>
+<p>SkillOpt的设计完全对标深度学习训练流程，实现了文本空间的可控优化：</p>
+<table>
+<thead>
+<tr>
+<th>深度学习概念</th>
+<th>SkillOpt对应实现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模型参数</td>
+<td>技能文档（skill.md）</td>
+</tr>
+<tr>
+<td>梯度方向</td>
+<td>从执行轨迹推导的编辑方向</td>
+</tr>
+<tr>
+<td>学习率</td>
+<td>每轮允许的最大编辑数量（编辑预算）</td>
+</tr>
+<tr>
+<td>验证集</td>
+<td>独立的选择拆分（selection split），用于验证编辑效果</td>
+</tr>
+<tr>
+<td>优化器</td>
+<td>独立的大模型（通常是更强的前沿模型），负责生成编辑建议</td>
+</tr>
+<tr>
+<td>动量项</td>
+<td>跨周期慢更新（epoch-wise slow/meta update）</td>
+</tr>
+<tr>
+<td>批量训练</td>
+<td>执行批量（rollout batch）、反射小批量（reflection minibatch）</td>
+</tr>
+</tbody>
+</table>
 <h3 id="22">2.2 核心工作流</h3>
 <p><img alt="SkillOpt工作流" src="https://arxiv.org/html/2605.23904/x2.png" /></p>
 <p>完整的优化循环分为6个阶段：
@@ -874,17 +903,58 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </tbody>
 </table>
 <h3 id="32">3.2 不同规模模型的提升效果</h3>
-<p>SkillOpt对小模型的提升尤为明显，越小的模型相对收益越高：
-| 目标模型 | 平均提升幅度 | 典型任务提升示例 |
-|----------|--------------|------------------|
-| GPT-5.5 | +23.5 | - |
-| GPT-5.4 | +12.7 | - |
-| GPT-5.4-mini | +15.4 | - |
-| GPT-5.4-nano | +26.7 | ALFWorld从34.3→69.4（提升102%），DocVQA从30.8→80.2（提升160%） |
-| GPT-5.2 | +16.6 | - |
-| Qwen3.5-4B | +19.2 | 表格处理从9.3→23.9（提升157%） |
-| Qwen3.6-35B | +9.1 | - |
-| <strong>所有模型平均</strong> | +17.6 | - |</p>
+<p>SkillOpt对小模型的提升尤为明显，越小的模型相对收益越高：</p>
+<table>
+<thead>
+<tr>
+<th>目标模型</th>
+<th>平均提升幅度</th>
+<th>典型任务提升示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-5.5</td>
+<td>+23.5</td>
+<td>-</td>
+</tr>
+<tr>
+<td>GPT-5.4</td>
+<td>+12.7</td>
+<td>-</td>
+</tr>
+<tr>
+<td>GPT-5.4-mini</td>
+<td>+15.4</td>
+<td>-</td>
+</tr>
+<tr>
+<td>GPT-5.4-nano</td>
+<td>+26.7</td>
+<td>ALFWorld从34.3→69.4（提升102%），DocVQA从30.8→80.2（提升160%）</td>
+</tr>
+<tr>
+<td>GPT-5.2</td>
+<td>+16.6</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Qwen3.5-4B</td>
+<td>+19.2</td>
+<td>表格处理从9.3→23.9（提升157%）</td>
+</tr>
+<tr>
+<td>Qwen3.6-35B</td>
+<td>+9.1</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>所有模型平均</strong></td>
+<td>+17.6</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
 <h2 id="_5">四、关键技术细节与消融分析</h2>
 <p>论文通过大量消融实验验证了各个模块的作用：</p>
 <h3 id="41">4.1 核心组件效果</h3>

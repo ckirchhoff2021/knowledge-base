@@ -730,7 +730,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <td>教师模型策略（可以是强模型、奖励模型、规则验证器、学生EMA版本）</td>
 </tr>
 <tr>
-<td>$s_t = (x, y_{&lt;t})$</td>
+<td>$s_t = (x, y_{<t})$</td>
 <td>第t步的上下文状态，包含输入和前t-1步生成的前缀</td>
 </tr>
 <tr>
@@ -752,9 +752,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <h4 id="21-full-vocabulary-opdopd">2.1 Full-Vocabulary OPD（全词表OPD）</h4>
 <p>对词表所有token计算KL散度，是理论最完整、效果最好但计算成本最高的形式：
 $$
-\mathcal{L}<em _mathcal_D="\mathcal{D" _sim="\sim" x="x">{OPD}^{full}(\theta) = \mathbb{E}</em>^T D_{}, y \sim \pi_\theta} \left[ \sum_{t=1<em>}\left( \pi_\theta(\cdot|s_t) \parallel \pi_T(\cdot|s_t) \right) \right]
+\mathcal{L}_{OPD}^{full}(\theta) = \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta} \left[ \sum_{t=1}^T D_{*}\left( \pi_\theta(\cdot|s_t) \parallel \pi_T(\cdot|s_t) \right) \right]
 $$
-其中$D_</em>$代表散度函数，根据KL方向分为三种：</p>
+其中$D_*$代表散度函数，根据KL方向分为三种：</p>
 <h5 id="1forward-klkl">（1）Forward KL（前向KL）</h5>
 <p>$$
 D_{FKL}(p \parallel q) = \sum_{v \in V} p(v) \log \frac{p(v)}{q(v)}
@@ -783,19 +783,19 @@ $$
 <h4 id="22-top-k-opdtop-kopd">2.2 Top-K OPD（Top-K截断OPD，工业界性价比首选）</h4>
 <p>全词表OPD需要计算教师所有V个token的logits，当词表大小为15万时，显存和计算成本很高，因此工业界通常采用Top-K截断：只对教师和学生概率最高的K个token计算KL散度，其余token的概率归一化后合并为一个"其他"类：
 $$
-\mathcal{L}<em _mathcal_D="\mathcal{D" _sim="\sim" x="x">{OPD}^{topk}(\theta) = \mathbb{E}</em>(\pi_T(\cdot|s_t), K) \right) \right]
+\mathcal{L}_{OPD}^{topk}(\theta) = \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta} \left[ \sum_{t=1}^T D_{*}\left( \text{TopK}(\pi_\theta(\cdot|s_t), K) \parallel \text{TopK}(\pi_T(\cdot|s_t), K) \right) \right]
 $$
 - K通常取20/50/100，计算成本仅为全词表的1/1000~1/3000
 - 效果损失小于2%，是目前工业界落地的首选方案
-- 注意：K不能太小，否则会丢失有价值的长尾token信号}, y \sim \pi_\theta} \left[ \sum_{t=1}^T D_{*}\left( \text{TopK}(\pi_\theta(\cdot|s_t), K) \parallel \text{TopK</p>
+- 注意：K不能太小，否则会丢失有价值的长尾token信号</p>
 <h4 id="23-sampled-token-opdtoken-opd">2.3 Sampled-Token OPD（采样Token OPD，轻量版）</h4>
 <p>最轻量化的形式，只对学生当前采样出来的那一个token计算对数概率差，不需要计算整个词表的分布：
 $$
-\mathcal{L}<em _mathcal_D="\mathcal{D" _sim="\sim" x="x">{OPD}^{sample}(\theta) = \mathbb{E}</em>^T \left( \log \pi_\theta(y_t|s_t) - \log \pi_T(y_t|s_t) \right) \right]
+\mathcal{L}_{OPD}^{sample}(\theta) = \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_\theta} \left[ \sum_{t=1}^T \left( \log \pi_\theta(y_t|s_t) - \log \pi_T(y_t|s_t) \right) \right]
 $$
 - 计算成本最低，只需要教师输出单个token的对数概率
 - 缺点：梯度方差大，信号稀疏，需要更大的batch size
-- 适用场景：超大规模模型训练、算力极度受限的场景}, y \sim \pi_\theta} \left[ \sum_{t=1</p>
+- 适用场景：超大规模模型训练、算力极度受限的场景</p>
 <h3 id="3-reverse-kl">3. 梯度推导（以Reverse KL为例）</h3>
 <p>我们对Reverse KL损失求梯度，可以得到OPD更新的本质：
 首先展开单步RKL：
@@ -804,27 +804,74 @@ D_{RKL}(\pi_\theta \parallel \pi_T) = \sum_v \pi_\theta(v|s_t) \log \pi_\theta(v
 $$
 对参数$\theta$求梯度：
 $$
-\nabla_\theta D_{RKL} = \mathbb{E}<em>{v \sim \pi</em>\theta} \left[ \nabla_\theta \log \pi_\theta(v|s_t) \cdot \left( \log \frac{\pi_\theta(v|s_t)}{\pi_T(v|s_t)} + 1 \right) \right]
+\nabla_\theta D_{RKL} = \mathbb{E}_{v \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(v|s_t) \cdot \left( \log \frac{\pi_\theta(v|s_t)}{\pi_T(v|s_t)} + 1 \right) \right]
 $$
 令优势函数$A_t(v) = \log \pi_T(v|s_t) - \log \pi_\theta(v|s_t)$，则梯度可以写为策略梯度的形式：
 $$
-\nabla_\theta \mathcal{L}<em t="1">{OPD} = -\mathbb{E} \left[ \sum</em>^T \nabla_\theta \log \pi_\theta(y_t|s_t) \cdot A_t(y_t) \right]
+\nabla_\theta \mathcal{L}_{OPD} = -\mathbb{E} \left[ \sum_{t=1}^T \nabla_\theta \log \pi_\theta(y_t|s_t) \cdot A_t(y_t) \right]
 $$
 <strong>核心发现</strong>：OPD本质上是一个特殊的RL算法，其奖励信号就是教师模型在每一步给的Token级对数概率差$A_t(v)$：
-- 如果学生采样的token $y_t$ 教师认为概率高（$A_t(y_t) &gt; 0$），则提高该token的生成概率
-- 如果学生采样的token $y_t$ 教师认为概率低（$A_t(y_t) &lt; 0$），则降低该token的生成概率
+- 如果学生采样的token $y_t$ 教师认为概率高（$A_t(y_t) > 0$），则提高该token的生成概率
+- 如果学生采样的token $y_t$ 教师认为概率低（$A_t(y_t) < 0$），则降低该token的生成概率
 - 这完美解决了传统RL的信用分配问题：每一个token都有即时的密集奖励，不需要等整个序列结束才能计算奖励</p>
 <h3 id="4">4. 与其他方法的数学本质区别</h3>
 <p><img alt="OPD与其他后训练方法对比图" src="./assets/opd_comparison.jpg" />
-图2：OPD与其他后训练方法特性对比
-| 方法 | 目标函数 | 数据分布 | 监督粒度 | 分布偏移 | 训练稳定性 |
-|------|---------|---------|---------|----------|------------|
-| SFT | 最小化$- \log \pi_\theta(y^<em>_t\mid s_t^</em>)$ | 教师/人工生成的固定前缀$s_t^<em>$ | Token硬标签 | 高 | 极高 |
-| 离线KD | 最小化$D(\pi_T(\cdot\mid s_t^</em>) \parallel \pi_\theta(\cdot\mid s_t^<em>))$ | 教师/人工生成的固定前缀$s_t^</em>$ | Token分布级 | 高 | 高 |
-| DPO | 最大化偏好对相对概率 | 离线偏好数据集 | 序列级偏好 | 中 | 高 |
-| PPO/GRPO | 最大化$\mathbb{E}[\sum_t R_t] - \beta D_{KL}$ | 学生自生成轨迹 | 稀疏标量奖励 | 无 | 中 |
-| OPD | 最小化$\mathbb{E}<em>{y \sim \pi</em>\theta}[\sum_t D(\pi_\theta \parallel \pi_T)]$ | 学生自生成轨迹 | Token分布级密集奖励 | 无 | 高 |
-<strong>OPD的核心优势</strong>：既避免了离线方法的分布偏移，又解决了在线RL的奖励稀疏问题。</p>
+图2：OPD与其他后训练方法特性对比</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>目标函数</th>
+<th>数据分布</th>
+<th>监督粒度</th>
+<th>分布偏移</th>
+<th>训练稳定性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT</td>
+<td>最小化$- \log \pi_\theta(y^*_t\mid s_t^*)$</td>
+<td>教师/人工生成的固定前缀$s_t^*$</td>
+<td>Token硬标签</td>
+<td>高</td>
+<td>极高</td>
+</tr>
+<tr>
+<td>离线KD</td>
+<td>最小化$D(\pi_T(\cdot\mid s_t^*) \parallel \pi_\theta(\cdot\mid s_t^*))$</td>
+<td>教师/人工生成的固定前缀$s_t^*$</td>
+<td>Token分布级</td>
+<td>高</td>
+<td>高</td>
+</tr>
+<tr>
+<td>DPO</td>
+<td>最大化偏好对相对概率</td>
+<td>离线偏好数据集</td>
+<td>序列级偏好</td>
+<td>中</td>
+<td>高</td>
+</tr>
+<tr>
+<td>PPO/GRPO</td>
+<td>最大化$\mathbb{E}[\sum_t R_t] - \beta D_{KL}$</td>
+<td>学生自生成轨迹</td>
+<td>稀疏标量奖励</td>
+<td>无</td>
+<td>中</td>
+</tr>
+<tr>
+<td>OPD</td>
+<td>最小化$\mathbb{E}_{y \sim \pi_\theta}[\sum_t D(\pi_\theta \parallel \pi_T)]$</td>
+<td>学生自生成轨迹</td>
+<td>Token分布级密集奖励</td>
+<td>无</td>
+<td>高</td>
+</tr>
+</tbody>
+</table>
+<p><strong>OPD的核心优势</strong>：既避免了离线方法的分布偏移，又解决了在线RL的奖励稀疏问题。</p>
 <h3 id="5-opdeffopd">5. 为什么OPD训练效率极高？（EffOPD理论证明）</h3>
 <p>2026年EffOPD论文通过数学证明和实验验证了OPD训练高效的根本原因：
 1. <strong>低秩更新特性</strong>：OPD的Hessian矩阵天然具有低秩结构，99%以上的参数更新能量集中在前1%的奇异方向上
@@ -1102,31 +1149,20 @@ $$
 <td>步骤级OPD官方实现，支持多步Agent</td>
 <td>论文arXiv:2605.27140</td>
 </tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_8">调参指南与常见问题</h2>
+<h3 id="1_3">1. 超参数选择表</h3>
+<table>
+<thead>
 <tr>
-<td>---</td>
-<td></td>
-<td></td>
+<th>超参数</th>
+<th>推荐值</th>
+<th>调整方向</th>
 </tr>
-<tr>
-<td>## 调参指南与常见问题</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>### 1. 超参数选择表</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>超参数</td>
-<td>推荐值</td>
-<td>调整方向</td>
-</tr>
-<tr>
-<td>--------</td>
-<td>--------</td>
-<td>---------</td>
-</tr>
+</thead>
+<tbody>
 <tr>
 <td>学习率</td>
 <td>1e-5 ~ 5e-5</td>
@@ -1167,21 +1203,18 @@ $$
 <td>100 ~ 500步</td>
 <td>从base模型开始训练时warmup步数要足够，从SFT模型开始可以减少</td>
 </tr>
+</tbody>
+</table>
+<h3 id="2_4">2. 常见问题排查</h3>
+<table>
+<thead>
 <tr>
-<td>### 2. 常见问题排查</td>
-<td></td>
-<td></td>
+<th>问题现象</th>
+<th>原因</th>
+<th>解决方案</th>
 </tr>
-<tr>
-<td>问题现象</td>
-<td>原因</td>
-<td>解决方案</td>
-</tr>
-<tr>
-<td>----------</td>
-<td>------</td>
-<td>---------</td>
-</tr>
+</thead>
+<tbody>
 <tr>
 <td>训练loss震荡不收敛</td>
 <td>学习率太大/教师模型太弱/没有SFT warmup</td>
@@ -1212,113 +1245,33 @@ $$
 <td>没有对工具调用mask/教师模板不匹配</td>
 <td>正确实现assistant mask；确保学生和教师用相同的chat template</td>
 </tr>
-<tr>
-<td>---</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>## 前沿变体与未来方向</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>1. <strong>StepOPSD（步骤级OPD）</strong>：将轨迹拆解为以动作为中心的步骤片段，利用后见之明（最终结果）给每个步骤重新打分，解决长程Agent任务的细粒度信用分配问题，在ALFWorld等多步任务上效果提升15%+</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>2. <strong>OPRD（表示空间OPD）</strong>：不监督输出层logits，改为监督中间层隐藏状态，跨架构/跨分词器场景下也能蒸馏，显存占用更低，训练更快</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>3. <strong>Direct OPD/弱到强OPD</strong>：打破教师必须强于学生的限制，弱模型也可以作为教师监督强模型，甚至模型可以自我蒸馏持续进化</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>4. <strong>Lightning OPD</strong>：将在线OPD离线化，缓存教师logits，训练速度提升10倍，精度损失小于2%，适合工业界大规模落地</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>5. <strong>GRM+OPD（DeepSeek-V4方案）</strong>：用生成式奖励模型（输出结构化评价文本而非标量分数）作为教师，同时学习输出分布和评价能力，在Agent场景下效果显著优于传统标量奖励RL</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>---</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>## 参考资料</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>1. MiniLLM: On-Policy Distillation of Large Language Models (arXiv:2306.08543, 2023)</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>2. On-policy Distillation of Language Models: Learning from Self-Generated Mistakes (ICLR 2024)</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>3. StepOPSD: Step-Aware Online Preference Distillation for Agent Reinforcement Learning (arXiv:2605.27140, 2026)</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>4. EffOPD: Efficient On-Policy Distillation via Early Low-Rank Lock-in (2026)</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>5. OPRD: On-Policy Representation Distillation (2026)</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>6. DeepSeek-V4 Technical Report (2026)</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>7. Verl Documentation: On-Policy Distillation (字节跳动, 2026)</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>8. ModelScope Swift: GKD/OPD Trainer Documentation (阿里魔搭, 2026)</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>9. 从SFT/RL到OPD: 给LLM Post-training初学者的直觉指南（知乎@Chase, 2026）</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>10. On-Policy Distillation原理、损失函数与工程实现详解（知乎@Orient, 2026）</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>11. OPD深度解析: 从数学推导到DeepSeek V4、SWIFT与verl实践（知乎@banana, 2026）</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>12. 三万字长文精讲2026上半年的On-Policy Distillation（知乎@Lei Tian, 2026）</td>
-<td></td>
-<td></td>
-</tr>
 </tbody>
 </table>
+<hr />
+<h2 id="_9">前沿变体与未来方向</h2>
+<ol>
+<li><strong>StepOPSD（步骤级OPD）</strong>：将轨迹拆解为以动作为中心的步骤片段，利用后见之明（最终结果）给每个步骤重新打分，解决长程Agent任务的细粒度信用分配问题，在ALFWorld等多步任务上效果提升15%+</li>
+<li><strong>OPRD（表示空间OPD）</strong>：不监督输出层logits，改为监督中间层隐藏状态，跨架构/跨分词器场景下也能蒸馏，显存占用更低，训练更快</li>
+<li><strong>Direct OPD/弱到强OPD</strong>：打破教师必须强于学生的限制，弱模型也可以作为教师监督强模型，甚至模型可以自我蒸馏持续进化</li>
+<li><strong>Lightning OPD</strong>：将在线OPD离线化，缓存教师logits，训练速度提升10倍，精度损失小于2%，适合工业界大规模落地</li>
+<li><strong>GRM+OPD（DeepSeek-V4方案）</strong>：用生成式奖励模型（输出结构化评价文本而非标量分数）作为教师，同时学习输出分布和评价能力，在Agent场景下效果显著优于传统标量奖励RL</li>
+</ol>
+<hr />
+<h2 id="_10">参考资料</h2>
+<ol>
+<li>MiniLLM: On-Policy Distillation of Large Language Models (arXiv:2306.08543, 2023)</li>
+<li>On-policy Distillation of Language Models: Learning from Self-Generated Mistakes (ICLR 2024)</li>
+<li>StepOPSD: Step-Aware Online Preference Distillation for Agent Reinforcement Learning (arXiv:2605.27140, 2026)</li>
+<li>EffOPD: Efficient On-Policy Distillation via Early Low-Rank Lock-in (2026)</li>
+<li>OPRD: On-Policy Representation Distillation (2026)</li>
+<li>DeepSeek-V4 Technical Report (2026)</li>
+<li>Verl Documentation: On-Policy Distillation (字节跳动, 2026)</li>
+<li>ModelScope Swift: GKD/OPD Trainer Documentation (阿里魔搭, 2026)</li>
+<li>从SFT/RL到OPD: 给LLM Post-training初学者的直觉指南（知乎@Chase, 2026）</li>
+<li>On-Policy Distillation原理、损失函数与工程实现详解（知乎@Orient, 2026）</li>
+<li>OPD深度解析: 从数学推导到DeepSeek V4、SWIFT与verl实践（知乎@banana, 2026）</li>
+<li>三万字长文精讲2026上半年的On-Policy Distillation（知乎@Lei Tian, 2026）</li>
+</ol>
         </main>
         
         <aside class="toc-container">
@@ -1365,6 +1318,13 @@ $$
 <li><a href="#_7">开源实现参考</a></li>
 </ul>
 </li>
+<li><a href="#_8">调参指南与常见问题</a><ul>
+<li><a href="#1_3">1. 超参数选择表</a></li>
+<li><a href="#2_4">2. 常见问题排查</a></li>
+</ul>
+</li>
+<li><a href="#_9">前沿变体与未来方向</a></li>
+<li><a href="#_10">参考资料</a></li>
 </ul>
 </div>
 
