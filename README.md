@@ -6,7 +6,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python&style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/badge/Docs-3+-orange?style=for-the-badge" alt="Docs">
+  <img src="https://img.shields.io/badge/Docs-4+-orange?style=for-the-badge" alt="Docs">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status">
   <a href="https://ckirchhoff2021.github.io/knowledge-base/"><img src="https://img.shields.io/badge/🌐-在线预览-blueviolet?style=for-the-badge" alt="Online Preview"></a>
 </p>
@@ -56,6 +56,13 @@ knowledge-base/
     <th>📅 更新时间</th>
     <th>📝 说明</th>
     <th>🔗 链接</th>
+  </tr>
+  <tr>
+    <td>Claude-Tag-技术调研报告</td>
+    <td>技术深度调研</td>
+    <td>2026-08-19</td>
+    <td>Claude Tag（Anthropic 团队协作型 Agent）深度调研：四大核心能力、Agent Identity、运行时架构（Session/Harness/Sandbox）、落地实践与风险，含3张交互架构图</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/html/Claude-Tag-技术调研报告.html"><b>🔗 在线阅读</b></a></td>
   </tr>
   <tr>
     <td>OPD-OPSD技术调研报告</td>

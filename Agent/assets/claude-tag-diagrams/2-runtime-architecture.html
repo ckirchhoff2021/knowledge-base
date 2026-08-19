@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Claude Tag 运行时架构：Channel Session 与 Agent Proxy</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#34d399; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .rose{background:#fb7185;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>Claude Tag 运行时架构：Channel Session 执行流程（五步）</h1></div>
+<div class="subtitle">三个系统协作：Slack 工作区（请求）· Anthropic 沙盒（执行）· 外部系统（GitHub/数仓）—— Agent Proxy 是安全边界</div>
+<div class="card">
+<svg viewBox="0 0 1040 720" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowG" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#34d399" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#fb7185" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#fbbf24" stroke-width="1.2"/>
+    </marker>
+  </defs>
+  <rect width="1040" height="720" fill="url(#grid)"/>
+
+  <!-- Zone 1: Slack workspace -->
+  <rect x="40" y="50" width="240" height="300" rx="10" fill="none" stroke="#22d3ee" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="60" y="75" fill="#22d3ee" font-size="11" font-weight="600">① Slack 工作区（请求发生）</text>
+
+  <rect x="60" y="95" width="200" height="56" rx="6" fill="#0f172a"/>
+  <rect x="60" y="95" width="200" height="56" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="160" y="118" fill="#22d3ee" font-size="11" font-weight="600" text-anchor="middle">频道 / 线程</text>
+  <text x="160" y="138" fill="#94a3b8" font-size="9" text-anchor="middle">@Claude 派活 → 新会话</text>
+
+  <rect x="60" y="175" width="200" height="56" rx="6" fill="#0f172a"/>
+  <rect x="60" y="175" width="200" height="56" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="160" y="198" fill="#e2e8f0" font-size="11" text-anchor="middle">频道级持久记忆</text>
+  <text x="160" y="216" fill="#94a3b8" font-size="8" text-anchor="middle">Org &gt; Workspace &gt; Channel 向下继承</text>
+
+  <rect x="60" y="255" width="200" height="56" rx="6" fill="#0f172a"/>
+  <rect x="60" y="255" width="200" height="56" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.2"/>
+  <text x="160" y="278" fill="#a78bfa" font-size="11" text-anchor="middle">Claude 身份（scoped identity）</text>
+  <text x="160" y="296" fill="#94a3b8" font-size="8" text-anchor="middle">Slack App 身份发帖，非个人 token</text>
+
+  <!-- Zone 2: Anthropic infra -->
+  <rect x="340" y="50" width="330" height="560" rx="10" fill="none" stroke="#34d399" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="360" y="75" fill="#34d399" font-size="11" font-weight="600">② Anthropic 基础设施（沙盒执行）</text>
+
+  <rect x="370" y="95" width="270" height="90" rx="6" fill="#0f172a"/>
+  <rect x="370" y="95" width="270" height="90" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="505" y="120" fill="#34d399" font-size="12" font-weight="600" text-anchor="middle">② 会话沙箱（Sandbox）</text>
+  <text x="505" y="142" fill="#94a3b8" font-size="9" text-anchor="middle">隔离环境：读文件 / 写文档 / 跑代码</text>
+  <text x="505" y="160" fill="#fb7185" font-size="9" text-anchor="middle">凭据不放入沙箱！</text>
+  <text x="505" y="176" fill="#64748b" font-size="8" text-anchor="middle">不在客户网络安装任何东西</text>
+
+  <rect x="370" y="225" width="270" height="80" rx="6" fill="#0f172a"/>
+  <rect x="370" y="225" width="270" height="80" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="505" y="252" fill="#fb7185" font-size="12" font-weight="600" text-anchor="middle">③ Agent Proxy（安全边界）</text>
+  <text x="505" y="272" fill="#94a3b8" font-size="9" text-anchor="middle">沙箱 ↔ 外部网络之间的唯一通道</text>
+  <text x="505" y="290" fill="#94a3b8" font-size="9" text-anchor="middle">④ 在此注入匹配凭据 → 出站请求</text>
+
+  <rect x="370" y="345" width="270" height="70" rx="6" fill="#0f172a"/>
+  <rect x="370" y="345" width="270" height="70" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="505" y="372" fill="#fbbf24" font-size="12" font-weight="600" text-anchor="middle">凭据存储（Credential Store）</text>
+  <text x="505" y="392" fill="#94a3b8" font-size="9" text-anchor="middle">管理员的连接信息集中保管</text>
+  <text x="505" y="406" fill="#64748b" font-size="8" text-anchor="middle">GitHub / 数仓 / 内部系统凭证</text>
+
+  <rect x="370" y="455" width="270" height="130" rx="6" fill="#0f172a"/>
+  <rect x="370" y="455" width="270" height="130" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="505" y="480" fill="#e2e8f0" font-size="11" font-weight="600" text-anchor="middle">Managed Agents 三接口（底层蓝图）</text>
+  <text x="385" y="504" fill="#22d3ee" font-size="9">Session：追加式事件日志（可恢复）</text>
+  <text x="385" y="524" fill="#22d3ee" font-size="9">Harness：调用模型+路由工具（大脑）</text>
+  <text x="385" y="544" fill="#22d3ee" font-size="9">Sandbox：代码执行+文件编辑（双手）</text>
+  <text x="385" y="568" fill="#34d399" font-size="8">解耦收益：container 死 ≠ session 死</text>
+  <text x="385" y="580" fill="#34d399" font-size="8">p50 TTFT ↓60%，p95 ↓90%+</text>
+
+  <!-- Zone 3: external -->
+  <rect x="730" y="50" width="270" height="300" rx="10" fill="none" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="750" y="75" fill="#fbbf24" font-size="11" font-weight="600">⑤ 外部系统（身份验证后到达）</text>
+
+  <rect x="760" y="100" width="210" height="46" rx="6" fill="#0f172a"/>
+  <rect x="760" y="100" width="210" height="46" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.2"/>
+  <text x="865" y="128" fill="#e2e8f0" font-size="10" text-anchor="middle">GitHub（Claude GitHub App 身份）</text>
+
+  <rect x="760" y="160" width="210" height="46" rx="6" fill="#0f172a"/>
+  <rect x="760" y="160" width="210" height="46" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.2"/>
+  <text x="865" y="188" fill="#e2e8f0" font-size="10" text-anchor="middle">数据仓库（服务账号身份）</text>
+
+  <rect x="760" y="220" width="210" height="46" rx="6" fill="#0f172a"/>
+  <rect x="760" y="220" width="210" height="46" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.2"/>
+  <text x="865" y="248" fill="#e2e8f0" font-size="10" text-anchor="middle">Jira / 文档 / 代码库 / 连接器</text>
+
+  <text x="865" y="295" fill="#94a3b8" font-size="9" text-anchor="middle">每个外部系统都以 Claude 自己的</text>
+  <text x="865" y="310" fill="#94a3b8" font-size="9" text-anchor="middle">服务身份访问，操作全程可审计</text>
+
+  <!-- flow arrows -->
+  <line x1="260" y1="123" x2="370" y2="130" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowG)"/>
+  <text x="300" y="112" fill="#34d399" font-size="8" text-anchor="middle">① 请求启动会话</text>
+
+  <line x1="505" y1="185" x2="505" y2="225" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrowR)"/>
+  <text x="560" y="208" fill="#fb7185" font-size="8">③ 出站请求过 Proxy</text>
+
+  <line x1="505" y1="345" x2="505" y2="305" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowA)"/>
+  <text x="560" y="330" fill="#fbbf24" font-size="8">④ 注入凭据</text>
+
+  <line x1="640" y1="260" x2="760" y2="180" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="700" y="205" fill="#94a3b8" font-size="8" text-anchor="middle">⑤ 认证请求</text>
+
+  <path d="M 760 240 C 700 300, 700 330, 640 285" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="660" y="332" fill="#64748b" font-size="8">结果返回</text>
+
+  <path d="M 400 585 C 280 630, 160 520, 160 350" fill="none" stroke="#22d3ee" stroke-width="1.2" stroke-dasharray="6,4" marker-end="url(#arrow)"/>
+  <text x="225" y="610" fill="#22d3ee" font-size="9">⑤ 结果回到 Slack 线程（异步汇报）</text>
+
+  <!-- DM note -->
+  <rect x="730" y="390" width="270" height="110" rx="8" fill="#0f172a"/>
+  <rect x="730" y="390" width="270" height="110" rx="8" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="865" y="415" fill="#e2e8f0" font-size="10" font-weight="600" text-anchor="middle">DM 私信 = 另一套规则</text>
+  <text x="865" y="438" fill="#94a3b8" font-size="9" text-anchor="middle">无身份绑定，用你个人 claude.ai 账户</text>
+  <text x="865" y="456" fill="#94a3b8" font-size="9" text-anchor="middle">自己的连接器/凭据，结果归于你</text>
+  <text x="865" y="478" fill="#64748b" font-size="8" text-anchor="middle">频道 = 组织身份 ｜ DM = 个人身份</text>
+  <text x="865" y="492" fill="#64748b" font-size="8" text-anchor="middle">敏感信息建议走 DM</text>
+</svg>
+</div>
+<div class="cards">
+  <div class="info-card"><h3><div class="card-dot emerald"></div>沙盒执行</h3><ul>
+    <li>• Claude 在 Anthropic 侧隔离环境干活</li>
+    <li>• 不在客户网络安装任何东西</li>
+    <li>• 读文件/写文档/跑代码都在沙箱内</li></ul></div>
+  <div class="info-card"><h3><div class="card-dot rose"></div>凭据隔离（核心安全设计）</h3><ul>
+    <li>• 凭据从不进入沙箱</li>
+    <li>• 只在出站 Agent Proxy 处注入</li>
+    <li>• 沙箱被攻破也拿不到凭据</li></ul></div>
+  <div class="info-card"><h3><div class="card-dot cyan"></div>三接口解耦</h3><ul>
+    <li>• Session 事件日志 / Harness 大脑 / Sandbox 双手</li>
+    <li>• container 死 ≠ session 死，可恢复续跑</li>
+    <li>• p50 TTFT ↓60%，p95 ↓90%+</li></ul></div>
+</div>
+<div class="footer">Claude Tag 技术调研报告 · 图 2/3 · 2026-08-18 · 架构细节源自官方文档转述（How Claude Tag works / Security and data handling）</div>
+</body>
+</html>
