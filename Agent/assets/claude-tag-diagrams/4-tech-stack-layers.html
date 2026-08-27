@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Claude Tag 技术栈八层架构与算法密度</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#34d399; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .rose{background:#fb7185;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>Claude Tag 技术栈：八层架构与算法密度标注</h1></div>
+<div class="subtitle">自下而上八层 · 算法密度：低=成熟工程 · 中=有优化空间 · 极高=开放研究问题（决定产品上限）</div>
+<div class="card">
+<svg viewBox="0 0 1060 780" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="1060" height="780" fill="url(#grid)"/>
+
+  <!-- Title zone labels -->
+  <text x="40" y="34" fill="#64748b" font-size="10">技术栈层次（自下而上）</text>
+  <text x="800" y="34" fill="#64748b" font-size="10">算法密度</text>
+
+  <!-- L8 Governance (top) -->
+  <rect x="60" y="50" width="700" height="66" rx="6" fill="#0f172a"/>
+  <rect x="60" y="50" width="700" height="66" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="80" y="76" fill="#fb7185" font-size="12" font-weight="600">L8 治理与安全层</text>
+  <text x="80" y="98" fill="#94a3b8" font-size="9">Agent Identity · scoped identity · 按任务授权 · 审计 trace · Ambient 主动介入</text>
+  <rect x="800" y="66" width="150" height="34" rx="6" fill="rgba(136,19,55,0.25)" stroke="#fb7185" stroke-width="1.2"/>
+  <text x="875" y="87" fill="#fb7185" font-size="10" text-anchor="middle">中-高（E2 介入决策）</text>
+
+  <!-- L7 Planning -->
+  <rect x="60" y="136" width="700" height="66" rx="6" fill="#0f172a"/>
+  <rect x="60" y="136" width="700" height="66" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="2"/>
+  <text x="80" y="162" fill="#fb7185" font-size="12" font-weight="600">L7 规划与执行循环层 ★</text>
+  <text x="80" y="184" fill="#94a3b8" font-size="9">任务拆解 · 多阶段异步推进（小时~天）· Harness wake() 循环 · 自调度 · 工具调用</text>
+  <rect x="800" y="152" width="150" height="34" rx="6" fill="rgba(136,19,55,0.5)" stroke="#fb7185" stroke-width="2"/>
+  <text x="875" y="173" fill="#fb7185" font-size="10" font-weight="600" text-anchor="middle">极高（C1-C4）</text>
+
+  <!-- L6 Model serving -->
+  <rect x="60" y="222" width="700" height="66" rx="6" fill="#0f172a"/>
+  <rect x="60" y="222" width="700" height="66" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="80" y="248" fill="#fbbf24" font-size="12" font-weight="600">L6 模型服务层</text>
+  <text x="80" y="270" fill="#94a3b8" font-size="9">Opus 4.8 固定 · 长会话恢复 · session tracing · TTFT 优化（p50 -60% / p95 -90%）</text>
+  <rect x="800" y="238" width="150" height="34" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.2"/>
+  <text x="875" y="259" fill="#fbbf24" font-size="10" text-anchor="middle">中（D1/D2 路由）</text>
+
+  <!-- L5 Retrieval -->
+  <rect x="60" y="308" width="700" height="66" rx="6" fill="#0f172a"/>
+  <rect x="60" y="308" width="700" height="66" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="2"/>
+  <text x="80" y="334" fill="#a78bfa" font-size="12" font-weight="600">L5 检索与知识层 ★</text>
+  <text x="80" y="356" fill="#94a3b8" font-size="9">多数据源召回（代码/文档/消息/数仓）· BM25+向量+RRF 混合 · 状态有效性过滤（空白）</text>
+  <rect x="800" y="324" width="150" height="34" rx="6" fill="rgba(76,29,149,0.55)" stroke="#a78bfa" stroke-width="2"/>
+  <text x="875" y="345" fill="#a78bfa" font-size="10" font-weight="600" text-anchor="middle">极高（A3/B）</text>
+
+  <!-- L4 Memory -->
+  <rect x="60" y="394" width="700" height="66" rx="6" fill="#0f172a"/>
+  <rect x="60" y="394" width="700" height="66" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="2"/>
+  <text x="80" y="420" fill="#a78bfa" font-size="12" font-weight="600">L4 记忆与上下文层 ★</text>
+  <text x="80" y="442" fill="#94a3b8" font-size="9">分层隔离记忆 Org→Workspace→Channel · 向下继承 · 蒸馏写入 · 遗忘与失效（核心壁垒）</text>
+  <rect x="800" y="410" width="150" height="34" rx="6" fill="rgba(76,29,149,0.55)" stroke="#a78bfa" stroke-width="2"/>
+  <text x="875" y="431" fill="#a78bfa" font-size="10" font-weight="600" text-anchor="middle">极高（A1/A2/A4）</text>
+
+  <!-- L3 Sandbox -->
+  <rect x="60" y="480" width="700" height="66" rx="6" fill="#0f172a"/>
+  <rect x="60" y="480" width="700" height="66" rx="6" fill="rgba(136,19,55,0.25)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="80" y="506" fill="#fb7185" font-size="12" font-weight="600">L3 执行与沙箱层</text>
+  <text x="80" y="528" fill="#94a3b8" font-size="9">隔离执行环境 · 凭据不进沙箱 · Agent Proxy 边界注入 · 安全信任根</text>
+  <rect x="800" y="496" width="150" height="34" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="875" y="517" fill="#94a3b8" font-size="10" text-anchor="middle">低（工程为主）</text>
+
+  <!-- L2 Session orchestration -->
+  <rect x="60" y="566" width="700" height="66" rx="6" fill="#0f172a"/>
+  <rect x="60" y="566" width="700" height="66" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="80" y="592" fill="#34d399" font-size="12" font-weight="600">L2 会话与编排层</text>
+  <text x="80" y="614" fill="#94a3b8" font-size="9">Channel Session 生命周期 · Session(日志)/Harness(大脑)/Sandbox(双手) 三接口解耦</text>
+  <rect x="800" y="582" width="150" height="34" rx="6" fill="rgba(6,78,59,0.3)" stroke="#34d399" stroke-width="1.2"/>
+  <text x="875" y="603" fill="#34d399" font-size="10" text-anchor="middle">中（B1 上下文重建）</text>
+
+  <!-- L1 Channel -->
+  <rect x="60" y="652" width="700" height="66" rx="6" fill="#0f172a"/>
+  <rect x="60" y="652" width="700" height="66" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="80" y="678" fill="#22d3ee" font-size="12" font-weight="600">L1 通道接入层</text>
+  <text x="80" y="700" fill="#94a3b8" font-size="9">Slack 频道/线程/DM · 一频道一 Claude · 频道=组织身份 / DM=个人身份 · 线程窗口 50 条</text>
+  <rect x="800" y="668" width="150" height="34" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="875" y="689" fill="#94a3b8" font-size="10" text-anchor="middle">低（成熟工程）</text>
+
+  <!-- Legend -->
+  <text x="60" y="752" fill="#64748b" font-size="9">★ = 算法密度极高的三层（L4/L5/L7）——对应 Claude Tag 差异化能力 Learns over time 与 Works asynchronously</text>
+</svg>
+</div>
+
+<div class="cards">
+  <div class="info-card">
+    <h3><div class="card-dot rose"></div>算法密度极高的三层</h3>
+    <ul>
+      <li>• L4 记忆：蒸馏/检索/遗忘全开放</li>
+      <li>• L5 检索：状态有效性过滤无方案</li>
+      <li>• L7 规划：长程漂移与敷衍交付</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot emerald"></div>已趋同成熟的部分</h3>
+    <ul>
+      <li>• L1-L3 接入/编排/沙箱：开源两周可复刻</li>
+      <li>• 三接口解耦是架构精髓（TTFT -60%）</li>
+      <li>• 凭据隔离是安全信任根</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot cyan"></div>核心判断</h3>
+    <ul>
+      <li>• 形态可复刻，上限由算法决定</li>
+      <li>• 壁垒在组织记忆的质量而非存在</li>
+      <li>• 三个难题都需要"对时间的推理"</li>
+    </ul>
+  </div>
+</div>
+<div class="footer">Claude Tag 技术栈拆解与算法研究点分析 · 图1 · 2026-08-21</div>
+</body>
+</html>

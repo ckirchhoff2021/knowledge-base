@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情绪修复与心态调整指南</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:960px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:32px; }
+  h1 { font-size:28px; line-height:1.4; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin-right:8px; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  h4 { font-size:15px; margin:20px 0 8px; color:var(--purple); }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); white-space:nowrap; }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  .callout { border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin:18px 0; background:var(--panel); }
+  .callout.warn { border-color:var(--amber); }
+  .callout.key { border-color:var(--green); }
+  .callout .title { font-weight:600; margin-bottom:6px; font-size:14px; }
+  .callout.key .title { color:var(--green); }
+  .callout.warn .title { color:var(--amber); }
+  figure { margin:24px 0; }
+  figure iframe { width:100%; height:860px; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>情绪修复与心态调整指南</h1>
+  <div>
+    <span class="badge">情绪调节</span>
+    <span class="badge">认知重评</span>
+    <span class="badge">反刍与内耗</span>
+    <span class="badge">应对难缠的人</span>
+  </div>
+  <div class="meta" style="margin-top:10px">
+    <span>信源：心理学主流理论（CBT / Gross 过程模型 / 躯体取向）+ 知乎高赞实操内容，出处见文末并标注可信度</span><br>
+    <span>报告日期：2026-08-21</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#sec1">一、背景：为什么糟心的人和事杀伤力这么大</a></li>
+    <li><a href="#sec2">二、原理：情绪调节的科学框架</a></li>
+    <li><a href="#sec3">三、方法工具箱：按时间尺度分四层</a></li>
+    <li><a href="#sec4">四、实战流程：今天遇到一件糟心事，全天怎么走</a></li>
+    <li><a href="#sec5">五、常见误区</a></li>
+    <li><a href="#sec6">六、何时需要专业帮助</a></li>
+    <li><a href="#sec7">七、核心结论（一页纸版本）</a></li>
+    <li><a href="#sec8">八、注意事项（可信度声明）</a></li>
+    <li><a href="#refs">九、参考资料</a></li>
+  </ol>
+</nav>
+
+<h2 id="sec1">一、背景：为什么糟心的人和事杀伤力这么大</h2>
+<p>先理解机制，再谈方法。情绪失控不是"你太脆弱"，而是几套生理和心理机制在特定条件下的必然反应。</p>
+
+<h3>1.1 生理层面：杏仁核劫持</h3>
+<p>遇到威胁（被冒犯、被否定、利益受损），大脑的<strong>杏仁核</strong>（恐惧/愤怒警报器）会在意识反应过来之前触发应激反应：心率飙升、呼吸变浅、肌肉紧绷。这个反应比理性思考（前额叶皮层）快得多——<strong>你不是先想清楚再生气，而是先生气才有机会想清楚</strong>。</p>
+<p>流行说法"情绪峰值只有 90 秒，撑过去就赢了"：生理上确有依据（应激激素的初始冲刷约 1-2 分钟），但注意——<strong>如果持续反刍，等于不断重新按下警报按钮</strong>，90 秒会变成 90 分钟、90 天。（"90 秒"常被归于神经解剖学家 Jill Bolte Taylor，这是科普简化，不是精确生理常数，如实标注。）</p>
+
+<h3>1.2 心理层面：伤害你的不是事件，是解读</h3>
+<p>认知行为疗法（CBT）奠基人阿尔伯特·埃利斯（Albert Ellis）1955 年提出的 <strong>情绪 ABC 理论</strong>：</p>
+<pre><code>A（Activating event）触发事件：老板当众批评了你
+        ↓
+B（Belief）你的解读："他针对我，我完了，同事都在看笑话"
+        ↓
+C（Consequence）情绪后果：羞耻 + 愤怒 + 焦虑，一整天缓不过来</code></pre>
+<p><strong>同一个 A，换一个 B，就是完全不同的 C</strong>。这解释了为什么同一件糟心事，有人当晚失眠，有人转头就忘——<strong>差别不在事件，在解读</strong>。</p>
+
+<h3>1.3 三种最常见的毒性解读</h3>
+<table>
+  <tr><th>认知扭曲</th><th>内心台词</th><th>真相</th></tr>
+  <tr><td><strong>灾难化</strong></td><td>"他没回消息 → 讨厌我 → 我要被开除"</td><td>把小概率最坏结果当必然</td></tr>
+  <tr><td><strong>非黑即白</strong></td><td>"这次没做好 → 我什么都做不好"</td><td>抹掉中间地带，不允许自己是普通人</td></tr>
+  <tr><td><strong>个人化</strong></td><td>"他心情不好 → 一定是我惹的"</td><td>把别人的情绪和责任揽到自己身上</td></tr>
+</table>
+<p>还有一类特别常见：<strong>读心术</strong>（"他们没说话，一定在议论我"）。遇到糟心的人时，这些扭曲会把对方的杀伤力放大数倍——<strong>对方只伤害了你一次，你的解读让你被伤害了几十次</strong>。</p>
+
+<h3>1.4 反刍：阴霾持续不散的真正原因</h3>
+<ul>
+  <li>形式上像"思考"，实际是<strong>没有出口的循环播放</strong>：不产生新信息、不导向行动，只反复体验痛苦；</li>
+  <li>反刍时身体仍在分泌应激激素——你躺在沙发上"休息"，身体却在打仗（van der Kolk《身体从未忘记》：交感神经油门踩到底 + 冻结反应拉手刹，表面静止、内部高耗损）；</li>
+  <li>反刍强化"负面事件 = 持续痛苦"的条件反射，越反刍下次越容易被触发。</li>
+</ul>
+<div class="callout key">
+  <div class="title">识别口诀</div>
+  思考有出口（得出一个下一步动作），反刍没有出口（只是循环）。
+</div>
+
+<h2 id="sec2">二、原理：情绪调节的科学框架</h2>
+
+<h3>2.1 Gross 情绪调节过程模型（1998）：干预越早，代价越小</h3>
+<pre><code>情境出现 → 注意分配 → 认知评价 → 情绪产生 → 情绪表达
+ ①情境选择  ②注意转移  ③认知重评      ④反应调节
+（前瞻型调节，源头降温）          （反应型调节，事后补救）</code></pre>
+<table>
+  <tr><th>策略</th><th>发生时机</th><th>机制</th><th>效果</th></tr>
+  <tr><td><strong>认知重评</strong>（reappraisal）</td><td>情绪爆发前/早期</td><td>前额叶介入，<strong>降低杏仁核激活</strong></td><td>主观痛苦真实减少，心率平稳——"真稳定"</td></tr>
+  <tr><td><strong>表达抑制</strong>（suppression）</td><td>情绪已全面爆发</td><td>强行压住表情和行为</td><td><strong>杏仁核激活没有减少</strong>，交感神经反而飙升——"假稳定"</td></tr>
+</table>
+<p>经典实验佐证（Gross 手术影片实验转述）：被要求"憋住表情"的组，脸上风平浪静，但心率、皮肤电瞬间飙升；被引导"换个角度看"的组，主观痛苦和生理指标同步平稳。</p>
+<div class="callout key">
+  <div class="title">核心结论</div>
+  压抑不是调节，是把壶嘴堵住继续烧水。真正有效的是<strong>在情绪定性之前改变解读</strong>（认知重评），以及<strong>给已产生的情绪找安全出口</strong>（而不是堵）。
+</div>
+
+<h3>2.2 命名即降温：情绪标注的神经机制</h3>
+<p>给情绪贴标签（"我现在是愤怒，强度 7 分，伴随心跳加快"）能立即调动前额叶、降低杏仁核活动——<strong>像从"正在发脾气的人"变成"看见自己在发脾气的人"</strong>，沉浸感立刻下降。这是所有快速平复技术里性价比最高的第一步。</p>
+
+<h3>2.3 身体先行：认知失灵时从躯体入手</h3>
+<ul>
+  <li><strong>呼吸</strong>：延长呼气刺激迷走神经（副交感主通路），向大脑发"安全信号"，降心率降压力激素；</li>
+  <li><strong>物理动作</strong>：洗碗时温水冲过手背、脚踩地面的触感——具身感受把注意力从脑内灾难推演拉回当下，解除"冻结"；</li>
+  <li><strong>温度/空间变化</strong>：喝冷水、离开现场——生理状态改变触发神经系统重新调节。</li>
+</ul>
+
+<h3>2.4 接纳悖论：越想控制，越失控</h3>
+<p>"控制情绪"本身隐含判断——"现在这个情绪是错的、危险的"，这会激活威胁侦测，<strong>焦虑指数立刻再涨一格</strong>：你在和情绪打内战。真正的情绪稳定不是没有情绪，而是<strong>不被情绪支配</strong>。允许情绪存在、给它命名、让它流经，它反而走得快。</p>
+
+<figure>
+  <iframe src="../assets/emotion-regulation-diagrams/1-abc-and-gross.html" loading="lazy"></iframe>
+  <figcaption>图 1 · 情绪 ABC 模型与 Gross 调节时机：杠杆在哪里</figcaption>
+</figure>
+
+<h2 id="sec3">三、方法工具箱：按时间尺度分四层</h2>
+
+<h3>3.1 第一层 · 即刻灭火（0–10 分钟）：生理先行，不做大决定</h3>
+<p>目标不是"想通"，是<strong>把身体从应激状态拉回来</strong>。</p>
+<table>
+  <tr><th>#</th><th>方法</th><th>操作</th><th>原理</th></tr>
+  <tr><td>1</td><td><strong>90 秒暂停</strong></td><td>深呼吸 3 秒 → 离开现场（哪怕去趟厕所）→ 喝口冷水</td><td>应激激素初始冲刷约 1-2 分钟；空间/体温变化重置神经系统</td></tr>
+  <tr><td>2</td><td><strong>4-7-8 呼吸</strong></td><td>鼻吸 4 秒 → 屏息 7 秒（初学 5 秒）→ 噘嘴慢呼 8 秒，4 轮起</td><td>延长呼气刺激迷走神经，心率变异性提升</td></tr>
+  <tr><td>3</td><td><strong>情绪命名</strong></td><td>默念："这是愤怒/委屈/羞耻，强度 X 分，身体反应是……"</td><td>前额叶介入，杏仁核降温</td></tr>
+  <tr><td>4</td><td><strong>落地技术</strong></td><td>5-4-3-2-1：5 个看到的、4 个摸到的、3 个听到的、2 个闻到的、1 个尝到的</td><td>把注意力从脑内推演拉回当下感官</td></tr>
+  <tr><td>5</td><td><strong>物理着陆</strong></td><td>洗手感受水温、脚踩地面、攥冰握拳 30 秒</td><td>具身感受解除冻结状态</td></tr>
+</table>
+<div class="callout warn">
+  <div class="title">这 10 分钟内的三条铁律</div>
+  ❌ 不发任何消息、不做任何决定、不回应挑衅（应激状态下的输出大概率事后后悔）<br>
+  ❌ 不"想通它"——前额叶没上线，想不通，只会反刍<br>
+  ✅ 只做一件事：让身体平静下来
+</div>
+
+<h3>3.2 第二层 · 当日消化（数小时）：认知重评三问</h3>
+<p>身体平静后，做 ABC 拆解。<strong>纸笔效果远好于脑内想</strong>——写下来才能看见自己的 B。</p>
+<pre><code>① 这件事最坏的结果是什么？（大概率不会死人，写出来就不那么可怕了）
+② 我能控制的部分有哪些？（把注意力从"他怎么能这样"移回"我能做什么"）
+③ 如果好朋友遇到同样的事，我会怎么劝他？（瞬间拉开视角）</code></pre>
+<p><strong>换框练习</strong>：给同一事件写三个不同的 B，观察 C 如何变化：</p>
+<table>
+  <tr><th>事件 A</th><th>解读 B1（毒性）</th><th>解读 B2（中性）</th><th>解读 B3（建设性）</th></tr>
+  <tr><td>领导当众挑刺</td><td>"他针对我"</td><td>"他今天状态差/风格如此"</td><td>"这条意见有价值，其余忽略"</td></tr>
+  <tr><td>被朋友爽约</td><td>"他根本不重视我"</td><td>"他可能真有急事"</td><td>"我期待落空了，可以直接问他"</td></tr>
+</table>
+<p><strong>安全宣泄出口</strong>（选其一）：</p>
+<ul>
+  <li><strong>碎纸宣泄</strong>：把糟心事写在废纸上，揉碎、撕烂、装袋扔掉（具身化的"清理"仪式）；</li>
+  <li><strong>运动宣泄</strong>：跑步/跳绳到大汗，放缓呼吸，给自己买瓶喜欢的饮料收尾；</li>
+  <li><strong>表达性书写</strong>：每周 3-4 次、每次 15-20 分钟，手写压抑的感受，不修饰不美化——研究显示持续 4 周可降低炎症指标、缓解躯体化症状（转述数据，以原始研究为准）。</li>
+</ul>
+
+<h3>3.3 第三层 · 针对性策略：遇到糟心的"人"</h3>
+<p>糟心的事会过去，糟心的人会反复出现，需要专门策略（详见图 3）：</p>
+<ul>
+  <li><strong>策略一：不接招</strong>——挑衅/阴阳/甩锅是邀请你进入他的情绪战场，你接招，他的情绪就由你买单。不是忍，是看清了不需要接；</li>
+  <li><strong>策略二：不纠缠</strong>——纠缠的成本函数是灾难性的，你的每一分钟注意力都是沉没成本。边界不是绝情，是风控；</li>
+  <li><strong>策略三：物理与信息隔离</strong>——能远离就远离，不能远离就降频（公事公办、不闲聊、不暴露私事），屏蔽是合法健康的手段；</li>
+  <li><strong>策略四：灰岩法（Grey Rock）</strong>——回应像灰色石头：无情绪、无细节、不解释、不辩驳（"嗯""知道了""按流程来"），对方得不到情绪反应，纠缠动力自然衰减；</li>
+  <li><strong>策略五：菩萨心肠 + 金刚手段</strong>——情绪上不接招（守住内心），行为上该处理处理：涉及实质侵害时冷静留证据、明确警告、走流程。像踢开绊脚石，不需要恨石头。<strong>事来则应，事去则静</strong>。</li>
+</ul>
+
+<h3>3.4 第四层 · 长期建设：把恢复力练成体质</h3>
+<table>
+  <tr><th>维度</th><th>做法</th><th>机制（转述）</th></tr>
+  <tr><td>睡眠</td><td>7-8 小时，23 点前入睡</td><td>熬夜打乱皮质醇/褪黑素节律 → 持续焦虑、"深夜 emo"</td></tr>
+  <tr><td>光照</td><td>晨间 7:00-9:30 户外自然光 20 分钟</td><td>白天血清素高位 + 夜间褪黑素加深，隔玻璃效果减半</td></tr>
+  <tr><td>运动</td><td>每周 3 次以上有氧</td><td>改善自主神经调节，提升心率变异性（HRV）</td></tr>
+  <tr><td>自然暴露</td><td>每周累计 ≥120 分钟，单次 ≥20 分钟</td><td>植物挥发物降低肾上腺素与皮质醇</td></tr>
+  <tr><td>社交</td><td>远离消耗性关系，经营高质量连接</td><td>良好社交降皮质醇、促催产素</td></tr>
+  <tr><td>正念/冥想</td><td>每天 10 分钟，持续 8 周量级</td><td>长期练习者杏仁核减敏、前额叶增厚（转述影像学研究）</td></tr>
+  <tr><td>自我接纳</td><td>从"有条件接纳"转向"无条件接纳"</td><td>内耗最深的根是不接纳"不够好的自己"</td></tr>
+</table>
+<p><strong>心态层面的三个根本转变</strong>（反刍/内耗的根治方向）：</p>
+<ol>
+  <li><strong>从追求确定 → 接受不确定</strong>："我做好我能做的，然后带着接纳面对控制不了的结果"；</li>
+  <li><strong>从活在头脑里 → 活在当下</strong>：吃饭感受味道，走路感受脚底——过去和未来插不进来；</li>
+  <li><strong>从有条件接纳自己 → 无条件接纳</strong>：你不需要变得完美才值得对自己好。</li>
+</ol>
+
+<h2 id="sec4">四、实战流程：今天遇到一件糟心事，全天怎么走</h2>
+<figure>
+  <iframe src="../assets/emotion-regulation-diagrams/2-daily-protocol.html" loading="lazy"></iframe>
+  <figcaption>图 2 · 四阶段全天应对流程（含长期底盘）</figcaption>
+</figure>
+<pre><code>【0-10 分钟】生理灭火
+  上头 → 深呼吸 3 秒 → 离开现场 → 冷水/洗手 → 4-7-8 呼吸 4 轮
+  → 命名情绪："这是愤怒，7 分"
+  铁律：不发消息、不做决定、不回应挑衅
+
+【10 分钟-数小时】转移 + 着陆
+  散步/运动/做家务（物理动作打断反刍）
+  识别反刍启动（循环回放无出口）→ 5-4-3-2-1 拉回当下
+
+【当晚】认知重评（纸笔）
+  写情绪日记：发生了什么 + 我的感受
+  三问：最坏结果？我能控制的？朋友遇到我怎么劝？
+  换框：给事件写 3 个不同的 B
+  若是"人"的问题：不接招/不纠缠/灰岩/走流程，选一个写下来
+
+【睡前】清空 + 感恩
+  未解决的事写一句"下一步是什么"，合上本子（"已存档"信号）
+  写 1-3 件今天值得感激的小事（训练注意力的正向选择）
+
+【次日及以后】
+  能行动的糟心事：执行昨晚写下的下一步
+  不能行动的（别人的烂事）：觉察反刍 → 标注 → 回到手头的事
+  反复出现同一触发源：上长期建设清单，或环境调整/专业支持</code></pre>
+<figure>
+  <iframe src="../assets/emotion-regulation-diagrams/3-toxic-people-strategy.html" loading="lazy"></iframe>
+  <figcaption>图 3 · 应对糟心的人：情绪层不接招 + 行为层有边界</figcaption>
+</figure>
+
+<h2 id="sec5">五、常见误区（这些"常识"是错的）</h2>
+<table>
+  <tr><th>误区</th><th>真相</th></tr>
+  <tr><td>"扛过去就坚强了"</td><td>压抑 ≠ 调节。外部照常运转不代表内部处理完成；未消化的情绪不会消失，只会换形式出现（躯体化、突然爆发、关系模式重复）</td></tr>
+  <tr><td>"想开点就好了"</td><td>对正在应激的人说"想开点"，等于要求他在前额叶掉线时使用前额叶。先生理平复，再谈认知</td></tr>
+  <tr><td>"情绪稳定 = 没有情绪"</td><td>真稳定是情绪升起但不被支配；脸上平静但心率飙升的是假稳定（表达抑制）</td></tr>
+  <tr><td>"发泄就是骂回去/砸东西"</td><td>攻击性宣泄会强化愤怒回路；有效的是无害出口（运动、书写、撕废纸）</td></tr>
+  <tr><td>"反复想想就能想通"</td><td>有出口的思考是解决问题，没出口的循环是反刍——后者越想越糟</td></tr>
+  <tr><td>"求助 = 脆弱"</td><td>求助是对自己负责的、有力量的行为</td></tr>
+</table>
+
+<h2 id="sec6">六、何时需要专业帮助（重要）</h2>
+<div class="callout warn">
+  <div class="title">以下情况说明已超出自我调节范围，请寻求精神科医生或心理咨询师支持</div>
+  <ul>
+    <li>情绪低落/焦虑持续 <strong>2 周以上</strong>，自我调节无效；</li>
+    <li>长期失眠、对什么都提不起兴趣、身体多处不适查无实据；</li>
+    <li>反刍严重干扰工作与生活，无法自行中断；</li>
+    <li>出现"活着没意思"的念头；</li>
+    <li>情绪爆发后频繁后悔，或需要借助酒精/暴食来麻痹。</li>
+  </ul>
+  分清"可以自己调节的情绪问题"和"需要专业干预的心理状况"，就像分清感冒和肺炎——<strong>寻求帮助不是脆弱，是对自己负责</strong>。
+</div>
+
+<h2 id="sec7">七、核心结论（一页纸版本）</h2>
+<div class="callout key">
+  <div class="title">七条带走</div>
+  <ol>
+    <li><strong>伤害你的不是事件，是解读</strong>（ABC 理论）：同一个 A，不同的 B，完全不同的 C。你的杠杆永远在 B。</li>
+    <li><strong>干预越早，代价越小</strong>（Gross 模型）：认知重评（源头降温）远优于表达抑制（事后硬堵）；压抑只是堵住壶嘴，水还在烧。</li>
+    <li><strong>上头的头 10 分钟只做一件事：让身体平静</strong>——离开现场、呼吸、冷水、命名情绪。不发任何消息、不做任何决定。</li>
+    <li><strong>阴霾不散的原因是反刍</strong>，不是事件本身：识别"循环回放无出口"，用物理动作（走路、洗手、5-4-3-2-1）把自己拉回当下。</li>
+    <li><strong>对糟心的人：情绪不接招 + 行为有边界</strong>——不纠缠是止损，灰岩法是降频，实质侵害冷静走流程。事来则应，事去则静。</li>
+    <li><strong>长期恢复力靠底盘</strong>：睡眠、晨光、运动、自然、高质量社交、自我接纳。</li>
+    <li><strong>持续两周以上的困扰请找专业人士</strong>。</li>
+  </ol>
+</div>
+
+<h2 id="sec8">八、注意事项（可信度声明）</h2>
+<div class="callout warn">
+  <div class="title">诚实性声明</div>
+  <ul>
+    <li>理论骨架（ABC、Gross 过程模型、认知重评 vs 表达抑制、情绪标注）<strong>属于心理学主流共识</strong>，但引用的实验细节（如手术影片实验）来自知乎转述，未逐条核对原始论文。</li>
+    <li><strong>"90 秒情绪峰值"为科普简化</strong>（常归于 Jill Bolte Taylor），非精确生理常数；合理内核（应激初始反应短暂、反刍会续燃）成立。</li>
+    <li>生理数据（杏仁核体积变化、皮质醇、炎症指标等具体数字）均来自知乎答主转述，<strong>未核对原始文献</strong>，仅作方向性参考。</li>
+    <li>知乎信源中存在心理咨询机构营销内容，本报告仅采用方法论描述，已剔除广告导向表述。</li>
+    <li>灰岩法（Grey Rock）为流行心理学实践，针对特定人格类型的有效性缺乏严格实证，作为策略选项参考。</li>
+    <li>本报告为科普整理，不构成心理诊疗建议；符合第六章情形时请以专业帮助为准。</li>
+  </ul>
+</div>
+
+<h2 id="refs">九、参考资料（知乎检索，2026-08-21）</h2>
+<h4>理论与机制</h4>
+<ol>
+  <li>理性情绪实验室《为什么很多人认为自己扛过了危机，实际上只是逃避？》（Gross 模型：抑制 vs 重评）— 知乎问答（170 赞）</li>
+  <li>欣欣博士《如何辨别真正的"情绪稳定"还是"压抑情绪"》（Gross 手术影片实验转述）— 知乎问答</li>
+  <li>朵拉《情绪的核武器——ABC 理论》（埃利斯、认知扭曲）— <a href="https://zhuanlan.zhihu.com/p/2069157414843294737">链接</a></li>
+  <li>《心理学有个「情绪ABC理论」：总说"想开点"的人，最不懂情绪管理》— 知乎专栏</li>
+  <li>闪闪发光《为什么你越想控制情绪，反而越容易崩溃？》（情绪标注、90 秒、第三视角）— 知乎问答</li>
+</ol>
+<h4>实操方法</h4>
+<ol start="6">
+  <li>陈思逸《绕过大脑内耗，从身体开始自救》（冻结反应、落地技术）— <a href="https://zhuanlan.zhihu.com/p/2065072172977107107">链接</a>（心理学话题优秀答主）</li>
+  <li>《4-7-8 呼吸法：3 分钟让你气定神闲》— 知乎专栏</li>
+  <li>敏而向上《习惯性压抑情绪的人如何有效调节》（觉察命名、无害宣泄）— 知乎问答（89 赞）</li>
+  <li>壹点灵《情绪调节：3 个方法重获情绪自由》（情绪三问、情绪日记）— 知乎专栏（仅方法部分）</li>
+  <li>《心理疏导的 68 个方法》（呼吸放松、音乐调节、运动宣泄）— 知乎专栏（仅方法部分）</li>
+</ol>
+<h4>反刍与内耗</h4>
+<ol start="11">
+  <li>理性情绪实验室《如何避免去内耗？》（三个根本转变、专业帮助边界）— 知乎问答（21 赞）</li>
+</ol>
+<h4>应对糟心的人</h4>
+<ol start="12">
+  <li>国企高管剑哥《遇见烂人怎么办？越抹不开面子，越容易被拖进是非泥潭》（边界=风控）— 知乎专栏</li>
+  <li>清风徐来《面对反复挑衅的烂人烂事》（情绪不接招 + 行为雷霆手段分层）— 知乎专栏（30 赞）</li>
+</ol>
+<h4>长期建设</h4>
+<ol start="14">
+  <li>Lithos《什么样的行为极大地改善了你的心理健康？》（睡眠/光照/运动/自然/书写/社交的生理机制）— 知乎问答（41 赞）</li>
+</ol>
+<h4>原始文献（正文转述所本，建议二次查证）</h4>
+<ol start="15">
+  <li>Ellis, A. (1955). 理性情绪行为疗法（REBT）/ ABC 理论</li>
+  <li>Gross, J. J. (1998). The emerging field of emotion regulation: An integrative review. <em>Review of General Psychology</em></li>
+  <li>van der Kolk, B.《身体从未忘记》（The Body Keeps the Score）</li>
+  <li>Bolte Taylor, J.（"90 秒"说法的流行来源）</li>
+</ol>
+
+
+<div class="footer">
+  情绪修复与心态调整指南 · 知乎开放平台 + 公开心理学文献转述 · 2026-08-21 · 配套概念图见 diagrams/ 目录
+</div>
+
+</div>
+</body>
+</html>

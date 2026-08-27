@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>情绪的 ABC 模型与调节时机</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#34d399; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .rose{background:#fb7185;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>情绪的 ABC 模型 与 Gross 调节时机：杠杆在哪里</h1></div>
+<div class="subtitle">上：伤害你的不是事件 A，是解读 B · 下：干预越早代价越小（认知重评 优于 表达抑制）</div>
+<div class="card">
+<svg viewBox="0 0 1080 820" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="aw" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    </marker>
+    <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#34d399" stroke-width="1.2"/>
+    </marker>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#fb7185" stroke-width="1.2"/>
+    </marker>
+  </defs>
+  <rect width="1080" height="820" fill="url(#grid)"/>
+
+  <!-- arrows first -->
+  <path d="M 285 140 L 350 140" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#aw)"/>
+  <path d="M 700 140 L 765 140" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#aw)"/>
+  <path d="M 560 175 L 560 235 L 765 235" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#ag)"/>
+
+  <!-- Part 1: ABC -->
+  <text x="60" y="60" fill="#64748b" font-size="10">PART 1 · 情绪 ABC（埃利斯 1955）：同一个 A，不同的 B → 完全不同的 C</text>
+
+  <rect x="70" y="105" width="215" height="70" rx="6" fill="#0f172a"/>
+  <rect x="70" y="105" width="215" height="70" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="177" y="130" fill="#22d3ee" font-size="12" font-weight="600" text-anchor="middle">A 触发事件</text>
+  <text x="177" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">领导当众挑刺你的方案</text>
+  <text x="177" y="164" fill="#94a3b8" font-size="9" text-anchor="middle">（不可控）</text>
+
+  <rect x="350" y="105" width="350" height="70" rx="6" fill="#0f172a"/>
+  <rect x="350" y="105" width="350" height="70" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="2"/>
+  <text x="525" y="130" fill="#34d399" font-size="12" font-weight="600" text-anchor="middle">B 你的解读 ★ 杠杆在这里</text>
+  <text x="525" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">B1 毒性："他针对我，我完了"（灾难化/个人化）</text>
+  <text x="525" y="164" fill="#94a3b8" font-size="9" text-anchor="middle">B2 建设性："这条意见有价值，其余忽略"</text>
+
+  <rect x="765" y="105" width="255" height="70" rx="6" fill="#0f172a"/>
+  <rect x="765" y="105" width="255" height="70" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="892" y="130" fill="#fb7185" font-size="12" font-weight="600" text-anchor="middle">C1 羞耻+愤怒，失眠一天</text>
+  <text x="892" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">对方伤害你 1 次</text>
+  <text x="892" y="164" fill="#94a3b8" font-size="9" text-anchor="middle">你的解读让你受伤几十次</text>
+
+  <rect x="765" y="200" width="255" height="70" rx="6" fill="#0f172a"/>
+  <rect x="765" y="200" width="255" height="70" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="892" y="225" fill="#34d399" font-size="12" font-weight="600" text-anchor="middle">C2 轻微不快，改进行动</text>
+  <text x="892" y="245" fill="#94a3b8" font-size="9" text-anchor="middle">转头就忘</text>
+  <text x="892" y="259" fill="#94a3b8" font-size="9" text-anchor="middle">代价≈0</text>
+
+  <text x="525" y="290" fill="#64748b" font-size="9" text-anchor="middle">毒性 B 三件套：灾难化（小事→末日）· 非黑即白（一次失败→我什么都做不好）· 个人化（别人的情绪→我的错）</text>
+
+  <!-- Part 2: Gross timeline -->
+  <text x="60" y="340" fill="#64748b" font-size="10">PART 2 · Gross 情绪调节过程模型（1998）：沿情绪产生的时间线，干预点越左越好</text>
+
+  <!-- timeline axis -->
+  <path d="M 90 460 L 1010 460" fill="none" stroke="#334155" stroke-width="1.5" marker-end="url(#aw)"/>
+  <text x="1010" y="480" fill="#64748b" font-size="9" text-anchor="end">时间 →</text>
+
+  <!-- stage 1 situation -->
+  <rect x="90" y="380" width="170" height="60" rx="6" fill="#0f172a"/>
+  <rect x="90" y="380" width="170" height="60" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="175" y="405" fill="#94a3b8" font-size="10" text-anchor="middle">情境出现</text>
+  <text x="175" y="423" fill="#64748b" font-size="8" text-anchor="middle">糟心的人/事登场</text>
+
+  <!-- stage 2 attention -->
+  <rect x="300" y="380" width="170" height="60" rx="6" fill="#0f172a"/>
+  <rect x="300" y="380" width="170" height="60" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="385" y="405" fill="#94a3b8" font-size="10" text-anchor="middle">注意分配</text>
+  <text x="385" y="423" fill="#64748b" font-size="8" text-anchor="middle">你开始关注它</text>
+
+  <!-- stage 3 appraisal (highlight) -->
+  <rect x="510" y="380" width="180" height="60" rx="6" fill="#0f172a"/>
+  <rect x="510" y="380" width="180" height="60" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="2"/>
+  <text x="600" y="405" fill="#34d399" font-size="10" font-weight="600" text-anchor="middle">认知评价 ★</text>
+  <text x="600" y="423" fill="#64748b" font-size="8" text-anchor="middle">大脑给事件定性</text>
+
+  <!-- stage 4 response -->
+  <rect x="730" y="380" width="170" height="60" rx="6" fill="#0f172a"/>
+  <rect x="730" y="380" width="170" height="60" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="815" y="405" fill="#fb7185" font-size="10" text-anchor="middle">情绪全面产生</text>
+  <text x="815" y="423" fill="#64748b" font-size="8" text-anchor="middle">杏仁核警报 + 生理唤起</text>
+
+  <!-- reappraisal box above -->
+  <rect x="430" y="520" width="330" height="86" rx="6" fill="#0f172a"/>
+  <rect x="430" y="520" width="330" height="86" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="2"/>
+  <text x="595" y="545" fill="#34d399" font-size="11" font-weight="600" text-anchor="middle">③ 认知重评（前瞻型调节）</text>
+  <text x="595" y="565" fill="#94a3b8" font-size="9" text-anchor="middle">前额叶介入 → 降低杏仁核激活</text>
+  <text x="595" y="581" fill="#94a3b8" font-size="9" text-anchor="middle">主观痛苦真实减少 + 心率平稳 = 真稳定</text>
+  <text x="595" y="597" fill="#34d399" font-size="9" text-anchor="middle">✓ 源头降温</text>
+  <path d="M 600 520 L 600 444" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#ag)"/>
+
+  <!-- suppression box below/right -->
+  <rect x="790" y="520" width="230" height="86" rx="6" fill="#0f172a"/>
+  <rect x="790" y="520" width="230" height="86" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.8"/>
+  <text x="905" y="545" fill="#fb7185" font-size="11" font-weight="600" text-anchor="middle">④ 表达抑制（反应型）</text>
+  <text x="905" y="565" fill="#94a3b8" font-size="9" text-anchor="middle">强压表情 = 堵住壶嘴</text>
+  <text x="905" y="581" fill="#94a3b8" font-size="9" text-anchor="middle">杏仁核激活不减，交感飙升</text>
+  <text x="905" y="597" fill="#fb7185" font-size="9" text-anchor="middle">✗ 假稳定，代价最高</text>
+  <path d="M 850 520 L 820 444" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#ar)"/>
+
+  <!-- early strategies box left -->
+  <rect x="90" y="520" width="310" height="86" rx="6" fill="#0f172a"/>
+  <rect x="90" y="520" width="310" height="86" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="245" y="545" fill="#22d3ee" font-size="11" font-weight="600" text-anchor="middle">①② 更早的干预点</text>
+  <text x="245" y="565" fill="#94a3b8" font-size="9" text-anchor="middle">情境选择：远离烂人烂事（边界=风控）</text>
+  <text x="245" y="581" fill="#94a3b8" font-size="9" text-anchor="middle">注意转移：不反刍，回到手头的事</text>
+  <text x="245" y="597" fill="#22d3ee" font-size="9" text-anchor="middle">✓ 成本最低，靠平时建设</text>
+
+  <!-- part3: 90s -->
+  <rect x="90" y="650" width="930" height="110" rx="8" fill="#0f172a"/>
+  <rect x="90" y="650" width="930" height="110" rx="8" fill="rgba(120,53,15,0.25)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="110" y="678" fill="#fbbf24" font-size="11" font-weight="600">已经上头了怎么办？—— 生理峰值约 1-2 分钟（"90 秒"法则，科普简化）</text>
+  <text x="110" y="702" fill="#94a3b8" font-size="10">应激激素的初始冲刷很短暂：深呼吸 → 离开现场 → 冷水 → 命名情绪，撑过峰值再说话</text>
+  <text x="110" y="722" fill="#94a3b8" font-size="10">但注意：反刍 = 反复重新按下警报按钮，90 秒会变 90 分钟。所以——</text>
+  <text x="110" y="744" fill="#fbbf24" font-size="10" font-weight="600">铁律：峰值期不发消息、不做决定、不回应挑衅。身体先落地，认知再上场。</text>
+
+  <text x="60" y="795" fill="#64748b" font-size="9">理论来源：Ellis (1955) ABC / REBT · Gross (1998) 情绪调节过程模型 · 实验细节转述自知乎，建议引用前核对原文</text>
+</svg>
+</div>
+
+<div class="cards">
+  <div class="info-card">
+    <h3><div class="card-dot emerald"></div>杠杆在 B</h3>
+    <ul>
+      <li>• 事件 A 常常不可控</li>
+      <li>• 解读 B 永远可以换</li>
+      <li>• 换框练习：给同一事件写 3 个 B</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot rose"></div>压抑 ≠ 调节</h3>
+    <ul>
+      <li>• 堵住壶嘴，水还在烧</li>
+      <li>• 脸平静但心率飙升</li>
+      <li>• 要给情绪出口，不是封口</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot cyan"></div>上头时的顺序</h3>
+    <ul>
+      <li>• 先身体：呼吸/离开/冷水</li>
+      <li>• 再命名：标注情绪即降温</li>
+      <li>• 最后才讲道理（认知重评）</li>
+    </ul>
+  </div>
+</div>
+<div class="footer">情绪修复与心态调整指南 · 图1 · 2026-08-21</div>
+</body>
+</html>

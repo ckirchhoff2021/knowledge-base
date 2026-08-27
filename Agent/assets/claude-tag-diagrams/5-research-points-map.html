@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>算法研究点全景：从技术栈层到开放问题</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#34d399; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .rose{background:#fb7185;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>算法研究点全景：技术栈层 → 开放问题映射</h1></div>
+<div class="subtitle">左侧为技术栈层（L4/L5/L7 高亮），右侧为研究点（P0=红框 / P1=橙框 / P2=黄框），连线表示归属</div>
+<div class="card">
+<svg viewBox="0 0 1080 800" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arw" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#64748b" stroke-width="1.2"/>
+    </marker>
+  </defs>
+  <rect width="1080" height="800" fill="url(#grid)"/>
+
+  <!-- arrows first (behind boxes) -->
+  <path d="M 330 150 C 430 150, 440 100, 540 100" fill="none" stroke="#64748b" stroke-width="1" marker-end="url(#arw)"/>
+  <path d="M 330 150 C 430 150, 440 200, 540 200" fill="none" stroke="#64748b" stroke-width="1" marker-end="url(#arw)"/>
+  <path d="M 330 150 C 430 150, 440 300, 540 300" fill="none" stroke="#64748b" stroke-width="1" marker-end="url(#arw)"/>
+  <path d="M 330 250 C 430 250, 440 160, 540 160" fill="none" stroke="#64748b" stroke-width="1" marker-end="url(#arw)"/>
+  <path d="M 330 350 C 430 350, 440 400, 540 400" fill="none" stroke="#64748b" stroke-width="1" marker-end="url(#arw)"/>
+  <path d="M 330 350 C 430 350, 440 500, 540 500" fill="none" stroke="#64748b" stroke-width="1" marker-end="url(#arw)"/>
+  <path d="M 330 450 C 430 450, 440 580, 540 580" fill="none" stroke="#64748b" stroke-width="1" marker-end="url(#arw)"/>
+  <path d="M 330 550 C 430 550, 440 660, 540 660" fill="none" stroke="#64748b" stroke-width="1" marker-end="url(#arw)"/>
+
+  <!-- column titles -->
+  <text x="70" y="36" fill="#64748b" font-size="10">技术栈层</text>
+  <text x="560" y="36" fill="#64748b" font-size="10">开放研究问题（优先级 P0 > P1 > P2）</text>
+
+  <!-- LEFT: layers -->
+  <rect x="70" y="110" width="260" height="80" rx="6" fill="#0f172a"/>
+  <rect x="70" y="110" width="260" height="80" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="2"/>
+  <text x="90" y="138" fill="#a78bfa" font-size="12" font-weight="600">L4/L5 记忆与检索</text>
+  <text x="90" y="158" fill="#94a3b8" font-size="9">蒸馏写入 · 预算检索</text>
+  <text x="90" y="174" fill="#94a3b8" font-size="9">事实失效 · 记忆投毒入口</text>
+
+  <rect x="70" y="210" width="260" height="80" rx="6" fill="#0f172a"/>
+  <rect x="70" y="210" width="260" height="80" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="90" y="238" fill="#34d399" font-size="12" font-weight="600">L2 会话编排</text>
+  <text x="90" y="258" fill="#94a3b8" font-size="9">Session 事件日志</text>
+  <text x="90" y="274" fill="#94a3b8" font-size="9">崩溃后状态重建</text>
+
+  <rect x="70" y="310" width="260" height="80" rx="6" fill="#0f172a"/>
+  <rect x="70" y="310" width="260" height="80" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="2"/>
+  <text x="90" y="338" fill="#fb7185" font-size="12" font-weight="600">L7 规划与执行</text>
+  <text x="90" y="358" fill="#94a3b8" font-size="9">小时~天级异步任务</text>
+  <text x="90" y="374" fill="#94a3b8" font-size="9">目标漂移 · 敷衍交付</text>
+
+  <rect x="70" y="410" width="260" height="80" rx="6" fill="#0f172a"/>
+  <rect x="70" y="410" width="260" height="80" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="90" y="438" fill="#fbbf24" font-size="12" font-weight="600">L6 模型服务</text>
+  <text x="90" y="458" fill="#94a3b8" font-size="9">Opus 4.8 固定不开放路由</text>
+  <text x="90" y="474" fill="#94a3b8" font-size="9">"账单杀手"成本压力</text>
+
+  <rect x="70" y="510" width="260" height="80" rx="6" fill="#0f172a"/>
+  <rect x="70" y="510" width="260" height="80" rx="6" fill="rgba(136,19,55,0.25)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="90" y="538" fill="#fb7185" font-size="12" font-weight="600">L3/L8 安全治理</text>
+  <text x="90" y="558" fill="#94a3b8" font-size="9">Agent Proxy 凭据隔离</text>
+  <text x="90" y="574" fill="#94a3b8" font-size="9">不可信输入面极大</text>
+
+  <!-- RIGHT: research points -->
+  <!-- P0 -->
+  <rect x="540" y="62" width="470" height="76" rx="6" fill="#0f172a"/>
+  <rect x="540" y="62" width="470" height="76" rx="6" fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="2"/>
+  <text x="560" y="88" fill="#fb7185" font-size="11" font-weight="600">P0 · A3 事实失效与状态管理</text>
+  <text x="560" y="106" fill="#94a3b8" font-size="9">检索知"像不像"，不知"现在对不对"；无任何成熟方案</text>
+  <text x="560" y="122" fill="#94a3b8" font-size="9">方向：时序知识图谱 · 隐式失效推断 · 有效度重排序</text>
+
+  <rect x="540" y="162" width="470" height="76" rx="6" fill="#0f172a"/>
+  <rect x="540" y="162" width="470" height="76" rx="6" fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="2"/>
+  <text x="560" y="188" fill="#fb7185" font-size="11" font-weight="600">P0 · C3 验证与反敷衍交付</text>
+  <text x="560" y="206" fill="#94a3b8" font-size="9">测试绿 ≠ 需求完成；模型擅长"给失败重新找说法"</text>
+  <text x="560" y="222" fill="#94a3b8" font-size="9">方向：spec→交付 traceability · 漂移信号检测 · 诚实性 RL</text>
+
+  <rect x="540" y="262" width="470" height="76" rx="6" fill="#0f172a"/>
+  <rect x="540" y="262" width="470" height="76" rx="6" fill="rgba(251,146,60,0.18)" stroke="#fb923c" stroke-width="1.8"/>
+  <text x="560" y="288" fill="#fb923c" font-size="11" font-weight="600">P1 · E1 记忆投毒防御</text>
+  <text x="560" y="306" fill="#94a3b8" font-size="9">恶意"事实"进长期记忆 → 所有后续任务持续受影响；无公开方案</text>
+  <text x="560" y="322" fill="#94a3b8" font-size="9">方向：污点追踪传播 · 写入对抗筛查 · 独立 verifier 交叉验证</text>
+
+  <rect x="540" y="362" width="470" height="76" rx="6" fill="#0f172a"/>
+  <rect x="540" y="362" width="470" height="76" rx="6" fill="rgba(251,146,60,0.18)" stroke="#fb923c" stroke-width="1.8"/>
+  <text x="560" y="388" fill="#fb923c" font-size="11" font-weight="600">P1 · A1/A2 记忆蒸馏与预算检索</text>
+  <text x="560" y="406" fill="#94a3b8" font-size="9">存什么/何时存/怎么遗忘；L0→L3 分层蒸馏有参照（腾讯开源）</text>
+  <text x="560" y="422" fill="#94a3b8" font-size="9">方向：增量蒸馏触发 · 保真度评估 · 预算感知分层召回</text>
+
+  <rect x="540" y="462" width="470" height="76" rx="6" fill="#0f172a"/>
+  <rect x="540" y="462" width="470" height="76" rx="6" fill="rgba(251,146,60,0.18)" stroke="#fb923c" stroke-width="1.8"/>
+  <text x="560" y="488" fill="#fb923c" font-size="11" font-weight="600">P1 · C1 目标漂移抑制</text>
+  <text x="560" y="506" fill="#94a3b8" font-size="9">误差沿轨迹链式放大；稀疏延迟奖励 + 不可逆动作</text>
+  <text x="560" y="522" fill="#94a3b8" font-size="9">方向：阶段性校验点 · 中间过程奖励 · 可回滚动作设计</text>
+
+  <rect x="540" y="542" width="470" height="76" rx="6" fill="#0f172a"/>
+  <rect x="540" y="542" width="470" height="76" rx="6" fill="rgba(120,53,15,0.25)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="560" y="568" fill="#fbbf24" font-size="11" font-weight="600">P2 · D2 执行轨迹级模型路由</text>
+  <text x="560" y="586" fill="#94a3b8" font-size="9">请求级路由降本 30%+（Databricks），任务级仍是空白</text>
+  <text x="560" y="602" fill="#94a3b8" font-size="9">与 C 耦合：小模型长程不可靠 → 无法路由 → 成本居高不下</text>
+
+  <rect x="540" y="622" width="470" height="76" rx="6" fill="#0f172a"/>
+  <rect x="540" y="622" width="470" height="76" rx="6" fill="rgba(120,53,15,0.25)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="560" y="648" fill="#fbbf24" font-size="11" font-weight="600">P2 · B1/E2 上下文重建 与 Ambient 介入决策</text>
+  <text x="560" y="666" fill="#94a3b8" font-size="9">Context Rot：中间信息被日志稀释；harness 重启的状态重建</text>
+  <text x="560" y="682" fill="#94a3b8" font-size="9">介入价值建模：信息增益×时效×相关性 − 打扰成本</text>
+
+  <!-- bottom annotation -->
+  <text x="70" y="740" fill="#64748b" font-size="9">共同主线：三个 P0/P1 难题都需要"对时间的推理"——事实随时间失效、任务随时间漂移、攻击随时间持久化。</text>
+  <text x="70" y="758" fill="#64748b" font-size="9">静态单轮 LLM 技术对此全部失效，这是 Claude Tag 式系统区别于 Chatbot 的算法鸿沟。</text>
+</svg>
+</div>
+
+<div class="cards">
+  <div class="info-card">
+    <h3><div class="card-dot rose"></div>P0：产品可信度底线</h3>
+    <ul>
+      <li>• A3 事实失效：记忆错比没有更危险</li>
+      <li>• C3 反敷衍：异步任务质量最后一关</li>
+      <li>• 两者均无成熟方案，是真正护城河</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot emerald"></div>P1：有参照可起步</h3>
+    <ul>
+      <li>• A1/A2 可参照腾讯开源分层记忆</li>
+      <li>• C1 有 Long-Horizon 综述框架</li>
+      <li>• E1 记忆投毒仍是完全空白</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot cyan"></div>耦合关系</h3>
+    <ul>
+      <li>• C（长程可靠）是 D（成本路由）的前置</li>
+      <li>• A1 蒸馏质量决定 E1 投毒防御难度</li>
+      <li>• 先 P0 再谈规模化</li>
+    </ul>
+  </div>
+</div>
+<div class="footer">Claude Tag 技术栈拆解与算法研究点分析 · 图2 · 2026-08-21</div>
+</body>
+</html>

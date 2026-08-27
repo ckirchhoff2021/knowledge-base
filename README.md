@@ -6,7 +6,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python&style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/badge/Docs-4+-orange?style=for-the-badge" alt="Docs">
+  <img src="https://img.shields.io/badge/Docs-10+-orange?style=for-the-badge" alt="Docs">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status">
   <a href="https://ckirchhoff2021.github.io/knowledge-base/"><img src="https://img.shields.io/badge/🌐-在线预览-blueviolet?style=for-the-badge" alt="Online Preview"></a>
 </p>
@@ -40,9 +40,13 @@ knowledge-base/
 ├── 🧠 PT/                    # 大模型预训练、后训练、RLHF、论文分析
 │   ├── markdown/
 │   └── html/
-└── 🛠️ Skills/                # 技能开发、工具链、工程实践
+├── 🛠️ Skills/                # 技能开发、工具链、工程实践
+│   ├── markdown/
+│   └── html/
+└── 🌱 Life/                  # 心态成长、情绪管理、生活方法论
     ├── markdown/
-    └── html/
+    ├── html/
+    └── assets/
 ```
 
 ---
@@ -63,6 +67,41 @@ knowledge-base/
     <td>2026-08-19</td>
     <td>Claude Tag（Anthropic 团队协作型 Agent）深度调研：四大核心能力、Agent Identity、运行时架构（Session/Harness/Sandbox）、落地实践与风险，含3张交互架构图</td>
     <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/html/Claude-Tag-技术调研报告.html"><b>🔗 在线阅读</b></a></td>
+  </tr>
+  <tr>
+    <td>Claude-Tag-技术栈拆解与算法研究点分析</td>
+    <td>技术深度调研</td>
+    <td>2026-08-22</td>
+    <td>Claude Tag八层技术栈拆解、算法密度标注、记忆管线与研究点优先级分析，含3张交互架构图</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/html/Claude-Tag-技术栈拆解与算法研究点分析.html"><b>🔗 在线阅读</b></a></td>
+  </tr>
+  <tr>
+    <td>Claude-Tag-开源实现盘点</td>
+    <td>开源项目盘点</td>
+    <td>2026-08-21</td>
+    <td>Claude Tag主流开源复刻实现盘点（Open Tag/MFS等），GitHub实测数据</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/html/Claude-Tag-开源实现盘点.html"><b>🔗 在线阅读</b></a></td>
+  </tr>
+  <tr>
+    <td>拟人化Agent产品设计调研报告</td>
+    <td>技术深度调研</td>
+    <td>2026-08-24</td>
+    <td>~16000字，拟人化Agent五大设计维度、六层架构、心理学与HCI理论框架，含交互架构图</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/html/拟人化Agent产品设计调研报告.html"><b>🔗 在线阅读</b></a></td>
+  </tr>
+  <tr>
+    <td>拟人化Agent设计维度理论框架调研笔记</td>
+    <td>调研笔记</td>
+    <td>2026-08-24</td>
+    <td>拟人化Agent设计理论素材：被理解感、连续人格、社交分寸等设计维度理论支撑</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/html/拟人化Agent设计维度理论框架调研笔记.html"><b>🔗 在线阅读</b></a></td>
+  </tr>
+  <tr>
+    <td>飞书数字员工记忆系统设计技术报告</td>
+    <td>技术深度调研</td>
+    <td>2026-08-21</td>
+    <td>~14000字，飞书数字员工分层记忆系统设计：常驻层/检索层/蒸馏层、双通道写入、预算检索注入，含总体架构图</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/html/飞书数字员工记忆系统设计技术报告.html"><b>🔗 在线阅读</b></a></td>
   </tr>
   <tr>
     <td>OPD-OPSD技术调研报告</td>
@@ -100,6 +139,24 @@ knowledge-base/
 
 ### 🛠️ Skills 技能开发
 > 🔄 持续更新中...
+
+### 🌱 Life 心态成长
+<table>
+  <tr>
+    <th>📄 文档名称</th>
+    <th>🏷️ 类型</th>
+    <th>📅 更新时间</th>
+    <th>📝 说明</th>
+    <th>🔗 链接</th>
+  </tr>
+  <tr>
+    <td>情绪修复与心态调整指南</td>
+    <td>心态方法论</td>
+    <td>2026-08-27</td>
+    <td>情绪ABC模型与Gross调节、四阶段全天应对流程、应对糟心的人的边界策略，含3张交互流程图</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Life/html/情绪修复与心态调整指南.html"><b>🔗 在线阅读</b></a></td>
+  </tr>
+</table>
 
 ---
 

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>应对糟心的人：五层策略</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#34d399; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .rose{background:#fb7185;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>应对糟心的人：五层策略矩阵</h1></div>
+<div class="subtitle">情绪层面不接招（守住内心）+ 行为层面有边界（处理现实）· 事来则应，事去则静</div>
+<div class="card">
+<svg viewBox="0 0 1080 780" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="1080" height="780" fill="url(#grid)"/>
+
+  <!-- two zone headers -->
+  <text x="60" y="45" fill="#64748b" font-size="10">情绪层（守住内心 · 不让他消耗你）</text>
+  <text x="600" y="45" fill="#64748b" font-size="10">行为层（处理现实 · 不让他破坏你）</text>
+
+  <!-- LEFT zone: emotional -->
+  <rect x="40" y="60" width="480" height="560" rx="10" fill="none" stroke="#22d3ee" stroke-width="1.2" stroke-dasharray="8,4"/>
+
+  <rect x="60" y="85" width="440" height="120" rx="6" fill="#0f172a"/>
+  <rect x="60" y="85" width="440" height="120" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="2"/>
+  <text x="80" y="112" fill="#22d3ee" font-size="12" font-weight="600">策略一 · 不接招（情绪不入场）</text>
+  <text x="80" y="134" fill="#94a3b8" font-size="9">挑衅/阴阳/甩锅 = 邀请你进入他的情绪战场</text>
+  <text x="80" y="152" fill="#94a3b8" font-size="9">你接招，他的情绪就由你买单</text>
+  <text x="80" y="170" fill="#94a3b8" font-size="9">心法：他骂你，你不生气——不是忍，是看清了不需要接</text>
+  <text x="80" y="190" fill="#22d3ee" font-size="9">✓ 对方伤害你 1 次，你不给自己加几十次</text>
+
+  <rect x="60" y="225" width="440" height="120" rx="6" fill="#0f172a"/>
+  <rect x="60" y="225" width="440" height="120" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="80" y="252" fill="#22d3ee" font-size="12" font-weight="600">策略二 · 不纠缠（止损思维）</text>
+  <text x="80" y="274" fill="#94a3b8" font-size="9">纠缠成本函数是灾难性的：</text>
+  <text x="80" y="292" fill="#94a3b8" font-size="9">你投入的每一分钟注意力都是沉没成本</text>
+  <text x="80" y="310" fill="#94a3b8" font-size="9">对方光脚不怕穿鞋，你耗不起</text>
+  <text x="80" y="330" fill="#22d3ee" font-size="9">✓ 边界不是绝情，是风控</text>
+
+  <rect x="60" y="365" width="440" height="120" rx="6" fill="#0f172a"/>
+  <rect x="60" y="365" width="440" height="120" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="80" y="392" fill="#22d3ee" font-size="12" font-weight="600">策略三 · 物理与信息隔离</text>
+  <text x="80" y="414" fill="#94a3b8" font-size="9">能远离 → 远离（换组、减少接触面）</text>
+  <text x="80" y="432" fill="#94a3b8" font-size="9">不能远离 → 降频（公事公办、不闲聊、不暴露私事）</text>
+  <text x="80" y="450" fill="#94a3b8" font-size="9">朋友圈/动态屏蔽是合法且健康的手段</text>
+  <text x="80" y="470" fill="#22d3ee" font-size="9">✓ 减少触发源 = 减少应激次数</text>
+
+  <rect x="60" y="505" width="440" height="90" rx="6" fill="#0f172a"/>
+  <rect x="60" y="505" width="440" height="90" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="80" y="532" fill="#22d3ee" font-size="12" font-weight="600">策略四 · 灰岩法（Grey Rock）</text>
+  <text x="80" y="554" fill="#94a3b8" font-size="9">回应像灰色石头：无情绪、无细节、不解释、不辩驳</text>
+  <text x="80" y="572" fill="#94a3b8" font-size="9">"嗯""知道了""按流程来" → 对方得不到情绪反应，动力衰减</text>
+
+  <!-- RIGHT zone: behavioral -->
+  <rect x="560" y="60" width="480" height="560" rx="10" fill="none" stroke="#fb7185" stroke-width="1.2" stroke-dasharray="8,4"/>
+
+  <rect x="580" y="85" width="440" height="160" rx="6" fill="#0f172a"/>
+  <rect x="580" y="85" width="440" height="160" rx="6" fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="2"/>
+  <text x="600" y="112" fill="#fb7185" font-size="12" font-weight="600">策略五 · 金刚手段（实质侵害时）</text>
+  <text x="600" y="134" fill="#94a3b8" font-size="9">涉及侵权/造谣/越界/利益受损时：</text>
+  <text x="600" y="152" fill="#94a3b8" font-size="9">1. 冷静留证据（记录、截图、证人）</text>
+  <text x="600" y="170" fill="#94a3b8" font-size="9">2. 明确警告一次，不含情绪</text>
+  <text x="600" y="188" fill="#94a3b8" font-size="9">3. 走流程：HR/上级/平台投诉/法律</text>
+  <text x="600" y="206" fill="#94a3b8" font-size="9">4. 像踢开绊脚石——不需要恨石头</text>
+  <text x="600" y="228" fill="#fb7185" font-size="9" font-weight="600">✓ 内心平静 与 果断行动 不矛盾</text>
+
+  <rect x="580" y="265" width="440" height="120" rx="6" fill="#0f172a"/>
+  <rect x="580" y="265" width="440" height="120" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="600" y="292" fill="#fbbf24" font-size="12" font-weight="600">决策树：这事值得处理吗？</text>
+  <text x="600" y="314" fill="#94a3b8" font-size="9">Q1 一周后这事还重要吗？→ 否：放下（不接招）</text>
+  <text x="600" y="332" fill="#94a3b8" font-size="9">Q2 有实质损害/再犯风险吗？→ 否：远离/降频</text>
+  <text x="600" y="350" fill="#94a3b8" font-size="9">Q3 有 → 留证据 + 走流程（金刚手段）</text>
+  <text x="600" y="370" fill="#fbbf24" font-size="9" font-weight="600">✓ 先问值不值得，再决定怎么应对</text>
+
+  <rect x="580" y="405" width="440" height="190" rx="6" fill="#0f172a"/>
+  <rect x="580" y="405" width="440" height="190" rx="6" fill="rgba(6,78,59,0.3)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="600" y="432" fill="#34d399" font-size="12" font-weight="600">收尾心法 · 事来则应，事去则静</text>
+  <text x="600" y="456" fill="#94a3b8" font-size="9">处理完 → 立即把注意力收回，不回放</text>
+  <text x="600" y="476" fill="#94a3b8" font-size="9">情绪不接招 = 战略（守住大本营）</text>
+  <text x="600" y="496" fill="#94a3b8" font-size="9">行为有手段 = 战术（解决现实问题）</text>
+  <text x="600" y="520" fill="#94a3b8" font-size="9">菩萨心肠 + 金刚手段：</text>
+  <text x="600" y="540" fill="#94a3b8" font-size="9">手里有刀，但从不乱砍；</text>
+  <text x="600" y="560" fill="#94a3b8" font-size="9">有人撞在刀口上，也绝不手软。</text>
+  <text x="600" y="582" fill="#34d399" font-size="9" font-weight="600">✓ 心是出世的，事是入世的</text>
+
+  <!-- bottom strip -->
+  <rect x="40" y="645" width="1000" height="90" rx="8" fill="#0f172a"/>
+  <rect x="40" y="645" width="1000" height="90" rx="8" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="60" y="675" fill="#a78bfa" font-size="11" font-weight="600">特别情形：持续纠缠型人格（反复越界、以消耗你为乐）</text>
+  <text x="60" y="699" fill="#94a3b8" font-size="10">灰岩法为主 + 零解释零辩驳 + 一切沟通留痕；不要试图讲道理或感化——你的反应就是对方的燃料。</text>
+  <text x="60" y="719" fill="#94a3b8" font-size="10">若涉及骚扰/威胁：直接升级流程与求助（上级、平台、警方），不再走个人应对。</text>
+
+  <text x="60" y="765" fill="#64748b" font-size="9">灰岩法为流行心理学实践，针对特定人格类型有效性缺乏严格实证，作为策略选项参考 · 知乎来源：剑哥/清风徐来等</text>
+</svg>
+</div>
+
+<div class="cards">
+  <div class="info-card">
+    <h3><div class="card-dot cyan"></div>情绪层：不接招</h3>
+    <ul>
+      <li>• 接招 = 替他买单情绪</li>
+      <li>• 不纠缠 = 止损，不是认输</li>
+      <li>• 隔离与屏蔽是健康手段</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot rose"></div>行为层：有边界</h3>
+    <ul>
+      <li>• 实质侵害：留证据→警告→走流程</li>
+      <li>• 先决策树判断值不值得处理</li>
+      <li>• 行动冷静精准，不带仇恨</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot emerald"></div>收尾：事去则静</h3>
+    <ul>
+      <li>• 处理完立即收回注意力</li>
+      <li>• 不回放、不复盘对方的恶</li>
+      <li>• 你的注意力是最贵的资源</li>
+    </ul>
+  </div>
+</div>
+<div class="footer">情绪修复与心态调整指南 · 图3 · 2026-08-21</div>
+</body>
+</html>
