@@ -867,27 +867,25 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <p>综合知乎高赞答主"羽度非凡"的 5 资金池模型与标准普尔象限图，本文设计适合中国普通上班族的<strong>四层金字塔架构</strong>（见图 1）：</p>
 <p><img alt="图1: 个人理财资产配置体系架构" src="../assets/wealth-management-diagrams/01-asset-allocation-architecture.jpg" /></p>
 <p><em>图 1：四层资产配置金字塔，风险自下而上递增，塔基越稳塔尖才能越高</em></p>
-<div class="highlight"><pre><span></span><code><span class="nf">graph</span><span class="w"> </span><span class="n">TB</span>
-<span class="w">    </span><span class="n">subgraph</span><span class="w"> </span><span class="n">L4</span><span class="p">[</span><span class="s">&quot;进攻层 10%~30%（视风险承受力）&quot;</span><span class="p">]</span>
-<span class="w">        </span><span class="n">A1</span><span class="p">[</span><span class="err">宽基指数基金定投</span><span class="p">]</span>
-<span class="w">        </span><span class="n">A2</span><span class="p">[</span><span class="err">行业主题基金·小仓位</span><span class="p">]</span>
-<span class="w">    </span><span class="kd">end</span>
-<span class="w">    </span><span class="n">subgraph</span><span class="w"> </span><span class="n">L3</span><span class="p">[</span><span class="s">&quot;稳健增值层 30%~40%&quot;</span><span class="p">]</span>
-<span class="w">        </span><span class="n">B1</span><span class="p">[</span><span class="err">债券基金</span><span class="p">]</span>
-<span class="w">        </span><span class="n">B2</span><span class="p">[</span><span class="err">定期存款</span><span class="o">/</span><span class="err">国债</span><span class="p">]</span>
-<span class="w">    </span><span class="kd">end</span>
-<span class="w">    </span><span class="n">subgraph</span><span class="w"> </span><span class="n">L2</span><span class="p">[</span><span class="s">&quot;防御保障层 5%~10%&quot;</span><span class="p">]</span>
-<span class="w">        </span><span class="n">C1</span><span class="p">[</span><span class="err">百万医疗险</span><span class="p">]</span>
-<span class="w">        </span><span class="n">C2</span><span class="p">[</span><span class="err">意外险</span><span class="p">]</span>
-<span class="w">        </span><span class="n">C3</span><span class="p">[</span><span class="err">重疾险·按需</span><span class="p">]</span>
-<span class="w">    </span><span class="kd">end</span>
-<span class="w">    </span><span class="n">subgraph</span><span class="w"> </span><span class="n">L1</span><span class="p">[</span><span class="s">&quot;应急储备层 10%~20%&quot;</span><span class="p">]</span>
-<span class="w">        </span><span class="n">D1</span><span class="p">[</span><span class="mi">3</span><span class="o">-</span><span class="mi">6</span><span class="err">个月开支</span><span class="p">]</span>
-<span class="w">        </span><span class="n">D2</span><span class="p">[</span><span class="err">货币基金</span><span class="o">/</span><span class="err">活期理财</span><span class="p">]</span>
-<span class="w">    </span><span class="kd">end</span>
-<span class="w">    </span><span class="n">L1</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="n">L2</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="n">L3</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="n">L4</span>
-</code></pre></div>
-
+<pre><code class="language-mermaid">graph TB
+    subgraph L4[&quot;进攻层 10%~30%（视风险承受力）&quot;]
+        A1[宽基指数基金定投]
+        A2[行业主题基金·小仓位]
+    end
+    subgraph L3[&quot;稳健增值层 30%~40%&quot;]
+        B1[债券基金]
+        B2[定期存款/国债]
+    end
+    subgraph L2[&quot;防御保障层 5%~10%&quot;]
+        C1[百万医疗险]
+        C2[意外险]
+        C3[重疾险·按需]
+    end
+    subgraph L1[&quot;应急储备层 10%~20%&quot;]
+        D1[3-6个月开支]
+        D2[货币基金/活期理财]
+    end
+    L1 --&gt; L2 --&gt; L3 --&gt; L4</code></pre>
 <h3 id="32">3.2 各层职责与工具选型</h3>
 <table>
 <thead>
@@ -931,17 +929,15 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </tbody>
 </table>
 <h3 id="33">3.3 数据流：工资到账后的资金流转</h3>
-<div class="highlight"><pre><span></span><code><span class="n">flowchart</span><span class="w"> </span><span class="n">LR</span>
-<span class="w">    </span><span class="n">S</span><span class="p">[</span><span class="err">工资到账</span><span class="p">]</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="n">T</span><span class="p">{</span><span class="err">先付给自己</span><span class="p">}</span>
-<span class="w">    </span><span class="n">T</span><span class="w"> </span><span class="o">--&gt;|</span><span class="mi">10</span><span class="o">-</span><span class="mi">20</span><span class="o">%|</span><span class="w"> </span><span class="n">INV</span><span class="p">[</span><span class="err">自动定投扣款</span><span class="p">]</span>
-<span class="w">    </span><span class="n">T</span><span class="w"> </span><span class="o">--&gt;|</span><span class="err">固定比例</span><span class="o">|</span><span class="w"> </span><span class="n">SAVE</span><span class="p">[</span><span class="err">应急金</span><span class="o">/</span><span class="err">稳健池</span><span class="p">]</span>
-<span class="w">    </span><span class="n">T</span><span class="w"> </span><span class="o">--&gt;|</span><span class="err">剩余</span><span class="o">|</span><span class="w"> </span><span class="n">LIVE</span><span class="p">[</span><span class="err">日常生活开销</span><span class="p">]</span>
-<span class="w">    </span><span class="n">INV</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="n">REVIEW</span><span class="p">[</span><span class="err">季度复盘</span><span class="p">]</span>
-<span class="w">    </span><span class="n">SAVE</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="n">REVIEW</span>
-<span class="w">    </span><span class="n">REVIEW</span><span class="w"> </span><span class="o">--&gt;|</span><span class="err">达标</span><span class="o">|</span><span class="w"> </span><span class="n">EXPAND</span><span class="p">[</span><span class="err">扩大投入</span><span class="p">]</span>
-<span class="w">    </span><span class="n">REVIEW</span><span class="w"> </span><span class="o">--&gt;|</span><span class="err">未达标</span><span class="o">|</span><span class="w"> </span><span class="n">ADJUST</span><span class="p">[</span><span class="err">调整比例</span><span class="p">]</span>
-</code></pre></div>
-
+<pre><code class="language-mermaid">flowchart LR
+    S[工资到账] --&gt; T{先付给自己}
+    T --&gt;|10-20%| INV[自动定投扣款]
+    T --&gt;|固定比例| SAVE[应急金/稳健池]
+    T --&gt;|剩余| LIVE[日常生活开销]
+    INV --&gt; REVIEW[季度复盘]
+    SAVE --&gt; REVIEW
+    REVIEW --&gt;|达标| EXPAND[扩大投入]
+    REVIEW --&gt;|未达标| ADJUST[调整比例]</code></pre>
 <p><strong>关键设计决策</strong>：</p>
 <ol>
 <li><strong>"先支付自己"原则</strong>：发薪后第 2 天自动扣款定投，先储蓄后消费，而非"消费剩余再储蓄"——这是知乎所有入门帖的共同结论；</li>
