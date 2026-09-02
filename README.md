@@ -6,7 +6,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python&style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/badge/Docs-10+-orange?style=for-the-badge" alt="Docs">
+  <img src="https://img.shields.io/badge/Docs-11+-orange?style=for-the-badge" alt="Docs">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status">
   <a href="https://ckirchhoff2021.github.io/knowledge-base/"><img src="https://img.shields.io/badge/🌐-在线预览-blueviolet?style=for-the-badge" alt="Online Preview"></a>
 </p>
@@ -148,6 +148,13 @@ knowledge-base/
     <th>📅 更新时间</th>
     <th>📝 说明</th>
     <th>🔗 链接</th>
+  </tr>
+  <tr>
+    <td>小白理财技术方案-从零开始的资产配置系统</td>
+    <td>理财方法论</td>
+    <td>2026-09-02</td>
+    <td>基于知乎社区高赞讨论的系统化梳理：复利/定投数学原理、四层资金池架构、五阶段落地路线、防骗决策树伪代码，含3张技术插图与14个参考来源</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Life/html/小白理财技术方案-从零开始的资产配置系统.html"><b>🔗 在线阅读</b></a></td>
   </tr>
   <tr>
     <td>情绪修复与心态调整指南</td>
