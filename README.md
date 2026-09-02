@@ -6,7 +6,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python&style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/badge/Docs-11+-orange?style=for-the-badge" alt="Docs">
+  <img src="https://img.shields.io/badge/Docs-12+-orange?style=for-the-badge" alt="Docs">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status">
   <a href="https://ckirchhoff2021.github.io/knowledge-base/"><img src="https://img.shields.io/badge/🌐-在线预览-blueviolet?style=for-the-badge" alt="Online Preview"></a>
 </p>
@@ -148,6 +148,13 @@ knowledge-base/
     <th>📅 更新时间</th>
     <th>📝 说明</th>
     <th>🔗 链接</th>
+  </tr>
+  <tr>
+    <td>长期失眠伴后脑勺跳动就医全指南</td>
+    <td>健康就医方法论</td>
+    <td>2026-09-02</td>
+    <td>基于知乎25+条医学/患者回答整理：病因分层（血管搏动/植物神经紊乱/情绪躯体化/器质性病变）、杭州4家医院科室选择、安眠药规范减停方案、异地医保备案全流程，含3张插图、病史模板、行动清单</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Life/html/长期失眠伴后脑勺跳动就医全指南-杭州就诊与异地医保方案.html"><b>🔗 在线阅读</b></a></td>
   </tr>
   <tr>
     <td>小白理财技术方案-从零开始的资产配置系统</td>
