@@ -66,8 +66,9 @@
 <li><a href="#sec2">二、原理详解</a></li>
 <li><a href="#sec3">三、方案设计</a></li>
 <li><a href="#sec4">四、核心实现</a></li>
-<li><a href="#sec5">五、结论与选型建议</a></li>
-<li><a href="#refs">六、参考资料</a></li>
+<li><a href="#sec5">五、Jev-like 模型训练流程（复现指南）</a></li>
+<li><a href="#sec6">六、结论与选型建议</a></li>
+<li><a href="#refs">七、参考资料</a></li>
 </ol></nav>
 <h2 id="sec1">一、背景</h2>
 <p>导读：Agent 落地一年多，系统里大量节点需要的不是"一段回答"，而只是一个"判断"。Jev 把这类判断从生成式大模型中单独拆出，做成一种新的模型形态。</p>
@@ -415,9 +416,118 @@ def route_with_policy(decision):
 </code></pre>
 <p>工程原则（社区高度认同）：<strong>AI 不应该拥有政策</strong>——模型负责感知、判断、估不确定性；何时执行/降级/交人，由确定性代码决定。</p>
 <hr />
-<h2 id="sec5">五、结论与选型建议</h2>
+<h2 id="sec5">五、Jev-like 模型训练流程（复现指南）</h2>
+<p>导读：官方 Jev 无法训练（闭源 API、结构/参数量/数据未披露、RLCD 无论文无代码）。本章给出复现一个「jev-like 决策模型」的完整流程：数据 → 模型改造 → SFT → 校准强化 → 评估。其中 RLCD 阶段的奖励设计基于官方一句话描述与校准学习常规做法的<strong>合理推断</strong>，标注为推断而非官方配方。</p>
+<h3>5.1 先选路线：由轻到重</h3>
+<table>
+<thead>
+<tr>
+<th>路线</th>
+<th>代表</th>
+<th>是否训练</th>
+<th>能拿到什么</th>
+<th>缺什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 · logit 直读</td>
+<td>OpenJev-SGLang</td>
+<td>不训练</td>
+<td>现成 Qwen 单 token 标签（A/B/C）logit 归一化 + KV 缓存复用</td>
+<td>无校准，概率需自行验证</td>
+</tr>
+<tr>
+<td>1 · 推理外壳</td>
+<td>Qwen-2.5-1B-RLCD（2 小时复刻）</td>
+<td>不改模型</td>
+<td>并行约束解码，M4 Max 实测延迟降 5.6–7 倍，输出 100% 合法</td>
+<td>同 0，仅工程改造</td>
+</tr>
+<tr>
+<td>2 · 轻量微调</td>
+<td>Kev（Qwen2.5-0.5B + LoRA + readout head，M5 上 1 小时 45 分训完）</td>
+<td>LoRA + 打分头</td>
+<td>动态候选项、可用概率，TypeSafe API 兼容</td>
+<td>CE 训练不保证校准</td>
+</tr>
+<tr>
+<td>3 · 窄任务从零训</td>
+<td>CUA-S1-FORMS（70 万参数，6 epoch × 1 万合成 episode）</td>
+<td>全参数</td>
+<td>2.8MB、单卡毫秒级</td>
+<td>只做窄任务，不含校准</td>
+</tr>
+</tbody>
+</table>
+<p>多数业务走到路线 2 即可；想要可写入 <code>if p &gt; t</code> 的可信概率，必须再做 5.5 的校准阶段。</p>
+<h3>5.2 阶段一：构造决策数据集（真正的门槛）</h3>
+<p>每条样本为四元组：</p>
+<pre><code>(state, question, options, correct_idx)
+</code></pre>
+<p>标签两条来源（NanoJev 实证方案）：</p>
+<ol>
+<li><strong>程序真值</strong>：规则引擎 / 模拟器直接算出精确标签（"北边有墙 → 不可通行"），零标注成本；</li>
+<li><strong>教师软标签</strong>：用相同输入调强模型（或 Jev API）取软概率分布，作为辅助监督信号。</li>
+</ol>
+<p>必须刻意构造的三类样本：</p>
+<ul>
+<li><strong>硬负例</strong>：似是而非的边界选项（如阈值判断里的 1.99 vs 2.00）；</li>
+<li><strong>无信号样本</strong>：state 中不含答案信息，正确输出应为"无法判断"而非随机硬选；</li>
+<li><strong>显式拒答标签</strong>：选项集内置 <code>other / none of the above / skip</code>。</li>
+</ul>
+<p>防泄漏切分：按<strong>任务模板 / 规则族 / 场景分组</strong>切分，训练集与测试集不得共享模板、规则脚本或生成器种子；NanoJev 直接用不同地图做测试集。社区共识：复现的真实门槛不在算力，而在数据合成、硬负例设计与评测集切分。</p>
+<h3>5.3 阶段二：模型改造（LoRA + 动态打分头）</h3>
+<p>关键点：选项每次请求可变，因此不能把标签写死在输出层，要让<strong>候选项文字也进入模型</strong>，由打分头比较「问题表示」与「各候选表示」：</p>
+<pre><code class="language-python"># 底座：Qwen2.5-0.5B/1B（或任意本地小模型），主体冻结 + LoRA 适配器
+# 训练部件：LoRA + 小型 readout 打分头
+
+def readout_head(q_hidden, opt_hiddens, temperature=1.0):
+    # q_hidden: [d] 问题表示；opt_hiddens: [K, d] K 个候选各自的表示
+    logits = (opt_hiddens @ q_hidden) / (sqrt(d) * temperature)
+    return softmax(logits, axis=0)        # K 可在运行时动态变化（≤255）
+
+# Boolean = K=2；Score = 有序档位走同一头，期望值客户端加权
+p_true = sigmoid(z_true - z_false)
+</code></pre>
+<p>多问题 packed 训练（Kev 做法）：同一 state 的多个子问题 pack 进同一批计算，用注意力掩码规定每个问题只能看见公共材料与自己的选项、看不见其他问题，等价于一次前向并行答完所有字段。</p>
+<h3>5.4 阶段三：SFT（训完即可用）</h3>
+<pre><code class="language-python"># 硬标签：对正确选项做交叉熵 —— 天然重罚&quot;自信地答错&quot;
+loss_hard = cross_entropy(logits, correct_idx)
+
+# 可选：教师软标签对齐（蒸馏概率形状）
+loss_soft = KL(teacher_probs || model_probs)
+
+loss = loss_hard + 0.5 * loss_soft
+</code></pre>
+<p>注意：交叉熵只惩罚自信答错，<strong>不直接保证分组频率校准</strong>——这是 SFT 与 RLCD 的分界线。</p>
+<h3>5.5 阶段四：RLCD 校准（核心壁垒，推断配方）</h3>
+<p>目标：模型说 0.8 的那批样本，长期约 80% 为真。由低成本到强化学习两级：</p>
+<p><strong>方案 A · 后校准（先试，半天见效）</strong>：冻结模型，在独立校准集上做 temperature scaling（只学一个温度 T）或 isotonic regression：</p>
+<pre><code>校准后概率 = softmax(logits / T)      # T&gt;1 抹平过度自信
+</code></pre>
+<p><strong>方案 B · 校准强化（RLCD 的对应物，推断）</strong>：决策是单步 bandit、没有多步轨迹，不需要完整 PPO，可用 GRPO 式离策略更新：</p>
+<pre><code class="language-python"># 奖励采用适当评分规则（proper scoring rule）
+reward_brier   = -(p_correct - 1) ** 2     # 负 Brier 分数
+reward_log     = log(p_correct)            # 对数评分
+# 无信号样本：奖励高熵/拒答，惩罚硬选
+reward_unknown = entropy(p) - miss(skip)
+# 额外 ECE 分桶惩罚：按置信度分桶，桶内真实频率偏离置信度即扣分
+reward_ece     = -ECE_buckets(p, y)
+</code></pre>
+<p>训练时加 KL 约束防止偏离 SFT 策略。官方 RLCD 未公开细节，以上为校准学习标准做法的工程化推断。</p>
+<h3>5.6 评估四件套</h3>
+<ol>
+<li><strong>准确率 / Macro-F1</strong>（类别不均衡时）；</li>
+<li><strong>校准指标</strong>：可靠性曲线（reliability diagram）、ECE、Brier score，分桶核对；</li>
+<li><strong>泛化切片</strong>：OOD 规则族、硬负例、无信号对照组——无信号时应输出"无法判断"而非掉到随机；</li>
+<li><strong>拒答质量</strong>：<code>skip/other</code> 的召回率与误拒率。</li>
+</ol>
+<p>目前所有开源复现（Kev / NanoJev / CUA-S1）都只报告了准确率，<strong>没有一家拿出校准曲线</strong>——校准是 RLCD 宣称的壁垒中唯一尚未被独立复现的部分。</p>
+<hr />
+<h2 id="sec6">六、结论与选型建议</h2>
 <p>导读：Jev 更像"被验证了的产品方向与接口范式"，而不是已被充分证明的精度答案。</p>
-<h3>5.1 编号结论</h3>
+<h3>6.1 编号结论</h3>
 <ol>
 <li><strong>速度/成本优势真实可感</strong>：非自回归单前向决策 70–500ms、$0.042/1M 输入、输出免费，在高频结构化判断上量级成立；</li>
 <li><strong>裸模型精度中等</strong>：中文客服实测 64%–65.2%、自有样本 Macro-F1 约 70%，均不优于同场便宜模型，旗舰模型明显更准；</li>
@@ -427,7 +537,7 @@ def route_with_policy(decision):
 <li><strong>生态信号强</strong>：Vercel 13%/24h 的采用速度、LangChain 次日集成、开源 0.5B–1.5B（乃至 70 万参数）复现，证明需求真实存在；</li>
 <li><strong>开源复刻不等于 Jev</strong>：社区项目普遍只复刻结构化输出，不承诺概率校准；真实门槛在数据合成、硬负例与评测切分。</li>
 </ol>
-<h3>5.2 工程上线 checklist</h3>
+<h3>6.2 工程上线 checklist</h3>
 <ul>
 <li>☐ 用<strong>真实业务分布</strong>自建评测集，而非供应商示例</li>
 <li>☐ 同时报告"全对率"与"单字段准确率/Macro-F1"两个口径</li>
@@ -444,7 +554,7 @@ def route_with_policy(decision):
 </ul>
 <div class="callout warn"><div class="title">可信度声明与注意事项</div>
 <ul>
-<li>本报告<strong>除官方发布事实（发布日期、公司、定价、官方自报倍数）外，多数实验数字来自知乎文章转述</strong>，包括：10,984 条 A/B 测试的 64.5%、开发者账单、级联 96% 准确率、官方评测页 67.8%/74.1% 等。引用前请按第六章链接二次核对；</li>
+<li>本报告<strong>除官方发布事实（发布日期、公司、定价、官方自报倍数）外，多数实验数字来自知乎文章转述</strong>，包括：10,984 条 A/B 测试的 64.5%、开发者账单、级联 96% 准确率、官方评测页 67.8%/74.1%、Kev 训练时长与 NanoJev 合成数据方案等。引用前请按第七章链接二次核对；</li>
 <li>NanoJev/CUA-S1 的决策头与结构参数来自其作者自报（知乎转述），未见独立复现；</li>
 <li><strong>无解释、不可审计</strong>：只返回选项与概率，金融、医疗等需归因场景应保留复核与日志；</li>
 <li><strong>误差传导</strong>：上游 OCR/抽取错误会被判别器以高置信选中，且无纠错能力；</li>
@@ -452,7 +562,7 @@ def route_with_policy(decision):
 <li>术语消歧：Jev 是产品名，不是论文方法；RLCD 目前<strong>没有公开发表的论文</strong>，仅有 TypeSafe 官方博客描述，勿与任何同名缩写混淆。</li>
 </ul></div>
 <hr />
-<h2 id="refs">六、参考资料</h2>
+<h2 id="refs">七、参考资料</h2>
 <h3>6.1 原始出处</h3>
 <ol>
 <li>TypeSafe AI,《Introducing System One Models and Jev》（2026-09-15）：https://typesafe.ai/blog/introducing-system-one-models-and-jev</li>
@@ -488,6 +598,11 @@ def route_with_policy(decision):
 <li>补天逐日摘星《Jev爆火这一周：200倍速和一份不太好看的测评》：https://zhuanlan.zhihu.com/p/2085266842772301240</li>
 <li>彭磊《Jev 把决策做成 70ms 函数调用》：https://zhuanlan.zhihu.com/p/2084775311300882784</li>
 <li>《Jev模型：又快又便宜，消灭幻觉》：https://zhuanlan.zhihu.com/p/2084699246675095910</li>
+<li>张善友《Jev 刚火两天，开源复现就来了：一个9B，一个0.5B》（Kev 训练细节）：https://zhuanlan.zhihu.com/p/2085398139213705362</li>
+<li>AI解码师《两小时复刻 Jev？并行约束解码实测》：https://www.zhihu.com/question/2084281918074385700/answer/2085416164054807836</li>
+<li>高飞《Jev模型创始人：RLHF是一条弯路，下一个时代绝不是Claude Code时代》：https://zhuanlan.zhihu.com/p/2084663688066290931</li>
+<li>john《为什么 LLM 的置信度在骗你？一个 33ms 校准概率引擎的解法》（工程化校准参考）：https://zhuanlan.zhihu.com/p/2085366424529285339</li>
+<li>rot.cx《大模型概率校准》（隐藏态探针/动态算力校准方法）：https://zhuanlan.zhihu.com/p/2083855581077562977</li>
 </ol>
 <hr />
 <p><em>配套架构图（3 张，暗色 SVG）见 <code>diagrams/</code> 目录；HTML 版报告见同目录上层 <code>JEV-技术调研报告.html</code>。</em></p>
