@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jev 决策小模型技术调研报告</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:960px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:32px; }
+  h1 { font-size:28px; line-height:1.4; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin-right:8px; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  h4 { font-size:15px; margin:20px 0 8px; }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  /* 公式块：monospace 显示，避免 LaTeX 依赖 */
+  .formula { background:#0a0e14; border-left:3px solid var(--purple); padding:12px 18px; margin:14px 0; border-radius:0 8px 8px 0; font-family:Menlo,monospace; font-size:14px; overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); white-space:nowrap; }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  /* callout 提示框：key=绿(核心结论) warn=黄(注意事项) 默认=中性 */
+  .callout { border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin:18px 0; background:var(--panel); }
+  .callout.warn { border-color:var(--amber); }
+  .callout.key { border-color:var(--green); }
+  .callout .title { font-weight:600; margin-bottom:6px; font-size:14px; }
+  .callout.key .title { color:var(--green); }
+  .callout.warn .title { color:var(--amber); }
+  /* 架构图 iframe：与 diagrams/ 同目录，相对路径 */
+  figure { margin:24px 0; }
+  figure iframe { width:100%; height:760px; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+  .strong-green { color:var(--green); font-weight:600; }
+  .strong-rose { color:var(--rose); font-weight:600; }
+</style>
+</head><body><div class="container">
+<header>
+  <h1>Jev 决策小模型技术调研报告</h1>
+  <div><span class="badge">System One 决策模型</span><span class="badge">RLCD 校准</span><span class="badge">Agent 架构</span></div>
+  <div class="meta" style="margin-top:10px">
+    <span>调研来源：知乎 29 篇去重文章及 TypeSafe/Every/Vercel 等外部信源</span>
+    &nbsp;·&nbsp;<span>报告日期：2026-09-21</span>
+  </div>
+</header>
+<nav class="toc"><h2>目录</h2><ol>
+<li><a href="#sec1">一、背景</a></li>
+<li><a href="#sec2">二、原理详解</a></li>
+<li><a href="#sec3">三、方案设计</a></li>
+<li><a href="#sec4">四、核心实现</a></li>
+<li><a href="#sec5">五、结论与选型建议</a></li>
+<li><a href="#refs">六、参考资料</a></li>
+</ol></nav>
+<h2 id="sec1">一、背景</h2>
+<p>导读：Agent 落地一年多，系统里大量节点需要的不是"一段回答"，而只是一个"判断"。Jev 把这类判断从生成式大模型中单独拆出，做成一种新的模型形态。</p>
+<h3>1.1 问题定义</h3>
+<p>现代软件（尤其 Agent）的运行循环里充满高频、原子化、接收者本来就是程序的决策点：</p>
+<ul>
+<li>这条用户请求该路由给哪个部门 / 哪个模型？</li>
+<li>检索结果与问题是否相关？</li>
+<li>页面上几十个元素，该点哪一个？</li>
+<li>这次工具调用是否危险？该自动执行、二次校验还是转人工？</li>
+<li>循环是否应该终止？失败后要不要重试？</li>
+</ul>
+<p>TypeSafe 的判断是：未来大规模 AI 自动化中 <strong>99% 的交互发生在机器之间，只有 1% 面向人</strong>。让一个自回归大模型为每个碎判断"想几秒、写一段、再被解析"，是系统性浪费。</p>
+<h3>1.2 现有两条路线的缺陷</h3>
+<table>
+<thead>
+<tr>
+<th>路线</th>
+<th>代表</th>
+<th>做这类判断时的缺陷</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>传统判别模型</td>
+<td>BERT / DeBERTa + 分类头</td>
+<td>标签体系编译期固定，增删一个类别就要重新标注、重新训练；常识储备弱、上下文短；一个任务一个模型</td>
+</tr>
+<tr>
+<td>生成式大模型</td>
+<td>GPT / Claude / Gemini / DeepSeek / 千问</td>
+<td>选择题也要逐 token 自回归生成，延迟 2–20 秒、双向计费；输出需解析/正则/重试兜底；随口报的"95% 确定"是生成的字符，与真实正确率没有统计关系（伪概率）</td>
+</tr>
+</tbody>
+</table>
+<p>LLM 伪概率的两个具体病理（知乎专栏分析）：</p>
+<ol>
+<li><strong>打分虚高</strong>："0.85"只是因为 RLHF 标注员偏好高分和整十数，不代表 85% 的真实发生率；</li>
+<li><strong>分布漂移</strong>：prompt 微调一个标点，整批打分分布就可能抬升或下降，下游不敢直接写 <code>if score &gt; 0.8</code>。</li>
+</ol>
+<h3>1.3 Jev 的定位</h3>
+<p>Jev 由前 OpenAI 研究员、InstructGPT/RLHF/ChatGPT 关键贡献者 <strong>Diogo Almeida</strong> 创办的 <strong>TypeSafe AI</strong> 发布（2024 年初离开 OpenAI，4000 万美元融资，闭门研发约两年，2026-09-15 发布，当前为小范围内测）。</p>
+<p>官方一句话定义：</p>
+<pre><code>unstructured state in, typed probabilistic decisions out
+（非结构化状态输入 → 带校准概率的强类型决策输出）
+</code></pre>
+<p><strong>直觉类比</strong>：如果大模型是"能写会算的顾问"，Jev 就是物流分拣线上的<strong>自动分流器</strong>——不聊天、不解释，在几十到几百毫秒内把上游来件拨到正确的下游分支。它也像软件里一条"<strong>智能 if 语句</strong>"。</p>
+<p>认知科学借喻来自卡尼曼《思考，快与慢》：Jev 是快速直觉的 <strong>System 1</strong>，前沿大模型继续做慢速推演的 <strong>System 2</strong>。模型名 Jev 则取自经济学家杰文斯（W. S. Jevons）与<strong>杰文斯悖论</strong>——资源利用效率越高，总消耗反而越大；商业隐喻是：单次决策成本降到近零，会把"问一下模型"嵌进软件的一切环节。</p>
+<blockquote>
+<p>注意能力范围：System 1 的任务集只是 System 2 的一小部分。大模型能做 Jev 的判断题，反过来不成立——Jev 不能写文章、写代码或聊天。</p>
+</blockquote><figure><iframe src="../assets/jev-decision-diagrams/1-paradigm-positioning.html" loading="lazy" style="height:657px"></iframe><figcaption>图 1 · 决策模型范式定位：灵活性 × 效率</figcaption></figure>
+<hr />
+<h2 id="sec2">二、原理详解</h2>
+<p>导读：Jev 的技术三件套为「新模型架构 + 并行采样器 + RLCD」。官方未公开网络细节，本章的形式化描述综合官方契约与社区复现资料（NanoJev/CUA-S1），凡属推断均已标注。</p>
+<h3>2.1 形式化定义</h3>
+<p>给定非结构化状态 <code>state</code> 与一组现场声明的决策任务 <code>tasks</code>，模型一次返回每个任务的概率分布：</p>
+<pre><code>输入:  state s ∈ 文本/程序状态
+       tasks τ = {τ_1, ..., τ_k}，每个任务含问题与候选集
+输出:  对每个 τ_j：候选上的概率分布 P(c | s, τ_j)
+       （Score 任务再给期望，Boolean 给 P(true)）
+</code></pre>
+<p>三种决策原语：</p>
+<ol>
+<li><strong>Choice（多选一）</strong>：候选数 ≤ <strong>255</strong>，对全部候选并行打分、归一化；</li>
+<li><strong>Boolean（是/否）</strong>：社区复现资料显示其等价于两个标量差过 sigmoid；</li>
+<li><strong>Score（有序评分）</strong>：2–10 个有序档位，返回档位概率与概率加权期望。</li>
+</ol>
+<p>Boolean 的标量形式（来自 NanoJev 技术转述，非官方文档）：</p>
+<pre><code>P(true) = sigmoid(z_true − z_false)
+        = 1 / (1 + exp(−(z_true − z_false)))
+</code></pre>
+<p>Score 的期望值（客户端计算）：</p>
+<pre><code>E = Σ_i  P(level_i) · value(level_i)
+</code></pre>
+<p><strong>关键澄清：Jev 不能直接输出自由数值（不能"做回归"）。</strong> 知乎实测：问"明天多少度"，必须给出 25/30/35 等档位让模型分配概率，再由客户端加权平均。三种原语本质上都是分类。</p>
+<h3>2.2 机制解释：为什么快</h3>
+<ol>
+<li><strong>去掉自回归循环</strong>：state 与全部候选编码后，通过共享骨干网络<strong>一次前向传播</strong>直接算出所有候选的概率张量，输出层没有文本生成通道；</li>
+<li><strong>多任务并行</strong>：一封邮件同时问"分类/紧急度/是否退款"，各子问题在同一查询内并行回答；</li>
+<li><strong>受限概率空间</strong>：在候选构成的概率单纯形上取值，配合硬件感知并行采样（官方称"对硬件友好"），从机制上消除 JSON 损坏与解析重试；</li>
+<li><strong>高基数两阶段</strong>：候选超过 255 时（如上千维基词条），先用 Score 全量粗筛，再用 Choice 对前几十个精选——维基百科 Wikiracing 据此几百毫秒完成一次跳转决策。</li>
+</ol>
+<h3>2.3 RLCD：校准概率从哪来</h3>
+<p><strong>RLCD</strong> = Reinforcement Learning for Calibrated Decisions（面向校准决策的强化学习），明确走 RLHF 的反方向：RLHF 优化"人更喜欢的回答"，RLCD 优化"概率对照真实结果是否准确"。</p>
+<p>校准目标的直觉形式：</p>
+<pre><code>校准要求：在模型给出置信度 p 的所有判断中，真实正确率 ≈ p
+例：模型长期说 0.8 的那批判断，约 80% 为真
+</code></pre>
+<p>官方文档的自我限定（知乎原文转译）："校准在<strong>成组</strong>的预测上度量，<strong>不保证单次回答正确</strong>。"</p>
+<p>校准若成立，工程上解锁三种模式：</p>
+<ul>
+<li><strong>置信度阈值路由</strong>：&gt;0.9 自动放行，0.7–0.9 二次校验，&lt;0.7 转人工；</li>
+<li><strong>多模型级联</strong>：小模型拿不准再喂大模型，成本压到极致；</li>
+<li><strong>风险场景自动化</strong>：审核/风控/医疗辅助等"错了要负责"的环节第一次有了可用的概率接口。</li>
+</ul>
+<h3>2.4 "零幻觉"的准确读法</h3>
+<pre><code>结构保证（成立）：候选枚举由调用方锁死，模型不可能输出 schema 之外的内容
+事实保证（不成立）：选项之内的判断照样会错
+</code></pre>
+<p>Hacker News 高赞评论的反驳：给大模型加上同样的约束解码，大模型一样"不会幻觉"、一样会选错。社区共识一句话：<strong>类型安全 ≠ 事实正确（type-safe ≠ truth-safe）</strong>。</p><figure><iframe src="../assets/jev-decision-diagrams/2-pipeline-flow.html" loading="lazy" style="height:657px"></iframe><figcaption>图 2 · Jev 决策流水线：单次前向 + 策略级联</figcaption></figure>
+<hr />
+<h2 id="sec3">三、方案设计</h2>
+<p>导读：本章给出三种范式的并排对比、目前可查的全部关键实验数据（均带来源与可信度标注），以及 jev-like 方法的演进谱系。</p>
+<h3>3.1 三种范式变体对比</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>传统判别模型（BERT/DeBERTa）</th>
+<th>生成式 LLM</th>
+<th>System One（Jev）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>核心机制</td>
+<td>Encoder + 静态线性头</td>
+<td>Decoder 自回归逐 token 生成</td>
+<td>稠密表征 + 单前向并行出全部候选概率</td>
+</tr>
+<tr>
+<td>规则注入</td>
+<td>标注数据微调，写进权重</td>
+<td>Prompt 自然语言描述</td>
+<td>请求 Schema 内联 instructions，零样本</td>
+</tr>
+<tr>
+<td>标签灵活性</td>
+<td>编译期固定，改标签需重训</td>
+<td>动态，但生成易失控</td>
+<td>运行时动态指定（≤255），输出天然合法</td>
+</tr>
+<tr>
+<td>常识储备</td>
+<td>弱</td>
+<td>极丰富</td>
+<td>较丰富，继承预训练底座</td>
+</tr>
+<tr>
+<td>上下文</td>
+<td>短（常 512 token）</td>
+<td>极长</td>
+<td>中长，依赖底座</td>
+</tr>
+<tr>
+<td>延迟</td>
+<td>本地 3–15ms</td>
+<td>云端 2–20s</td>
+<td>云端 70–500ms（国内含网络约 300–1200ms）</td>
+</tr>
+<tr>
+<td>输出风险</td>
+<td>无</td>
+<td>JSON 损坏/多余文本/重试</td>
+<td>无语法层风险，判断仍会错</td>
+</tr>
+<tr>
+<td>概率可信度</td>
+<td>任务封闭时可校准</td>
+<td>打分虚高、prompt 敏感</td>
+<td>RLCD 专门校准（独立验证不足）</td>
+</tr>
+<tr>
+<td>成本</td>
+<td>极低（自托管）</td>
+<td>输入输出双向计费，最贵</td>
+<td>$0.042/1M 输入，输出免费</td>
+</tr>
+<tr>
+<td>可解释性</td>
+<td>可做特征分析</td>
+<td>能给理由（未必忠实）</td>
+<td>无理由无过程</td>
+</tr>
+</tbody>
+</table>
+<h3>3.2 关键实验数据汇总</h3>
+<p><strong>官方口径</strong></p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数值</th>
+<th>来源与限定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>端到端延迟</td>
+<td>70–500ms</td>
+<td>TypeSafe 官方博客</td>
+</tr>
+<tr>
+<td>定价</td>
+<td>$0.042/1M 输入，输出 $0</td>
+<td>OpenRouter / 官方</td>
+</tr>
+<tr>
+<td>工作流提速</td>
+<td>最高 193.6×</td>
+<td>自制 workflow eval；官方自曝 workflow 内部设计、参考答案由 OpenAI/Anthropic 模型产生</td>
+</tr>
+<tr>
+<td>工作流降本</td>
+<td>最高 444.6×</td>
+<td>同上；官方注明接近收益上限，不可外推</td>
+</tr>
+<tr>
+<td>与前沿模型平均判断一致率</td>
+<td>67.8%</td>
+<td>官方评测页；最佳对照 74.1%（GPT-5.6 Sol 74.1%、Claude Opus 5 73.1%），Jev 排第四、追平中档模型</td>
+</tr>
+</tbody>
+</table>
+<p><strong>第三方 / 社区实测</strong></p>
+<table>
+<thead>
+<tr>
+<th>测试方</th>
+<th>设计</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Every（Mike Taylor）</td>
+<td>37 篇文章 × 21 个判断题 = 777 个判断</td>
+<td>总耗时 &lt;0.7s；单任务中位 0.35s vs Claude Fable 5.1 的 8.83s（约 25×），估算成本低约 580×；7 个刻意埋错找出 6 个（Fable 找出 7 个）</td>
+</tr>
+<tr>
+<td>硅星人</td>
+<td>50 条真实中文电商客服问题，每题 4 项判断（紧急度/售前概率/类别/严重度），四项全对方算对</td>
+<td>Jev 平均分约 32–32.6，完整准确率 <strong>64%–65.2%</strong>，便宜小模型组第二（比 DeepSeek V4 Flash 低 1.2 分）；每题 0.73–0.75s；50 题总成本约 <strong>$0.002</strong>，速度成本全场最低</td>
+</tr>
+<tr>
+<td>社区 A/B 测试</td>
+<td>10,984 条真实 A/B 文本</td>
+<td>判对率 64.5%；<strong>无真实差异的对照组掉回随机水平</strong>（来源：知乎转述，未经独立核实）</td>
+</tr>
+<tr>
+<td>知乎用户（算法一只狗）</td>
+<td>自有业务分类样本，zero-shot</td>
+<td>Macro-F1 约 70%，落后于其他大模型；1800 样本约 1.5 分钟；1000 万 token 不到 $0.435</td>
+</tr>
+<tr>
+<td>Vercel / TechCrunch 案例</td>
+<td>替换原有安全审查分类器；另一公司邮件分类对比 Gemini</td>
+<td>快 5–18× 且准确率更高；Gemini 略准但贵 10–20×</td>
+</tr>
+</tbody>
+</table>
+<p><strong>开发者自晒账单（未经独立核实，仅看量级）</strong></p>
+<ul>
+<li>3282 条推文、400 多万 token 增长分析：$0.1282、8 分 34 秒；</li>
+<li>1018 篇论文分类：$0.08；</li>
+<li>浏览器 Agent 苏黎世→伦敦机票全流程：7.1 秒、$0.0039；</li>
+<li>724 条实时广告拆解：40 秒、$0.09；</li>
+<li>客服邮件分诊 + 拿不准的转大模型兜底：端到端准确率约 96%、总成本 $0.07；</li>
+<li>操控《DOOM》：每秒约 10 次决策、每小时约 $7。</li>
+</ul>
+<p><strong>读数结论</strong>：Jev 的优势集中在"高频、结构化、允许级联兜底"的判断节点；裸模型精度不优于同场便宜模型，明显不如旗舰。真实价值应在级联系统的端到端口径下评估。</p>
+<h3>3.3 方法演进谱系</h3>
+<pre><code>2018 前后  BERT/DeBERTa 判别器
+           Encoder + 固定分类头，一个任务一个模型
+              │  问题：标签固定、需标注重训
+              ▼
+2022+      LLM-as-judge
+           大模型零样本做判断/打分，prompt 定义规则
+              │  问题：自回归慢贵、格式漂移、伪概率
+              ▼
+2026-09    Jev（System One Model）
+           非自回归并行采样 + RLCD 校准 + 现场 schema
+              │
+              ├─ 工程复刻（不训练/轻训练）
+              │   OpenJev-SGLang（读单 token logit）
+              │   Qwen-2.5-1B-RLCD（并行约束解码）
+              ├─ 轻量克隆（微调）
+              │   Kev-0.5B / NanoJev（0.6B）
+              └─ 极窄专用
+                  CUA-S1-FORMS（70 万参数，2.8MB）
+</code></pre>
+<h3>3.4 生态集成</h3>
+<ul>
+<li><strong>Vercel</strong>：上线 AI Gateway 24 小时内约 13% 付费团队调用，为平台史上采用最快的模型；AI SDK 7 的 <code>evaluate</code> 支持其当裁判；</li>
+<li><strong>LangChain</strong>（次日集成，<code>langchain-typesafe</code>）：<code>TypeSafeClassifier</code>（分类替代聊天）、<code>ModelRouterMiddleware</code>（按难度选模型）、<code>AutoModeMiddleware</code>（工具执行前拦截危险操作）；</li>
+<li><strong>browser-use</strong>：<code>jev-ultrafast</code>，元素选择变成几十选 1，复杂输入才调生成模型；</li>
+<li>Pydantic AI 亦已支持。</li><figure><iframe src="../assets/jev-decision-diagrams/3-agent-architecture.html" loading="lazy" style="height:657px"></iframe><figcaption>图 3 · Agent 三层分工与已知病理</figcaption></figure>
+</ul>
+<hr />
+<h2 id="sec4">四、核心实现</h2>
+<p>导读：本章给出 jev-like 决策调用的最小参考实现（Python 风格伪代码），以及"客户端期望值回归"和"阈值级联"两个关键工程片段。</p>
+<h3>4.1 决策调用</h3>
+<pre><code class="language-python"># 伪代码：Jev 风格的结构化决策调用
+def decide(state):
+    # tasks 在运行时现场声明，无需微调、无需固定标签表
+    # 一次请求，服务端并行回答全部子问题
+    response = client.decide(
+        state=state,
+        tasks={
+            &quot;category&quot;: {
+                &quot;type&quot;: &quot;choice&quot;,
+                &quot;question&quot;: &quot;这个问题属于哪一类？&quot;,
+                &quot;options&quot;: {
+                    &quot;billing&quot;:   &quot;账单、扣款、支付问题&quot;,
+                    &quot;technical&quot;: &quot;功能异常、技术故障&quot;,
+                    &quot;account&quot;:   &quot;账号、登录、账户设置&quot;,
+                },
+            },
+            &quot;refund_requested&quot;: {
+                &quot;type&quot;: &quot;boolean&quot;,
+                &quot;question&quot;: &quot;用户是否明确要求退款？&quot;,
+            },
+            &quot;urgency&quot;: {
+                &quot;type&quot;: &quot;score&quot;,
+                &quot;question&quot;: &quot;紧急程度？&quot;,
+                &quot;levels&quot;: [&quot;可以等待&quot;, &quot;今天处理&quot;, &quot;立即处理&quot;],
+            },
+        },
+    )
+    # 返回全部为强类型概率，程序可直接消费，无需解析文本
+    return response
+    # 例：
+    # category.probs = {&quot;billing&quot;: 0.84, &quot;technical&quot;: 0.11, &quot;account&quot;: 0.05}
+    # refund_requested.p_true = 0.93
+    # urgency.expect = 2.7
+</code></pre>
+<h3>4.2 客户端期望值（伪回归）</h3>
+<pre><code class="language-python"># Score 档位概率 → 数值期望；这是 Jev 支持&quot;回归&quot;的真实方式
+def expected_value(level_probs, level_values):
+    # level_probs: {&quot;25&quot;: 0.2, &quot;30&quot;: 0.5, &quot;35&quot;: 0.3}
+    # level_values: {&quot;25&quot;: 25, &quot;30&quot;: 30, &quot;35&quot;: 35}
+    return sum(level_probs[k] * level_values[k] for k in level_probs)
+
+# expected_value(...) = 25*0.2 + 30*0.5 + 35*0.3 = 30.5
+</code></pre>
+<h3>4.3 阈值级联（价值落地的关键）</h3>
+<pre><code class="language-python"># 伪代码：置信度决定自动执行 / 二次校验 / 转人工
+def route_with_policy(decision):
+    p = decision.confidence          # 模型只负责判断与不确定性
+    if p &gt;= 0.9:                     # 政策阈值写死在代码里，不交给模型
+        return execute()
+    if p &gt;= 0.7:
+        return second_check()        # 如换旗舰模型复核
+    return hand_off_to_human()
+</code></pre>
+<p>工程原则（社区高度认同）：<strong>AI 不应该拥有政策</strong>——模型负责感知、判断、估不确定性；何时执行/降级/交人，由确定性代码决定。</p>
+<hr />
+<h2 id="sec5">五、结论与选型建议</h2>
+<p>导读：Jev 更像"被验证了的产品方向与接口范式"，而不是已被充分证明的精度答案。</p>
+<h3>5.1 编号结论</h3>
+<ol>
+<li><strong>速度/成本优势真实可感</strong>：非自回归单前向决策 70–500ms、$0.042/1M 输入、输出免费，在高频结构化判断上量级成立；</li>
+<li><strong>裸模型精度中等</strong>：中文客服实测 64%–65.2%、自有样本 Macro-F1 约 70%，均不优于同场便宜模型，旗舰模型明显更准；</li>
+<li><strong>"零幻觉"是结构保证</strong>：类型安全 ≠ 事实正确，选项之内照样选错；</li>
+<li><strong>校准是核心卖点也是最大未知数</strong>：RLCD 的独立验证、长尾/OOD 校准均无公开证据；无信号任务会掉回随机水平；</li>
+<li><strong>真实价值在级联端到端</strong>：决策小模型 + 生成大模型 + 确定性代码的三层分工，配合兜底才能同时拿到准确率与成本；</li>
+<li><strong>生态信号强</strong>：Vercel 13%/24h 的采用速度、LangChain 次日集成、开源 0.5B–1.5B（乃至 70 万参数）复现，证明需求真实存在；</li>
+<li><strong>开源复刻不等于 Jev</strong>：社区项目普遍只复刻结构化输出，不承诺概率校准；真实门槛在数据合成、硬负例与评测切分。</li>
+</ol>
+<h3>5.2 工程上线 checklist</h3>
+<ul>
+<li>☐ 用<strong>真实业务分布</strong>自建评测集，而非供应商示例</li>
+<li>☐ 同时报告"全对率"与"单字段准确率/Macro-F1"两个口径</li>
+<li>☐ 包含硬负例/边界样本切片（如 1.99 vs 2.00）</li>
+<li>☐ 包含<strong>无信号/空差异对照组</strong>，检验是否在没信息时硬选</li>
+<li>☐ 校准评估：可靠性曲线、ECE、Brier score，分置信度桶核对</li>
+<li>☐ 效率评估：P50/P95 延迟（含网络）、每千题成本、吞吐</li>
+<li>☐ 级联评估：兜底后的整体准确率、兜底比例、总成本</li>
+<li>☐ prompt 稳定性：同义改写下概率分布的漂移幅度</li>
+<li>☐ Choice 选项内置 <code>other / none of the above</code>（或 skip）显式拒答出口</li>
+<li>☐ 策略阈值、权限、人工兜底全部留在确定性代码中</li>
+<li>☐ 灰度上线：高分自动、中分复核、低分人工，先用于可逆低风险节点</li>
+<li>☐ 上线后持续监控分桶准确率与分布漂移</li>
+</ul>
+<div class="callout warn"><div class="title">可信度声明与注意事项</div>
+<ul>
+<li>本报告<strong>除官方发布事实（发布日期、公司、定价、官方自报倍数）外，多数实验数字来自知乎文章转述</strong>，包括：10,984 条 A/B 测试的 64.5%、开发者账单、级联 96% 准确率、官方评测页 67.8%/74.1% 等。引用前请按第六章链接二次核对；</li>
+<li>NanoJev/CUA-S1 的决策头与结构参数来自其作者自报（知乎转述），未见独立复现；</li>
+<li><strong>无解释、不可审计</strong>：只返回选项与概率，金融、医疗等需归因场景应保留复核与日志；</li>
+<li><strong>误差传导</strong>：上游 OCR/抽取错误会被判别器以高置信选中，且无纠错能力；</li>
+<li>产品仍处内测，无具名客户与收入披露；定价接近价格战，长期供给稳定性需观察；</li>
+<li>术语消歧：Jev 是产品名，不是论文方法；RLCD 目前<strong>没有公开发表的论文</strong>，仅有 TypeSafe 官方博客描述，勿与任何同名缩写混淆。</li>
+</ul></div>
+<hr />
+<h2 id="refs">六、参考资料</h2>
+<h3>6.1 原始出处</h3>
+<ol>
+<li>TypeSafe AI,《Introducing System One Models and Jev》（2026-09-15）：https://typesafe.ai/blog/introducing-system-one-models-and-jev</li>
+<li>Vercel Changelog,《TypeSafe AI Jev now available on AI Gateway》：https://vercel.com/changelog/typesafe-ai-jev-now-available-on-ai-gateway</li>
+<li>Every（Mike Taylor）,《Mini vibe check: TypeSafe's Jev judged everything I've written in 0.7 second》：https://every.to/also-true-for-humans/mini-vibe-check-typesafe-s-jev-judged-everything-i-ve-written-in-0-7-second</li>
+</ol>
+<h3>6.2 研究论文/技术深潜</h3>
+<ol start="4">
+<li>RLCD 目前无公开论文；以下为技术深潜文章（非学术论文）：
+   - Flavio Copes,《Jev deep dive》：https://flaviocopes.com/jev/
+   - Arize,《Decision models vs LLM judges》：https://arize.com/blog/typesafe-jev-llm-judge/
+   - browser-use,《jev-ultrafast》（开源）：https://github.com/browser-use/jev-ultrafast</li>
+</ol>
+<h3>6.3 知乎主要参考文章</h3>
+<ol start="5">
+<li>硅星人《实测Jev：没那么强，但足够给有些乏味的AI圈带来新刺激》：https://zhuanlan.zhihu.com/p/2085046088835323490</li>
+<li>谷粒《万字长文解读 Jev 模型：毫秒级判定原理与工程应用边界》：https://zhuanlan.zhihu.com/p/2084624500726022179</li>
+<li>平凡（116 赞）《如何看待新模型「Jev」？会成为 Agent 的新技术路线吗？》：https://www.zhihu.com/question/2083549123160925836/answer/2083676154213550015</li>
+<li>平凡（7 赞，OpenJev-SGLang 路线）：https://www.zhihu.com/question/2083549123160925836/answer/2085062945311043940</li>
+<li>小盒子《深度拆解 TypeSafe Jev，零幻觉 System1 模型到底几斤几两》：https://zhuanlan.zhihu.com/p/2085057727869593002</li>
+<li>lcj2022《Jev 模型研究：System One、RLCD 校准与采用边界》：https://zhuanlan.zhihu.com/p/2084904502075855731</li>
+<li>梁川《Jev：比 LLM 快百倍的 System One Model》：https://zhuanlan.zhihu.com/p/2084944605628441992</li>
+<li>《NanoJev：0.6B 小模型学会"直觉判断"》：https://zhuanlan.zhihu.com/p/2084753701562999443</li>
+<li>Kitt在进化（31 赞）《两小时复刻 Jev？》：https://www.zhihu.com/question/2084281918074385700/answer/2084678414238225597</li>
+<li>算法一只狗《Jev 为什么突然火了？》：https://zhuanlan.zhihu.com/p/2085131245999092046</li>
+<li>鑫澜沧海《Jev 不是新物种》：https://zhuanlan.zhihu.com/p/2084985506677384611</li>
+<li>张翼轸《Jev 与大模型的高频交易时刻》：https://zhuanlan.zhihu.com/p/2084230284103439046</li>
+<li>《1号系统：当 AI 开始惜字如金》：https://zhuanlan.zhihu.com/p/2084711042186208529</li>
+<li>feisan《Jev：不能聊天只会决策的新模型》：https://zhuanlan.zhihu.com/p/2083606436337153500</li>
+<li>NeoMu《教 ChatGPT 说话的人，做了个不说话的模型》：https://zhuanlan.zhihu.com/p/2084708191154206398</li>
+<li>机器之心《2400万人围观，前OpenAI研究员做了个「闭嘴」模型》：https://zhuanlan.zhihu.com/p/2083970992435734185</li>
+<li>极客公园《教 ChatGPT 说话的人，做了一个「哑巴」模型》：https://zhuanlan.zhihu.com/p/2084287611334612912</li>
+<li>补天逐日摘星《Jev爆火这一周：200倍速和一份不太好看的测评》：https://zhuanlan.zhihu.com/p/2085266842772301240</li>
+<li>彭磊《Jev 把决策做成 70ms 函数调用》：https://zhuanlan.zhihu.com/p/2084775311300882784</li>
+<li>《Jev模型：又快又便宜，消灭幻觉》：https://zhuanlan.zhihu.com/p/2084699246675095910</li>
+</ol>
+<hr />
+<p><em>配套架构图（3 张，暗色 SVG）见 <code>diagrams/</code> 目录；HTML 版报告见同目录上层 <code>JEV-技术调研报告.html</code>。</em></p>
+<div class="footer">Jev 决策小模型技术调研报告 · 知乎+外部交叉信源 · 2026-09-21 · 配套架构图见 diagrams/ 目录</div>
+</div></body></html>
