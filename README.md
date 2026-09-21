@@ -6,7 +6,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python&style=for-the-badge" alt="Python">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/badge/Docs-12+-orange?style=for-the-badge" alt="Docs">
+  <img src="https://img.shields.io/badge/Docs-13+-orange?style=for-the-badge" alt="Docs">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status">
   <a href="https://ckirchhoff2021.github.io/knowledge-base/"><img src="https://img.shields.io/badge/🌐-在线预览-blueviolet?style=for-the-badge" alt="Online Preview"></a>
 </p>
@@ -116,6 +116,13 @@ knowledge-base/
     <td>2026-08-14</td>
     <td>~25000字，含数学推导、Mermaid架构图、可运行PyTorch伪代码、落地路径、调参指南、常见问题</td>
     <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/html/OPD在线策略蒸馏技术完全指南.html"><b>🔗 在线阅读</b></a></td>
+  </tr>
+  <tr>
+    <td>JEV-决策模型技术调研报告</td>
+    <td>技术深度调研</td>
+    <td>2026-09-21</td>
+    <td>TypeSafe JEV 决策小模型深度调研：System One 架构、类型安全约束解码、决策流水线、Agent集成生态与选型建议</td>
+    <td><a href="https://ckirchhoff2021.github.io/knowledge-base/PT/html/JEV-决策模型技术调研报告.html">📖 阅读</a></td>
   </tr>
 </table>
 
