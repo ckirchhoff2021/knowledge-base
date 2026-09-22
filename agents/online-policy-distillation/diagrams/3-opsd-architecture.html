@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>OPSD 架构：信息不对称的自蒸馏</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#a78bfa; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .violet{background:#a78bfa;} .rose{background:#fb7185;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>OPSD 架构：同一模型、两种条件、信息不对称</h1></div>
+<div class="subtitle">Self-Distilled Reasoner（arXiv:2601.18734）：教师 = 同模型 + 特权信息（参考答案），学生 = 同模型仅看题目</div>
+<div class="card">
+<svg viewBox="0 0 1040 700" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowV" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#a78bfa" stroke-width="1.2"/>
+    </marker>
+  </defs>
+  <rect width="1040" height="700" fill="url(#grid)"/>
+
+  <!-- boundary: shared weights -->
+  <rect x="60" y="40" width="920" height="230" rx="12" fill="none" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="80" y="62" fill="#fbbf24" font-size="11">同一组参数 θ（共享权重，教师分支 stop-gradient）</text>
+
+  <!-- prompt + answer source -->
+  <rect x="90" y="90" width="200" height="60" rx="6" fill="#0f172a"/>
+  <rect x="90" y="90" width="200" height="60" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="190" y="114" fill="#e2e8f0" font-size="12" font-weight="600" text-anchor="middle">问题 x</text>
+  <text x="190" y="134" fill="#94a3b8" font-size="9" text-anchor="middle">数学题 / 代码题</text>
+
+  <rect x="90" y="180" width="200" height="60" rx="6" fill="#0f172a"/>
+  <rect x="90" y="180" width="200" height="60" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="190" y="204" fill="#fbbf24" font-size="11" font-weight="600" text-anchor="middle">特权信息 PI（参考答案）</text>
+  <text x="190" y="224" fill="#94a3b8" font-size="9" text-anchor="middle">数据集 ground truth / 验证轨迹</text>
+
+  <!-- teacher -->
+  <rect x="400" y="150" width="250" height="90" rx="6" fill="#0f172a"/>
+  <rect x="400" y="150" width="250" height="90" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="525" y="176" fill="#fbbf24" font-size="12" font-weight="600" text-anchor="middle">教师分布 πθ(·| x, PI, y_&lt;t)</text>
+  <text x="525" y="198" fill="#94a3b8" font-size="9" text-anchor="middle">开卷：上下文里带着答案</text>
+  <text x="525" y="216" fill="#94a3b8" font-size="9" text-anchor="middle">对每个前缀输出 next-token 分布 q_t</text>
+  <text x="525" y="232" fill="#64748b" font-size="8" text-anchor="middle">固定为初始策略，隐式正则化</text>
+
+  <!-- student -->
+  <rect x="400" y="80" width="250" height="56" rx="6" fill="#0f172a"/>
+  <rect x="400" y="80" width="250" height="56" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="525" y="102" fill="#34d399" font-size="12" font-weight="600" text-anchor="middle">学生分布 πθ(·| x, y_&lt;t)</text>
+  <text x="525" y="120" fill="#94a3b8" font-size="9" text-anchor="middle">闭卷：仅凭题目作答（推理时同条件）</text>
+
+  <line x1="290" y1="120" x2="400" y2="108" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="290" y1="120" x2="400" y2="170" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="290" y1="210" x2="400" y2="195" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="330" y="218" fill="#fbbf24" font-size="8">仅教师可见</text>
+
+  <!-- rollout -->
+  <rect x="720" y="90" width="240" height="80" rx="6" fill="#0f172a"/>
+  <rect x="720" y="90" width="240" height="80" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="840" y="116" fill="#22d3ee" font-size="12" font-weight="600" text-anchor="middle">学生 rollout（on-policy）</text>
+  <text x="840" y="138" fill="#94a3b8" font-size="9" text-anchor="middle">ŷ ~ πθ(·|x)，学生自己生成</text>
+  <text x="840" y="154" fill="#64748b" font-size="8" text-anchor="middle">教师不生成轨迹，只在学生前缀上打分</text>
+  <line x1="650" y1="108" x2="720" y2="120" stroke="#34d399" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- loss -->
+  <rect x="400" y="330" width="560" height="130" rx="6" fill="#0f172a"/>
+  <rect x="400" y="330" width="560" height="130" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="680" y="358" fill="#a78bfa" font-size="13" font-weight="600" text-anchor="middle">训练目标：在学生轨迹上最小化分布距离</text>
+  <text x="680" y="386" fill="#e2e8f0" font-size="11" text-anchor="middle">L = E_{ŷ~πθ} [ Σ_t  D( πθ(·|x, y_&lt;t) ‖ πθ(·|x, PI, y_&lt;t) ) ]</text>
+  <text x="680" y="410" fill="#94a3b8" font-size="9" text-anchor="middle">D ∈ { forward-KL, reverse-KL, JSD }（论文主用 full-vocab 蒸馏）</text>
+  <text x="680" y="432" fill="#94a3b8" font-size="9" text-anchor="middle">教师分支 stop-gradient：只蒸"答题的自己"，不动"看答案的自己"</text>
+  <line x1="525" y1="240" x2="600" y2="330" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrowV)"/>
+  <line x1="840" y1="170" x2="760" y2="330" stroke="#22d3ee" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- results panel -->
+  <rect x="90" y="330" width="270" height="130" rx="6" fill="#0f172a"/>
+  <rect x="90" y="330" width="270" height="130" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="225" y="354" fill="#e2e8f0" font-size="11" font-weight="600" text-anchor="middle">论文实验（Qwen3，AIME/HMMT 均分）</text>
+  <text x="104" y="380" fill="#94a3b8" font-size="9">Base 8B: 61.8 → OPSD 64.8（GRPO 64.0）</text>
+  <text x="104" y="400" fill="#94a3b8" font-size="9">Base 4B: 61.2 → OPSD 63.6（GRPO 62.7）</text>
+  <text x="104" y="420" fill="#34d399" font-size="9">Base 1.7B: 37.1 → OPSD 43.4（GRPO 37.7）</text>
+  <text x="104" y="444" fill="#64748b" font-size="8">token 效率约为 GRPO 的 8–12 倍</text>
+
+  <!-- pathology panel -->
+  <rect x="90" y="510" width="870" height="150" rx="6" fill="#0f172a"/>
+  <rect x="90" y="510" width="870" height="150" rx="6" fill="rgba(136,19,55,0.25)" stroke="#fb7185" stroke-width="1.2"/>
+  <text x="525" y="536" fill="#fb7185" font-size="12" font-weight="600" text-anchor="middle">已知病理与修复方向（2026 年多篇跟进工作）</text>
+  <text x="110" y="562" fill="#e2e8f0" font-size="10">① 特权诱导的风格偏移（RLCSD）：信号被"更短更直接"的风格 token 主导 → 对比正确/错误提示下的师生差异抵消</text>
+  <text x="110" y="586" fill="#e2e8f0" font-size="10">② 死记硬背（Purified OPSD）：长 CoT 模型反思词崩塌或复读 → 用"只看答案不看题"的对照教师 + PMI 提取可迁移残差</text>
+  <text x="110" y="610" fill="#e2e8f0" font-size="10">③ 轨迹绑死（Rubric-SD）：监督绑定单条参考路径，学生偏离即被鼓励重写 → 用评分标准（rubric）替代单条参考解</text>
+  <text x="110" y="634" fill="#e2e8f0" font-size="10">④ 归纳困境（The Many Faces）：实例特定 PI 强行聚合学出"平庸共识" → 教师适配 / SFT 冷启动 / Top-K 重归一化</text>
+</svg>
+</div>
+<div class="cards">
+  <div class="info-card"><h3><div class="card-dot violet"></div>核心思想</h3><ul>
+    <li>• 用"信息不对称"替代外部教师：开卷 vs 闭卷</li>
+    <li>• 教师与学生同权重，只差一份参考答案</li>
+    <li>• 推理时学生条件与训练时完全一致，无泄漏</li></ul></div>
+  <div class="info-card"><h3><div class="card-dot cyan"></div>优势</h3><ul>
+    <li>• 无需外部大教师，免同词表约束与在线推理成本</li>
+    <li>• token 级稠密监督，样本效率高（8–12×）</li>
+    <li>• 把参考解答转成 dense supervision 而非模仿路径</li></ul></div>
+  <div class="info-card"><h3><div class="card-dot rose"></div>局限</h3><ul>
+    <li>• 模型容量门槛：≤1.7B 小模型自蒸馏收益有限</li>
+    <li>• PI 质量与形式决定上限；超纲题教师失效</li>
+    <li>• 风格偏移/死记硬背等病理需额外正则手段</li></ul></div>
+</div>
+<div class="footer">OPD/OPSD 技术调研报告 · 图 3/3 · 2026-08-18</div>
+</body>
+</html>
