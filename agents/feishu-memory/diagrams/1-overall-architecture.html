@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>飞书数字员工记忆系统总体架构</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#34d399; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .violet{background:#a78bfa;} .rose{background:#fb7185;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>飞书数字员工记忆系统总体架构：五层记忆 × 四级隔离 × 双通道写入</h1></div>
+<div class="subtitle">参照 Hermes Agent 三层记忆（有界常驻 + 按需检索）与 Claude Tag 分层隔离（向下继承、不向上泄漏）· 虚线 = 治理 / 常驻注入路径</div>
+<div class="card">
+<svg viewBox="0 0 1160 700" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="aG" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#34d399" stroke-width="1.2"/></marker>
+    <marker id="aC" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#22d3ee" stroke-width="1.2"/></marker>
+    <marker id="aV" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#a78bfa" stroke-width="1.2"/></marker>
+    <marker id="aR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#fb7185" stroke-width="1.2"/></marker>
+    <marker id="aO" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#fb923c" stroke-width="1.2"/></marker>
+  </defs>
+  <rect width="1160" height="700" fill="url(#grid)"/>
+
+  <!-- arrows (behind boxes) -->
+  <path d="M 230 139 L 310 135" fill="none" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#aC)"/>
+  <path d="M 230 229 L 310 150" fill="none" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#aC)"/>
+  <path d="M 230 319 L 310 255" fill="none" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#aC)"/>
+  <path d="M 230 409 L 310 390" fill="none" stroke="#fb923c" stroke-width="1.5" marker-end="url(#aO)"/>
+  <path d="M 390 180 L 390 330" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#aG)"/>
+  <path d="M 440 300 L 440 330" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#aG)"/>
+  <path d="M 520 380 L 580 345" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#aG)"/>
+  <path d="M 520 135 L 600 122" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#aG)"/>
+  <path d="M 880 285 L 920 240" fill="none" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#aV)"/>
+  <path d="M 830 129 L 920 330" fill="none" stroke="#a78bfa" stroke-width="1.3" stroke-dasharray="5,4" marker-end="url(#aV)"/>
+  <path d="M 1025 168 L 1025 200" fill="none" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#aC)"/>
+  <path d="M 1025 258 L 1025 300" fill="none" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#aC)"/>
+  <path d="M 1025 410 L 1025 440" fill="none" stroke="#fb923c" stroke-width="1.5" marker-end="url(#aO)"/>
+  <path d="M 415 545 L 415 442" fill="none" stroke="#fb7185" stroke-width="1.3" stroke-dasharray="5,4" marker-end="url(#aR)"/>
+  <path d="M 740 545 L 740 458" fill="none" stroke="#fb7185" stroke-width="1.3" stroke-dasharray="5,4" marker-end="url(#aR)"/>
+
+  <!-- Zone: events -->
+  <rect x="30" y="60" width="220" height="430" rx="12" fill="none" stroke="#22d3ee" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="50" y="85" fill="#22d3ee" font-size="11" font-weight="600">飞书事件层</text>
+
+  <rect x="50" y="110" width="180" height="58" rx="6" fill="#0f172a"/>
+  <rect x="50" y="110" width="180" height="58" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="140" y="134" fill="#22d3ee" font-size="11" text-anchor="middle">用户单聊 (DM)</text>
+  <text x="140" y="152" fill="#94a3b8" font-size="9" text-anchor="middle">S2 单聊级隔离</text>
+
+  <rect x="50" y="200" width="180" height="58" rx="6" fill="#0f172a"/>
+  <rect x="50" y="200" width="180" height="58" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="140" y="224" fill="#22d3ee" font-size="11" text-anchor="middle">群聊 @提及任务</text>
+  <text x="140" y="242" fill="#94a3b8" font-size="9" text-anchor="middle">显式意图 · 热路径</text>
+
+  <rect x="50" y="290" width="180" height="58" rx="6" fill="#0f172a"/>
+  <rect x="50" y="290" width="180" height="58" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="140" y="314" fill="#22d3ee" font-size="11" text-anchor="middle">群观察消息流</text>
+  <text x="140" y="332" fill="#94a3b8" font-size="9" text-anchor="middle">高噪声 · 冷路径蒸馏</text>
+
+  <rect x="50" y="380" width="180" height="58" rx="6" fill="#0f172a"/>
+  <rect x="50" y="380" width="180" height="58" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="140" y="404" fill="#fbbf24" font-size="11" text-anchor="middle">定时任务 / 订阅触发</text>
+  <text x="140" y="422" fill="#94a3b8" font-size="9" text-anchor="middle">主动响应 · 周期重审</text>
+  <!-- Zone: write pipeline -->
+  <rect x="290" y="60" width="270" height="430" rx="12" fill="none" stroke="#34d399" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="310" y="85" fill="#34d399" font-size="11" font-weight="600">写入管线（双通道 + 门控）</text>
+
+  <rect x="310" y="110" width="230" height="70" rx="6" fill="#0f172a"/>
+  <rect x="310" y="110" width="230" height="70" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="425" y="132" fill="#34d399" font-size="11" font-weight="600" text-anchor="middle">热路径（@响应内即时写）</text>
+  <text x="425" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">用户主动沉淀"记住XXX"→复述确认</text>
+  <text x="425" y="166" fill="#94a3b8" font-size="9" text-anchor="middle">任务结果回写：方法-结果-踩坑</text>
+
+  <rect x="310" y="330" width="230" height="100" rx="6" fill="#0f172a"/>
+  <rect x="310" y="330" width="230" height="100" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="425" y="352" fill="#34d399" font-size="11" font-weight="600" text-anchor="middle">冷路径（后台异步蒸馏）</text>
+  <text x="425" y="370" fill="#94a3b8" font-size="9" text-anchor="middle">① 粗筛：小模型/规则砍噪声</text>
+  <text x="425" y="386" fill="#94a3b8" font-size="9" text-anchor="middle">② 精炼：LLM提取+类型+置信度</text>
+  <text x="425" y="402" fill="#94a3b8" font-size="9" text-anchor="middle">③ 消解：ADD/UPDATE/DELETE/NOOP</text>
+  <text x="425" y="418" fill="#94a3b8" font-size="9" text-anchor="middle">UPDATE旧值标valid_until（不删除）</text>
+
+  <rect x="310" y="220" width="230" height="80" rx="6" fill="#0f172a"/>
+  <rect x="310" y="220" width="230" height="80" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="425" y="242" fill="#fb7185" font-size="11" font-weight="600" text-anchor="middle">写入门控（所有通道必经）</text>
+  <text x="425" y="260" fill="#94a3b8" font-size="9" text-anchor="middle">安全扫描：注入/凭据/不可见字符</text>
+  <text x="425" y="276" fill="#94a3b8" font-size="9" text-anchor="middle">去重合并 · 置信度分流→待审求证</text>
+  <text x="425" y="292" fill="#94a3b8" font-size="9" text-anchor="middle">高敏群可开 write_approval 人工批准</text>
+
+  <!-- Zone: storage layers -->
+  <rect x="600" y="60" width="300" height="430" rx="12" fill="none" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="620" y="85" fill="#a78bfa" font-size="11" font-weight="600">五层记忆存储（scope 决定隔离）</text>
+
+  <rect x="620" y="100" width="260" height="50" rx="6" fill="#0f172a"/>
+  <rect x="620" y="100" width="260" height="50" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="750" y="120" fill="#a78bfa" font-size="11" font-weight="600" text-anchor="middle">M0 工作记忆（会话/任务级）</text>
+  <text x="750" y="138" fill="#94a3b8" font-size="9" text-anchor="middle">线程近窗消息 + 长程任务状态</text>
+
+  <rect x="620" y="165" width="260" height="56" rx="6" fill="#0f172a"/>
+  <rect x="620" y="165" width="260" height="56" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="750" y="185" fill="#a78bfa" font-size="11" font-weight="600" text-anchor="middle">M1 语义记忆（事实）</text>
+  <text x="750" y="201" fill="#94a3b8" font-size="9" text-anchor="middle">mem0/MemoryBase 后端 · 决策/口径/分工</text>
+  <text x="750" y="214" fill="#94a3b8" font-size="9" text-anchor="middle">valid_until / superseded_by 时效字段</text>
+
+  <rect x="620" y="236" width="260" height="50" rx="6" fill="#0f172a"/>
+  <rect x="620" y="236" width="260" height="50" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="750" y="256" fill="#a78bfa" font-size="11" font-weight="600" text-anchor="middle">M2 情景记忆（场景块）</text>
+  <text x="750" y="274" fill="#94a3b8" font-size="9" text-anchor="middle">向量库+来源消息链接 · 时间衰减</text>
+
+  <rect x="620" y="301" width="260" height="50" rx="6" fill="#0f172a"/>
+  <rect x="620" y="301" width="260" height="50" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="750" y="321" fill="#a78bfa" font-size="11" font-weight="600" text-anchor="middle">M3 程序记忆（技能/SOP）</text>
+  <text x="750" y="339" fill="#94a3b8" font-size="9" text-anchor="middle">Markdown 文件 · 版本化 · 定时任务模板</text>
+
+  <rect x="620" y="366" width="260" height="60" rx="6" fill="#0f172a"/>
+  <rect x="620" y="366" width="260" height="60" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="750" y="386" fill="#34d399" font-size="11" font-weight="600" text-anchor="middle">M4 画像（人设+偏好面板）</text>
+  <text x="750" y="402" fill="#94a3b8" font-size="9" text-anchor="middle">有界Markdown≤3K字符 · 冻结快照常驻</text>
+  <text x="750" y="416" fill="#94a3b8" font-size="9" text-anchor="middle">偏好双写：M1可检索 + M4必注入</text>
+
+  <rect x="620" y="440" width="260" height="40" rx="6" fill="#0f172a"/>
+  <rect x="620" y="440" width="260" height="40" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="750" y="457" fill="#fb7185" font-size="10" font-weight="600" text-anchor="middle">四级隔离：员工S0→群S1→单聊S2→会话S3</text>
+  <text x="750" y="472" fill="#94a3b8" font-size="9" text-anchor="middle">向下继承 · 不向上泄漏 · 检索强制带scope</text>
+
+  <!-- Zone: retrieval / injection -->
+  <rect x="940" y="60" width="190" height="430" rx="12" fill="none" stroke="#22d3ee" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="960" y="85" fill="#22d3ee" font-size="11" font-weight="600">检索与注入</text>
+
+  <rect x="955" y="200" width="160" height="58" rx="6" fill="#0f172a"/>
+  <rect x="955" y="200" width="160" height="58" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="1035" y="222" fill="#22d3ee" font-size="10" font-weight="600" text-anchor="middle">混合检索（预算≤500ms）</text>
+  <text x="1035" y="238" fill="#94a3b8" font-size="9" text-anchor="middle">向量+关键词 · RRF融合</text>
+  <text x="1035" y="251" fill="#94a3b8" font-size="9" text-anchor="middle">memory-as-a-tool 按需召回</text>
+
+  <rect x="955" y="300" width="160" height="110" rx="6" fill="#0f172a"/>
+  <rect x="955" y="300" width="160" height="110" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="1035" y="322" fill="#22d3ee" font-size="10" font-weight="600" text-anchor="middle">上下文组装（首因/近因）</text>
+  <text x="1035" y="340" fill="#94a3b8" font-size="9" text-anchor="middle">①人设+群规（常驻）</text>
+  <text x="1035" y="354" fill="#94a3b8" font-size="9" text-anchor="middle">②用户偏好（常驻）</text>
+  <text x="1035" y="368" fill="#94a3b8" font-size="9" text-anchor="middle">③线程近窗 ④召回片段</text>
+  <text x="1035" y="382" fill="#94a3b8" font-size="9" text-anchor="middle">⑤当前问题（结尾）</text>
+  <text x="1035" y="398" fill="#94a3b8" font-size="9" text-anchor="middle">注入上限4K token</text>
+
+  <rect x="955" y="100" width="160" height="68" rx="6" fill="#0f172a"/>
+  <rect x="955" y="100" width="160" height="68" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="1035" y="122" fill="#22d3ee" font-size="10" font-weight="600" text-anchor="middle">Agent 推理循环</text>
+  <text x="1035" y="138" fill="#94a3b8" font-size="9" text-anchor="middle">@响应 / 主动推送</text>
+  <text x="1035" y="152" fill="#94a3b8" font-size="9" text-anchor="middle">回答附记忆来源链接</text>
+
+  <rect x="955" y="440" width="160" height="40" rx="6" fill="#0f172a"/>
+  <rect x="955" y="440" width="160" height="40" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="1035" y="457" fill="#fbbf24" font-size="10" text-anchor="middle">跨群提升（受控例外）</text>
+  <text x="1035" y="472" fill="#94a3b8" font-size="9" text-anchor="middle">管理员批准 · 来源标注</text>
+
+  <!-- governance bar -->
+  <rect x="290" y="530" width="490" height="50" rx="8" fill="#0f172a"/>
+  <rect x="290" y="530" width="490" height="50" rx="8" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="535" y="551" fill="#fb7185" font-size="11" font-weight="600" text-anchor="middle">治理层：遗忘（衰减/归档）· 状态重审（周任务）· 审计留痕 · 全派生链删除</text>
+  <text x="535" y="568" fill="#94a3b8" font-size="9" text-anchor="middle">记忆是持久化注入攻击面 —— 写入扫描 + 投毒防御贯穿全链路</text>
+
+  <!-- legend -->
+  <g font-size="9">
+    <rect x="40" y="620" width="14" height="10" rx="2" fill="rgba(8,51,68,0.4)" stroke="#22d3ee"/>
+    <text x="60" y="629" fill="#94a3b8">接入 / 检索</text>
+    <rect x="150" y="620" width="14" height="10" rx="2" fill="rgba(6,78,59,0.4)" stroke="#34d399"/>
+    <text x="170" y="629" fill="#94a3b8">写入管线 / 常驻层</text>
+    <rect x="300" y="620" width="14" height="10" rx="2" fill="rgba(76,29,149,0.4)" stroke="#a78bfa"/>
+    <text x="320" y="629" fill="#94a3b8">记忆存储</text>
+    <rect x="410" y="620" width="14" height="10" rx="2" fill="rgba(136,19,55,0.4)" stroke="#fb7185"/>
+    <text x="430" y="629" fill="#94a3b8">安全 / 治理</text>
+    <rect x="530" y="620" width="14" height="10" rx="2" fill="rgba(120,53,15,0.3)" stroke="#fbbf24"/>
+    <text x="550" y="629" fill="#94a3b8">调度 / 受控共享</text>
+    <text x="700" y="629" fill="#475569">虚线 = 治理 / 常驻注入路径</text>
+  </g>
+</svg>
+</div>
+<div class="cards">
+  <div class="info-card">
+    <h3><div class="card-dot emerald"></div>分层蒸馏：存什么、何时存</h3>
+    <ul>
+      <li>• 短期消息不直接复制进长期记忆——必须经 LLM 蒸馏（提取-消解-时效）</li>
+      <li>• 热路径：用户主动沉淀（最高置信）+ 任务结果回写，即时生效</li>
+      <li>• 冷路径：观察消息流后台批处理，粗筛砍 80% 噪声再精炼</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot violet"></div>隔离与检索：怎么取</h3>
+    <ul>
+      <li>• 四级 scope（员工/群/单聊/会话），向下继承、不向上泄漏</li>
+      <li>• 检索强制带范围约束，代码层禁止无隔离回退</li>
+      <li>• memory-as-a-tool 按需召回，注入预算 ≤4K token、延迟 ≤500ms</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot rose"></div>治理：忘得掉、改得动</h3>
+    <ul>
+      <li>• 旧事实不删除、标失效（双时间字段），回答"现在以哪个版本为准"</li>
+      <li>• 画像有界硬上限，写满强制整理；使用衰减定期归档</li>
+      <li>• 写入安全扫描 + 待审求证，防记忆投毒与个人发言冒充共识</li>
+    </ul>
+  </div>
+</div>
+<div class="footer">飞书数字员工记忆系统设计 · 参照 Hermes Agent memory + Claude Tag 分层隔离 · 2026-08-27</div>
+</body>
+</html>
+
