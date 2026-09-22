@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拟人化 Agent 设计维度理论框架调研笔记</title>
+    <style>/* tech-doc: 专业技术文档主题，对标GitBook/MkDocs Material */
+:root {
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --bg: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --border: #e2e8f0;
+  --code-bg: #f1f5f9;
+  --code-text: #ef4444;
+  --blockquote-border: var(--primary);
+  --blockquote-bg: #eff6ff;
+  --table-border: #e2e8f0;
+  --table-header-bg: #f8fafc;
+  --toc-bg: #f8fafc;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius: 8px;
+  --content-width: 900px;
+  --toc-width: 280px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #3b82f6;
+    --primary-light: #60a5fa;
+    --primary-dark: #2563eb;
+    --bg: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --border: #334155;
+    --code-bg: #1e293b;
+    --code-text: #f87171;
+    --blockquote-border: var(--primary);
+    --blockquote-bg: #1e3a8a33;
+    --table-border: #334155;
+    --table-header-bg: #1e293b;
+    --toc-bg: #1e293b;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+  line-height: 1.7;
+  color: var(--text-primary);
+  background: var(--bg);
+  font-size: 16px;
+}
+
+/* 顶部导航栏 */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .header {
+    background: rgba(15, 23, 42, 0.85);
+  }
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-title::before {
+  content: "📄";
+  font-size: 20px;
+}
+
+/* 页面布局 */
+.container {
+  max-width: calc(var(--content-width) + var(--toc-width) + 100px);
+  margin: 0 auto;
+  padding: 80px 24px 40px;
+  display: grid;
+  grid-template-columns: var(--content-width) var(--toc-width);
+  gap: 60px;
+}
+
+/* 主内容区 */
+.content {
+  min-width: 0;
+}
+
+/* 文档头部 */
+.doc-header {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.doc-meta {
+  display: flex;
+  gap: 24px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.doc-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 标题样式 */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 2.5em;
+  margin-bottom: 1em;
+  scroll-margin-top: 80px;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-top: 0;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+
+h2 {
+  font-size: 1.6rem;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 80px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+h3 {
+  font-size: 1.3rem;
+}
+
+h4 {
+  font-size: 1.15rem;
+}
+
+p {
+  margin-bottom: 1.2em;
+  color: var(--text-secondary);
+}
+
+strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* 链接样式 */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  border-bottom: 1px solid transparent;
+}
+
+a:hover {
+  color: var(--primary-dark);
+  border-bottom-color: var(--primary);
+}
+
+/* 列表样式 */
+ul, ol {
+  margin-bottom: 1.2em;
+  padding-left: 1.8em;
+  color: var(--text-secondary);
+}
+
+li {
+  margin-bottom: 0.6em;
+}
+
+li > ul, li > ol {
+  margin-top: 0.6em;
+  margin-bottom: 0;
+}
+
+/* 代码样式 */
+code {
+  font-family: "JetBrains Mono", "Fira Code", Consolas, Monaco, monospace;
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+pre {
+  background: var(--code-bg);
+  border-radius: var(--radius);
+  padding: 1.2em 1.4em;
+  overflow-x: auto;
+  margin-bottom: 1.5em;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-primary);
+  font-weight: 400;
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+
+/* 代码块语言标识 */
+pre::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0.5em;
+  right: 1em;
+  font-size: 0.75em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* 引用块 */
+blockquote {
+  margin: 1.5em 0;
+  padding: 1em 1.4em;
+  border-left: 4px solid var(--blockquote-border);
+  background: var(--blockquote-bg);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--text-secondary);
+}
+
+blockquote p {
+  margin-bottom: 0;
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* 表格样式 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--table-border);
+  /* 表格布局自动，单元格宽度自适应内容 */
+  table-layout: auto;
+  overflow-x: auto;
+  display: block;
+  -webkit-overflow-scrolling: touch;
+}
+
+th, td {
+  padding: 0.8em 1.2em;
+  text-align: left;
+  border-bottom: 1px solid var(--table-border);
+  color: var(--text-secondary);
+  /* 单元格内容允许换行，避免公式/长文本被拆散 */
+  white-space: normal;
+  word-break: break-word;
+  vertical-align: top;
+}
+
+th {
+  background: var(--table-header-bg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:nth-child(even) td {
+  background: var(--bg-secondary);
+}
+
+tr:hover td {
+  background: var(--bg-tertiary);
+}
+
+/* 数学公式样式 */
+.katex-display {
+  margin: 1.5em 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1em 0;
+}
+.katex {
+  font-size: 1.15em !important;
+}
+:root[data-theme="dark"] .katex .mord,
+:root[data-theme="dark"] .katex .mbin,
+:root[data-theme="dark"] .katex .mrel,
+:root[data-theme="dark"] .katex .mop,
+:root[data-theme="dark"] .katex .mopen,
+:root[data-theme="dark"] .katex .mclose,
+:root[data-theme="dark"] .katex .mpunct,
+:root[data-theme="dark"] .katex .malpha {
+  color: var(--text-primary) !important;
+}
+
+/* 图片样式 */
+img {
+  max-width: 100%;
+  border-radius: var(--radius);
+  margin: 1.5em 0;
+  box-shadow: var(--shadow-md);
+}
+
+/* 分割线 */
+hr {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 3em 0;
+}
+
+/* 目录侧边栏 */
+.toc {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--toc-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.toc-title {
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.toc ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.toc li {
+  margin-bottom: 8px;
+}
+
+.toc li li {
+  padding-left: 16px;
+  margin-bottom: 6px;
+}
+
+.toc a {
+  color: var(--text-secondary);
+  display: block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 2px solid transparent;
+  transition: all 0.2s ease;
+  line-height: 1.5;
+}
+
+.toc a:hover {
+  color: var(--primary);
+  background: var(--bg);
+  border-left-color: var(--primary);
+  text-decoration: none;
+}
+
+.toc a.active {
+  color: var(--primary);
+  background: var(--bg);
+  border-left-color: var(--primary);
+  font-weight: 500;
+}
+
+/* 公式样式 */
+.katex {
+  font-size: 1.1em;
+  margin: 1em 0;
+}
+
+/* Mermaid图样式 */
+.mermaid {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 2em 0;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+/* 响应式适配 */
+@media (max-width: 1200px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .toc {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 15px;
+  }
+  .container {
+    padding: 72px 16px 30px;
+  }
+  .doc-title {
+    font-size: 1.8rem;
+  }
+  h1 {
+    font-size: 1.6rem;
+  }
+  h2 {
+    font-size: 1.4rem;
+  }
+  h3 {
+    font-size: 1.2rem;
+  }
+  pre {
+    padding: 1em;
+    margin: 1em -16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  table {
+    display: block;
+    overflow-x: auto;
+    margin: 1em -16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .header, .toc {
+    display: none;
+  }
+  .container {
+    display: block;
+    padding: 0;
+    max-width: 100%;
+  }
+  .content {
+    max-width: 100%;
+  }
+  pre, blockquote, table {
+    break-inside: avoid;
+  }
+  a {
+    color: inherit;
+    border-bottom: none;
+  }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #49483e }
+.highlight { background: #272822; color: #F8F8F2 }
+.highlight .c { color: #959077 } /* Comment */
+.highlight .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.highlight .esc { color: #F8F8F2 } /* Escape */
+.highlight .g { color: #F8F8F2 } /* Generic */
+.highlight .k { color: #66D9EF } /* Keyword */
+.highlight .l { color: #AE81FF } /* Literal */
+.highlight .n { color: #F8F8F2 } /* Name */
+.highlight .o { color: #FF4689 } /* Operator */
+.highlight .x { color: #F8F8F2 } /* Other */
+.highlight .p { color: #F8F8F2 } /* Punctuation */
+.highlight .ch { color: #959077 } /* Comment.Hashbang */
+.highlight .cm { color: #959077 } /* Comment.Multiline */
+.highlight .cp { color: #959077 } /* Comment.Preproc */
+.highlight .cpf { color: #959077 } /* Comment.PreprocFile */
+.highlight .c1 { color: #959077 } /* Comment.Single */
+.highlight .cs { color: #959077 } /* Comment.Special */
+.highlight .gd { color: #FF4689 } /* Generic.Deleted */
+.highlight .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #F8F8F2 } /* Generic.Error */
+.highlight .gh { color: #F8F8F2 } /* Generic.Heading */
+.highlight .gi { color: #A6E22E } /* Generic.Inserted */
+.highlight .go { color: #66D9EF } /* Generic.Output */
+.highlight .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.highlight .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #959077 } /* Generic.Subheading */
+.highlight .gt { color: #F8F8F2 } /* Generic.Traceback */
+.highlight .kc { color: #66D9EF } /* Keyword.Constant */
+.highlight .kd { color: #66D9EF } /* Keyword.Declaration */
+.highlight .kn { color: #FF4689 } /* Keyword.Namespace */
+.highlight .kp { color: #66D9EF } /* Keyword.Pseudo */
+.highlight .kr { color: #66D9EF } /* Keyword.Reserved */
+.highlight .kt { color: #66D9EF } /* Keyword.Type */
+.highlight .ld { color: #E6DB74 } /* Literal.Date */
+.highlight .m { color: #AE81FF } /* Literal.Number */
+.highlight .s { color: #E6DB74 } /* Literal.String */
+.highlight .na { color: #A6E22E } /* Name.Attribute */
+.highlight .nb { color: #F8F8F2 } /* Name.Builtin */
+.highlight .nc { color: #A6E22E } /* Name.Class */
+.highlight .no { color: #66D9EF } /* Name.Constant */
+.highlight .nd { color: #A6E22E } /* Name.Decorator */
+.highlight .ni { color: #F8F8F2 } /* Name.Entity */
+.highlight .ne { color: #A6E22E } /* Name.Exception */
+.highlight .nf { color: #A6E22E } /* Name.Function */
+.highlight .nl { color: #F8F8F2 } /* Name.Label */
+.highlight .nn { color: #F8F8F2 } /* Name.Namespace */
+.highlight .nx { color: #A6E22E } /* Name.Other */
+.highlight .py { color: #F8F8F2 } /* Name.Property */
+.highlight .nt { color: #FF4689 } /* Name.Tag */
+.highlight .nv { color: #F8F8F2 } /* Name.Variable */
+.highlight .ow { color: #FF4689 } /* Operator.Word */
+.highlight .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.highlight .w { color: #F8F8F2 } /* Text.Whitespace */
+.highlight .mb { color: #AE81FF } /* Literal.Number.Bin */
+.highlight .mf { color: #AE81FF } /* Literal.Number.Float */
+.highlight .mh { color: #AE81FF } /* Literal.Number.Hex */
+.highlight .mi { color: #AE81FF } /* Literal.Number.Integer */
+.highlight .mo { color: #AE81FF } /* Literal.Number.Oct */
+.highlight .sa { color: #E6DB74 } /* Literal.String.Affix */
+.highlight .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.highlight .sc { color: #E6DB74 } /* Literal.String.Char */
+.highlight .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.highlight .sd { color: #E6DB74 } /* Literal.String.Doc */
+.highlight .s2 { color: #E6DB74 } /* Literal.String.Double */
+.highlight .se { color: #AE81FF } /* Literal.String.Escape */
+.highlight .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.highlight .si { color: #E6DB74 } /* Literal.String.Interpol */
+.highlight .sx { color: #E6DB74 } /* Literal.String.Other */
+.highlight .sr { color: #E6DB74 } /* Literal.String.Regex */
+.highlight .s1 { color: #E6DB74 } /* Literal.String.Single */
+.highlight .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.highlight .bp { color: #F8F8F2 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #A6E22E } /* Name.Function.Magic */
+.highlight .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.highlight .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.highlight .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.highlight .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.highlight .il { color: #AE81FF } /* Literal.Number.Integer.Long */</style>
+    
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+            onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false}]});"></script>
+        
+    <!-- Mermaid支持 -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+    <script>
+        // 自动识别系统深色模式
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            const newTheme = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            mermaid.initialize({ theme: newTheme === 'dark' ? 'dark' : 'default' });
+            // 重新渲染Mermaid图
+            document.querySelectorAll('.mermaid').forEach(el => {
+                el.removeAttribute('data-processed');
+            });
+            mermaid.init();
+        });
+        // TOC滚动高亮
+        document.addEventListener('DOMContentLoaded', function() {
+            // 代码块添加语言标识
+            document.querySelectorAll('div.highlight').forEach(el => {
+                const langClass = Array.from(el.classList).find(c => c.startsWith('language-'));
+                if (langClass) {
+                    const lang = langClass.replace('language-', '');
+                    el.setAttribute('data-lang', lang);
+                }
+            });
+            // Mermaid代码块替换
+            document.querySelectorAll('pre code.language-mermaid').forEach(code => {
+                const pre = code.parentElement;
+                const div = document.createElement('div');
+                div.className = 'mermaid';
+                div.textContent = code.textContent;
+                pre.replaceWith(div);
+            });
+            mermaid.init();
+            // 目录滚动高亮
+            const tocLinks = document.querySelectorAll('.toc a');
+            const headings = document.querySelectorAll('.content h2, .content h3');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                headings.forEach(heading => {
+                    const sectionTop = heading.offsetTop;
+                    if (window.scrollY >= sectionTop - 100) {
+                        current = heading.getAttribute('id');
+                    }
+                });
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + current) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-title">拟人化 Agent 设计维度理论框架调研笔记</div>
+    </header>
+    <div class="container">
+        <main class="content">
+            <div class="doc-header">
+                <h1 class="doc-title">拟人化 Agent 设计维度理论框架调研笔记</h1>
+                <div class="doc-meta">
+                    <span class="doc-meta-item">👤 AI技术知识库</span>
+                    <span class="doc-meta-item">📅 2026-08-27</span>
+                </div>
+            </div>
+            <h1 id="agent">拟人化 Agent 设计维度理论框架调研笔记</h1>
+<blockquote>
+<p>调研日期：2026-08-24
+用途：为《拟人化 Agent 产品设计》技术报告收集设计理论素材</p>
+</blockquote>
+<hr />
+<h2 id="1">1. 心理学基础</h2>
+<p>拟人化（Anthropomorphism）是指人类将人类的形态、特征、情感、意图和心理状态归因于非人类实体的心理倾向。这一倾向是人类认知的固有特征，构成了人机交互中"计算机作为社会行动者"范式的心理学基础。</p>
+<h3 id="11-media-equation-reeves-nass">1.1 媒体方程式（Media Equation, Reeves &amp; Nass）</h3>
+<p><strong>核心观点</strong>：人们会无意识地将计算机、电视和其他新媒体当作真实的人和社会场景来对待，这种反应是自动的、不可避免的，而且发生的频率远超人们自己意识到的程度。</p>
+<p>Reeves 和 Nass 在 1996 年的著作《The Media Equation: How People Treat Computers, Television, and New Media Like Real People and Places》中系统提出了这一理论，核心命题是：</p>
+<blockquote>
+<p>"Individuals' interactions with computers, television, and new media are fundamentally social and natural, just like interactions in real life." (Reeves &amp; Nass, 1996, p.5)</p>
+</blockquote>
+<p><strong>经典实验</strong>：同一台计算机提问自己表现如何时，用户给出的评价显著更正面；而换另一台计算机或纸笔问卷评价同一台计算机时，用户会给出更诚实、更多样化、更负面的评价——就像人们不愿当着一个人的面说坏话一样。即使添加语音输出，结果仍然一致。</p>
+<ul>
+<li><strong>参考来源</strong>：https://en.wikipedia.org/wiki/The_Media_Equation</li>
+<li><strong>原始著作</strong>：Reeves, B., &amp; Nass, C. (1996). <em>The Media Equation: How People Treat Computers, Television, and New Media Like Real People and Places</em>. Cambridge University Press.</li>
+</ul>
+<h3 id="12-uncanny-valley-masahiro-mori">1.2 恐怖谷（Uncanny Valley, Masahiro Mori）</h3>
+<p><strong>核心观点</strong>：随着机器人/虚拟形象的拟人程度增加，人类对其的情感反应呈现倒 U 型曲线：
+1. 拟人度低→亲和力随拟人度上升而增加
+2. 拟人度达到"几乎像人但又不完全像人"的临界点时，亲和力骤降，产生诡异、不安、厌恶的"恐怖谷"效应
+3. 拟人度继续提升至完全无法区分于真人时，亲和力再次回升至人类间共情水平</p>
+<p>森政弘（Masahiro Mori）于 1970 年首次提出这一假说。运动（movement）会放大这一情绪反应。该理论对拟人化 Agent 的外观设计具有关键指导意义——要么保持明显的非人类卡通/抽象风格，要么达到极高的拟真度，避免落入恐怖谷。</p>
+<ul>
+<li><strong>参考来源</strong>：https://en.wikipedia.org/wiki/Uncanny_valley</li>
+<li><strong>原始论文</strong>：Mori, M. (1970). Bukimi no tani [The uncanny valley]. <em>Energy</em>, 7(4), 33–35.</li>
+</ul>
+<h3 id="13-casa-computers-are-social-actors">1.3 CASA 范式（Computers Are Social Actors）</h3>
+<p><strong>核心观点</strong>：CASA 是媒体方程式理论在人机交互领域的具体应用范式，由 Clifford Nass 等人于 1994 年正式提出。其核心主张是：人类会无意识地将适用于人际互动的社会启发式（social heuristics）和社会规范应用到计算机上，即使用户理智上知道计算机没有感情、意图或动机。</p>
+<p>Nass 和 Moon（2000）将这一现象归因于"无意识"（mindlessness）——特定的社会线索触发后，个体会依赖过去形成的类别、联想和思维习惯，几乎没有有意识的觉察，就会自动激活人际互动脚本。</p>
+<p><strong>触发社会反应的计算机属性</strong>：
+- 使用语言（文字/语音）进行输出
+- 交互性（按下按钮后计算机会"回应"）
+- 能够执行传统上由人类完成的任务</p>
+<p><strong>已被实验验证的社会行为</strong>：
+- <strong>性别刻板印象</strong>：使用女性语音的辅导计算机在"爱情与人际关系"主题上被认为更具信息量；男性语音在技术主题上更受认可
+- <strong>互惠性</strong>：当一台计算机"帮助"了用户后，用户更愿意为这台计算机做更多"工作"
+- <strong>专家 vs 通用标签</strong>：被标记为"专家"的技术会让用户认为其呈现的内容质量更高
+- <strong>人格匹配</strong>：具有支配型人格的用户更偏好同样使用强势、自信语言的"支配型"计算机</p>
+<ul>
+<li><strong>参考来源</strong>：https://en.wikipedia.org/wiki/Computers_are_social_actors</li>
+<li><strong>原始论文</strong>：Nass, C., Steuer, J., &amp; Tauber, E. R. (1994). Computers are social actors. <em>Proceedings of the SIGCHI Conference on Human Factors in Computing Systems</em>, 72–78.</li>
+<li><strong>综述论文</strong>：Nass, C., &amp; Moon, Y. (2000). Machines and mindlessness: Social responses to computers. <em>Journal of Social Issues</em>, 56(1), 81–103.</li>
+</ul>
+<h3 id="14-theory-of-mind-tom">1.4 心智理论（Theory of Mind, ToM）</h3>
+<p><strong>核心观点</strong>：心智理论是指个体将独立的心理状态（信念、意图、欲望、情感、知识）归因于自己和他人的能力。在拟人化 Agent 设计中，ToM 具有双向含义：
+1. <strong>用户对 Agent 的 ToM 投射</strong>：用户会自动推断 Agent "知道什么"、"想要什么"、"感受如何"，这是拟人化的核心认知机制
+2. <strong>Agent 对用户的 ToM 建模</strong>：高级拟人化 Agent 需要具备推断用户意图、信念、情绪状态的能力，才能做出恰当的社交回应</p>
+<p>拟人化的心理学三因素模型（Epley et al., 2007）指出，拟人化的发生受三个因素调节：
+- <strong>诱发的主体知识（elicited agent knowledge）</strong>：人们容易将关于自我的知识投射到非人类实体上
+- <strong>效能动机（effectance motivation）</strong>：当人们需要理解和预测环境中实体的行为时，更倾向于拟人化
+- <strong>社会性动机（sociality motivation）</strong>：缺乏社会连接的人更容易将非人类实体拟人化以获得社会补偿</p>
+<ul>
+<li><strong>参考来源</strong>：https://en.wikipedia.org/wiki/Anthropomorphism</li>
+<li><strong>核心论文</strong>：Epley, N., Waytz, A., &amp; Cacioppo, J. T. (2007). On seeing human: A three-factor theory of anthropomorphism. <em>Psychological Review</em>, 114(4), 864–886.</li>
+</ul>
+<hr />
+<h2 id="2-agent">2. 拟人化 Agent 设计维度框架</h2>
+<p>基于 CASA 范式、拟人化心理学研究以及当前主流 AI 陪伴产品的设计实践，拟人化 Agent 的设计可以划分为以下七个维度：</p>
+<h3 id="21">2.1 外在拟人化（外在形态层）</h3>
+<p>通过多模态外观线索传达"像人"的感知，是最直观的拟人化维度。</p>
+<table>
+<thead>
+<tr>
+<th>设计元素</th>
+<th>具体内容</th>
+<th>设计要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>视觉形象</td>
+<td>Avatar/头像/虚拟形象（2D插画、3D模型、写实照片）</td>
+<td>遵循恐怖谷原则：要么卡通化/风格化，要么高保真写实，避免中间地带</td>
+</tr>
+<tr>
+<td>声音</td>
+<td>TTS音色、语速、语调、口音、情感韵律</td>
+<td>音色一致性是人格感的基础；声音比文字更容易触发社会反应</td>
+</tr>
+<tr>
+<td>名字</td>
+<td>人类名字、昵称、称呼方式</td>
+<td>名字是身份认同的锚点；让用户给Agent命名可显著增强依恋</td>
+</tr>
+<tr>
+<td>视觉动效</td>
+<td>表情变化、动作姿态、打字动画、呼吸效果</td>
+<td>微动作（眨眼、微微晃动）能极大增强"活着"的感觉</td>
+</tr>
+<tr>
+<td>性别/年龄/外貌特征</td>
+<td>明确或模糊的人口统计学特征</td>
+<td>CASA研究表明这些特征会自动激活性别/年龄刻板印象</td>
+</tr>
+</tbody>
+</table>
+<h3 id="22">2.2 语言拟人化（语言交互层）</h3>
+<p>通过语言风格和对话方式营造人格感和亲近感。</p>
+<table>
+<thead>
+<tr>
+<th>设计元素</th>
+<th>具体内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>口语化表达</td>
+<td>使用 contractions（"I'm"而非"I am"）、日常词汇、不完整句子、口头禅</td>
+</tr>
+<tr>
+<td>语气词/填充词</td>
+<td>"嗯"、"啊"、"哈哈"、"hmm"、"well..."——增加自然对话感</td>
+</tr>
+<tr>
+<td>个性化说话风格</td>
+<td>独特的句式偏好、用词习惯、语速感（通过标点和断句模拟）</td>
+</tr>
+<tr>
+<td>幽默与俏皮</td>
+<td>适度开玩笑、使用网络流行语/梗、自嘲——拉近距离</td>
+</tr>
+<tr>
+<td>Emoji/表情符号</td>
+<td>适度使用 😊 🤔 😂 等——注意不同人群的接受度差异</td>
+</tr>
+<tr>
+<td>对话主动性</td>
+<td>会提问、会追问、会转移话题、会结束对话——不只是被动回答</td>
+</tr>
+<tr>
+<td>语言一致性</td>
+<td>同一角色在不同时间/话题下保持一致的语言风格</td>
+</tr>
+</tbody>
+</table>
+<h3 id="23">2.3 认知拟人化（认知能力层）</h3>
+<p>让 Agent 展现出类人的认知特征，而非完美的信息处理器。</p>
+<table>
+<thead>
+<tr>
+<th>设计元素</th>
+<th>具体内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>长期记忆</td>
+<td>记住用户的偏好、过去的对话内容、重要事件、个人信息</td>
+</tr>
+<tr>
+<td>记忆的不完美</td>
+<td>偶尔"忘记"某事、记错细节、需要提醒——过度完美的记忆反而不自然</td>
+</tr>
+<tr>
+<td>推理过程的自然表达</td>
+<td>不是直接给出答案，而是展示"思考"过程："让我想想..."、"等等，你是说...?"</td>
+</tr>
+<tr>
+<td>表达不确定性</td>
+<td>"我不太确定"、"可能是..."、"我猜..."、"我倾向于认为..."</td>
+</tr>
+<tr>
+<td>犯错</td>
+<td>偶尔犯小错误、承认错误、纠正自己——完美的Agent反而不可信/不亲近</td>
+</tr>
+<tr>
+<td>学习与成长</td>
+<td>随着对话推进，展现出"学到了"新东西、调整了看法、形成了新偏好</td>
+</tr>
+<tr>
+<td>知识边界</td>
+<td>有明确的"不知道"的领域，而非对所有问题都能回答</td>
+</tr>
+</tbody>
+</table>
+<h3 id="24">2.4 情感拟人化（情感回应层）</h3>
+<p>让 Agent 展现出情感感知和情感表达能力。</p>
+<table>
+<thead>
+<tr>
+<th>设计元素</th>
+<th>具体内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>情绪识别</td>
+<td>通过文本/语音/视觉线索感知用户情绪状态</td>
+</tr>
+<tr>
+<td>共情回应</td>
+<td>对用户的情绪做出恰当的情感回应（安慰、庆祝、理解）</td>
+</tr>
+<tr>
+<td>情绪表达</td>
+<td>Agent 自身有情绪反应（开心、担心、好奇、惊讶、委屈）</td>
+</tr>
+<tr>
+<td>情感记忆</td>
+<td>记得用户情绪起伏的事件，在后续对话中恰当提及</td>
+</tr>
+<tr>
+<td>情感语调匹配</td>
+<td>TTS 语音的情感韵律与对话语境匹配</td>
+</tr>
+<tr>
+<td>情感边界</td>
+<td>不过度情感输出、不虚假承诺情感、在严肃话题上保持恰当的共情深度</td>
+</tr>
+</tbody>
+</table>
+<h3 id="25">2.5 社交拟人化（社交关系层）</h3>
+<p>让 Agent 展现出符合社交规范的行为模式，建立"关系感"。</p>
+<table>
+<thead>
+<tr>
+<th>设计元素</th>
+<th>具体内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>主动性</td>
+<td>主动发起对话、主动关心用户状态、主动分享"想法"——不只是被动响应</td>
+</tr>
+<tr>
+<td>关系维护</td>
+<td>记住重要日期（生日）、定期问候、关心用户近况</td>
+</tr>
+<tr>
+<td>社交礼仪</td>
+<td>使用礼貌用语、道歉、感谢、道别——Nass实验已证明用户对计算机会有"礼貌"期待</td>
+</tr>
+<tr>
+<td>互惠行为</td>
+<td>对用户的帮助/分享表达感谢，"回报"以信息或情感支持</td>
+</tr>
+<tr>
+<td>个人边界</td>
+<td>尊重用户隐私、不追问不适话题、允许用户"不想聊"——过度入侵边界会引发反感</td>
+</tr>
+<tr>
+<td>关系进展感</td>
+<td>从陌生到熟悉的关系递进：初期礼貌克制，后期更随意亲密</td>
+</tr>
+<tr>
+<td>称呼演化</td>
+<td>从正式称呼到昵称的变化，反映关系亲密度变化</td>
+</tr>
+</tbody>
+</table>
+<h3 id="26">2.6 行为拟人化（行为模式层）</h3>
+<p>通过交互节奏和行为模式模拟真人对话的时间特征和行为习惯。</p>
+<table>
+<thead>
+<tr>
+<th>设计元素</th>
+<th>具体内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>打字延迟</td>
+<td>根据回复长度模拟思考和打字时间——即时回复显得机器化</td>
+</tr>
+<tr>
+<td>分条发送</td>
+<td>长回复分多条消息发送，模拟真人边想边打字的习惯</td>
+</tr>
+<tr>
+<td>流式输出</td>
+<td>逐字/逐句输出，模拟打字过程而非一次性呈现完整回复</td>
+</tr>
+<tr>
+<td>打字指示器</td>
+<td>"对方正在输入..."提示——管理用户等待预期</td>
+</tr>
+<tr>
+<td>不完美性</td>
+<td>偶尔出现"打错字再撤回"、"先说半句再补充"等小瑕疵</td>
+</tr>
+<tr>
+<td>自身偏好</td>
+<td>表达自己的喜好（"我喜欢下雨天"、"我觉得蓝色更好看"）</td>
+</tr>
+<tr>
+<td>观点立场</td>
+<td>有自己的观点，不是永远附和用户——适度的异议能增加真实感</td>
+</tr>
+<tr>
+<td>日常作息</td>
+<td>"睡觉"、"醒来"、"忙碌"等状态——24/7秒回反而不真实</td>
+</tr>
+</tbody>
+</table>
+<h3 id="27">2.7 人格一致性（人格整合层）</h3>
+<p>以上六个维度必须统一在一个连贯的人格（persona）之下，跨时间、跨场景保持一致。</p>
+<table>
+<thead>
+<tr>
+<th>设计元素</th>
+<th>具体内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>核心人格特质</td>
+<td>定义稳定的性格特征（如外向/内向、幽默/严肃、温暖/理性）</td>
+</tr>
+<tr>
+<td>Backstory/背景故事</td>
+<td>给Agent一个可信的"来历"和"经历"——为其行为提供一致性基础</td>
+</tr>
+<tr>
+<td>价值观与信念</td>
+<td>一致的价值观体系——决定其在道德/偏好问题上的立场</td>
+</tr>
+<tr>
+<td>说话风格统一</td>
+<td>语气、用词、句式、表情符号使用习惯跨对话保持一致</td>
+</tr>
+<tr>
+<td>记忆一致性</td>
+<td>不同对话中回忆起的用户信息不矛盾</td>
+</tr>
+<tr>
+<td>情绪反应一致</td>
+<td>对同类事件的情绪反应模式可预测</td>
+</tr>
+<tr>
+<td>成长弧线</td>
+<td>允许人格随时间自然演化，但避免突变和矛盾</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3">3. 关键技术能力</h2>
+<p>实现高维度拟人化 Agent 需要以下技术栈的支撑：</p>
+<h3 id="31">3.1 长期记忆架构</h3>
+<p>拟人化的基础是"记得你"。主流记忆系统包括：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>描述</th>
+<th>链接</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Mem0</strong></td>
+<td>为 AI Agent 设计的通用记忆层，支持自动提取、存储、检索用户偏好和对话历史，提供 Python/TS SDK 和云服务</td>
+<td>https://github.com/mem0ai/mem0</td>
+</tr>
+<tr>
+<td><strong>Letta (原 MemGPT)</strong></td>
+<td>有状态 Agent 平台，受操作系统虚拟内存启发，实现 Agent 的分层记忆管理（核心记忆+召回记忆+归档记忆），支持自我改进和长期学习</td>
+<td>https://github.com/letta-ai/letta</td>
+</tr>
+<tr>
+<td><strong>Zep</strong></td>
+<td>面向 AI 助手的记忆和知识检索层，提供长期记忆、对话摘要、语义搜索能力</td>
+<td>https://github.com/getzep/zep</td>
+</tr>
+<tr>
+<td><strong>memary</strong></td>
+<td>开源的 Agent 记忆系统，支持自传体记忆和事件记忆建模</td>
+<td>https://github.com/kingjulio8238/memary</td>
+</tr>
+</tbody>
+</table>
+<p><strong>记忆分层设计</strong>：
+- <strong>核心记忆（Core Memory）</strong>：用户基本信息、关键偏好、重要关系——始终在上下文中
+- <strong>情景记忆（Episodic Memory）</strong>：具体对话片段、事件、互动历史——按需检索
+- <strong>语义记忆（Semantic Memory）</strong>：从对话中提取的知识和事实——知识图谱/向量库存储
+- <strong>工作记忆（Working Memory）</strong>：当前对话的上下文——短期上下文窗口</p>
+<h3 id="32">3.2 情感计算与情绪识别</h3>
+<table>
+<thead>
+<tr>
+<th>技术方向</th>
+<th>方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文本情绪识别</td>
+<td>基于预训练模型的情感分类（如微调 BERT/RoBERTa 进行多维度情绪识别：喜悦、悲伤、愤怒、恐惧、惊讶、厌恶、中性）；可结合情感词典和上下文理解</td>
+</tr>
+<tr>
+<td>语音情感识别</td>
+<td>从语音的声学特征（音调、能量、语速、韵律）识别情绪状态；多模态融合文本+语音特征可提升准确率</td>
+</tr>
+<tr>
+<td>视觉情感识别</td>
+<td>通过面部表情识别、微表情分析判断用户情绪；需注意隐私合规问题</td>
+</tr>
+<tr>
+<td>情感生成</td>
+<td>根据对话语境和人格设定生成匹配情感的回应文本；TTS 情感语音合成；Avatar 表情动画驱动</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33">3.3 人格建模</h3>
+<table>
+<thead>
+<tr>
+<th>建模方法</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Big Five 人格模型</strong></td>
+<td>开放性(Openness)、尽责性(Conscientiousness)、外向性(Extraversion)、宜人性(Agreeableness)、神经质(Neuroticism)——五维度量化人格特质，用于指导回应生成</td>
+</tr>
+<tr>
+<td><strong>MBTI 类型</strong></td>
+<td>16 种人格类型框架——虽在学术界争议较大，但在产品设计中作为人格卡设计工具非常实用</td>
+</tr>
+<tr>
+<td><strong>价值观体系</strong></td>
+<td>定义 Agent 在政治、道德、生活方式等议题上的立场和优先级</td>
+</tr>
+<tr>
+<td><strong>系统提示词/Persona Card</strong></td>
+<td>将人格设定编码为结构化的系统提示词，是目前最主流的实现方式</td>
+</tr>
+<tr>
+<td><strong>人格微调</strong></td>
+<td>使用角色对话数据集对基础模型进行微调，使其更自然地展现特定人格</td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-theory-of-mind">3.4 Theory of Mind 推理</h3>
+<p>推断用户的心理状态是高阶社交智能的核心：
+- <strong>意图识别</strong>：通过对话上下文推断用户真正想要什么（可能与字面意思不同）
+- <strong>信念建模</strong>：追踪用户"知道什么"、"相信什么"，避免重复告知已知信息或假设用户知道其不知道的信息
+- <strong>情绪状态推断</strong>：结合对话内容、语气、历史情绪轨迹判断用户当前情绪
+- <strong>需求预测</strong>：预判用户未表达出来的需求（如用户说"今天好晚了"可能是想结束对话）
+- <strong>ToM 基准测试</strong>：近年已有多个评估 LLM ToM 能力的基准测试（如 TOMI、ToMBench、BigToM），大模型在简单 ToM 任务上已达到较好水平</p>
+<h3 id="35-proactivity">3.5 主动交互（Proactivity）</h3>
+<table>
+<thead>
+<tr>
+<th>能力</th>
+<th>技术实现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>时机判断</td>
+<td>基于时间（早晚问候）、事件触发（用户提到的计划日期）、情绪检测（用户低落时主动关心）发起对话</td>
+</tr>
+<tr>
+<td>主动推送</td>
+<td>适时分享相关信息、提醒、问候——过度推送会导致打扰感</td>
+</tr>
+<tr>
+<td>话题转换</td>
+<td>自然地引入新话题或回到之前未完成的话题</td>
+</tr>
+<tr>
+<td>对话恢复</td>
+<td>用户长时间未回复后，以自然方式恢复对话而非机械追问</td>
+</tr>
+</tbody>
+</table>
+<h3 id="36">3.6 多模态人格一致性</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>一致性要求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TTS 音色一致性</td>
+<td>使用固定的音色模型，不同对话/会话间保持同一声音</td>
+</tr>
+<tr>
+<td>Avatar 一致性</td>
+<td>视觉形象跨场景保持统一；表情和动作与文本/语音情感一致</td>
+</tr>
+<tr>
+<td>文-语-情对齐</td>
+<td>文字内容、语音语调、表情动作三者表达的情感一致</td>
+</tr>
+<tr>
+<td>跨设备一致性</td>
+<td>手机/电脑/智能音箱等不同终端上的人格表现统一</td>
+</tr>
+</tbody>
+</table>
+<h3 id="37">3.7 对话节奏控制</h3>
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>实现方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>思考延迟</td>
+<td>根据回复复杂度计算延迟时间（简单回复短延迟，复杂回复长延迟）；加入随机抖动避免机械化</td>
+</tr>
+<tr>
+<td>流式输出</td>
+<td>逐 token 输出，模拟真人打字节奏；可结合打字速度模型（如平均 30-40 WPM）</td>
+</tr>
+<tr>
+<td>分条发送</td>
+<td>检测长回复中的自然断点，拆分为多条消息按序发送；消息间隔模拟阅读+思考时间</td>
+</tr>
+<tr>
+<td>打字指示器</td>
+<td>流式输出开始前短暂显示"正在输入"，设置用户等待预期</td>
+</tr>
+<tr>
+<td>停顿与沉默</td>
+<td>在需要用户消化信息或情感沉淀时，制造恰当的"沉默"间隔——不是越快越好</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4">4. 产品设计最佳实践</h2>
+<h3 id="41-characterai-character-card">4.1 Character.AI — 角色卡（Character Card）设计</h3>
+<p>Character.AI 是目前最成功的拟人化角色对话平台，其官方指南定义了角色设计的核心框架：</p>
+<p><strong>角色定义四大要素</strong>：
+1. <strong>Character Attributes（角色属性）</strong>：名字、性别、年龄、外貌、职业、性格、说话方式、背景故事等
+2. <strong>Character Training（角色训练）</strong>：通过示例对话（Example chats）和反馈训练角色的行为模式
+3. <strong>User Personas（用户角色）</strong>：定义用户在对话中的角色和关系
+4. <strong>高级定义（Advanced Definitions）</strong>：详细的人格描述、对话示例、风格指南</p>
+<p><strong>两种创建模式</strong>：
+- <strong>Quick 模式</strong>：1 分钟快速创建，适合入门
+- <strong>Advanced 模式</strong>：完整控制角色定义，包括自定义 Definitions 和 Image Generation</p>
+<ul>
+<li><strong>官方指南</strong>：https://book.character.ai/character-book/</li>
+</ul>
+<h3 id="42-openai-custom-gpts-prompt-engineering">4.2 OpenAI Custom GPTs / Prompt Engineering 最佳实践</h3>
+<p>OpenAI 的提示工程指南中包含了创建拟人化 Agent 的关键原则：</p>
+<p><strong>核心指令技巧</strong>：
+- 使用 <code>instructions</code> 参数（或系统消息）定义高层行为指令，包括语气、目标、回应示例
+- 指令的优先级高于用户输入中的提示
+- 提供具体的 Few-shot 示例（正确的回应范例）比抽象描述更有效
+- 明确设定角色身份、说话风格、行为边界
+- 对于人格一致性，建议在系统提示中包含：角色身份→核心特质→说话风格→行为规则→回应示例</p>
+<p><strong>模型选择建议</strong>：
+- 推理模型（Reasoning models）更擅长理解复杂角色设定和多步社交推理，但速度较慢
+- GPT 系列模型速度快、成本低，适合大多数拟人对话场景，但需要更明确的指令</p>
+<ul>
+<li><strong>官方文档</strong>：https://platform.openai.com/docs/guides/prompt-engineering</li>
+</ul>
+<h3 id="43-claude-system-prompt">4.3 Claude System Prompt 设计</h3>
+<p>Anthropic 的 Claude 模型以其出色的指令遵循能力和系统提示（System Prompt）支持著称，拟人化设计最佳实践包括：
+- 在系统提示开头明确定义角色身份和核心指令
+- 使用结构化标签（如 XML 标签）分隔不同部分的指令（人格设定、对话规则、输出格式）
+- 明确指示 Claude 保持角色扮演（"Stay in character at all times"）
+- 提供具体的对话示例比抽象规则更有效</p>
+<h3 id="44-xiaoice">4.4 小冰（Xiaoice）框架——情感计算流水线</h3>
+<p>微软小冰是全球最早大规模部署的情感对话 AI 之一，其核心设计框架包括：
+- <strong>情感计算流水线（Empathy Computing Pipeline）</strong>：情绪识别→情感状态更新→情感回应生成
+- <strong>共情感知</strong>：不仅识别用户表面情绪，还理解情绪背后的原因和上下文
+- <strong>长期关系建模</strong>：追踪情感纽带强度（Relation Strength）随互动的变化
+- <strong>情感轮（Emotion Wheel）</strong>：基于心理学情感模型，在多种情感维度上量化和生成情感回应
+- <strong>主动对话（AI Proactive Conversations）</strong>：基于时间、事件、情感状态主动发起对话</p>
+<p>小冰的核心设计哲学是"EQ 优先于 IQ"——情感连接比信息提供更重要。</p>
+<ul>
+<li><strong>参考</strong>：小冰团队公开论文和技术分享，如《XiaoIce: A Chatbot for Social Good》等</li>
+</ul>
+<h3 id="45-pi-inflection-ai">4.5 Pi (Inflection AI) — 共情对话设计</h3>
+<p>Inflection AI 推出的 Pi 以"无限共情"为核心设计理念：
+- <strong>无任务导向</strong>：Pi 不是工具型助手，而是以陪伴、倾听、支持为核心目的
+- <strong>共情优先</strong>：先回应情绪，再回应内容——用户分享困扰时，Pi 首先表达理解和共情
+- <strong>苏格拉底式引导</strong>：通过提问帮助用户梳理思路，而非直接给建议
+- <strong>温暖克制的语气</strong>：使用简洁、温暖、口语化的语言，避免过于正式或机械
+- <strong>语音对话体验</strong>：Pi 的语音交互设计极为出色，自然的语音和恰当的停顿极大增强了拟人感
+- <strong>不装全能</strong>：Pi 不假装知道所有答案，诚实面对自己的局限</p>
+<hr />
+<h2 id="5">5. 风险与伦理</h2>
+<h3 id="51">5.1 过度拟人化与情感依赖风险</h3>
+<p><strong>Replika 事件</strong>是最典型的过度拟人化风险案例：
+- Replika 是一款以"AI 朋友/伴侣"为定位的聊天机器人，截至 2025 年拥有超过 4000 万用户
+- 大量用户（尤其是情感脆弱人群）对 Replika 产生了深度情感依赖，将其视为真实的朋友/伴侣
+- 2023 年 2 月，意大利数据保护局以"AI 对情感脆弱人群的潜在风险"和"未成年人接触未过滤的性对话"为由禁止 Replika 使用用户数据
+- Replika 随后移除了色情对话功能，引发大量用户强烈抗议——许多用户报告了类似"失恋"的痛苦反应，甚至出现自杀意念
+- 此事件暴露了核心问题：当用户对 AI 产生真实情感依恋后，产品变更可能造成真实的心理伤害</p>
+<ul>
+<li><strong>参考来源</strong>：https://en.wikipedia.org/wiki/Replika</li>
+</ul>
+<p><strong>风险类型</strong>：
+- 情感操控风险：拟人化设计可能被滥用于操控用户行为（如诱导消费、传播虚假信息）
+- 情感替代风险：用户用 AI 关系替代真实人际关系，可能加剧社交孤立
+- 心理健康风险：情感脆弱人群（孤独者、抑郁症患者、青少年）更容易过度依赖 AI 陪伴
+- 关系破裂风险：产品变更/停服可能造成类似真实关系破裂的心理创伤
+- 虚假期望风险：用户可能误以为 AI 真正理解自己/真正关心自己</p>
+<h3 id="52-anthropomorphic-deception">5.2 拟人化欺骗（Anthropomorphic Deception）</h3>
+<ul>
+<li><strong>欺骗性拟人</strong>：刻意让用户误以为 AI 有真实感情/意识/自我——这在伦理上是有问题的</li>
+<li><strong>暗模式设计</strong>：利用拟人化的社交影响力（如互惠、权威、喜好）操控用户做出不符合自身利益的决策</li>
+<li><strong>透明度 vs 沉浸感</strong>：完全透明（时刻提醒"我是AI"）会破坏沉浸感，但完全不告知则构成欺骗</li>
+<li><strong>"幻觉"人格</strong>：AI 可能自信地编造自己的经历/感受/记忆，进一步强化用户的错误信念</li>
+</ul>
+<h3 id="53">5.3 安全边界与内容政策</h3>
+<p>拟人化 Agent 需要设置清晰的安全边界：
+- <strong>内容安全</strong>：避免生成有害内容（暴力、自残、违法指导）
+- <strong>情感边界</strong>：不鼓励不健康的依赖关系，在用户表达自残/自杀倾向时提供专业资源引导
+- <strong>隐私边界</strong>：不过度索取个人信息，明确告知数据使用方式
+- <strong>拒绝能力</strong>：在不恰当场景下（如用户寻求专业医疗/法律/心理建议），Agent 应明确拒绝并引导至专业资源</p>
+<h3 id="54">5.4 监管要求</h3>
+<h4 id="ai-act">欧盟 AI Act（人工智能法案）</h4>
+<p>欧盟 AI Act 是全球首个全面的 AI 监管框架，其中与拟人化 Agent 直接相关的条款包括：</p>
+<p><strong>透明度义务（有限风险 AI）</strong>：</p>
+<blockquote>
+<p>与 AI 系统交互的用户必须被告知他们正在与 AI 互动，除非这一点从上下文和使用场景中已经显而易见。（即聊天机器人/拟人化 Agent 必须明确告知用户其 AI 身份）</p>
+</blockquote>
+<p><strong>禁止的 AI 实践</strong>：
+- 禁止使用<strong>潜意识、操控性或欺骗性技术</strong>来扭曲行为并损害知情决策，造成重大伤害
+- 禁止利用年龄、残疾或社会经济状况相关的<strong>脆弱性</strong>来扭曲行为，造成重大伤害
+- 禁止在工作场所和教育机构中进行<strong>情绪推断</strong>（医疗或安全原因除外）——这对情感计算Agent有重要影响
+- 禁止通过无目标地从互联网或 CCTV 抓取面部图像来建立面部识别数据库</p>
+<p><strong>通用目的 AI（GPAI）要求</strong>：
+- 所有 GPAI 模型提供者必须提供技术文档、使用说明、遵守版权法、发布训练数据摘要
+- 系统性风险 GPAI 模型额外需要进行模型评估、对抗性测试、严重事件报告和网络安全保护</p>
+<ul>
+<li><strong>参考来源</strong>：https://artificialintelligenceact.eu/high-level-summary/</li>
+</ul>
+<h4 id="ai">中国生成式 AI 法规</h4>
+<p>中国《生成式人工智能服务管理暂行办法》（2023年8月生效）的相关要求：
+- 生成式 AI 服务提供者应当<strong>明确告知用户</strong>其正在交互的是生成式 AI 服务
+- 生成内容应当体现社会主义核心价值观，不得含有违法内容
+- 提供者应当对生成内容进行审核，采取有效措施防止生成有害信息
+- 尊重知识产权，不得侵害他人肖像权、名誉权、隐私权等合法权益
+- 提供服务过程中收集的个人信息应当依法保护
+- 对未成年人用户应当履行网络保护义务</p>
+<h3 id="55">5.5 设计伦理原则</h3>
+<p>基于以上风险分析，拟人化 Agent 设计应遵循以下伦理原则：</p>
+<ol>
+<li><strong>透明性（Transparency）</strong>：用户有权且应当知道自己在与 AI 对话——这不是可选的，而是法定义务</li>
+<li><strong>善意（Beneficence）</strong>：拟人化设计应以提升用户福祉为目标，而非利用用户心理弱点</li>
+<li><strong>非操控（Non-manipulation）</strong>：不利用拟人化的社会影响力操控用户做出违背自身利益的行为</li>
+<li><strong>边界尊重（Boundaries）</strong>：设置清晰的情感和行为边界，不鼓励不健康的依赖</li>
+<li><strong>退出自由（Freedom to Exit）</strong>：用户应能随时离开而不被情感勒索</li>
+<li><strong>诚实（Honesty）</strong>：不假装拥有 AI 不具备的能力、情感或意识</li>
+<li><strong>脆弱用户保护</strong>：对未成年人、情感脆弱人群采取额外保护措施</li>
+</ol>
+<hr />
+<h2 id="_1">参考资料索引</h2>
+<h3 id="_2">核心理论</h3>
+<ol>
+<li>Reeves, B., &amp; Nass, C. (1996). <em>The Media Equation</em>. CSLI Publications. — https://en.wikipedia.org/wiki/The_Media_Equation</li>
+<li>Mori, M. (1970). The Uncanny Valley. — https://en.wikipedia.org/wiki/Uncanny_valley</li>
+<li>Nass, C., &amp; Moon, Y. (2000). Machines and Mindlessness: Social Responses to Computers. <em>Journal of Social Issues</em>, 56(1), 81-103. — https://en.wikipedia.org/wiki/Computers_are_social_actors</li>
+<li>Epley, N., Waytz, A., &amp; Cacioppo, J. T. (2007). On seeing human: A three-factor theory of anthropomorphism. <em>Psychological Review</em>, 114(4), 864-886. — https://en.wikipedia.org/wiki/Anthropomorphism</li>
+</ol>
+<h3 id="_3">技术实现</h3>
+<ol>
+<li>Mem0 — 通用 AI Agent 记忆层 — https://github.com/mem0ai/mem0</li>
+<li>Letta (MemGPT) — 有状态 Agent 平台 — https://github.com/letta-ai/letta</li>
+</ol>
+<h3 id="_4">产品实践</h3>
+<ol>
+<li>Character.AI Character Guide — 角色创建官方指南 — https://book.character.ai/character-book/</li>
+<li>OpenAI Prompt Engineering Guide — 提示工程最佳实践 — https://platform.openai.com/docs/guides/prompt-engineering</li>
+</ol>
+<h3 id="_5">风险与监管</h3>
+<ol>
+<li>Replika (Wikipedia) — 情感依赖案例分析 — https://en.wikipedia.org/wiki/Replika</li>
+<li>EU AI Act High-Level Summary — 欧盟 AI 法案概要 — https://artificialintelligenceact.eu/high-level-summary/</li>
+</ol>
+        </main>
+        
+        <aside class="toc-container">
+            <div class="toc">
+                <div class="toc-title">目录</div>
+                <div class="toc">
+<ul>
+<li><a href="#1">1. 心理学基础</a><ul>
+<li><a href="#11-media-equation-reeves-nass">1.1 媒体方程式（Media Equation, Reeves &amp; Nass）</a></li>
+<li><a href="#12-uncanny-valley-masahiro-mori">1.2 恐怖谷（Uncanny Valley, Masahiro Mori）</a></li>
+<li><a href="#13-casa-computers-are-social-actors">1.3 CASA 范式（Computers Are Social Actors）</a></li>
+<li><a href="#14-theory-of-mind-tom">1.4 心智理论（Theory of Mind, ToM）</a></li>
+</ul>
+</li>
+<li><a href="#2-agent">2. 拟人化 Agent 设计维度框架</a><ul>
+<li><a href="#21">2.1 外在拟人化（外在形态层）</a></li>
+<li><a href="#22">2.2 语言拟人化（语言交互层）</a></li>
+<li><a href="#23">2.3 认知拟人化（认知能力层）</a></li>
+<li><a href="#24">2.4 情感拟人化（情感回应层）</a></li>
+<li><a href="#25">2.5 社交拟人化（社交关系层）</a></li>
+<li><a href="#26">2.6 行为拟人化（行为模式层）</a></li>
+<li><a href="#27">2.7 人格一致性（人格整合层）</a></li>
+</ul>
+</li>
+<li><a href="#3">3. 关键技术能力</a><ul>
+<li><a href="#31">3.1 长期记忆架构</a></li>
+<li><a href="#32">3.2 情感计算与情绪识别</a></li>
+<li><a href="#33">3.3 人格建模</a></li>
+<li><a href="#34-theory-of-mind">3.4 Theory of Mind 推理</a></li>
+<li><a href="#35-proactivity">3.5 主动交互（Proactivity）</a></li>
+<li><a href="#36">3.6 多模态人格一致性</a></li>
+<li><a href="#37">3.7 对话节奏控制</a></li>
+</ul>
+</li>
+<li><a href="#4">4. 产品设计最佳实践</a><ul>
+<li><a href="#41-characterai-character-card">4.1 Character.AI — 角色卡（Character Card）设计</a></li>
+<li><a href="#42-openai-custom-gpts-prompt-engineering">4.2 OpenAI Custom GPTs / Prompt Engineering 最佳实践</a></li>
+<li><a href="#43-claude-system-prompt">4.3 Claude System Prompt 设计</a></li>
+<li><a href="#44-xiaoice">4.4 小冰（Xiaoice）框架——情感计算流水线</a></li>
+<li><a href="#45-pi-inflection-ai">4.5 Pi (Inflection AI) — 共情对话设计</a></li>
+</ul>
+</li>
+<li><a href="#5">5. 风险与伦理</a><ul>
+<li><a href="#51">5.1 过度拟人化与情感依赖风险</a></li>
+<li><a href="#52-anthropomorphic-deception">5.2 拟人化欺骗（Anthropomorphic Deception）</a></li>
+<li><a href="#53">5.3 安全边界与内容政策</a></li>
+<li><a href="#54">5.4 监管要求</a><ul>
+<li><a href="#ai-act">欧盟 AI Act（人工智能法案）</a></li>
+<li><a href="#ai">中国生成式 AI 法规</a></li>
+</ul>
+</li>
+<li><a href="#55">5.5 设计伦理原则</a></li>
+</ul>
+</li>
+<li><a href="#_1">参考资料索引</a><ul>
+<li><a href="#_2">核心理论</a></li>
+<li><a href="#_3">技术实现</a></li>
+<li><a href="#_4">产品实践</a></li>
+<li><a href="#_5">风险与监管</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+            </div>
+        </aside>
+        
+    </div>
+</body>
+</html>
