@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>组织记忆算法管线：蒸馏 → 检索 → 失效</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#34d399; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .rose{background:#fb7185;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>组织记忆算法管线：写入蒸馏 → 分层存储 → 预算检索 → 状态校验</h1></div>
+<div class="subtitle">左半（写入侧）有参照实现；右半"状态有效性"环节为空白（P0 研究点 A3）· 虚线=未解环节</div>
+<div class="card">
+<svg viewBox="0 0 1080 760" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#34d399" stroke-width="1.2"/>
+    </marker>
+    <marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#a78bfa" stroke-width="1.2"/>
+    </marker>
+    <marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#fb7185" stroke-width="1.2"/>
+    </marker>
+  </defs>
+  <rect width="1080" height="760" fill="url(#grid)"/>
+
+  <!-- flow arrows (behind boxes) -->
+  <path d="M 200 120 L 200 150" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#a1)"/>
+  <path d="M 200 230 L 200 260" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#a1)"/>
+  <path d="M 200 340 L 200 370" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#a1)"/>
+  <path d="M 330 430 L 420 430" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#a1)"/>
+  <path d="M 640 430 L 730 430" fill="none" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#a2)"/>
+  <path d="M 850 470 L 850 540" fill="none" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#a2)"/>
+  <path d="M 730 585 L 704 585" fill="none" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#a2)"/>
+  <path d="M 540 620 L 540 660" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#a3)"/>
+
+  <!-- Zone: write side -->
+  <rect x="40" y="50" width="340" height="470" rx="10" fill="none" stroke="#34d399" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="60" y="75" fill="#34d399" font-size="11" font-weight="600">写入侧（有参照实现）</text>
+
+  <rect x="70" y="90" width="260" height="30" rx="6" fill="#0f172a"/>
+  <rect x="70" y="90" width="260" height="30" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="200" y="109" fill="#22d3ee" font-size="10" text-anchor="middle">L0 频道消息流 / 操作日志（高噪声）</text>
+
+  <rect x="70" y="155" width="260" height="72" rx="6" fill="#0f172a"/>
+  <rect x="70" y="155" width="260" height="72" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="200" y="178" fill="#34d399" font-size="11" font-weight="600" text-anchor="middle">LLM 蒸馏（提取·归纳·压缩）</text>
+  <text x="200" y="198" fill="#94a3b8" font-size="9" text-anchor="middle">⚠ 开放：触发时机 / 误差累积</text>
+  <text x="200" y="214" fill="#94a3b8" font-size="9" text-anchor="middle">⚠ 投毒入口：恶意事实混入（E1）</text>
+
+  <rect x="70" y="265" width="260" height="72" rx="6" fill="#0f172a"/>
+  <rect x="70" y="265" width="260" height="72" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="200" y="288" fill="#a78bfa" font-size="11" font-weight="600" text-anchor="middle">L1 原子事实 + L2 场景块</text>
+  <text x="200" y="308" fill="#94a3b8" font-size="9" text-anchor="middle">Scene Extractor：新建/更新/软删除</text>
+  <text x="200" y="324" fill="#94a3b8" font-size="9" text-anchor="middle">硬隔离：必须带团队/Agent 范围</text>
+
+  <rect x="70" y="375" width="260" height="110" rx="6" fill="#0f172a"/>
+  <rect x="70" y="375" width="260" height="110" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="200" y="398" fill="#a78bfa" font-size="11" font-weight="600" text-anchor="middle">L3 核心画像 + 偏好面板</text>
+  <text x="200" y="418" fill="#94a3b8" font-size="9" text-anchor="middle">增量更新（只处理变化部分）</text>
+  <text x="200" y="434" fill="#94a3b8" font-size="9" text-anchor="middle">偏好双写：语义库 + System Prompt</text>
+  <text x="200" y="450" fill="#94a3b8" font-size="9" text-anchor="middle">直接注入，不依赖检索召回</text>
+
+  <!-- Zone: retrieval side -->
+  <rect x="400" y="50" width="640" height="470" rx="10" fill="none" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <text x="420" y="75" fill="#a78bfa" font-size="11" font-weight="600">检索侧（任务触发）</text>
+
+  <rect x="420" y="390" width="220" height="80" rx="6" fill="#0f172a"/>
+  <rect x="420" y="390" width="220" height="80" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="530" y="415" fill="#34d399" font-size="11" font-weight="600" text-anchor="middle">混合检索（生成前自动回忆）</text>
+  <text x="530" y="435" fill="#94a3b8" font-size="9" text-anchor="middle">BM25 ∥ 向量 → RRF(k=60) 融合</text>
+  <text x="530" y="451" fill="#94a3b8" font-size="9" text-anchor="middle">顺序：L3 轮廓 → L2 现场 → L1 事实</text>
+
+  <rect x="730" y="390" width="240" height="80" rx="6" fill="#0f172a"/>
+  <rect x="730" y="390" width="240" height="80" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="850" y="415" fill="#fbbf24" font-size="11" font-weight="600" text-anchor="middle">上下文预算分配</text>
+  <text x="850" y="435" fill="#94a3b8" font-size="9" text-anchor="middle">⚠ 开放：L3/L2/L1 token 配额</text>
+  <text x="850" y="451" fill="#94a3b8" font-size="9" text-anchor="middle">50 条线程窗口外全靠这里兜底</text>
+
+  <rect x="730" y="545" width="240" height="80" rx="6" fill="#0f172a"/>
+  <rect x="730" y="545" width="240" height="80" rx="6" fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="850" y="570" fill="#fb7185" font-size="11" font-weight="600" text-anchor="middle">状态有效性校验（空白！）</text>
+  <text x="850" y="590" fill="#94a3b8" font-size="9" text-anchor="middle">P0 · A3：检索到的现在还成立吗？</text>
+  <text x="850" y="606" fill="#94a3b8" font-size="9" text-anchor="middle">失效检测/传播/版本化/冲突消解</text>
+
+  <rect x="400" y="545" width="300" height="80" rx="6" fill="#0f172a"/>
+  <rect x="400" y="545" width="300" height="80" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="550" y="570" fill="#22d3ee" font-size="11" font-weight="600" text-anchor="middle">注入 Harness 上下文 → 执行任务</text>
+  <text x="550" y="590" fill="#94a3b8" font-size="9" text-anchor="middle">高风险旧事实 → 主动核实（问人/查源）</text>
+  <text x="550" y="606" fill="#94a3b8" font-size="9" text-anchor="middle">而非直接采信</text>
+
+  <rect x="400" y="665" width="570" height="56" rx="6" fill="#0f172a"/>
+  <rect x="400" y="665" width="570" height="56" rx="6" fill="rgba(136,19,55,0.2)" stroke="#fb7185" stroke-width="1.2" stroke-dasharray="6,4"/>
+  <text x="685" y="688" fill="#fb7185" font-size="10" text-anchor="middle">闭环缺口：任务执行中发现事实失效 → 无机制回写标记失效 → 下次任务再次踩坑</text>
+  <text x="685" y="706" fill="#94a3b8" font-size="9" text-anchor="middle">研究方向：隐式失效推断（后续对话流的 NLI 矛盾检测）+ 有效度作为独立排序维度</text>
+
+  <!-- legend -->
+  <text x="60" y="740" fill="#64748b" font-size="9">实线=已有参照实现（腾讯开源 Agent 记忆知识库）· 虚线框=开放研究问题 · 参照：恋猫《腾讯开源 Agent 记忆知识库》解析</text>
+</svg>
+</div>
+
+<div class="cards">
+  <div class="info-card">
+    <h3><div class="card-dot emerald"></div>写入侧：有参照</h3>
+    <ul>
+      <li>• L0→L3 分层蒸馏 + 偏好双写</li>
+      <li>• 蒸馏不能直接复制，必须 LLM 归纳</li>
+      <li>• 但蒸馏误差累积与投毒筛查未解</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot cyan"></div>检索侧：混合召回</h3>
+    <ul>
+      <li>• BM25 + 向量 + RRF(k=60)</li>
+      <li>• 硬隔离防跨团队记忆泄漏</li>
+      <li>• 预算分配是资源优化问题</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><div class="card-dot rose"></div>状态校验：空白</h3>
+    <ul>
+      <li>• RAG 知"像不像"不知"对不对"</li>
+      <li>• 旧方案被当当前事实=最危险失效</li>
+      <li>• 时序 KG + 隐式失效推断待研究</li>
+    </ul>
+  </div>
+</div>
+<div class="footer">Claude Tag 技术栈拆解与算法研究点分析 · 图3 · 2026-08-21</div>
+</body>
+</html>
