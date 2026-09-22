@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>后训练范式定位：SFT / RL / OPD / OPSD</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:'JetBrains Mono',monospace; padding:32px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#22d3ee; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:12px; margin-bottom:20px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:24px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
+  .info-card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .info-card h3 { font-size:12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .amber{background:#fbbf24;}
+  .info-card ul { list-style:none; }
+  .info-card li { font-size:11px; color:#94a3b8; line-height:1.8; }
+  .footer { margin-top:20px; color:#475569; font-size:10px; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>后训练范式定位：采样来源 × 监督密度</h1></div>
+<div class="subtitle">OPD = RL 的 on-policy 相关性 + 蒸馏的 dense 监督；OPSD 将教师替换为"持有特权信息的自己"</div>
+<div class="card">
+<svg viewBox="0 0 1040 620" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    </marker>
+  </defs>
+  <rect width="1040" height="620" fill="url(#grid)"/>
+
+  <!-- axes -->
+  <line x1="120" y1="460" x2="980" y2="460" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="120" y1="460" x2="120" y2="60" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="985" y="485" fill="#94a3b8" font-size="11" text-anchor="end">采样来源 → on-policy（学生自己生成）</text>
+  <text x="135" y="485" fill="#64748b" font-size="11">off-policy（外部固定数据）</text>
+  <text x="70" y="70" fill="#94a3b8" font-size="11" transform="rotate(-90 70 70)" text-anchor="end">监督密度 →</text>
+  <text x="86" y="450" fill="#64748b" font-size="10" transform="rotate(-90 86 450)">稀疏（序列级 reward）</text>
+  <text x="86" y="150" fill="#64748b" font-size="10" transform="rotate(-90 86 150)">稠密（token 级分布）</text>
+
+  <!-- quadrant hints -->
+  <text x="300" y="400" fill="#334155" font-size="10" text-anchor="middle">off-policy + 稀疏：少见组合</text>
+  <text x="760" y="400" fill="#334155" font-size="10" text-anchor="middle">RLVR / GRPO / PPO</text>
+
+  <!-- SFT / off-policy KD -->
+  <rect x="200" y="120" width="250" height="100" rx="6" fill="#0f172a"/>
+  <rect x="200" y="120" width="250" height="100" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="325" y="150" fill="#22d3ee" font-size="13" font-weight="600" text-anchor="middle">SFT / Off-Policy KD</text>
+  <text x="325" y="172" fill="#94a3b8" font-size="10" text-anchor="middle">监督：hard label / teacher 静态轨迹</text>
+  <text x="325" y="190" fill="#94a3b8" font-size="10" text-anchor="middle">逐 token 稠密 ✓</text>
+  <text x="325" y="208" fill="#fb7185" font-size="10" text-anchor="middle">暴露偏差 / 分布失配 ✗</text>
+
+  <!-- RL -->
+  <rect x="680" y="300" width="250" height="100" rx="6" fill="#0f172a"/>
+  <rect x="680" y="300" width="250" height="100" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="805" y="330" fill="#fbbf24" font-size="13" font-weight="600" text-anchor="middle">RL（RLVR / GRPO）</text>
+  <text x="805" y="352" fill="#94a3b8" font-size="10" text-anchor="middle">监督：结果级标量奖励</text>
+  <text x="805" y="370" fill="#94a3b8" font-size="10" text-anchor="middle">on-policy 相关性 ✓</text>
+  <text x="805" y="388" fill="#fb7185" font-size="10" text-anchor="middle">信号稀疏 / credit assignment ✗</text>
+
+  <!-- OPD -->
+  <rect x="640" y="100" width="330" height="140" rx="6" fill="#0f172a"/>
+  <rect x="640" y="100" width="330" height="140" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="2"/>
+  <text x="805" y="130" fill="#34d399" font-size="14" font-weight="600" text-anchor="middle">OPD（On-Policy Distillation）</text>
+  <text x="805" y="152" fill="#e2e8f0" font-size="10" text-anchor="middle">学生自己采样轨迹（on-policy）</text>
+  <text x="805" y="170" fill="#e2e8f0" font-size="10" text-anchor="middle">教师在学生前缀上逐 token 给分布（dense）</text>
+  <text x="805" y="192" fill="#34d399" font-size="10" text-anchor="middle">✓ 相关性 + ✓ 稠密 = 两头占优</text>
+  <text x="805" y="216" fill="#94a3b8" font-size="9" text-anchor="middle">Thinking Machines 2025 · Qwen3 / GLM-5 / MiMo 工业标配</text>
+
+  <!-- OPSD badge -->
+  <rect x="230" y="280" width="300" height="120" rx="6" fill="#0f172a"/>
+  <rect x="230" y="280" width="300" height="120" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="380" y="308" fill="#a78bfa" font-size="13" font-weight="600" text-anchor="middle">OPSD（On-Policy Self-Distill）</text>
+  <text x="380" y="330" fill="#94a3b8" font-size="10" text-anchor="middle">OPD 的特例：去掉外部教师</text>
+  <text x="380" y="348" fill="#94a3b8" font-size="10" text-anchor="middle">teacher = 同模型 + 特权信息（参考答案）</text>
+  <text x="380" y="366" fill="#94a3b8" font-size="10" text-anchor="middle">student = 同模型，仅看题目</text>
+  <text x="380" y="386" fill="#a78bfa" font-size="9" text-anchor="middle">Self-Distilled Reasoner · arXiv:2601.18734</text>
+  <line x1="530" y1="320" x2="640" y2="200" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+  <!-- pipeline strip -->
+  <rect x="120" y="510" width="860" height="80" rx="10" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="8,4"/>
+  <text x="140" y="530" fill="#64748b" font-size="10">工业后训练流水线（OPD 常作为收尾的能力合并阶段）</text>
+  <rect x="150" y="540" width="170" height="36" rx="6" fill="#0f172a"/>
+  <rect x="150" y="540" width="170" height="36" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="235" y="562" fill="#e2e8f0" font-size="11" text-anchor="middle">SFT 冷启动/格式</text>
+  <line x1="320" y1="558" x2="370" y2="558" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="370" y="540" width="220" height="36" rx="6" fill="#0f172a"/>
+  <rect x="370" y="540" width="220" height="36" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.2"/>
+  <text x="480" y="562" fill="#e2e8f0" font-size="11" text-anchor="middle">RLVR 探索能力（可偏科）</text>
+  <line x1="590" y1="558" x2="640" y2="558" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="640" y="540" width="300" height="36" rx="6" fill="#0f172a"/>
+  <rect x="640" y="540" width="300" height="36" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.2"/>
+  <text x="790" y="562" fill="#e2e8f0" font-size="11" text-anchor="middle">OPD/MOPD 能力合并回基础模型</text>
+</svg>
+</div>
+<div class="cards">
+  <div class="info-card"><h3><div class="card-dot cyan"></div>SFT / Off-Policy KD</h3><ul>
+    <li>• 稠密逐 token 监督，但训练状态来自外部数据</li>
+    <li>• 推理时学生访问自己生成的前缀 → exposure bias</li>
+    <li>• 上限受教师轨迹锁死，教师错则学生跟着错</li></ul></div>
+  <div class="info-card"><h3><div class="card-dot amber"></div>RL / RLVR</h3><ul>
+    <li>• on-policy 采样，学生直面自己的错误</li>
+    <li>• 每回合固定信息量，与 token 数无关（稀疏）</li>
+    <li>• 只知道"答错了"，不知道"错在哪一步"</li></ul></div>
+  <div class="info-card"><h3><div class="card-dot emerald"></div>OPD / OPSD</h3><ul>
+    <li>• 学生采样 + 教师逐 token 分布 = 稠密且 on-policy</li>
+    <li>• 1000-token 轨迹可产生上千个 next-token 信号</li>
+    <li>• OPSD 用"带答案的自己"当老师，免外部教师</li></ul></div>
+</div>
+<div class="footer">OPD/OPSD 技术调研报告 · 图 1/3 · 2026-08-18</div>
+</body>
+</html>
