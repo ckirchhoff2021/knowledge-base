@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loop Engineering（循环工程）技术调研报告</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:960px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:32px; }
+  h1 { font-size:28px; line-height:1.4; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin-right:8px; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  h4 { font-size:15px; margin:20px 0 8px; }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  .formula { background:#0a0e14; border-left:3px solid var(--purple); padding:12px 18px; margin:14px 0; border-radius:0 8px 8px 0; font-family:Menlo,monospace; font-size:13.5px; overflow-x:auto; white-space:pre; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); white-space:nowrap; }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  blockquote p { margin:4px 0; }
+  .callout { border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin:18px 0; background:var(--panel); }
+  .callout.warn { border-color:var(--amber); }
+  .callout.key { border-color:var(--green); }
+  .callout .title { font-weight:600; margin-bottom:6px; font-size:14px; }
+  .callout.key .title { color:var(--green); }
+  .callout.warn .title { color:var(--amber); }
+  figure { margin:24px 0; }
+  figure iframe { width:100%; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figure iframe.fig-h1 { height:1058px; }
+  figure iframe.fig-h2 { height:704px; }
+  figure iframe.fig-h3 { height:684px; }
+  figure iframe.fig-h4 { height:809px; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  hr { border:none; border-top:1px solid var(--border); margin:32px 0; }
+  strong { font-weight:600; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); }
+  .toc-sub { list-style:none; margin:6px 0 6px 6px; }
+  .toc-sub li { margin:3px 0; font-size:14px; }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+  h2, h3 { scroll-margin-top:12px; }
+  .refs li { font-size:13.5px; }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Loop Engineering（循环工程）技术调研报告</h1>
+  <div>
+    <span class="badge">Loop Engineering</span>
+    <span class="badge">Agentic Loop</span>
+    <span class="badge">Claude Code / Codex</span>
+    <span class="badge">Harness</span>
+  </div>
+  <div class="meta" style="margin-top:10px">调研日期：2026-09-23 ｜ 主要信源：Addy Osmani 原博、Anthropic/Claude 官方博客、Andrew Ng《The Batch》、arXiv:2607.00038（均抓取原文核实）+ 知乎社区实践文章 20+ 篇</div>
+</header>
+
+<div class="toc">
+<h2>目录</h2>
+<ol>
+<li><a href="#1-背景与问题定义">背景与问题定义</a>
+  <ul class="toc-sub">
+    <li><a href="#11-一句话定义与引爆事件">1.1 一句话定义与引爆事件</a></li>
+    <li><a href="#12-旧模式的三个痛点验收记忆推进全靠人">1.2 旧模式的三个痛点：验收、记忆、推进全靠人</a></li>
+    <li><a href="#13-范式定位prompt--context--harness--loop">1.3 范式定位：Prompt → Context → Harness → Loop</a></li>
+    <li><a href="#14-直觉类比human-in-the-loop--human-on-the-loop">1.4 直觉类比：human in the loop → human on the loop</a></li>
+  </ul>
+</li>
+<li><a href="#2-原理详解一个-loop-由什么构成">原理详解：一个 Loop 由什么构成</a>
+  <ul class="toc-sub">
+    <li><a href="#21-形式化loop-specification-五要素">2.1 形式化：Loop Specification 五要素</a></li>
+    <li><a href="#22-关键消歧agent-loop--loop-engineering内环-vs-外环">2.2 关键消歧：Agent Loop ≠ Loop Engineering</a></li>
+    <li><a href="#23-运转机制一个循环周期的六个动作">2.3 运转机制：一个循环周期的六个动作</a></li>
+    <li><a href="#24-停止条件必须命名终态">2.4 停止条件：必须命名终态</a></li>
+    <li><a href="#25-理论脉络react--reflexion--ralph--loop-engineering">2.5 理论脉络：ReAct → Reflexion → Ralph → Loop Engineering</a></li>
+  </ul>
+</li>
+<li><a href="#3-方案设计四类循环51-组件与三层嵌套">方案设计：四类循环、5+1 组件与三层嵌套</a>
+  <ul class="toc-sub">
+    <li><a href="#31-anthropic-四类循环触发停止与适用场景">3.1 Anthropic 四类循环</a></li>
+    <li><a href="#32-addy-osmani-的-51-工程组件">3.2 Addy Osmani 的 5+1 工程组件</a></li>
+    <li><a href="#33-吴恩达三层嵌套循环">3.3 吴恩达三层嵌套循环</a></li>
+    <li><a href="#34-验证者模式与五级验证阶梯">3.4 验证者模式与五级验证阶梯</a></li>
+    <li><a href="#35-方法演进谱系2025-07--2026-07">3.5 方法演进谱系</a></li>
+  </ul>
+</li>
+<li><a href="#4-核心实现循环契约与-builderchecker-模式">核心实现：循环契约与 builder/checker 模式</a>
+  <ul class="toc-sub">
+    <li><a href="#41-循环契约模板">4.1 循环契约模板</a></li>
+    <li><a href="#42-builderchecker-伪代码">4.2 builder/checker 伪代码</a></li>
+    <li><a href="#43-状态文件与-skillmd-示例">4.3 状态文件与 SKILL.md 示例</a></li>
+    <li><a href="#44-工程反模式与典型坑">4.4 工程反模式与典型坑</a></li>
+  </ul>
+</li>
+<li><a href="#5-结论与选型建议">结论与选型建议</a></li>
+<li><a href="#6-参考资料">参考资料</a></li>
+</ol>
+</div>
+
+<h2 id="1-背景与问题定义">1. 背景与问题定义</h2>
+
+<h3 id="11-一句话定义与引爆事件">1.1 一句话定义与引爆事件</h3>
+<p><strong>Loop Engineering（循环工程）是：把「人」从逐轮提示 Agent 的位置上替换下来，改为设计一套自动驱动 Agent 的循环系统。</strong></p>
+<p>Addy Osmani（曾任 Google Chrome、Google Cloud AI 开发者体验负责人）2026 年 6 月 7 日在个人博客发表《Loop Engineering》，给出的原始定义是：</p>
+<blockquote><p>"Loop engineering is replacing yourself as the person who prompts the agent. You design the system that does it instead."（循环工程就是把"提示 Agent 的那个人"替换成你自己设计的系统。）—— addyosmani.com，2026-06-07</p></blockquote>
+<p>概念被两句话点燃，Osmani 在原文中均有引述：</p>
+<ul>
+<li><strong>Peter Steinberger</strong>（开源 Agent 项目 OpenClaw 作者）："You shouldn't be prompting coding agents anymore. You should be designing loops that prompt your agents."（你不该再给编码 Agent 写提示词了，你该去设计给 Agent 写提示词的循环。）</li>
+<li><strong>Boris Cherny</strong>（Anthropic Claude Code 负责人）："I don't prompt Claude anymore. I have loops running that prompt Claude and figuring out what to do. My job is to write loops."（我已经不直接提示 Claude 了，我有一堆循环在运行，由它们提示 Claude 并决定下一步，我的工作是写循环。）</li>
+</ul>
+<p>两周多后，两个权威来源把社区口号变成了正式框架：</p>
+<ul>
+<li><strong>2026-06-26</strong>，吴恩达（Andrew Ng）在 DeepLearning.AI《The Batch》发表《Three Key Loops for Building Great Software》，把循环抽象为三层嵌套反馈环；</li>
+<li><strong>2026-06-30</strong>，Anthropic 官方博客发布《Loop engineering: Getting started with loops》（作者 Delba de Oliveira、Michael Segner），给出 Agent 循环的官方定义与四类分类，标志 Loop 从社区实践变成<strong>平台级功能</strong>。</li>
+</ul>
+
+<h3 id="12-旧模式的三个痛点验收记忆推进全靠人">1.2 旧模式的三个痛点：验收、记忆、推进全靠人</h3>
+<p>过去两年使用编码 Agent 的标准姿势是：写一个好 prompt + 塞足上下文 → Agent 回一版 → 人读结果、跑测试、贴报错 → 再写下一条 prompt。这个「人肉循环」里，Agent 只是活塞，人才是引擎：</p>
+<table>
+<tr><th>环节</th><th>手动 Prompt 模式下谁在做</th><th>痛点</th></tr>
+<tr><td><strong>验收（verification）</strong></td><td>人：手动跑、肉眼看、判断"看起来能登录了"</td><td>主观、易漏；人成为吞吐瓶颈</td></tr>
+<tr><td><strong>记忆（memory）</strong></td><td>人：记得上次踩过什么坑、进度到哪</td><td>上下文一关全忘；同一个坑反复踩</td></tr>
+<tr><td><strong>推进（progression）</strong></td><td>人：决定下一步问什么、何时停</td><td>人不说话 Agent 就不动，无法过夜运行</td></tr>
+</table>
+<p>知乎社区的典型场景（锦恢《小白教程（五）》）：Agent 说网站做完了，打开一看注册登录有 bug、几个路由只实现了五成；人只能重新编织 prompt、等它再写一轮、再检查——<strong>这里面没有真正的思考，全是重复劳动</strong>。</p>
+
+<h3 id="13-范式定位prompt--context--harness--loop">1.3 范式定位：Prompt → Context → Harness → Loop</h3>
+<p>Loop Engineering 不是凭空出现的第四个营销词，而是 AI 编程技术栈逐层上移的最新一层（Osmani 原文明确说 "Loop engineering sits one floor above the harness"）：</p>
+<table>
+<tr><th>层级</th><th>解决的问题</th><th>单位</th><th>人的位置</th></tr>
+<tr><td><strong>Prompt Engineering</strong>（提示工程）</td><td>一次交互怎么说清楚</td><td>单轮请求</td><td>每一轮都在</td></tr>
+<tr><td><strong>Context Engineering</strong>（上下文工程）</td><td>正确的信息在正确时机进入模型</td><td>单次任务</td><td>每轮筛选材料</td></tr>
+<tr><td><strong>Harness Engineering</strong>（脚手架/驾驭工程，2026 年初流行）</td><td>单个 Agent 运行的环境：工具注册、权限、上下文、状态、重试</td><td>单个 Agent 运行时</td><td>设计运行环境</td></tr>
+<tr><td><strong>Loop Engineering</strong>（循环工程，2026-06）</td><td>谁来触发、带什么材料、用什么证据验收、何时停</td><td>跨轮/跨会话的流程</td><td>站在循环之上设计它</td></tr>
+</table>
+<p>关键关系：<strong>Harness 是 Loop 得以运行的底座</strong>。Harness 提供 Agent 内部的"感知—行动—观察"机制，而 Loop 是按时启动、在 Harness 上派生多个 helper agent、并自我喂养（feeds itself）的外部系统。arXiv:2607.00038 特别强调要把外部的 loop specification 与两样容易混淆的东西区分开：①普通编程里的 while 循环；②Harness 已经内置的 perceive-act-observe 管道循环。</p>
+<div class="callout"><div class="title" style="color:var(--accent)">注意：Loop Engineering 并不淘汰 Prompt Engineering</div>循环内的每一次模型调用仍要靠 prompt、上下文和工具描述工作；变化的是工程注意力从"这一句怎么写"移到了"谁触发、带什么材料、用什么证据判停"。</div>
+
+<h3 id="14-直觉类比human-in-the-loop--human-on-the-loop">1.4 直觉类比：human in the loop → human on the loop</h3>
+<ul>
+<li><strong>手动挡 → 自动驾驶</strong>：以前像开手动挡，每步自己操作；Loop Engineering 像设定好目的地和安全规则的自动驾驶，遇红灯自己停、路况变了自己绕、到点自己停，人只需偶尔看仪表盘。</li>
+<li>更精确的表述是位置的变化：<strong>从 human in the loop（人是循环里亲手转齿轮的人）变成 human on the loop（人站在循环之上，设计循环、观察循环、必要时介入）</strong>。</li>
+</ul>
+
+<figure><iframe class="fig-h1" src="diagrams/1-paradigm-layers.html" loading="lazy"></iframe><figcaption>图 1 · 范式定位：Prompt → Context → Harness → Loop 四层演进，以及内环（Agent Loop）与外环（Loop Engineering）的区分</figcaption></figure>
+
+<hr>
+<h2 id="2-原理详解一个-loop-由什么构成">2. 原理详解：一个 Loop 由什么构成</h2>
+
+<h3 id="21-形式化loop-specification-五要素">2.1 形式化：Loop Specification 五要素</h3>
+<p>arXiv:2607.00038《Stop Hand-Holding Your Coding Agent: Engineering the Loops that Replace Step-by-Step Prompting》（作者 Sandeco Macedo，2026-06-28 提交）把实践对象形式化为 <strong>loop specification（循环规约）</strong>：一份有界、可复用的工件，由人交给 Agent Harness（如 Claude Code、Codex），让 Agent 自主追求目标，替代逐步提示。五个组成部分：</p>
+<div class="formula">LoopSpec := (Trigger, Goal, Verification, StoppingRule, Memory)
+
+  Trigger       触发方式：手动 / 定时 / 事件（决定"谁发起下一轮"）
+  Goal          目标：可验证的完成标准（最好是确定性、可机检的）
+  Verification  验证步骤：由谁、用什么证据判定一轮结果（独立于执行者）
+  StoppingRule  停止规则：终态集合 + 轮次/时间/预算上限 + 升级条件
+  Memory        记忆：存活在单次对话之外的状态（progress.md / issue board / git 历史）</div>
+<p>Osmani 的工程化版本是「五个组件 + 一个记东西的地方」（five building blocks plus state，见 §3.2），与论文五元组一一对应：Automations 对应 Trigger，Skills/Sub-agents 服务于 Verification，State 即 Memory。最小 loop 的递归目标语义：</p>
+<pre><code>loop(purpose):
+    while not done:
+        result = agent.act(purpose, memory.read(), tools)
+        verdict = verifier.check(result, goal)      # 注意：不是执行者自己判
+        memory.write(result, verdict)
+        done = stopping_rule(verdict, budget, state)
+    escalate_to_human() if verdict == "cannot_resolve"</code></pre>
+
+<h3 id="22-关键消歧agent-loop--loop-engineering内环-vs-外环">2.2 关键消歧：Agent Loop ≠ Loop Engineering（内环 vs 外环）</h3>
+<p>这是中文社区最容易混淆的一点（lufeikevin、CRUD 等多篇知乎文章专门做了区分）：</p>
+<table>
+<tr><th>维度</th><th>Agent Loop（内环 / inner loop）</th><th>Loop Engineering（外环 / outer loop）</th></tr>
+<tr><td>本质</td><td>模型与工具之间的内部循环</td><td>面向需求与验收标准的外部自执行流程</td></tr>
+<tr><td>位置</td><td>Harness 内部的管道</td><td>构建在 Harness 之上</td></tr>
+<tr><td>典型过程</td><td>读上下文 → LLM 决策 → 调工具 → 结果写回 → 直到 stop_reason 不再是 tool_use</td><td>触发 → 取状态 → 派活 → 独立验证 → 判停/升级 → 落盘 → 下一轮</td></tr>
+<tr><td>解决的问题</td><td>单次对话/单个任务能跑完</td><td>人工验收、跨任务调度、跨会话记忆</td></tr>
+<tr><td>状态存活处</td><td>上下文窗口内（消息历史）</td><td>磁盘上的持久文件（SKILL.md、progress.md、Linear）</td></tr>
+</table>
+<div class="callout key"><div class="title">一句话总结</div>Inner Loop 决定这一轮跑不跑得通，Outer Loop 决定下一轮还踩不踩同一个坑。</div>
+<p>内环的最小代码形态（袋鼠云数栈 UED《Agent Loop 核心机制》）：<code>messages</code> 是短期记忆；<code>stop_reason === "tool_use"</code> 表示模型要继续；工具结果重新写回消息历史。这是"为什么能跑"的最小心智模型，真实源码还要处理事件流、上下文压缩、并行工具、用户中断等稳定性问题。</p>
+<p>一个生产级内环实例是 Claude Code 插件 Pi 的两级循环（知乎《从 Pi 窥见 Loop Engineering 的递归美学》，基于源码）：</p>
+<ul>
+<li><strong>run / turn 两级</strong>：ReAct 是单层 loop，Pi 拆成 run（一次完整任务）与 turn（一轮模型交互），子 Agent 再嵌套完整 loop；</li>
+<li><strong>两个队列</strong>：steering（转向，用户中途插话，排队到当前 turn 结束、下一次请求模型前注入）与 follow-up（追问，Agent 准备退出前检查队列，有货就再跑一轮）——中途插话靠"两个 turn 的缝隙注入"实现，无需打断；</li>
+<li><strong>稳定事件流</strong>：<code>agent_start / turn_start / message_* / tool_execution_* / turn_end / agent_end</code>，UI、会话保存、扩展、自动压缩全部挂在事件上；</li>
+<li><strong>边界处理</strong>：输出被 token 上限截断时，该消息内所有工具调用<strong>整批标记失败、一个都不执行</strong>（流式解析器会"抢救"出残缺 JSON 参数，执行残缺的 write 可能毁文件）；工具异常不中断循环，包装成结果喂回模型。</li>
+</ul>
+
+<h3 id="23-运转机制一个循环周期的六个动作">2.3 运转机制：一个循环周期的六个动作</h3>
+<ol>
+<li><strong>触发（trigger）</strong>：手动 prompt、定时器（<code>/loop 5m</code>、cron）、或外部事件（新 issue、CI 失败、PR 评论）。</li>
+<li><strong>装载状态（load state）</strong>：从磁盘读取 progress 文件/看板，知道昨天试过什么、什么还开着——模型跨 run 会忘，仓库不会忘（"The agent forgets, the repo doesn't."——Osmani）。</li>
+<li><strong>执行（act）</strong>：在隔离 worktree 中由主 Agent 或子 Agent 干活，工具调用发生在真实环境里。</li>
+<li><strong>观察（observe）</strong>：收集测试、lint、浏览器截图、监控 Trace 等客观证据。</li>
+<li><strong>验证（verify）</strong>：由<strong>独立验证者</strong>（另一个 Agent / 评估模型 / 确定性脚本）对照 Goal 判定，执行者不给自己打分。</li>
+<li><strong>判停与落盘（decide &amp; persist）</strong>：对照停止规则决定成功退出、继续、预算耗尽失败、还是升级给人；把结果写回 Memory，下一轮从断点继续。</li>
+</ol>
+
+<figure><iframe class="fig-h2" src="diagrams/2-loop-anatomy.html" loading="lazy"></iframe><figcaption>图 2 · 循环解剖：LoopSpec 五要素、六步运行周期、FAILED 反馈回路与四个命名终态</figcaption></figure>
+
+<h3 id="24-停止条件必须命名终态">2.4 停止条件：必须命名终态</h3>
+<p>Anthropic 官方对 loop 的定义只有一句话：<strong>"agents repeating cycles of work until a stop condition is met"（Agent 重复工作周期，直到满足停止条件）</strong>。工程上最容易被轻视、也最容易出事的就是停止条件。</p>
+<blockquote><p>很多人第一次用循环踩坑，不是模型太弱，而是没有写 Stop Rules。<strong>没有刹车的 Agent，不是自动化，是成本风险。</strong>—— 沐风《把 /goal 和 /loop 变成可验证的 AI 工程循环》</p></blockquote>
+<p>一个完整停止规则至少命名四种出口：</p>
+<div class="formula">SUCCESS          所有确定性检查通过（如 tests/auth 12 个用例全绿 + lint 零警告）
+BUDGET_EXHAUSTED 轮次/时间/Token 预算用尽（如最多 5 轮、单轮 15 分钟超时）
+REPEAT_FAILURE   同一检查连续 N 轮以同样方式失败 → 停，整理 diff 和日志升级给人
+BLOCKED          触碰硬性约束（要改迁移文件、要加依赖、缺权限）→ 停，等人决策</div>
+<p>论文 arXiv:2607.00038 对 50 个真实公开 loop 的手工编码统计（<strong>该数字来自论文摘要转述，引用前建议查原文核对</strong>）：74% 的 loop 显式命名了终态（named terminal states），而自动化触发与持久记忆仍是相对薄弱的环节。</p>
+
+<h3 id="25-理论脉络react--reflexion--ralph--loop-engineering">2.5 理论脉络：ReAct → Reflexion → Ralph → Loop Engineering</h3>
+<ul>
+<li><strong>ReAct（2022，Princeton × Google，arXiv:2210.03629）</strong>：推理与行动交替，<code>thought → action → observation → …</code>，内环 Agent Loop 的学术原型。</li>
+<li><strong>Reflexion（2023，arXiv:2303.11366）</strong>：任务失败后用自然语言反思原因并存入记忆，下一次尝试调用记忆改进表现。外环"失败 → 反思 → 写进 SKILL.md/progress → 下一轮受益"本质就是工程化的 Reflexion。</li>
+<li><strong>Ralph（2025-07 → 2026-01）</strong>：Geoffrey Huntley 的 Claude Code 插件，一个 bash 脚本驱动的循环：开发功能 → 检查预期 → 继续开发直到完成；记忆靠 git commit 和文本文件，不靠上下文窗口。2025-07-14《Ralph Wiggum as a "Software Engineer"》、2026-01-17《Everything Is a Ralph Loop》（ghuntley.com，本报告已核实可访问）。当时还没有 Loop Engineering 这个词。</li>
+<li><strong>平台原语化（2026-05 → 06）</strong>：2026 年 5 月 Codex 上线 <code>/goal</code>；6 月 7 日 Osmani 定名；6 月底 Claude Code 与 Codex 都内置了 Automations、worktree、skills、subagents、state 全套能力。一年前跑 loop 要写一堆 bash 并永久维护，现在零件直接随产品发布——"一旦发现形状相同，你就不再争论用哪个工具"。</li>
+</ul>
+
+<hr>
+<h2 id="3-方案设计四类循环51-组件与三层嵌套">3. 方案设计：四类循环、5+1 组件与三层嵌套</h2>
+
+<h3 id="31-anthropic-四类循环触发停止与适用场景">3.1 Anthropic 四类循环：触发、停止与适用场景</h3>
+<p>Claude Code 团队按<strong>四件事</strong>分类循环：怎么触发、怎么停止、使用什么原语、适合什么任务（来源：claude.com 官方博客 2026-06-30，本报告已逐字核实）：</p>
+<table>
+<tr><th>类型</th><th>触发</th><th>停止条件</th><th>原语</th><th>最适合的任务</th><th>成本管理</th></tr>
+<tr><td><strong>① Turn-based 回合制</strong></td><td>用户发一条 prompt</td><td>Claude 自判完成，或需要更多上下文</td><td>普通对话 + SKILL.md 强化自验</td><td>不属于例行流程的短任务</td><td>把人工验证步骤写进 skill，减少回合数</td></tr>
+<tr><td><strong>② Goal-based 目标循环</strong></td><td>实时手动 prompt 启动</td><td><strong>目标达成或达到最大轮次</strong>；每次想停由独立评估模型检查</td><td><code>/goal</code></td><td>有可验证退出标准的任务</td><td>确定性完成标准 + 显式轮次上限（"stop after 5 tries"）</td></tr>
+<tr><td><strong>③ Time-based 定时循环</strong></td><td>指定时间间隔</td><td>人取消，或工作自然完结（PR 合并、队列清空）</td><td><code>/loop</code>（本机，关机即停）；<code>/schedule</code>（上云常驻）</td><td>周期性工作；对接外部系统（盯 PR/CI、每日摘要）</td><td>拉长间隔；尽量事件驱动而非时间驱动</td></tr>
+<tr><td><strong>④ Proactive 主动循环</strong></td><td>事件或计划，全程无人实时参与</td><td>每个子任务达标即退出；例程运行直到被关闭</td><td><code>/schedule</code> + <code>/goal</code> + Dynamic Workflows + Auto mode</td><td>源源不断的定义清晰工作：bug 报告、issue 分诊、迁移、依赖升级</td><td>例行步骤路由给小/快模型，关键判断才用最强模型</td></tr>
+</table>
+<p>官方 goal 循环原例：</p>
+<pre><code>/goal get the homepage Lighthouse score to 90 or above, stop after 5 tries.</code></pre>
+<p>官方 proactive 组合原例：</p>
+<pre><code>/schedule every hour: check #project-feedback for bug reports.
+/goal: don't stop until every report found this run is triaged, actioned, and responded to.
+When fixing a bug, use a workflow to explore three solutions in parallel
+worktrees and have a judge adversarially review them.</code></pre>
+<div class="callout"><div class="title" style="color:var(--accent)">选型原则（官方明确提醒）</div>不是所有任务都需要复杂循环，<strong>从最简单的方案开始，选择性使用这些模式</strong>。四类循环不是互斥功能，而是自治度阶梯——区别只在于"谁来发起下一轮"。</div>
+
+<figure><iframe class="fig-h3" src="diagrams/3-four-loops.html" loading="lazy"></iframe><figcaption>图 3 · Anthropic 四类循环：按触发/停止/原语/任务划分的自治度阶梯（官方 2026-06-30）</figcaption></figure>
+
+<h3 id="32-addy-osmani-的-51-工程组件">3.2 Addy Osmani 的 5+1 工程组件</h3>
+<p>一个可运转的 loop 需要五个组件加一个记忆位置，工具映射直接来自 Osmani 原博：</p>
+<table>
+<tr><th>组件</th><th>在循环里的职责</th><th>Codex app</th><th>Claude Code</th></tr>
+<tr><td><strong>Automations 自动化调度</strong></td><td>按计划自动发现任务、初步分诊（循环的"心跳"）</td><td>Automations 面板：选项目/prompt/频率/环境，结果进 Triage 收件箱，无发现自动归档</td><td>Scheduled tasks、cron、<code>/loop</code>、hooks、推到 GitHub Actions</td></tr>
+<tr><td><strong>Worktrees 隔离工作树</strong></td><td>并行 Agent 各占独立工作目录+分支，文件层面不可能互相踩</td><td>内置 worktree 支持</td><td><code>git worktree</code>、<code>--worktree</code>、子 Agent 配 <code>isolation: worktree</code>（用完自动清理）</td></tr>
+<tr><td><strong>Skills 技能</strong></td><td>把项目知识（约定、构建步骤、历史教训）写下来，避免 Agent 靠猜</td><td>Agent Skills（SKILL.md），<code>$name</code> 调用或按描述隐式触发</td><td>Agent Skills（SKILL.md）</td></tr>
+<tr><td><strong>Plugins &amp; connectors</strong></td><td>接入既有工具链（能在真实环境动手而非只动嘴）</td><td>Connectors（MCP）+ 分发插件</td><td>MCP servers + plugins</td></tr>
+<tr><td><strong>Sub-agents 子代理</strong></td><td><strong>提议者与检查者分离</strong>：一个出主意，另一个（可换不同模型）检查</td><td><code>.codex/agents/</code> 下 TOML 定义，按需并行派生后汇总</td><td><code>.claude/agents/</code> 子代理 + agent teams</td></tr>
+<tr><td><strong>State 状态（第 6 件）</strong></td><td>活在单次对话之外的记忆：做过什么、下一步什么</td><td>Markdown 或经 connector 连 Linear</td><td>Markdown（AGENTS.md、progress 文件）或 MCP 连 Linear</td></tr>
+</table>
+<p>几个来自原文的工程细节：</p>
+<ul>
+<li><strong>自动化是循环成为循环的原因</strong>（"the heartbeat"）。OpenAI 内部用它做每日 issue 分诊、CI 失败摘要、commit 简报、追查上周引入的 bug；automation 可以调用 skill，避免把一大墙指令贴进没人会更新的定时器。</li>
+<li><strong>Skill 是创作格式，plugin 是分发方式</strong>；skill 的 description 写得"无聊而精确"比花哨更有效，因为隐式触发靠它匹配。</li>
+<li><strong>子代理是循环里最有价值的结构性设计</strong>：写代码的模型给自己打分太宽容（"way too nice grading its own homework"）；loop 在没人盯着时运行，<strong>一个你真正信任的验证者，是你敢于走开的唯一理由</strong>。代价是子代理各自消耗 token，只在第二意见值钱的地方用。</li>
+<li><code>/goal</code> 底层就是 maker/checker 分离应用在停止条件上：由一个新的模型实例判定是否完成。</li>
+<li><strong>Worktree 只解决机械冲突，不解决编排税（orchestration tax）</strong>：你的 review 带宽才是并行度的真实天花板。</li>
+</ul>
+
+<h3 id="33-吴恩达三层嵌套循环">3.3 吴恩达三层嵌套循环</h3>
+<p>吴恩达 2026-06-26《The Batch》提出，用 AI 做 0→1 产品本质是三个不同速度、彼此嵌套驱动的反馈环（本报告已抓取原文核实）：</p>
+<table>
+<tr><th>循环</th><th>周期</th><th>谁在转</th><th>人的角色变化</th></tr>
+<tr><td><strong>① Agentic coding loop 智能体编码循环</strong></td><td>分钟级</td><td>Agent：按规格写码→测试→修 bug→再测，直到无 bug 且满足规格</td><td>可长时间不介入（吴恩达的 Agent 曾连续自主约 1 小时，用浏览器多次自检）</td></tr>
+<tr><td><strong>② Developer feedback loop 开发者反馈循环</strong></td><td>几十分钟～小时级</td><td>开发者审查当前产品，引导改进</td><td>从"给 Agent 当 QA 手动找 bug"解放，转向高层产品决策（功能取舍、UI、用户流）</td></tr>
+<tr><td><strong>③ External feedback loop 外部反馈循环</strong></td><td>小时～天、周级</td><td>朋友反馈、alpha 测试、A/B 测试</td><td>数据反哺产品愿景 → 规格 → Agent；工程师部分承担产品经理角色</td></tr>
+</table>
+<p>三层是同心齿轮：最内层转得最快，外层数据逐层向内驱动。<strong>Agent 越能干，开发者反而越忙——但忙的是"决定让 AI 写什么、写得对不对"。</strong></p>
+
+<figure><iframe class="fig-h4" src="diagrams/4-nested-loops.html" loading="lazy"></iframe><figcaption>图 4 · 吴恩达三层嵌套反馈循环：分钟级编码环、小时级开发者环、天/周级外部环（The Batch 2026-06-26）</figcaption></figure>
+
+<h3 id="34-验证者模式与五级验证阶梯">3.4 验证者模式与五级验证阶梯</h3>
+<p>「谁来喊停」是循环工程方法论最密集的部分（北方的郎《Loop Engineering 第 4 章》等）。按目标的可形式化程度选择验证模式：</p>
+<table>
+<tr><th>任务特征</th><th>推荐验证模式</th><th>典型场景</th></tr>
+<tr><td>目标可写成确定性检查代码</td><td><strong>确定性验证</strong></td><td>测试通过数、格式合规、数值阈值</td></tr>
+<tr><td>目标依赖主观判断、难以形式化</td><td><strong>独立评判者</strong>（fresh context 的模型）</td><td>文案是否得体、方案是否合理、报告论证是否充分</td></tr>
+<tr><td>兼具硬性约束与质量维度</td><td><strong>混合验证</strong></td><td>报告既要格式合规又要内容准确</td></tr>
+<tr><td>依赖特定领域规则</td><td>确定性验证 + <strong>领域规则引擎/知识库</strong></td><td>工程规范、行业标准核查；规则越结构化越不要依赖模型"常识判断"</td></tr>
+</table>
+<p>验证者设计第一原则：<strong>验证逻辑运行时看不到执行者的推理过程</strong>，并尽量拿到执行者接触不到的独立证据。实战案例（千问云《从日志扫描到预发部署的全自主闭环》）：单测能放过 <code>logger.error → logger.warning</code> 的假修复，但第 3 层独立诊断复查 Langfuse Trace 发现 ERROR observation 仍在——<strong>修复 Agent 能骗自己，骗不了独立验证 Agent</strong>。</p>
+<p>arXiv:2607.00038 进一步提出 <strong>five-level verification ladder（五级验证阶梯）</strong>，并在 50 个真实 loop 语料中观察到 70% 的循环在阶梯的"自主区"完成验证（具体五级划分本报告未取得论文全文，<strong>引用前请查原文核对</strong>）。论文同时指出设计原则植根于自我纠正（self-correction）、奖励黑客（reward hacking）与 model-as-judge 脆弱性的科学文献。</p>
+
+<h3 id="35-方法演进谱系2025-07--2026-07">3.5 方法演进谱系（2025-07 → 2026-07）</h3>
+<table>
+<tr><th>时间</th><th>事件</th><th>性质</th></tr>
+<tr><td>2025-07-14</td><td>Geoffrey Huntley《Ralph Wiggum as a "Software Engineer"》</td><td>社区原型：bash 驱动循环（ghuntley.com/ralph）</td></tr>
+<tr><td>2026-01-17</td><td>Huntley《Everything Is a Ralph Loop》</td><td>循环理念成型（ghuntley.com/loop，已核实可访问）</td></tr>
+<tr><td>2026-02</td><td>Harness Engineering 概念在中文社区流行</td><td>底座层成熟</td></tr>
+<tr><td>2026-05</td><td>Codex 发布 <code>/goal</code>，可跨轮跑到条件成立</td><td>平台原语化开始（时间为知乎社区转述）</td></tr>
+<tr><td>2026-06-07</td><td>Peter Steinberger 发声 + Addy Osmani《Loop Engineering》定名</td><td>概念引爆（原文已核实）</td></tr>
+<tr><td>2026-06-10 / 06-12 / 06-22</td><td>The New Stack 跟进；Ponytail 上线；Osmani 在 O'Reilly Radar 发修订扩展版</td><td>媒体扩散（知乎转述，未独立核实）</td></tr>
+<tr><td>2026-06-26</td><td>吴恩达《The Batch》三层循环框架</td><td>权威背书（原文已核实）</td></tr>
+<tr><td>2026-06-28</td><td>arXiv:2607.00038 提交（Sandeco Macedo）</td><td>首个系统性学术形式化（摘要已核实）</td></tr>
+<tr><td>2026-06-30</td><td>Anthropic《Getting Started with Loops》四类循环</td><td>平台级官方框架（原文已核实）</td></tr>
+<tr><td>2026-07-15 / 07-16</td><td>Osmani《Own the Outer Loop》；Boris Cherny 五级 AI 采用成熟度模型</td><td>讨论推进到"人的责任边界"（知乎转述，未独立核实）</td></tr>
+<tr><td>2026-08</td><td>Osmani《Practical Loop Engineering》回顾从 bash/cron 拼装到产品化</td><td>实践复盘（知乎转述，未独立核实）</td></tr>
+</table>
+
+<hr>
+<h2 id="4-核心实现循环契约与-builderchecker-模式">4. 核心实现：循环契约与 builder/checker 模式</h2>
+
+<h3 id="41-循环契约模板">4.1 循环契约模板</h3>
+<p>综合知乎多篇实战文章（沐风、北方的郎、陶刚），一个可直接复用的<strong>循环契约（loop contract）</strong>七项一项不能少。反例是一句"登录坏了，帮我修一下"——那是人肉循环；工程化版本：</p>
+<pre><code># loop-contract.yaml
+goal: |
+  tests/auth/ 下 12 个用例全部通过，且 npm run lint 零警告
+scope:
+  allow: [lib/auth, tests/auth]
+  forbid:
+    - 不得修改 tests/ 目录          # 防止"改测试让它变绿"
+    - 不得改动公开 API 签名
+verifier:
+  deterministic: [npm test -- auth, npm run lint]   # 在 agent 之外运行
+  independent_judge: reviewer-subagent   # 全新上下文，看不到执行者推理
+state: progress.md            # 跨轮持久：试过什么、结果、下一步
+stop_rules:
+  success: 上述检查全部通过
+  budget: 最多 5 轮；单轮 >15 分钟判超时
+  repeat_failure: 同一测试连续 2 轮以同样方式失败 → 停止升级
+  blocked: 需要改迁移文件 / 新增依赖 / 缺权限 → 停止升级
+escalation: 停止时把两轮 diff、日志、Trace 链接整理成报告交给人</code></pre>
+<p>陶刚《AI 编程从写提示词到造循环》强调：测试和 lint 要<strong>在 agent 之外运行</strong>、结果写回状态文件；还要有一个不参与写代码的验证步骤检查约束是否被绕过（比如测试文件有没有被动过）。</p>
+
+<h3 id="42-builderchecker-伪代码">4.2 builder/checker 伪代码</h3>
+<p>JEECG《三个文件让 Claude Code 循环验证代码直到全绿》给出的最小可运行模式（builder 与 checker 两个子代理循环，已按本报告语境改写并加注释）：</p>
+<pre><code># loop.py —— builder/checker 循环的最小实现（Python 风格伪代码）
+def run_loop(task: str, contract: LoopContract, max_turns: int = 5):
+    state = State.load("progress.md")          # 记忆在磁盘，不在上下文
+
+    for turn in range(1, max_turns + 1):
+        # 1) builder：实现任务，或修复上一轮失败（给它失败报告，不帮它解读）
+        patch = builder_subagent.act(
+            task=task,
+            history=state.failed_attempts,
+            worktree=f"wt-{turn}",             # 每轮隔离工作树
+        )
+
+        # 2) checker：独立子代理运行所有检查；与 builder 上下文隔离
+        verdict = checker_subagent.verify(
+            patch=patch,
+            goal=contract.goal,
+            checks=contract.verifier.deterministic,   # 测试/lint 在 agent 外跑
+            guardrails=contract.scope,                # tests/ 没被改过？
+        )
+
+        state.record(turn, patch, verdict)
+        state.save("progress.md")               # 每轮落盘，可断点续跑
+
+        # 3) 判停：成功 / 预算 / 重复失败 / 硬阻塞，终态必须显式
+        if verdict.status == "ALL_GREEN":
+            return show_diff_and_report(patch, verdict)       # SUCCESS
+        if verdict.repeat_failure(prev=state.last_verdict):
+            return escalate_to_human(verdict, state)          # REPEAT_FAILURE
+        if verdict.blocked_by_contract:
+            return escalate_to_human(verdict, state)          # BLOCKED
+        # FAILED：把 checker 的完整失败报告原样转给 builder，不解读不过滤
+        state.failed_attempts.append(verdict.full_report)
+
+    return escalate_to_human("BUDGET_EXHAUSTED after 5 turns", state)</code></pre>
+<p>对应到 Claude Code，这套机制已有平台原语：<code>/goal</code> 在每轮后调用独立评估模型；dynamic workflows 在并行 worktree 里探索多个方案，再由一个 judge 子代理对抗式评审。</p>
+
+<h3 id="43-状态文件与-skillmd-示例">4.3 状态文件与 SKILL.md 示例</h3>
+<p>State（记忆）的最小形态就是一个 Markdown 文件——"听起来蠢到不像有用，但这是每个长跑 Agent 都依赖的同一招"（Osmani）：</p>
+<pre><code>&lt;!-- progress.md：外环记忆，模型跨 run 全靠它续上 --&gt;
+## Goal
+Lighthouse 首页分数 ≥ 90
+
+## Done
+- [x] turn1: 图片懒加载，分数 78 → 84（证据：lighthouse-2026-09-23-a.html）
+- [x] turn2: 移除未用 JS，84 → 88
+
+## Open / Blocked
+- turn3: LCP 仍 2.3s，疑似 hero 图 CDN 配置问题，需要运维权限 → 已升级 @人
+
+## Lessons（Reflexion：失败反思写下来，喂给后续每一轮）
+- 不要用 CSS 隐藏未用模块骗 Lighthouse，checker 会查 DOM</code></pre>
+<p>SKILL.md 把"什么叫高质量"编码成可检查步骤，让 Agent 能端到端自检（Anthropic 官方 turn-based 循环的建议）：</p>
+<pre><code>---
+name: verify-frontend-change
+description: Verify any UI change end-to-end before declaring it done.
+---
+# Verifying frontend changes
+Never report a UI change as complete based on a successful edit alone:
+1. 启动 dev server，浏览器打开改动页面。
+2. 新控件（按钮/输入/开关）必须实际点击，确认状态变化，截图 before/after。
+3. 浏览器 console 零新增 error/warning。</code></pre>
+
+<h3 id="44-工程反模式与典型坑">4.4 工程反模式与典型坑</h3>
+<ol>
+<li><strong>没有刹车的循环（no stop rules）</strong>：模糊目标（"做得更好一点"）会让 Agent 永远觉得没做完，或过早自我宣布完成。退出标准必须确定性（测试数、分数阈值），并配轮次/预算上限。</li>
+<li><strong>执行者即打分者（self-grading）</strong>：写代码的模型判自己完成，等于没有验证。maker/checker 必须分离，checker 用全新上下文、最好能接触执行者看不到的独立证据。</li>
+<li><strong>对同一错误用同样方法重试（空转而非学习）</strong>：这不是学习是烧钱。可恢复错误（语法、缺 import）与硬性阻塞（缺权限、未定义行为）要分流；重复失败要能升级。Reflexion 式反思必须落盘进记忆，否则每轮从零再犯。</li>
+<li><strong>奖励黑客 / 自我欺骗（reward hacking）</strong>：改测试让它变绿、用 CSS 隐藏元素骗过截图检查。靠 scope 约束（禁止改 tests/）+ 独立证据（Trace、真实浏览器交互）兜住。</li>
+<li><strong>Worktree 幻觉并行</strong>：机械隔离解决了文件冲突，但每个 PR 仍需 review，人的审查带宽才是并行度天花板（Osmani 称之 orchestration tax）。</li>
+<li><strong>Token 失控</strong>：Osmani 原博开头即警告 token 成本差异巨大；proactive 循环要用小模型跑例行步骤、最强模型只做关键判断；定时器尽量改事件驱动。</li>
+<li><strong>理解债（comprehension debt）</strong>：循环越快交付你没亲手写的代码，"存在的东西"与"你真正理解的东西"之间的裂缝越大，且理解债增长得更快。</li>
+<li><strong>认知缴械（cognitive surrender）</strong>：循环自运转后最舒服也最危险的姿势是放弃判断、来什么收什么。"同样一个 loop，两个人用出相反结果：一个在自己深刻理解的工作上加速，另一个用它来逃避理解工作。循环分不清区别，你能。"（Osmani）</li>
+<li><strong>可恢复性缺口</strong>：进程退出前的工具调用处于未开始/执行中/副作用已完成但结果未落盘哪种状态？目前多数会话层没有 durable run cursor，恢复未完成的 write/bash/API 调用需要工具幂等、执行 receipt、验收与补偿（知乎《从 Pi 窥见》高赞评论提出的工程边界）。</li>
+</ol>
+
+<hr>
+<h2 id="5-结论与选型建议">5. 结论与选型建议</h2>
+
+<h3>5.1 核心结论</h3>
+<ol>
+<li><strong>Loop Engineering 的杠杆点从"写好一句 prompt"移到了"设计触发、验证、停止与权限组成的可靠系统"</strong>。它不是让 Agent 一直跑，而是把刹车和验收做对。</li>
+<li><strong>内环（Agent Loop）与外环（Loop Engineering）是两层问题</strong>：Harness 让单轮跑得通，Loop 让跨轮/跨会话的验收与记忆跑得通；Loop 建立在 Harness 之上，不取代 prompt 与 harness。</li>
+<li><strong>可验证的目标 + 独立验证者 + 显式终态，是敢于无人值守的三个前提</strong>；<code>/goal</code> 底层就是 maker/checker 分离。</li>
+<li><strong>从 turn-based 起步，按自治度阶梯升级</strong>：短任务用回合制，可验证任务上 <code>/goal</code>，周期/对接外部系统用 <code>/loop</code>、<code>/schedule</code>，定义清晰的流工作才组合 proactive；不是越自动越好。</li>
+<li><strong>循环放大工程判断，不替代它</strong>：保持 codebase 整洁、持续读循环产出的代码、守住 review 与升级路径，否则平滑的循环只会更快累积理解债。</li>
+</ol>
+
+<h3>5.2 落地 checklist</h3>
+<ul>
+<li>☐ 目标写成确定性、可机检的完成标准（测试数、阈值、格式），不用模糊形容词</li>
+<li>☐ 写明四类终态：成功、预算耗尽、重复失败升级、硬阻塞升级</li>
+<li>☐ 设置轮次/时间/Token 三重预算；单轮超时阈值</li>
+<li>☐ 验证者独立于执行者：全新上下文的 checker 子代理或 agent 外脚本</li>
+<li>☐ 验证证据独立且多维：测试 + lint + 真实浏览器/截图 + 监控 Trace</li>
+<li>☐ scope 护栏：禁止改测试/公开 API；每轮检查护栏是否被绕过</li>
+<li>☐ 状态外置到 progress.md/看板，每轮落盘，支持断点续跑</li>
+<li>☐ 并行 Agent 一律 worktree 隔离；估算自己的 review 带宽再定并行度</li>
+<li>☐ 重复性知识沉淀进 SKILL.md；失败反思（Reflexion）写入持久记忆</li>
+<li>☐ 模型分级：例行步骤小模型，判断与评审强模型</li>
+<li>☐ 定时器优先改为事件驱动；本机 <code>/loop</code> 与云端 <code>/schedule</code> 按关机容忍度选择</li>
+<li>☐ 保留人工升级通道：重复失败、要加依赖/改迁移/缺权限时停下报告</li>
+<li>☐ 定期阅读循环产出的代码，主动偿还理解债；上线前先在自己深度理解的仓库试点</li>
+</ul>
+
+<h3>5.3 注意事项与诚实性声明</h3>
+<div class="callout warn">
+<div class="title">诚实性声明</div>
+<ul>
+<li>本报告的<strong>一手事实</strong>（四类循环定义与示例、5+1 组件与工具映射、三层循环、Ralph 文章、三篇论文编号与标题）均通过抓取原始网页/arXiv 核实。</li>
+<li>标注"<strong>知乎转述，未独立核实</strong>"的时间线条目（The New Stack/Ponytail/O'Reilly 日期、Codex <code>/goal</code> 5 月上线、Osmani 7-8 月后续文章标题、Boris 五级成熟度模型）来自知乎文章引用，引用前请二次核对。</li>
+<li>arXiv:2607.00038 的语料统计数字（70%/74%）与"五级验证阶梯"细节来自论文摘要，未获取全文逐字核对。</li>
+<li>工具原语（<code>/goal</code>、<code>/loop</code>、<code>/schedule</code>、dynamic workflows、auto mode）迭代很快，具体语法以 Claude Code / Codex 官方文档当前版本为准。</li>
+</ul>
+</div>
+
+<hr>
+<h2 id="6-参考资料">6. 参考资料</h2>
+
+<h3>原始出处（官方博客 / 一手来源）</h3>
+<ol class="refs">
+<li>Addy Osmani.《Loop Engineering》. 2026-06-07. <a href="https://addyosmani.com/blog/loop-engineering/">https://addyosmani.com/blog/loop-engineering/</a></li>
+<li>Anthropic / Claude Code 团队（Delba de Oliveira, Michael Segner）.《Loop engineering: Getting started with loops》. 2026-06-30. <a href="https://claude.com/blog/getting-started-with-loops">https://claude.com/blog/getting-started-with-loops</a></li>
+<li>Andrew Ng.《Three Key Loops for Building Great Software》. The Batch, DeepLearning.AI, 2026-06-26. <a href="https://www.deeplearning.ai/the-batch/three-key-loops-for-building-great-software/">https://www.deeplearning.ai/the-batch/three-key-loops-for-building-great-software/</a></li>
+<li>Geoffrey Huntley.《Everything Is a Ralph Loop》. 2026-01-17. <a href="https://ghuntley.com/loop/">https://ghuntley.com/loop/</a></li>
+<li>Geoffrey Huntley.《Ralph Wiggum as a "Software Engineer"》. 2025-07-14. <a href="https://ghuntley.com/ralph/">https://ghuntley.com/ralph/</a></li>
+</ol>
+
+<h3>研究论文</h3>
+<ol class="refs">
+<li>Sandeco Macedo.《Stop Hand-Holding Your Coding Agent: Engineering the Loops that Replace Step-by-Step Prompting》. arXiv:2607.00038, 2026-06-28. <a href="https://arxiv.org/abs/2607.00038">https://arxiv.org/abs/2607.00038</a></li>
+<li>Shunyu Yao 等.《ReAct: Synergizing Reasoning and Acting in Language Models》. arXiv:2210.03629, 2022. <a href="https://arxiv.org/abs/2210.03629">https://arxiv.org/abs/2210.03629</a></li>
+<li>Noah Shinn 等.《Reflexion: Language Agents with Verbal Reinforcement Learning》. arXiv:2303.11366, 2023. <a href="https://arxiv.org/abs/2303.11366">https://arxiv.org/abs/2303.11366</a></li>
+</ol>
+
+<h3>知乎文章（社区实践与中文阐释）</h3>
+<ol class="refs">
+<li>代码里程碑.《从 Pi 窥见 Loop Engineering 的递归美学》. <a href="https://zhuanlan.zhihu.com/p/2061271933296154175">链接</a></li>
+<li>PaperAgent.《提示词工程已死，Loop Engineering 来了！》. <a href="https://zhuanlan.zhihu.com/p/2060404811510571249">链接</a></li>
+<li>程序员鱼皮.《提示词工程已死，Loop Engineering 称王！保姆级教程 + 项目实战》. <a href="https://zhuanlan.zhihu.com/p/2050246303012148996">链接</a></li>
+<li>溯流而上.《Blog 速读：Loop Engineering》（Addy Osmani 译文）. <a href="https://zhuanlan.zhihu.com/p/2047832303997563703">链接</a></li>
+<li>搬砖的小明.《Loop Engineering，炒概念还是真革命？》. <a href="https://zhuanlan.zhihu.com/p/2054994809631290487">链接</a></li>
+<li>Simon Wong.《理解 Loop Engineering：写代码从手动挡到全自动》. <a href="https://zhuanlan.zhihu.com/p/2058650346986141248">链接</a></li>
+<li>锦恢.《锦恢的 AI Agent 小白教程（五）Loop Engineering 与 goal》. <a href="https://zhuanlan.zhihu.com/p/2064738034575226689">链接</a></li>
+<li>锦恢.《小白教程（四）智能体基本原理：Agent Loop，规划模式与子智能体》. <a href="https://zhuanlan.zhihu.com/p/2057385707082093544">链接</a></li>
+<li>袋鼠云数栈 UED.《Agent Loop：让 Agent 真正跑起来的核心机制》. <a href="https://zhuanlan.zhihu.com/p/2061058101885850658">链接</a></li>
+<li>晓码的创造栈.《Loop engineering：四类 loop 的触发、停止与适用场景》. <a href="https://zhuanlan.zhihu.com/p/2061029890938364857">链接</a></li>
+<li>lufeikevin.《Harness 还没弄明白 Loop Engineering 又来了》. <a href="https://zhuanlan.zhihu.com/p/2051245811766391870">链接</a></li>
+<li>技术极简主义.《打造 Claude Code 可持续推进的工作流：Loop Engineering 完整上手攻略》. <a href="https://zhuanlan.zhihu.com/p/2058220227637392413">链接</a></li>
+<li>沐风.《Loop Engineering 实战：把 /goal 和 /loop 变成可验证的 AI 工程循环》. <a href="https://zhuanlan.zhihu.com/p/2057427259162727944">链接</a></li>
+<li>北方的郎.《Loop Engineering，第 4 章：谁来喊停，终止条件与验证者模式》. <a href="https://zhuanlan.zhihu.com/p/2064632428308721863">链接</a></li>
+<li>北方的郎.《Loop Engineering：大模型智能体的自主运行之道》（全书目录）. <a href="https://zhuanlan.zhihu.com/p/2063947506501809711">链接</a></li>
+<li>千问云.《Loop Engineering 实战：实现从日志扫描到预发部署的全自主闭环》. <a href="https://zhuanlan.zhihu.com/p/2060371303559868657">链接</a></li>
+<li>JEECG 低代码平台.《爆火的 Loop Engineering，三个文件让 Claude Code 循环验证代码直到全绿》. <a href="https://zhuanlan.zhihu.com/p/2057405303231189116">链接</a></li>
+<li>陶刚.《AI 编程从写提示词到造循环：Loop Engineering 工程化了什么》. <a href="https://zhuanlan.zhihu.com/p/2083837763582011161">链接</a></li>
+<li>神经 CAE.《从 Harness 工程到 Loop 工程？——把人从内环引擎位，移到外环方向盘》. <a href="https://zhuanlan.zhihu.com/p/2064796369110541793">链接</a></li>
+<li>非著名程序员.《吴恩达最新长文：AI 时代，真正重要的不是写代码，而是设计循环》. <a href="https://zhuanlan.zhihu.com/p/2056347456036664299">链接</a></li>
+<li>夜晚星空下的你.《吴恩达说人的核心价值不是「品味」——「循环工程」三重回路到底在说什么》. <a href="https://zhuanlan.zhihu.com/p/2054334162258094078">链接</a></li>
+<li>七牛云行业应用.《Loop Engineering 实践教程：从写提示词到设计循环》. <a href="https://zhuanlan.zhihu.com/p/2056419614930876230">链接</a></li>
+<li>玉鸯.《Loop Engineering 会成为 AI Agent 时代的新基础能力吗？》（时间线梳理）. <a href="https://www.zhihu.com/question/2050706169056977955/answer/2062138878719432164">链接</a></li>
+<li>邦比快跑.《如何看待由 OpenClaw 作者引发的 "Loop 工程" 讨论？》（四类循环实例）. <a href="https://www.zhihu.com/question/2048003050531558553/answer/2056061192188204497">链接</a></li>
+<li>CRUD.《Loop Engineering，循环工程是什么？》（概念借了哪些老概念）. <a href="https://www.zhihu.com/question/2049888183597512610/answer/2057204243904345250">链接</a></li>
+<li>gwave.《Loop Engineering（循环工程）》. <a href="https://zhuanlan.zhihu.com/p/2051768479712384475">链接</a></li>
+<li>人工智能研究所.《Loop Engineering：不要再写 prompt 了？而是设计一套 Loop 系统！》. <a href="https://zhuanlan.zhihu.com/p/2052002838067393271">链接</a></li>
+<li>JavaGuide.《万字详解 AI Agent 核心概念：Agent Loop、Plan-and-Execute、A2A、Agentic Workflows、Tools 注册》. <a href="https://zhuanlan.zhihu.com/p/2044328943587743048">链接</a></li>
+<li>思林广不记.《超级 Loop：让 AI 干长活的完整架构》. <a href="https://zhuanlan.zhihu.com/p/2063723265848243487">链接</a></li>
+<li>Arron.《如何构建一个超越 99% 人的 Claude Loop Engineering（循环工程）》. <a href="https://zhuanlan.zhihu.com/p/2050553784628146887">链接</a></li>
+</ol>
+
+<div class="footer">Loop Engineering 技术调研报告 ｜ 生成日期 2026-09-23 ｜ 信源已交叉验证，转述数据已在正文显式标注</div>
+</div>
+</body>
+</html>

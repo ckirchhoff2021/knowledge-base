@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>循环解剖：Loop Specification 与运行周期</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:20px 24px}
+.container{width:100%;max-width:1100px}
+h1{text-align:center;font-size:21px;font-weight:600;margin-bottom:6px;color:#f1f5f9}
+.sub{text-align:center;font-size:12.5px;color:#94a3b8;margin-bottom:16px}
+.spec{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.sp{border:1px solid #475569;border-radius:9px;padding:9px 11px;background:#1e293b;text-align:center}
+.sp b{display:block;font-size:12.5px;color:#60a5fa;margin-bottom:3px}
+.sp span{font-size:10.5px;color:#94a3b8;line-height:1.45;display:block}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.step{border:1px solid #334155;border-radius:12px;padding:13px 15px;background:#1e293b;position:relative;min-height:108px}
+.step .n{width:22px;height:22px;border-radius:50%;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.step h3{font-size:13.5px;color:#e2e8f0;margin-bottom:5px}
+.step p{font-size:11px;color:#94a3b8;line-height:1.55}
+.s-trigger{border-color:#fbbf24}.s-trigger .n{background:#b45309}
+.s-state{border-color:#a78bfa}.s-state .n{background:#6d28d9}
+.s-act{border-color:#34d399}.s-act .n{background:#047857}
+.s-observe{border-color:#22d3ee}.s-observe .n{background:#0e7490}
+.s-verify{border-color:#fb923c}.s-verify .n{background:#c2410c}
+.s-decide{border-color:#60a5fa}.s-decide .n{background:#1d4ed8}
+.sep{grid-column:1/-1;height:18px;position:relative}
+.sep::after{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:2px dashed #475569}
+.feedback{border:1px dashed #475569;border-radius:10px;padding:9px 14px;font-size:11.5px;color:#94a3b8;margin-top:12px;text-align:center;background:rgba(71,85,105,.06)}
+.feedback b{color:#fbbf24}
+.terminal{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.t{border-radius:9px;padding:10px 12px;font-size:11px;line-height:1.5;border:1px solid}
+.t b{display:block;font-size:11.5px;margin-bottom:2px;font-family:Menlo,monospace}
+.t-ok{border-color:#14532d;background:#052e16;color:#86efac}.t-ok b{color:#4ade80}
+.t-budget{border-color:#78350f;background:#451a03;color:#fcd34d}.t-budget b{color:#fbbf24}
+.t-repeat{border-color:#7f1d1d;background:#450a0a;color:#fca5a5}.t-repeat b{color:#f87171}
+.t-block{border-color:#7f1d1d;background:#450a0a;color:#fca5a5}.t-block b{color:#f87171}
+.info-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.card{background:#1e293b;border-radius:10px;padding:13px 15px;border-left:3px solid #3b82f6}
+.card h4{font-size:12px;color:#60a5fa;margin-bottom:6px}
+.card p{font-size:11px;color:#cbd5e1;line-height:1.55}
+@media(max-width:820px){.spec,.terminal{grid-template-columns:1fr 1fr}.flow{grid-template-columns:1fr}.info-cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>循环解剖：Loop Specification 与运行周期</h1>
+<div class="sub">形式化来自 arXiv:2607.00038 — LoopSpec = (Trigger, Goal, Verification, StoppingRule, Memory)</div>
+
+<div class="spec">
+  <div class="sp"><b>Trigger 触发</b><span>手动 / 定时 / 事件<br>决定谁发起下一轮</span></div>
+  <div class="sp"><b>Goal 目标</b><span>可验证完成标准<br>最好确定性可机检</span></div>
+  <div class="sp"><b>Verification 验证</b><span>独立于执行者<br>用客观证据判定</span></div>
+  <div class="sp"><b>StoppingRule 停止</b><span>终态集合 + 轮次/<br>时间/预算上限</span></div>
+  <div class="sp"><b>Memory 记忆</b><span>对话之外持久化<br>progress.md / 看板</span></div>
+</div>
+
+<div class="flow">
+  <div class="step s-trigger"><div class="n">1</div><h3>触发 Trigger</h3><p>手动 prompt、定时器（/loop、cron）或外部事件（新 issue、CI 失败、PR 评论）</p></div>
+  <div class="step s-state"><div class="n">2</div><h3>装载状态 Load State</h3><p>读 progress / 看板：昨天试过什么、什么还开着。模型会忘，仓库不会忘</p></div>
+  <div class="step s-act"><div class="n">3</div><h3>执行 Act（Builder）</h3><p>主/子 Agent 在隔离 worktree 中真实动手，工具调用发生在真实环境</p></div>
+  <div class="step s-decide"><div class="n">6</div><h3>判停 &amp; 落盘 Decide</h3><p>对照停止规则选择终态；结果写回 Memory，下一轮从断点继续</p></div>
+  <div class="step s-verify"><div class="n">5</div><h3>验证 Verify（Checker）</h3><p>另一个 fresh-context 子代理 / 评估模型 / agent 外脚本，对照 Goal 判定</p></div>
+  <div class="step s-observe"><div class="n">4</div><h3>观察 Observe</h3><p>收集测试、lint、浏览器截图、Langfuse Trace 等客观证据</p></div>
+</div>
+
+<div class="feedback">↻ <b>FAILED 回路</b>：把 Checker 的完整失败报告<b>原样</b>转给 Builder（不解读、不过滤）→ 回到第 3 步；同一错误连续 2 轮同样方式失败则升级</div>
+
+<div class="terminal">
+  <div class="t t-ok"><b>SUCCESS</b>全部确定性检查通过 → 展示 diff 与证据后退出</div>
+  <div class="t t-budget"><b>BUDGET_EXHAUSTED</b>轮次/时间/Token 用尽（如最多 5 轮）→ 失败退出</div>
+  <div class="t t-repeat"><b>REPEAT_FAILURE</b>同检查连续 N 轮同样失败 → 整理报告升级给人</div>
+  <div class="t t-block"><b>BLOCKED</b>触碰硬约束（改迁移/加依赖/缺权限）→ 停止等人决策</div>
+</div>
+
+<div class="info-cards">
+  <div class="card"><h4>执行者≠打分者</h4><p>写代码的模型给自己打分太宽容；/goal 每轮由独立评估模型判停，即 maker/checker 分离。</p></div>
+  <div class="card"><h4>证据要独立多维</h4><p>单测能放过 logger 降级假修复，独立 Trace 复查抓得到——Agent 骗得了自己，骗不了独立验证者。</p></div>
+  <div class="card"><h4>记忆必须落盘</h4><p>模型跨 run 清空一切，状态在磁盘才支持续跑；失败反思写进记忆，下一轮才不重犯（Reflexion）。</p></div>
+</div>
+</div>
+</body>
+</html>

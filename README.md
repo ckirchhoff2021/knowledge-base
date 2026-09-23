@@ -106,6 +106,13 @@ knowledge-base/
     <td>~22000字，LLM Agent强化学习两条路线（传统Agent-RL vs Harness-Native RL）系统调研：训推不一致根因、OpenForgeRL/CoreCraft/GRPO/SAO/AT-GRPO算法对比、基础设施选型（verl/Miles/AReaL）、落地checklist，含3张暗色主题交互架构图</td>
     <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/agent-rl-harness-rl/report.html"><b>🔗 在线阅读</b></a></td>
   </tr>
+  <tr>
+    <td>Loop Engineering（循环工程）技术调研报告</td>
+    <td>技术深度调研</td>
+    <td>2026-09-23</td>
+    <td>从"人给 Agent 写提示词"到"人设计给 Agent 写提示词的循环"：LoopSpec 五要素形式化（arXiv:2607.00038）、Anthropic 四类循环（turn/goal/time/proactive）、Addy Osmani 5+1 工程组件、吴恩达三层嵌套循环、循环契约与 builder/checker 验证者模式、工程反模式与落地 checklist，含 4 张暗色主题交互架构图</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/agents/loop-engineering/report.html"><b>🔗 在线阅读</b></a></td>
+  </tr>
 </table>
 
 ### 🧠 大模型技术
