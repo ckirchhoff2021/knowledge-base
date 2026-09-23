@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>演进谱系与 Misevolution 风险</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:20px 24px}
+.container{width:100%;max-width:1100px}
+h1{text-align:center;font-size:21px;font-weight:600;margin-bottom:6px}
+.sub{text-align:center;font-size:12.5px;color:#94a3b8;margin-bottom:18px}
+.timeline{position:relative;margin:6px 0 10px}
+.tl-track{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;position:relative}
+.tl-track::before{content:"";position:absolute;left:0;right:0;top:15px;height:2px;background:linear-gradient(90deg,#475569,#60a5fa)}
+.node{position:relative;text-align:center;z-index:1}
+.dot{width:11px;height:11px;border-radius:50%;margin:10px auto 8px;border:2px solid #0f172a;background:#64748b}
+.node.hot .dot{background:#60a5fa;box-shadow:0 0 9px rgba(96,165,250,.7)}
+.node .date{font-size:10px;color:#94a3b8;font-family:Menlo,monospace}
+.node .name{font-size:10.5px;color:#e2e8f0;line-height:1.4;margin-top:2px;padding:0 2px}
+.node .tag{font-size:9.5px;color:#64748b}
+.phase-label{display:grid;grid-template-columns:2fr 2fr 4fr;gap:8px;margin:2px 0 4px;font-size:10.5px;color:#64748b}
+.panel{display:grid;grid-template-columns:1.15fr 1fr;gap:14px;margin-top:14px}
+.riskbox,.guardbox{border:1px solid;border-radius:12px;padding:14px 16px;background:#1e293b}
+.riskbox{border-color:#7f1d1d}.guardbox{border-color:#14532d}
+.riskbox h3{font-size:14px;color:#f87171;margin-bottom:10px}
+.guardbox h3{font-size:14px;color:#4ade80;margin-bottom:10px}
+.risk{display:grid;grid-template-columns:92px 1fr;gap:9px;padding:8px 0;border-bottom:1px dashed #475569;font-size:11px;line-height:1.5}
+.risk:last-child{border-bottom:none}
+.risk b{color:#fca5a5;font-size:11px}
+.risk span{color:#94a3b8}
+.guardbox ul{margin:0 0 0 17px;font-size:11px;color:#cbd5e1;line-height:1.85}
+.note{margin-top:12px;border:1px dashed #78350f;background:rgba(251,191,36,.07);border-radius:9px;padding:9px 13px;font-size:11px;color:#fcd34d;line-height:1.55}
+.info-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.card{background:#1e293b;border-radius:10px;padding:13px 15px;border-left:3px solid #3b82f6}
+.card h4{font-size:12px;color:#60a5fa;margin-bottom:6px}
+.card p{font-size:11px;color:#cbd5e1;line-height:1.55}
+@media(max-width:820px){.tl-track{grid-template-columns:1fr 1fr}.tl-track::before{display:none}.phase-label{display:none}.panel,.info-cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>演进谱系与 Misevolution 风险</h1>
+<div class="sub">从 ReAct 内环到双空间协同进化（2022 → 2026-09），自进化越成熟，防失控越关键</div>
+
+<div class="timeline">
+  <div class="tl-track">
+    <div class="node"><div class="dot"></div><div class="date">2022</div><div class="name">ReAct</div><div class="tag">内环原型</div></div>
+    <div class="node"><div class="dot"></div><div class="date">2023</div><div class="name">Reflexion</div><div class="tag">反思记忆</div></div>
+    <div class="node"><div class="dot"></div><div class="date">2025-08</div><div class="name">自进化综述</div><div class="tag">2508.07407</div></div>
+    <div class="node"><div class="dot"></div><div class="date">2025-11</div><div class="name">RLVE</div><div class="tag">自适应环境</div></div>
+    <div class="node hot"><div class="dot"></div><div class="date">2026-05</div><div class="name">SkillOpt</div><div class="tag">技能可训练</div></div>
+    <div class="node hot"><div class="dot"></div><div class="date">2026-06</div><div class="name">HarnessX</div><div class="tag">双信号 GRPO</div></div>
+    <div class="node hot"><div class="dot"></div><div class="date">2026-08</div><div class="name">TaoLive HAT</div><div class="tag">工业部署</div></div>
+    <div class="node hot"><div class="dot"></div><div class="date">2026-09-21</div><div class="name">RRSI</div><div class="tag">进化正则化</div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="riskbox">
+    <h3>▲ Misevolution：四个进化维度的失控面</h3>
+    <div class="risk"><b>记忆 Memory</b><span>记忆积累后安全对齐降级——Agent 开始接受它原本应拒绝的请求</span></div>
+    <div class="risk"><b>工具 Tools</b><span>工具创建与复用无意中引入代码漏洞，随进化扩散到多个任务</span></div>
+    <div class="risk"><b>权重 Weights</b><span>分布内刷榜式进化，在分布外（OOD）变成退化甚至消失</span></div>
+    <div class="risk"><b>工作流 Workflow</b><span>控制流自修改后路径爆炸/死锁，且难以回滚</span></div>
+    <div class="note">顶级模型也未能免疫（知乎原文举例 Gemini 级模型）；自进化不是「配好就能放手」——该研究目前仅知乎转述，引用前需查证原文。</div>
+  </div>
+  <div class="guardbox">
+    <h3>◆ 防失控护栏（RRSI / SkillOpt / 工程实践）</h3>
+    <ul>
+      <li><b>退火编辑预算</b>：限制单轮可改组件数，随时间收缩</li>
+      <li><b>独立验证集门控</b>：严格提升才接受编辑（SkillOpt）</li>
+      <li><b>OOD 评测集</b>：监控 ID/OOD 增益差，防 Harness 刷榜（RRSI）</li>
+      <li><b>快照 + 回滚</b>：每次进化留版本，异常立即回退</li>
+      <li><b>记忆写入过滤</b>：定期用安全测试集检查对齐污染</li>
+      <li><b>工具幂等 + receipt</b>：进程退出可恢复未完成副作用</li>
+      <li><b>人工定期审计</b>：关键系统保持 human-on-the-loop</li>
+    </ul>
+  </div>
+</div>
+
+<div class="info-cards">
+  <div class="card"><h4>主线在加速合流</h4><p>2026 年 5→9 月，技能训练、双信号 GRPO、工业部署、进化正则化四个环节在 4 个月内被依次打通。</p></div>
+  <div class="card"><h4>纪律比聪明更重要</h4><p>SkillOpt-Lite 证明强模型时代极简循环更强，但验证门控与负反馈这类"优化纪律"不能省。</p></div>
+  <div class="card"><h4>治理成为一部分</h4><p>进化速度越快，OOD 评测、可回滚性、审计与安全回归越是系统设计的一等公民。</p></div>
+</div>
+</div>
+</body>
+</html>

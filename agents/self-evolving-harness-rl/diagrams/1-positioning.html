@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>范式定位：双空间进化 × Harness 保真度</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:20px 24px}
+.container{width:100%;max-width:1100px}
+h1{text-align:center;font-size:21px;font-weight:600;margin-bottom:6px}
+.sub{text-align:center;font-size:12.5px;color:#94a3b8;margin-bottom:16px}
+.plot{position:relative;padding:0 10px 44px 86px}
+.grid{position:relative;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:18px;height:420px}
+.axis-v{position:absolute;left:50%;top:-10px;bottom:-10px;width:2px;transform:translateX(-50%);background:linear-gradient(180deg,#94a3b8,#475569);z-index:0}
+.axis-h{position:absolute;left:-10px;right:-10px;top:50%;height:2px;transform:translateY(-50%);background:linear-gradient(90deg,#475569,#94a3b8);z-index:0}
+.arr-u{position:absolute;left:50%;top:-17px;transform:translateX(-50%);border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:9px solid #94a3b8}
+.arr-r{position:absolute;top:50%;right:-17px;transform:translateY(-50%);border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:9px solid #94a3b8}
+.ax-y{position:absolute;left:0;top:0;bottom:44px;width:78px;display:flex;align-items:center;justify-content:center}
+.ax-y span{font-size:12.5px;color:#94a3b8;white-space:nowrap;transform:rotate(-90deg);line-height:1.7}
+.ax-x{position:absolute;bottom:6px;left:86px;right:10px;text-align:center;font-size:12.5px;color:#94a3b8;line-height:1.6}
+.hint{position:absolute;font-size:10.5px;color:#64748b;z-index:2}
+.h-hi{left:50%;top:6px;transform:translateX(-50%)}.h-lo{left:50%;bottom:6px;transform:translateX(-50%)}
+.h-l{left:12px;top:50%;transform:translateY(-50%)}.h-r{right:12px;top:50%;transform:translateY(-50%)}
+.q{position:relative;z-index:1;border:1px solid;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;background:#1e293b}
+.q-amber{border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.08)}
+.q-blue{border-color:rgba(96,165,250,.5);background:rgba(59,130,246,.13);box-shadow:0 0 24px rgba(59,130,246,.16)}
+.q-slate{border-color:#64748b;background:rgba(100,116,139,.1)}
+.q-rose{border-color:rgba(248,113,113,.45);background:rgba(239,68,68,.09)}
+.q h3{font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.q-amber h3{color:#fbbf24}.q-blue h3{color:#60a5fa}.q-slate h3{color:#cbd5e1}.q-rose h3{color:#f87171}
+.q p{font-size:11.5px;color:#94a3b8;line-height:1.55;margin:0}
+.q .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:10px}
+.tag{font-size:10.5px;padding:2px 9px;border-radius:9px;border:1px solid;font-family:Menlo,monospace}
+.q-blue .tag{border-color:#1e3a8a;background:#172554;color:#93c5fd}
+.q-amber .tag{border-color:#78350f;background:#451a03;color:#fcd34d}
+.q-rose .tag{border-color:#7f1d1d;background:#450a0a;color:#fca5a5}
+.q-slate .tag{border-color:#475569;background:#0b1220;color:#cbd5e1}
+.info-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px}
+.card{background:#1e293b;border-radius:10px;padding:13px 15px;border-left:3px solid #3b82f6}
+.card h4{font-size:12px;color:#60a5fa;margin-bottom:6px}
+.card p{font-size:11px;color:#cbd5e1;line-height:1.55}
+@media(max-width:820px){.plot{padding:0}.grid{grid-template-columns:1fr;grid-template-rows:none;height:auto}.axis-v,.axis-h,.arr-u,.arr-r,.ax-y,.hint{display:none}.ax-x{position:static}.info-cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>范式定位：双空间进化 × Harness 保真度</h1>
+<div class="sub">纵轴：进化覆盖的空间（只调权重 → 模型+Harness 协同进化）；横轴：训练 rollout 的 Harness 保真度</div>
+<div class="plot">
+  <div class="ax-y"><span>进化空间覆盖：模型+脚手架 →</span></div>
+  <div class="ax-x">训练 Harness 保真度 →（剥离脚手架 / Mock 工具 → 真实 + HSA 随机化）</div>
+  <div class="grid">
+    <span class="axis-v"></span><span class="axis-h"></span>
+    <span class="arr-u"></span><span class="arr-r"></span>
+    <span class="hint h-hi">双空间</span><span class="hint h-lo">单空间</span>
+    <span class="hint h-l">低保真</span><span class="hint h-r">高保真</span>
+
+    <div class="q q-slate">
+      <h3>○ 固定 Harness 上的符号进化</h3>
+      <p>Reflexion/记忆/技能积累在固定背景下发生；进化信号不回传权重，Harness 一换即失效</p>
+      <div class="tags"><span class="tag">Reflexion</span><span class="tag">Memory</span><span class="tag">Skill lib</span></div>
+    </div>
+    <div class="q q-blue">
+      <h3>● 双空间协同进化（目标范式）</h3>
+      <p>真实/增强 Harness 上的 trace 同时驱动模型 GRPO 与 Harness 编辑，两信号同源对齐</p>
+      <div class="tags"><span class="tag">HarnessX</span><span class="tag">HAT/HSA</span><span class="tag">SkillOpt</span><span class="tag">RRSI</span></div>
+    </div>
+    <div class="q q-rose">
+      <h3>▲ 传统 Agent-RL</h3>
+      <p>只在简化环境调权重：训推偏移，真实工具失败/Hook 拦截/多轮状态学不到</p>
+      <div class="tags"><span class="tag">Mock tools</span><span class="tag">Fixed-harness SFT</span></div>
+    </div>
+    <div class="q q-amber">
+      <h3>◆ 进化的折中起步区</h3>
+      <p>在高保真环境只做模型 RL（RLVE 类），或只自动改 Harness 不训模型——先打通一条再合流</p>
+      <div class="tags"><span class="tag">RLVE</span><span class="tag">AutoDesign</span><span class="tag">SEVerA</span></div>
+    </div>
+  </div>
+</div>
+<div class="info-cards">
+  <div class="card"><h4>为什么必须高保真</h4><p>只有真实/随机化 Harness 的 trace 含真实故障与状态转移，才是驱动双空间进化的有效信号。</p></div>
+  <div class="card"><h4>为什么必须双空间</h4><p>架构变化靠离散编辑、行为微调靠梯度；只占一个空间，另一个空间的瓶颈永远解不掉。</p></div>
+  <div class="card"><h4>允许从折中起步</h4><p>先在高保真环境打通模型 RL，或先自动改 Harness，验证 ROI 后再做 Cross-Harness 合流。</p></div>
+</div>
+</div>
+</body>
+</html>

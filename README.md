@@ -33,7 +33,9 @@ knowledge-base/
 │   ├── anthropomorphic-agent/    # 拟人化 Agent 产品设计（产品调研+理论框架）
 │   ├── feishu-memory/            # 飞书数字员工记忆系统设计
 │   ├── online-policy-distillation/ # OPD/OPSD 在线策略蒸馏技术
-│   └── hermes/                   # Hermes Agent API 文档
+│   ├── loop-engineering/          # Loop Engineering 循环工程
+│   ├── self-evolving-harness-rl/  # 自进化 Agent × Harness-Native RL
+│   └── hermes/                    # Hermes Agent API 文档
 ├── 🧠 models/                    # 大模型技术与论文分析
 │   ├── jev-decision/             # TypeSafe JEV 决策小模型调研报告
 │   └── skillopt/                 # SkillOpt 技能优化论文分析
@@ -112,6 +114,13 @@ knowledge-base/
     <td>2026-09-23</td>
     <td>从"人给 Agent 写提示词"到"人设计给 Agent 写提示词的循环"：LoopSpec 五要素形式化（arXiv:2607.00038）、Anthropic 四类循环（turn/goal/time/proactive）、Addy Osmani 5+1 工程组件、吴恩达三层嵌套循环、循环契约与 builder/checker 验证者模式、工程反模式与落地 checklist，含 4 张暗色主题交互架构图</td>
     <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/agents/loop-engineering/report.html"><b>🔗 在线阅读</b></a></td>
+  </tr>
+  <tr>
+    <td>Self-Evolving Agents × Harness-Native RL 技术调研报告</td>
+    <td>技术深度调研</td>
+    <td>2026-09-23</td>
+    <td>自进化 Agent 双空间协同进化：统一反馈环、与 Harness-Native RL 的合流逻辑、TaoLive HAT/HSA 五维扰动与三阶段训练、HarnessX Cross-Harness GRPO、SkillOpt 文本空间优化器、RRSI 退火编辑预算与 Misevolution 失控面，6 篇 arXiv 一手核实（含 2026-09-21 的 RRSI），含 4 张暗色主题架构图</td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/agents/self-evolving-harness-rl/report.html"><b>🔗 在线阅读</b></a></td>
   </tr>
 </table>
 

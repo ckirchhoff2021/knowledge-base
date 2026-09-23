@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>双空间协同进化闭环</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:20px 24px}
+.container{width:100%;max-width:1100px}
+h1{text-align:center;font-size:21px;font-weight:600;margin-bottom:6px}
+.sub{text-align:center;font-size:12.5px;color:#94a3b8;margin-bottom:18px}
+.rollout{border:1px solid #22d3ee;background:rgba(8,51,68,.35);border-radius:12px;padding:14px 18px;text-align:center}
+.rollout h3{font-size:14px;color:#22d3ee;margin-bottom:5px}
+.rollout p{font-size:11.5px;color:#cbd5e1;margin:0}
+.branch{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
+.lane{border:1px solid;border-radius:12px;padding:0;overflow:hidden;background:#1e293b}
+.lane.harness{border-color:#fbbf24}.lane.model{border-color:#60a5fa}
+.lane header{padding:10px 14px;font-size:13px;font-weight:700}
+.harness header{background:rgba(251,191,36,.14);color:#fbbf24}
+.model header{background:rgba(96,165,250,.15);color:#60a5fa}
+.lane .body{padding:12px 14px}
+.lane ol{margin:0 0 0 18px;font-size:11.5px;color:#cbd5e1;line-height:1.8}
+.gate{margin-top:10px;border:1px dashed;border-radius:8px;padding:8px 11px;font-size:11px;line-height:1.5}
+.harness .gate{border-color:#78350f;color:#fcd34d;background:rgba(251,191,36,.06)}
+.model .gate{border-color:#1e3a8a;color:#93c5fd;background:rgba(59,130,246,.07)}
+code{font-family:Menlo,monospace;font-size:10.5px;background:#0b1220;border:1px solid #334155;border-radius:4px;padding:1px 5px;color:#7dd3fc}
+.flowline{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;align-items:center}
+.next{border:1px solid #34d399;background:rgba(6,78,59,.28);border-radius:12px;padding:12px 16px;font-size:11.5px;line-height:1.6;text-align:center}
+.next b{color:#34d399}
+.varr{text-align:center;color:#64748b;font-size:18px;line-height:1}
+.statebar{margin-top:14px;border:1px solid #a78bfa;background:rgba(76,29,149,.2);border-radius:10px;padding:10px 15px;font-size:11px;color:#c4b5fd;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.statebar b{color:#a78bfa}
+.loopnote{text-align:center;margin-top:12px;font-size:11.5px;color:#94a3b8}
+.loopnote b{color:#f87171}
+.info-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.card{background:#1e293b;border-radius:10px;padding:13px 15px;border-left:3px solid #3b82f6}
+.card h4{font-size:12px;color:#60a5fa;margin-bottom:6px}
+.card p{font-size:11px;color:#cbd5e1;line-height:1.55}
+@media(max-width:820px){.branch,.info-cards{grid-template-columns:1fr}.flowline{grid-template-columns:1fr}.flowline .varr{transform:rotate(90deg)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>双空间协同进化闭环</h1>
+<div class="sub">同一条执行轨迹（trace）在进化周期里分成两路信号，更新后共同进入下一轮 rollout</div>
+
+<div class="rollout">
+  <h3>① Rollout：在真实 / HSA 增强 Harness 上执行</h3>
+  <p>π_θ(a | s, <b>η</b>) → 工具/Hook/技能 → 真实任务结果与环境反馈 → 完整 trace（动作、奖励、失败点、重试）</p>
+</div>
+<div style="text-align:center;color:#64748b;font-size:15px;margin:2px 0">▼ trace 分两路同源信号</div>
+
+<div class="branch">
+  <div class="lane harness">
+    <header>◆ 信号 b · Harness 符号空间（离散编辑 η）</header>
+    <div class="body">
+      <ol>
+        <li>AEGIS 读取 trace，诊断卡壳/失败模式</li>
+        <li>提出有界编辑：加工具 / 换 processor / 重组 prompt</li>
+        <li>替换代数保证组件可独立替换、不耦合</li>
+      </ol>
+      <div class="gate">✓ <b>验证门控</b>：编辑在 held-out 任务上严格提升才接受；被拒编辑写入负反馈缓冲</div>
+    </div>
+  </div>
+  <div class="lane model">
+    <header>● 信号 a · Model 参数空间（GRPO 更新 θ）</header>
+    <div class="body">
+      <ol>
+        <li>按 harness 配置 cross-harness 分组</li>
+        <li>还原对应设置后算新策略概率与重要性比 <code>ratio</code></li>
+        <li>组内优势 → GRPO 梯度更新细粒度行为</li>
+      </ol>
+      <div class="gate">✓ <b>分布对齐</b>：rollout 与梯度同保真度，避免「假环境信号驱动真模型」</div>
+    </div>
+  </div>
+</div>
+
+<div class="flowline">
+  <div class="next"><b>η' 新 Harness</b><br>粗粒度策略架构已更新</div>
+  <div class="varr">➜</div>
+  <div class="next"><b>θ' 新模型</b><br>细粒度行为已调整，学会利用 η'</div>
+</div>
+
+<div class="statebar">
+  <span><b>外部记忆 State</b>：trace / 反思 / 进度持久化到磁盘（progress.md、看板），跨会话续跑</span>
+  <span>模型会忘，仓库不会忘</span>
+</div>
+
+<div class="loopnote">↻ <b>闭环成立的关键</b>：两个更新方向来自同一批真实 trace —— Harness 改架构、模型改行为，天然对齐不互相打架</div>
+
+<div class="info-cards">
+  <div class="card"><h4>信号保真</h4><p>真实/随机化 Harness 才含真实故障恢复信号，是两路进化共同的数据底座。</p></div>
+  <div class="card"><h4>随机化覆盖</h4><p>HSA 让 rollout 覆盖未来 Harness 变体，模型学"理解 η"而非"背固定版本"。</p></div>
+  <div class="card"><h4>双门控兜底</h4><p>离散编辑验证集门控 + 梯度分布对齐，任一不过都不进入下一轮。</p></div>
+</div>
+</div>
+</body>
+</html>
