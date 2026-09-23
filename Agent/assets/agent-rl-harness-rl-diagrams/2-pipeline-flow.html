@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Agent-RL vs Harness-RL 训练流程对比</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;display:flex;justify-content:center}
+.container{max-width:1100px;width:100%}
+h1{text-align:center;font-size:20px;font-weight:600;margin-bottom:28px;color:#f1f5f9}
+.columns{display:grid;grid-template-columns:1fr 4px 1fr;gap:0;margin-bottom:24px}
+.col{padding:20px;border-radius:12px}
+.col-left{background:#1e293b;border:1px solid #334155}
+.col-right{background:#1e293b;border:1px solid #1e3a8a}
+.divider{background:linear-gradient(180deg,#334155,#3b82f6,#334155);border-radius:2px;position:relative}
+.divider::after{content:'VS';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e293b;border:2px solid #3b82f6;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#60a5fa}
+.col h2{font-size:15px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.col-left h2 .tag{background:#78350f;color:#fbbf24;font-size:11px;padding:2px 8px;border-radius:4px}
+.col-right h2 .tag{background:#1e3a8a;color:#60a5fa;font-size:11px;padding:2px 8px;border-radius:4px}
+.step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.col-left .num{background:#78350f;color:#fbbf24}
+.col-right .num{background:#1e3a8a;color:#60a5fa}
+.step-body{flex:1}
+.step-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.step-desc{font-size:11px;color:#94a3b8;line-height:1.5}
+.arrow{text-align:center;color:#475569;font-size:20px;margin:4px 0 4px 38px}
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+.pc-box{background:#1e293b;border-radius:10px;padding:16px;border:1px solid #334155}
+.pc-box h3{font-size:13px;margin-bottom:10px}
+.pc-box.pros h3{color:#4ade80}
+.pc-box.cons h3{color:#f87171}
+.pc-box ul{list-style:none;padding:0}
+.pc-box li{font-size:11px;color:#cbd5e1;padding:3px 0;padding-left:16px;position:relative;line-height:1.5}
+.pc-box li::before{content:'';position:absolute;left:0;top:9px;width:8px;height:8px;border-radius:2px}
+.pc-box.pros li::before{background:#4ade80}
+.pc-box.cons li::before{background:#f87171}
+.legend{text-align:center;font-size:11px;color:#64748b;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>训练流程对比：传统 Agent-RL vs Harness-Native RL</h1>
+<div class="columns">
+<div class="col col-left">
+<h2>传统 Agent-RL（Scaffold-Stripped） <span class="tag">2024–2025 主流</span></h2>
+<div class="step">
+  <div class="num">1</div>
+  <div class="step-body">
+    <div class="step-title">构建简化环境</div>
+    <div class="step-desc">Mock 工具调用、合成数据、简化奖励函数；剥离超时/重试/上下文管理</div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+<div class="step">
+  <div class="num">2</div>
+  <div class="step-body">
+    <div class="step-title">同步 Rollout 采样</div>
+    <div class="step-desc">在受控环境中批量生成轨迹，环境是Python函数调用，延迟低</div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+<div class="step">
+  <div class="num">3</div>
+  <div class="step-body">
+    <div class="step-title">PPO/GRPO 训练</div>
+    <div class="step-desc">on-policy 更新，advantage 估计基于简化环境的 reward</div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+<div class="step">
+  <div class="num">4</div>
+  <div class="step-body">
+    <div class="step-title">部署到真实 Harness</div>
+    <div class="step-desc">把训练好的模型接入真实系统（带完整工具/重试/上下文/子代理），出现分布偏移</div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+<div class="step">
+  <div class="num">5</div>
+  <div class="step-body">
+    <div class="step-title" style="color:#f87171">❌ 性能衰减</div>
+    <div class="step-desc">训练时学到的策略无法泛化到真实Harness的观测空间和行动空间</div>
+  </div>
+</div>
+</div>
+<div class="divider"></div>
+<div class="col col-right">
+<h2>Harness-Native RL <span class="tag">2026 新范式</span></h2>
+<div class="step">
+  <div class="num">1</div>
+  <div class="step-body">
+    <div class="step-title">部署 Harness 直接复用</div>
+    <div class="step-desc">训练时使用与推理完全相同的二进制Harness，含真实工具/超时/重试/子代理</div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+<div class="step">
+  <div class="num">2</div>
+  <div class="step-body">
+    <div class="step-title">LLM Proxy 拦截</div>
+    <div class="step-desc">在模型调用层插入代理，捕获请求/响应，收集轨迹数据，注入训练时的action</div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+<div class="step">
+  <div class="num">3</div>
+  <div class="step-body">
+    <div class="step-title">异步分布式 Rollout</div>
+    <div class="step-desc">Harness跑在真实环境（浏览器/IDE/OS），trajectory异步收集，支持多进程/多机</div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+<div class="step">
+  <div class="num">4</div>
+  <div class="step-body">
+    <div class="step-title">端到端训练</div>
+    <div class="step-desc">奖励基于真实任务结果（单测通过/任务完成），不依赖简化grader；训推零gap</div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+<div class="step">
+  <div class="num">5</div>
+  <div class="step-body">
+    <div class="step-title" style="color:#4ade80">✅ 直接部署</div>
+    <div class="step-desc">训练好的模型权重即插即用，因为训练时所见即部署时所见</div>
+  </div>
+</div>
+</div>
+</div>
+<div class="pros-cons">
+<div class="pc-box cons">
+  <h3>传统 Agent-RL 的问题</h3>
+  <ul>
+    <li>训推不一致（train-deploy mismatch）：ClawEval 显示换Harness后 pass@1 从48.5%掉到20.9%</li>
+    <li>简化环境无法覆盖真实世界的长程依赖、错误恢复、状态ful交互</li>
+    <li>Mock工具返回完美结果，模型没学会处理工具失败/超时/格式错误</li>
+    <li>Prompt/System message 的微小变化可导致已训练策略完全失效</li>
+    <li>训练中学到的「投机取巧」策略（利用grader漏洞）在真实环境中无效</li>
+  </ul>
+</div>
+<div class="pc-box pros">
+  <h3>Harness-Native RL 的优势</h3>
+  <ul>
+    <li>零分布偏移：训练与推理使用同一套二进制、同一组工具、同一套状态管理</li>
+    <li>奖励信号来自真实任务结果（ground-truth outcome），不依赖可欺骗的verifier</li>
+    <li>自然习得Harness层面的能力：重试策略、错误恢复、上下文管理、工具选择</li>
+    <li>可以联合优化 Harness 本身的参数（Prompt/工具描述/Workflow），即Harness-Updating</li>
+    <li>代表工作：OpenForgeRL、Agent Lightning、CoreCraft、NeoHorse 数据引擎</li>
+  </ul>
+</div>
+</div>
+<div class="legend">关键洞察：Agent = Model × Harness。只优化Model而固定Harness（或用假Harness），永远无法达到最优；Harness-RL将整个Agent系统作为优化对象。</div>
+</div>
+</body>
+</html>

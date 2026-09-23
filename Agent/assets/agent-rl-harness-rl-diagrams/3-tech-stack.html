@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Agent-RL 技术栈全景</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;display:flex;justify-content:center}
+.container{max-width:1100px;width:100%}
+h1{text-align:center;font-size:20px;font-weight:600;margin-bottom:24px;color:#f1f5f9}
+.layer{border-radius:12px;padding:16px 20px;margin-bottom:12px;position:relative}
+.layer h2{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid;white-space:nowrap}
+.l5{background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid #4338ca}
+.l5 h2{color:#a5b4fc}.l5 .chip{border-color:#6366f1;background:#312e81;color:#c7d2fe}
+.l4{background:linear-gradient(135deg,#1e293b,#1e3a8a);border:1px solid #1e40af}
+.l4 h2{color:#93c5fd}.l4 .chip{border-color:#3b82f6;background:#1e3a8a;color:#bfdbfe}
+.l3{background:linear-gradient(135deg,#1a2e1a,#14532d);border:1px solid #166534}
+.l3 h2{color:#86efac}.l3 .chip{border-color:#22c55e;background:#14532d;color:#bbf7d0}
+.l2{background:linear-gradient(135deg,#292524,#44403c);border:1px solid #57534e}
+.l2 h2{color:#fcd34d}.l2 .chip{border-color:#ca8a04;background:#422006;color:#fde68a}
+.l1{background:linear-gradient(135deg,#1c1917,#292524);border:1px solid #44403c}
+.l1 h2{color:#fb923c}.l1 .chip{border-color:#ea580c;background:#431407;color:#fed7aa}
+.arrow-down{text-align:center;color:#475569;font-size:18px;margin:4px 0}
+.note{background:#1e293b;border-radius:8px;padding:12px 16px;margin-top:16px;font-size:11px;color:#94a3b8;line-height:1.7;border-left:3px solid #3b82f6}
+.note strong{color:#e2e8f0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.card{background:#1e293b;border-radius:10px;padding:14px;border:1px solid #334155}
+.card h3{font-size:13px;color:#f1f5f9;margin-bottom:8px}
+.card p{font-size:11px;color:#94a3b8;line-height:1.6}
+.badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:400}
+.badge-new{background:#7c2d12;color:#fdba74}
+.badge-hot{background:#14532d;color:#86efac}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Agent-RL 技术栈全景（2025–2026）</h1>
+
+<div class="layer l5">
+<h2>🧠 应用层 · Agent 产品/任务</h2>
+<div class="chips">
+  <span class="chip">SWE-bench 代码生成</span>
+  <span class="chip">Web 浏览 Agent</span>
+  <span class="chip">OS/GUI 操作</span>
+  <span class="chip">Deep Research</span>
+  <span class="chip">多模态世界交互</span>
+  <span class="chip">多智能体协作</span>
+</div>
+</div>
+<div class="arrow-down">↕ 任务结果作为 Reward</div>
+
+<div class="layer l4">
+<h2>🎯 算法层 · RL 方法 <span class="badge badge-new">Harness-Updating</span></h2>
+<div class="chips">
+  <span class="chip">GRPO (Group Relative)</span>
+  <span class="chip">PPO / Dr.GRPO</span>
+  <span class="chip">GSPO (Qwen3)</span>
+  <span class="chip">REINFORCE++</span>
+  <span class="chip">RLOO</span>
+  <span class="chip">DAPO</span>
+  <span class="chip">MCTS + RL</span>
+  <span class="chip">Process Reward (PRM)</span>
+  <span class="chip">Outcome Reward (ORM)</span>
+  <span class="chip">Self-Evolution / Skill Bootstrapping</span>
+  <span class="chip">AT-GRPO (多智能体)</span>
+  <span class="chip">SAO (Stable Advantage Optimization)</span>
+  <span class="chip">Harness-Benefit (双轨优化)</span>
+</div>
+</div>
+<div class="arrow-down">↕ Policy/Value 更新</div>
+
+<div class="layer l3">
+<h2>🔄 训练编排层 · Rollout & Harness <span class="badge badge-hot">Harness-RL 主战场</span></h2>
+<div class="chips">
+  <span class="chip">OpenForgeRL (微软)</span>
+  <span class="chip">Agent Lightning</span>
+  <span class="chip">verl (字节/清华)</span>
+  <span class="chip">Miles (360)</span>
+  <span class="chip">AReaL (字节)</span>
+  <span class="chip">Slime</span>
+  <span class="chip">HybridFlow</span>
+  <span class="chip">CoreCraft (真实环境)</span>
+  <span class="chip">LLM Proxy 拦截</span>
+  <span class="chip">异步轨迹收集</span>
+  <span class="chip">Prefix Replay</span>
+  <span class="chip">On-Policy Distillation</span>
+</div>
+</div>
+<div class="arrow-down">↕ Rollout 请求/响应</div>
+
+<div class="layer l2">
+<h2>⚡ 推理引擎层 · Inference Backend</h2>
+<div class="chips">
+  <span class="chip">vLLM</span>
+  <span class="chip">SGLang</span>
+  <span class="chip">TensorRT-LLM</span>
+  <span class="chip">Megatron-Core</span>
+  <span class="chip">分离式推理 (Prefill/Decode)</span>
+  <span class="chip">投机解码</span>
+  <span class="chip">Prefix/KV Cache 复用</span>
+  <span class="chip">多轮工具调用上下文管理</span>
+</div>
+</div>
+<div class="arrow-down">↕ 分布式权重同步</div>
+
+<div class="layer l1">
+<h2>🔧 基础设施层 · Distributed Training</h2>
+<div class="chips">
+  <span class="chip">PyTorch FSDP</span>
+  <span class="chip">Megatron-LM</span>
+  <span class="chip">DeepSpeed</span>
+  <span class="chip">Ray (分布式编排)</span>
+  <span class="chip">NCCL 通信</span>
+  <span class="chip">权重同步3种方案(PRM/RPC/NCCL)</span>
+  <span class="chip">3D并行 (TP/PP/DP)</span>
+  <span class="chip">A100/H100/L4 GPU集群</span>
+</div>
+</div>
+
+<div class="note">
+<strong>关键技术选型建议</strong>：<br>
+• <strong>框架</strong>：研究/灵活 → verl；生产/稳定 → Miles/Slime；Harness-Native → OpenForgeRL/Agent Lightning<br>
+• <strong>算法</strong>：单轮数学/代码 → GRPO/DAPO/GSPO；多轮Agent → AT-GRPO/SAO + Process Reward<br>
+• <strong>核心痛点</strong>：训推一致性（vLLM vs Train分布偏差）、长程信用分配、奖励黑客（reward hacking）、异步rollout数据staleness
+</div>
+
+<div class="two-col">
+<div class="card">
+  <h3>📐 推荐工程 Checklist</h3>
+  <p>
+    ☐ Rollout引擎与训练引擎版本对齐，定期校验 logprob 一致性<br>
+    ☐ 训练Harness与部署Harness共享同一代码仓库/二进制<br>
+    ☐ 奖励函数必须包含任务级结果信号，不只依赖verifier分数<br>
+    ☐ 异步Rollout设置合理的stale policy阈值（<1个epoch）<br>
+    ☐ 日志记录：每N步做真实Harness评测，防止reward over-optimization<br>
+    ☐ 保留人工评测通道，自动指标+人工双轨验证
+  </p>
+</div>
+<div class="card">
+  <h3>📉 常见坑与对策</h3>
+  <p>
+    <strong>Reward Hacking</strong>：混合outcome+process奖励，定期换held-out eval<br>
+    <strong>分布偏移</strong>：Harness-Native训练或引入重要性采样校正<br>
+    <strong>长程信用分配</strong>：关键步骤奖励放大、失败回溯标记<br>
+    <strong>工具调用格式坍缩</strong>：训练时注入错误恢复样本<br>
+    <strong>训推引擎偏差</strong>：定期计算KL(训练分布||推理分布)监控
+  </p>
+</div>
+</div>
+</div>
+</body>
+</html>

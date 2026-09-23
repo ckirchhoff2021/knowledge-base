@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>范式定位：Agent-RL vs Harness-RL</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.container{width:100%;max-width:1100px}
+h1{text-align:center;font-size:22px;font-weight:600;margin-bottom:32px;color:#f1f5f9;letter-spacing:.5px}
+.axis{position:relative;background:#1e293b;border-radius:16px;padding:48px 32px 64px;border:1px solid #334155}
+.axis::before{content:'';position:absolute;left:60px;right:32px;bottom:32px;height:2px;background:linear-gradient(90deg,#334155,#94a3b8)}
+.axis::after{content:'';position:absolute;left:60px;top:32px;bottom:32px;width:2px;background:linear-gradient(180deg,#334155,#94a3b8)}
+.x-label{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:13px;color:#94a3b8}
+.y-label{position:absolute;left:12px;top:50%;transform:rotate(-90deg) translateX(50%);font-size:13px;color:#94a3b8;white-space:nowrap}
+.quadrant{position:absolute;border:1px dashed #475569;border-radius:8px;padding:16px;transition:all .3s}
+.quadrant:hover{border-color:#60a5fa;box-shadow:0 0 20px rgba(96,165,250,.1)}
+.q1{top:40px;left:calc(50% + 10px);right:40px;height:calc(50% - 52px);background:rgba(239,68,68,.05)}
+.q2{top:40px;left:70px;width:calc(50% - 50px);height:calc(50% - 52px);background:rgba(251,191,36,.05)}
+.q3{top:calc(50% + 8px);left:70px;width:calc(50% - 50px);height:calc(50% - 60px);background:rgba(34,197,94,.05)}
+.q4{top:calc(50% + 8px);left:calc(50% + 10px);right:40px;height:calc(50% - 60px);background:rgba(59,130,246,.08)}
+.q-title{font-size:14px;font-weight:600;margin-bottom:6px}
+.q-desc{font-size:11px;color:#94a3b8;line-height:1.5}
+.q1 .q-title{color:#f87171}
+.q2 .q-title{color:#fbbf24}
+.q3 .q-title{color:#4ade80}
+.q4 .q-title{color:#60a5fa}
+.item{display:inline-block;background:#1e293b;border:1px solid #475569;border-radius:6px;padding:3px 10px;font-size:11px;margin:2px 2px;white-space:nowrap}
+.q1 .item{border-color:#7f1d1d;background:#450a0a;color:#fca5a5}
+.q2 .item{border-color:#78350f;background:#451a03;color:#fcd34d}
+.q3 .item{border-color:#14532d;background:#052e16;color:#86efac}
+.q4 .item{border-color:#1e3a8a;background:#172554;color:#93c5fd}
+.arrow-label{position:absolute;font-size:10px;color:#64748b;font-style:italic}
+.info-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+.card{background:#1e293b;border-radius:10px;padding:14px;border-left:3px solid #3b82f6}
+.card h3{font-size:12px;color:#60a5fa;margin-bottom:6px}
+.card p{font-size:11px;color:#cbd5e1;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>范式定位图：训练环境复杂度 × Harness 真实度</h1>
+<div class="axis">
+  <div class="x-label">Harness 复杂度 →（提示词 → 工具调用 → 多轮状态 → 产品级脚手架）</div>
+  <div class="y-label">↑ 训练分布与部署分布一致性</div>
+  <div class="quadrant q1">
+    <div class="q-title">⚠️ 裸模型RL（Scaffold-Stripped）</div>
+    <div class="q-desc">简化环境、移除脚手架 → 训练分布与部署严重偏移</div>
+    <div style="margin-top:8px">
+      <span class="item">早期 Math/Chat RL</span>
+      <span class="item">简单单轮 Tool-Use</span>
+      <span class="item">Search-R1 类</span>
+    </div>
+  </div>
+  <div class="quadrant q2">
+    <div class="q-title">🔶 传统 Agent-RL</div>
+    <div class="q-desc">有Agent能力，但训练用简化Harness（Mock工具/合成环境）</div>
+    <div style="margin-top:8px">
+      <span class="item">WebArena RL</span>
+      <span class="item">ALFWorld</span>
+      <span class="item">ReTool</span>
+      <span class="item">SWE-bench RL</span>
+    </div>
+  </div>
+  <div class="quadrant q3">
+    <div class="q-title">🟢 SFT + Prompt Engineering</div>
+    <div class="q-desc">无RL，靠SFT和手工Prompt对齐；训练成本低但天花板有限</div>
+    <div style="margin-top:8px">
+      <span class="item">传统 Chatbot</span>
+      <span class="item">纯Prompt Agent</span>
+    </div>
+  </div>
+  <div class="quadrant q4">
+    <div class="q-title">🔵 Harness-Native RL</div>
+    <div class="q-desc">直接在真实部署Harness上端到端训练，零分布偏移</div>
+    <div style="margin-top:8px">
+      <span class="item">OpenForgeRL</span>
+      <span class="item">Agent Lightning</span>
+      <span class="item">CoreCraft</span>
+      <span class="item">Codex/Claw*</span>
+    </div>
+  </div>
+</div>
+<div class="info-cards">
+  <div class="card">
+    <h3>核心矛盾</h3>
+    <p>训练时为了快/稳，剥离真实脚手架；部署时装回去，模型面对全新观测分布 → 性能腰斩（ClawEval 48.5→20.9）</p>
+  </div>
+  <div class="card">
+    <h3>演进方向</h3>
+    <p>从「训简推繁」→「训推一体」：在真正运行的Harness中做RL，把Prompt/工具/重试/超时都当作环境的一部分</p>
+  </div>
+  <div class="card">
+    <h3>代价</h3>
+    <p>Harness-RL rollout慢、调试难、基础设施要求高（异步/多进程/中间件拦截），但收益是可直接迁移部署</p>
+  </div>
+</div>
+</div>
+</body>
+</html>
