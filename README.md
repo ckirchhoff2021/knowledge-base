@@ -104,7 +104,7 @@ knowledge-base/
     <td>技术深度调研</td>
     <td>2026-09-23</td>
     <td>~22000字，LLM Agent强化学习两条路线（传统Agent-RL vs Harness-Native RL）系统调研：训推不一致根因、OpenForgeRL/CoreCraft/GRPO/SAO/AT-GRPO算法对比、基础设施选型（verl/Miles/AReaL）、落地checklist，含3张暗色主题交互架构图</td>
-    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/html/Agent-RL与Harness-RL技术调研报告.html"><b>🔗 在线阅读</b></a></td>
+    <td align="center"><a href="https://ckirchhoff2021.github.io/knowledge-base/Agent/agent-rl-harness-rl/report.html"><b>🔗 在线阅读</b></a></td>
   </tr>
 </table>
 

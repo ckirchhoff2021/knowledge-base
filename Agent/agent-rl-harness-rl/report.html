@@ -114,7 +114,7 @@
 </table>
 <p><strong>直觉类比</strong>：把 LLM 比作F1赛车手，Harness 就是赛车+赛道+维修站。传统 Agent-RL 是让车手在模拟器里练（环境简化、路况完美、没有故障），然后直接送到真实赛道比赛——车手当然不适应。Harness-Native RL 是直接在真实赛道上练，用真实的赛车、面对真实的故障和天气，练出来的能力直接可用。</p>
 <hr>
-<figure><iframe class="fig-h1" src="../assets/agent-rl-harness-rl-diagrams/1-paradigm-comparison.html" loading="lazy"></iframe><figcaption>图 1 · Agent-RL 与 Harness-RL 范式定位对比（训练复杂度 × Harness 保真度象限）</figcaption></figure>
+<figure><iframe class="fig-h1" src="diagrams/1-paradigm-comparison.html" loading="lazy"></iframe><figcaption>图 1 · Agent-RL 与 Harness-RL 范式定位对比（训练复杂度 × Harness 保真度象限）</figcaption></figure>
 
 <h2>2. 核心概念：Agent、Harness 与 RL 的关系</h2>
 <h3>2.1 Agent 的分解公式</h3>
@@ -287,7 +287,7 @@
 </ul>
 <p><strong>双轨训练</strong>是 Harness-Updating 的一个重要实践：模型和 Harness 交替更新，类似 GAN 的训练循环。NeoHorse（华为）的工作展示了将部署中的路由 harness 作为数据引擎，每轮交互轨迹经筛选后转成 SFT 样本，再 on-policy 蒸馏回模型。</p>
 <hr>
-<figure><iframe class="fig-h2" src="../assets/agent-rl-harness-rl-diagrams/2-pipeline-flow.html" loading="lazy"></iframe><figcaption>图 2 · 传统 Agent-RL 与 Harness-Native RL 训练流水线对比</figcaption></figure>
+<figure><iframe class="fig-h2" src="diagrams/2-pipeline-flow.html" loading="lazy"></iframe><figcaption>图 2 · 传统 Agent-RL 与 Harness-Native RL 训练流水线对比</figcaption></figure>
 
 <h2>4. 实施方法与工程实践</h2>
 <h3>4.1 传统 Agent-RL 的训练流水线</h3>
@@ -460,7 +460,7 @@ Step 5: 直接部署
 <li>SGLang：与 verl 深度集成，prefix cache 效率高，多轮 RL 性能优秀。</li>
 </ul>
 <hr>
-<figure><iframe class="fig-h3" src="../assets/agent-rl-harness-rl-diagrams/3-tech-stack.html" loading="lazy"></iframe><figcaption>图 3 · Agent/Harness RL 全栈技术分层（应用→算法→Rollout/Harness→推理→基础设施）</figcaption></figure>
+<figure><iframe class="fig-h3" src="diagrams/3-tech-stack.html" loading="lazy"></iframe><figcaption>图 3 · Agent/Harness RL 全栈技术分层（应用→算法→Rollout/Harness→推理→基础设施）</figcaption></figure>
 
 <h2>5. 方案对比与方法演进</h2>
 <h3>5.1 Agent-RL 技术路线演进（2024–2026）</h3>
@@ -827,7 +827,7 @@ Step 5: 直接部署
 <hr>
 <p>*本报告使用 tech-report-writing 技能（tech-reports-skills/tech-report-writing）生成。架构图使用 architecture-diagram 技能制作。*</p>
 <div class="footer">
-  Agent-RL 与 Harness-RL 技术调研报告 · 信源：知乎 + arXiv + 开源项目文档 · 2026-09-23 · 配套架构图见 <code>../assets/agent-rl-harness-rl-diagrams/</code> 目录
+  Agent-RL 与 Harness-RL 技术调研报告 · 信源：知乎 + arXiv + 开源项目文档 · 2026-09-23 · 配套架构图见 <code>diagrams/</code> 目录
 </div>
 </div>
 </body>
