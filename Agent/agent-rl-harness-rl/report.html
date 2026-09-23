@@ -40,6 +40,9 @@
   a:hover { text-decoration:underline; }
   hr { border:none; border-top:1px solid var(--border); margin:32px 0; }
   strong { font-weight:600; }
+  .toc-sub { list-style:none; margin:6px 0 6px 6px; }
+  .toc-sub li { margin:3px 0; font-size:14px; }
+  h2, h3 { scroll-margin-top:12px; }
   .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
 </style>
 </head>
@@ -60,36 +63,44 @@
 <h1>Agent-RL 与 Harness-RL 技术调研报告</h1>
 <blockquote>报告日期：2026-09-23 信源：知乎社区技术文章（12篇深度分析）、arXiv 论文（OpenForgeRL、CoreCraft、Miles/AReaL/verl 技术报告、DeepAnalyze/ReTool 等）、开源项目文档 主题：系统梳理 LLM Agent 强化学习的两条技术路线——「简化环境中的Agent-RL」与「Harness-Native RL（Harness-RL）」的原理、方法、演进、工程实践与选型建议</blockquote>
 <hr>
-<h2>目录</h2>
-<ol>
+<h2 id="目录">目录</h2>
+<ol class="toc">
 <li><a href="#1-背景与问题定义">背景与问题定义</a></li>
 <li><a href="#2-核心概念agentharness-与-rl-的关系">核心概念：Agent、Harness 与 RL 的关系</a></li>
-<li><a href="#3-原理详解">原理详解</a></li>
-</ol>
-<p>- 3.1 传统 Agent-RL 的范式与假设 - 3.2 训推不一致：Agent-RL 的根本缺陷 - 3.3 Harness-Native RL 的核心思想 - 3.4 Harness-Benefit 与 Harness-Updating</p>
-<ol>
-<li><a href="#4-实施方法与工程实践">实施方法与工程实践</a></li>
-</ol>
-<p>- 4.1 传统 Agent-RL 的训练流水线 - 4.2 Harness-Native RL 的训练流水线 - 4.3 算法选择：GRPO / GSPO / AT-GRPO / SAO - 4.4 基础设施选型</p>
-<ol>
+<li><a href="#3-原理详解">原理详解</a>
+  <ul class="toc-sub">
+    <li><a href="#31-传统-agent-rl-的范式与假设">3.1 传统 Agent-RL 的范式与假设</a></li>
+    <li><a href="#32-训推不一致agent-rl-的根本缺陷">3.2 训推不一致：Agent-RL 的根本缺陷</a></li>
+    <li><a href="#33-harness-native-rl-的核心思想">3.3 Harness-Native RL 的核心思想</a></li>
+    <li><a href="#34-harness-benefit-与-harness-updating">3.4 Harness-Benefit 与 Harness-Updating</a></li>
+  </ul>
+</li>
+<li><a href="#4-实施方法与工程实践">实施方法与工程实践</a>
+  <ul class="toc-sub">
+    <li><a href="#41-传统-agent-rl-的训练流水线">4.1 传统 Agent-RL 的训练流水线</a></li>
+    <li><a href="#42-harness-native-rl-的训练流水线">4.2 Harness-Native RL 的训练流水线</a></li>
+    <li><a href="#43-算法选择">4.3 算法选择：GRPO / GSPO / AT-GRPO / SAO</a></li>
+    <li><a href="#44-基础设施选型">4.4 基础设施选型</a></li>
+  </ul>
+</li>
 <li><a href="#5-方案对比与方法演进">方案对比与方法演进</a></li>
 <li><a href="#6-核心实现要点算法伪代码">核心实现要点：算法伪代码</a></li>
 <li><a href="#7-结论与选型建议">结论与选型建议</a></li>
 <li><a href="#8-参考资料">参考资料</a></li>
 </ol>
 <hr>
-<h2>1. 背景与问题定义</h2>
-<h3>1.1 Agent 能力训练的挑战</h3>
+<h2 id="1-背景与问题定义">1. 背景与问题定义</h2>
+<h3 id="11-agent-能力训练的挑战">1.1 Agent 能力训练的挑战</h3>
 <p>随着大模型从「单轮问答」走向「能使用工具、执行多步任务、与真实环境交互」的 Agent，传统的 SFT（监督微调）+ RLHF（基于人类反馈的强化学习）范式暴露出明显不足：</p>
 <ul>
 <li><strong>单轮 RL（如数学推理）</strong>的 rollout 是纯文本生成，环境简单（题目→答案），奖励函数可以自动判定对错（规则匹配、答案比对）。</li>
 <li><strong>Agent 任务</strong>（写代码、浏览网页、操作 OS、跨应用执行）涉及<strong>多轮工具调用、有状态环境交互、长程规划、错误恢复</strong>，轨迹长度可达数百到数万 token，传统方法难以直接扩展。</li>
 </ul>
-<h3>1.2 一个反直觉的实验事实</h3>
+<h3 id="12-一个反直觉的实验事实">1.2 一个反直觉的实验事实</h3>
 <p>2026 年微软和多个团队独立发现了一个震撼性结果：</p>
 <blockquote><strong>同一个模型权重，只更换推理时的 Harness（脚手架），ClawEval 基准的 pass@1 可以从 48.5% 掉到 20.9%</strong>，差距超过两倍。</blockquote>
 <p>这说明 Agent 的实际表现不只是「模型能力」问题——Harness（提示词、工具注册、上下文管理、重试策略、超时设置、子代理调度）与模型权重共同决定行为。如果训练时用了一个「简化版 Harness」，部署时换到「真实 Harness」，模型面对的观测分布、行动空间、错误模式都发生了根本性变化，性能严重衰减。</p>
-<h3>1.3 本报告核心问题</h3>
+<h3 id="13-本报告核心问题">1.3 本报告核心问题</h3>
 <table>
 <tr>
 <th>问题</th>
@@ -116,8 +127,8 @@
 <hr>
 <figure><iframe class="fig-h1" src="diagrams/1-paradigm-comparison.html" loading="lazy"></iframe><figcaption>图 1 · Agent-RL 与 Harness-RL 范式定位对比（训练复杂度 × Harness 保真度象限）</figcaption></figure>
 
-<h2>2. 核心概念：Agent、Harness 与 RL 的关系</h2>
-<h3>2.1 Agent 的分解公式</h3>
+<h2 id="2-核心概念agentharness-与-rl-的关系">2. 核心概念：Agent、Harness 与 RL 的关系</h2>
+<h3 id="21-agent-的分解公式">2.1 Agent 的分解公式</h3>
 <p>业界逐步形成了一个共识性的 Agent 能力分解：</p>
 <pre><code>Agent 行为 = Model(权重) × Harness(脚手架) × Environment(环境)</code></pre>
 <ul>
@@ -125,7 +136,7 @@
 <li><strong>Harness（推理脚手架）</strong>：包裹模型的运行时框架——系统提示词、工具注册与 schema、上下文管理策略、重试/超时/错误处理逻辑、记忆模块、子代理调度策略、输出解析器。</li>
 <li><strong>Environment</strong>：Agent 实际操作的外部世界——文件系统、浏览器、API、数据库、操作系统 GUI。</li>
 </ul>
-<h3>2.2 Agent-RL vs Harness-RL 的定义差异</h3>
+<h3 id="22-agent-rl-vs-harness-rl-的定义差异">2.2 Agent-RL vs Harness-RL 的定义差异</h3>
 <table>
 <tr>
 <th>维度</th>
@@ -168,12 +179,12 @@
 <td>OpenForgeRL（微软）、Agent Lightning、CoreCraft、NeoHorse 数据引擎</td>
 </tr>
 </table>
-<h3>2.3 什么是 Harness-Updating？</h3>
+<h3 id="23-什么是-harness-updating">2.3 什么是 Harness-Updating？</h3>
 <p>Harness-Updating（脚手架更新）是 Harness-RL 的一个进阶方向：不只优化模型权重 θ，还把 Harness 中的可调参数 η（Prompt 模板、工具描述文本、Workflow 路由逻辑、重试策略参数、上下文截断阈值）一并作为优化对象，通过 RL 或搜索方法联合优化 (θ, η)。</p>
 <p>核心洞察来自 OpenForgeRL 等工作：Harness 的「超参数」对性能影响巨大，但目前全部依赖人工调优。Harness-Updating 让这些参数也进入学习循环。</p>
 <hr>
-<h2>3. 原理详解</h2>
-<h3>3.1 传统 Agent-RL 的范式与假设</h3>
+<h2 id="3-原理详解">3. 原理详解</h2>
+<h3 id="31-传统-agent-rl-的范式与假设">3.1 传统 Agent-RL 的范式与假设</h3>
 <p>传统 Agent-RL 把 Agent 任务形式化为一个多步 MDP，但在实际训练时做了大量简化：</p>
 <p><strong>形式化定义</strong>：</p>
 <pre><code>状态 S_t = (历史对话, 工具返回结果, 当前环境观测)
@@ -188,7 +199,7 @@
 <li><strong>Harness 是透明的、可以被剥离的</strong>——模型能力 ≈ Agent 能力。</li>
 </ol>
 <p>这四条假设在长程、真实环境 Agent 任务中<strong>全部不成立</strong>。</p>
-<h3>3.2 训推不一致：Agent-RL 的根本缺陷</h3>
+<h3 id="32-训推不一致agent-rl-的根本缺陷">3.2 训推不一致：Agent-RL 的根本缺陷</h3>
 <p>当训练用的 Harness（H_train）和部署用的 Harness（H_deploy）不同时，会产生<strong>多维度分布偏移</strong>：</p>
 <p><strong>(a) 观测空间偏移（Observation Shift）</strong></p>
 <ul>
@@ -222,7 +233,7 @@
 <li>OpenForgeRL 实验：同一模型换 harness 后 ClawEval pass@1 从 48.5% → 20.9%。</li>
 <li>397B 模型在简化训练 harness 上的收益，换到 OpenCode（真实代码环境）后明显缩小——证明部分能力是「harness-overfitting」。</li>
 </ul>
-<h3>3.3 Harness-Native RL 的核心思想</h3>
+<h3 id="33-harness-native-rl-的核心思想">3.3 Harness-Native RL 的核心思想</h3>
 <p>Harness-Native RL 的原则非常简洁：<strong>训练时使用的 Harness 就是部署时使用的 Harness</strong>，不做任何简化。</p>
 <p><strong>核心机制：LLM Proxy 拦截</strong></p>
 <pre><code>┌──────────────────────────────────────────────────┐
@@ -268,7 +279,7 @@
 <li><strong>异步收集</strong>：多个 Harness 实例可以并行跑不同任务，trajectory 通过队列异步传给 trainer，解决长程 rollout 的延迟问题。</li>
 <li><strong>真实奖励</strong>：任务完成与否由真实环境的 outcome 决定（比如代码是否真的通过了单测、浏览器操作是否真的完成了表单提交），不依赖简化 grader。</li>
 </ol>
-<h3>3.4 Harness-Benefit 与 Harness-Updating</h3>
+<h3 id="34-harness-benefit-与-harness-updating">3.4 Harness-Benefit 与 Harness-Updating</h3>
 <p>OpenForgeRL 和后续工作提出了两个关键概念：</p>
 <p><strong>Harness-Benefit（脚手架增益）</strong>：衡量 Harness 对 Agent 性能的贡献。形式化地，对于给定模型 θ：</p>
 <pre><code>Benefit(H; θ) = Perf(θ, H_deploy) - Perf(θ, H_minimal)</code></pre>
@@ -289,8 +300,8 @@
 <hr>
 <figure><iframe class="fig-h2" src="diagrams/2-pipeline-flow.html" loading="lazy"></iframe><figcaption>图 2 · 传统 Agent-RL 与 Harness-Native RL 训练流水线对比</figcaption></figure>
 
-<h2>4. 实施方法与工程实践</h2>
-<h3>4.1 传统 Agent-RL 的训练流水线</h3>
+<h2 id="4-实施方法与工程实践">4. 实施方法与工程实践</h2>
+<h3 id="41-传统-agent-rl-的训练流水线">4.1 传统 Agent-RL 的训练流水线</h3>
 <pre><code>Step 1: 准备训练环境
   - 实现简化版工具（mock API、返回固定格式结果）
   - 实现 reward function（规则匹配/单元测试/答案比对）
@@ -315,7 +326,7 @@ Step 5: 部署到真实 Harness
   - 将训练好的模型接入真实 agent 框架
   - 发现性能衰减 → 回到 Step 1 调参（循环反复）</code></pre>
 <p><strong>优点</strong>：框架成熟（verl、TRL、OpenRLHF 均支持），rollout 快，调试方便。 <strong>缺点</strong>：部署时性能衰减严重；模型可能学会 reward hacking；不适应真实工具的异常模式。</p>
-<h3>4.2 Harness-Native RL 的训练流水线</h3>
+<h3 id="42-harness-native-rl-的训练流水线">4.2 Harness-Native RL 的训练流水线</h3>
 <pre><code>Step 1: 准备生产级 Harness
   - 使用部署时一模一样的 Harness 代码（不做任何简化）
   - 接入真实工具（浏览器、文件系统、真实 API）
@@ -351,7 +362,7 @@ Step 5: 直接部署
 <li><strong>Prefix Replay</strong>：微软的工作提出，多轮 distillation 时可以复用已验证过的 prefix（前缀轨迹），大幅减少 rollout 成本。</li>
 <li><strong>错误恢复</strong>：Harness 本身会超时、崩溃、工具会返回错误——这些都是真实训练数据的一部分，不应丢弃，而是作为负样本训练模型的错误恢复能力。</li>
 </ul>
-<h3>4.3 算法选择</h3>
+<h3 id="43-算法选择">4.3 算法选择</h3>
 <table>
 <tr>
 <th>算法</th>
@@ -409,7 +420,7 @@ Step 5: 直接部署
 <li>多智能体协作：AT-GRPO。</li>
 <li>有 MCTS 搜索模块：策略蒸馏 + GRPO（如 Kimi-K1.5 路线）。</li>
 </ul>
-<h3>4.4 基础设施选型</h3>
+<h3 id="44-基础设施选型">4.4 基础设施选型</h3>
 <table>
 <tr>
 <th>框架</th>
@@ -462,8 +473,8 @@ Step 5: 直接部署
 <hr>
 <figure><iframe class="fig-h3" src="diagrams/3-tech-stack.html" loading="lazy"></iframe><figcaption>图 3 · Agent/Harness RL 全栈技术分层（应用→算法→Rollout/Harness→推理→基础设施）</figcaption></figure>
 
-<h2>5. 方案对比与方法演进</h2>
-<h3>5.1 Agent-RL 技术路线演进（2024–2026）</h3>
+<h2 id="5-方案对比与方法演进">5. 方案对比与方法演进</h2>
+<h3 id="51-agent-rl-技术路线演进20242026">5.1 Agent-RL 技术路线演进（2024–2026）</h3>
 <pre><code>2024 Q3-Q4  第一波：单轮 RLHF 扩展到推理链
   └─ GRPO 普及（DeepSeek-R1），数学/代码推理突破
   └─ 局限：单轮、无工具、纯文本生成
@@ -491,7 +502,7 @@ Step 5: 直接部署
   └─ Self-Evolving Agent（Evolving-RL、Memento-Skills）
   └─ 多智能体协同 RL（PettingLLMs）
   └─ 部署后持续学习（Harness Continual Learning）</code></pre>
-<h3>5.2 关键方法对比表</h3>
+<h3 id="52-关键方法对比表">5.2 关键方法对比表</h3>
 <table>
 <tr>
 <th>方法</th>
@@ -574,7 +585,7 @@ Step 5: 直接部署
 <td>❓</td>
 </tr>
 </table>
-<h3>5.3 实验结果对比（公开数据）</h3>
+<h3 id="53-实验结果对比公开数据">5.3 实验结果对比（公开数据）</h3>
 <table>
 <tr>
 <th>基准/任务</th>
@@ -609,8 +620,8 @@ Step 5: 直接部署
 </table>
 <blockquote>⚠️ <strong>注意</strong>：以上数据来自知乎文章转述，引用前请二次核对原论文。</blockquote>
 <hr>
-<h2>6. 核心实现要点：算法伪代码</h2>
-<h3>6.1 Harness-Native RL 核心循环</h3>
+<h2 id="6-核心实现要点算法伪代码">6. 核心实现要点：算法伪代码</h2>
+<h3 id="61-harness-native-rl-核心循环">6.1 Harness-Native RL 核心循环</h3>
 <pre><code>def harness_native_rl(
     harness_path: str,        # 部署时使用的 Harness 代码路径（不做任何修改）
     tasks: list[Task],
@@ -659,7 +670,7 @@ Step 5: 直接部署
             print(f"Iter {iteration}: loss={loss:.4f}, eval={eval_score:.4f}")
     
     return model</code></pre>
-<h3>6.2 LLM Proxy 核心逻辑</h3>
+<h3 id="62-llm-proxy-核心逻辑">6.2 LLM Proxy 核心逻辑</h3>
 <pre><code>class LLMProxy:
     """拦截 Harness 对 LLM 的调用，注入当前 policy 的输出"""
     
@@ -712,7 +723,7 @@ Step 5: 直接部署
         traj = self.current_rollouts.pop(trace_id)
         traj.final_reward = final_reward
         self.trajectory_buffer.append(traj)</code></pre>
-<h3>6.3 Harness-Updating 扩展（联合优化）</h3>
+<h3 id="63-harness-updating-扩展联合优化">6.3 Harness-Updating 扩展（联合优化）</h3>
 <pre><code>def harness_updating_rl(
     harness_template,  # Harness 代码模板（含可优化参数 η）
     tasks,
@@ -742,8 +753,8 @@ Step 5: 直接部署
     
     return model, eta</code></pre>
 <hr>
-<h2>7. 结论与选型建议</h2>
-<h3>7.1 核心结论</h3>
+<h2 id="7-结论与选型建议">7. 结论与选型建议</h2>
+<h3 id="71-核心结论">7.1 核心结论</h3>
 <ol>
 <li><strong>Agent 能力 = 模型 × Harness</strong>，只优化其中一个会留下巨大天花板。传统 Agent-RL 在简化环境中训练，部署时性能严重衰减（可达 50%+）。</li>
 <li><strong>Harness-Native RL 是当前最务实的方向</strong>：直接在部署用的 Harness 上训练，通过 LLM Proxy 拦截模式收集轨迹，零分布偏移。OpenForgeRL、Agent Lightning 等框架已开源可用。</li>
@@ -751,7 +762,7 @@ Step 5: 直接部署
 <li><strong>异步 RL 基础设施是规模化的关键</strong>：长程 trajectory 在真实 Harness 中执行很慢（单个任务可达数分钟），必须异步收集 + 分布式训练，控制 policy staleness 是核心工程挑战。</li>
 <li><strong>算法层面</strong>：GRPO 仍然是最通用的基线；GSPO/SAO 在长程场景表现更好；多智能体场景需要 AT-GRPO 类的专门算法。</li>
 </ol>
-<h3>7.2 工程选型 Checklist</h3>
+<h3 id="72-工程选型-checklist">7.2 工程选型 Checklist</h3>
 <p><strong>☐ 如果你的场景是「单轮/短程、工具简单」（如简单 RAG、数学推理）</strong></p>
 <ul>
 <li>走传统 Agent-RL 即可，用 verl + GRPO，成本低、成熟度高。</li>
@@ -773,7 +784,7 @@ Step 5: 直接部署
 <li>引入 Harness-Updating 优化 prompt 和 workflow。</li>
 <li>考虑多智能体 AT-GRPO 协同训练。</li>
 </ul>
-<h3>7.3 注意事项与陷阱</h3>
+<h3 id="73-注意事项与陷阱">7.3 注意事项与陷阱</h3>
 <ul>
 <li><strong>奖励设计</strong>：不要只依赖终局 outcome reward（稀疏、方差大），适当加入过程奖励（格式正确性、工具选择合理性），但要警惕过程奖励被 hack。</li>
 <li><strong>数据质量 &gt;&gt; 数据数量</strong>：过滤掉 Harness 崩溃/超时的轨迹，这些轨迹的噪声会严重损害训练。</li>
@@ -782,15 +793,15 @@ Step 5: 直接部署
 <li><strong>小模型也值得做 RL</strong>：MiniCPM5-2B 级别的模型在合适的 Harness-RL 训练后，可以达到远超其参数级别的 Agent 能力。</li>
 <li><strong>Harness 本身的演进</strong>：如果 Harness 在训练期间频繁更新（新工具加入、prompt 调整），需要持续做 on-policy 微调，否则模型会过时。</li>
 </ul>
-<h3>7.4 诚实性声明</h3>
+<h3 id="74-诚实性声明">7.4 诚实性声明</h3>
 <ul>
 <li>本文中的实验数据（如 ClawEval 48.5%→20.9%、397B模型缩小）均来自知乎社区文章转述，未逐一核对原始论文，引用前建议对照 arXiv 原文确认。</li>
 <li>部分框架（Miles、Agent Lightning）的具体能力范围基于其公开文档描述，未在本环境中实际部署验证。</li>
 <li>Harness-RL 是一个快速演进的方向（2026 Q3 仍在爆发期），部分推荐意见基于截至 2026-09 的认知，可能随新工作出现而过时。</li>
 </ul>
 <hr>
-<h2>8. 参考资料</h2>
-<h3>原始论文/技术报告</h3>
+<h2 id="8-参考资料">8. 参考资料</h2>
+<h3 id="原始论文技术报告">原始论文/技术报告</h3>
 <ol>
 <li>OpenForgeRL Team. *OpenForgeRL: Train Harness-native Agents in Any Environment*. arXiv:2607.21557, 2026.</li>
 <li>Kimi Team. *Kimi K1.5: Scaling Reinforcement Learning with LLMs*. arXiv:2501.12599, 2025.</li>
@@ -801,7 +812,7 @@ Step 5: 直接部署
 <li>Hu et al. *ADAS: Automated Design of Agentic Systems*. 2025.</li>
 <li>*Harness Continual Learning: Continual Adaptation Beyond Model Parameters*. arXiv:2608.19013, 2026.</li>
 </ol>
-<h3>知乎深度文章</h3>
+<h3 id="知乎深度文章">知乎深度文章</h3>
 <ol>
 <li>绝密伏击. 《LoRA 一作、OpenAI o1 核心成员的新工作：首次公开 397B 模型的 Agent RL 训练配方》. <a href="https://zhuanlan.zhihu.com/p/2082860762947703480">https://zhuanlan.zhihu.com/p/2082860762947703480</a></li>
 <li>我是刘玉书. 《大模型 Agent 强化学习系统学习指南》. <a href="https://zhuanlan.zhihu.com/p/2084575106010035340">https://zhuanlan.zhihu.com/p/2084575106010035340</a></li>

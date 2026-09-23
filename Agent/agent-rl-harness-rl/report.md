@@ -11,15 +11,15 @@
 1. [背景与问题定义](#1-背景与问题定义)
 2. [核心概念：Agent、Harness 与 RL 的关系](#2-核心概念agentharness-与-rl-的关系)
 3. [原理详解](#3-原理详解)
-   - 3.1 传统 Agent-RL 的范式与假设
-   - 3.2 训推不一致：Agent-RL 的根本缺陷
-   - 3.3 Harness-Native RL 的核心思想
-   - 3.4 Harness-Benefit 与 Harness-Updating
+   - [3.1 传统 Agent-RL 的范式与假设](#31-传统-agent-rl-的范式与假设)
+   - [3.2 训推不一致：Agent-RL 的根本缺陷](#32-训推不一致agent-rl-的根本缺陷)
+   - [3.3 Harness-Native RL 的核心思想](#33-harness-native-rl-的核心思想)
+   - [3.4 Harness-Benefit 与 Harness-Updating](#34-harness-benefit-与-harness-updating)
 4. [实施方法与工程实践](#4-实施方法与工程实践)
-   - 4.1 传统 Agent-RL 的训练流水线
-   - 4.2 Harness-Native RL 的训练流水线
-   - 4.3 算法选择：GRPO / GSPO / AT-GRPO / SAO
-   - 4.4 基础设施选型
+   - [4.1 传统 Agent-RL 的训练流水线](#41-传统-agent-rl-的训练流水线)
+   - [4.2 Harness-Native RL 的训练流水线](#42-harness-native-rl-的训练流水线)
+   - [4.3 算法选择：GRPO / GSPO / AT-GRPO / SAO](#43-算法选择)
+   - [4.4 基础设施选型](#44-基础设施选型)
 5. [方案对比与方法演进](#5-方案对比与方法演进)
 6. [核心实现要点：算法伪代码](#6-核心实现要点算法伪代码)
 7. [结论与选型建议](#7-结论与选型建议)
