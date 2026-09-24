@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RLHF vs DPO vs GRPO 对比</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:"JetBrains Mono",monospace; padding:28px 24px 40px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#a78bfa; box-shadow:0 0 8px #a78bfa; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:11px; margin-bottom:18px; }
+  .diagram-card { border:1px solid #1e293b; border-radius:12px; background:#0f172a; padding:10px; }
+  svg { width:100%; height:auto; display:block; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:22px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .card-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .violet{background:#a78bfa;} .cyan{background:#22d3ee;} .emerald{background:#34d399;}
+  .card h3 { font-size:12px; color:#e2e8f0; }
+  .card ul { list-style:none; }
+  .card li { font-size:10.5px; color:#94a3b8; margin:6px 0; line-height:1.6; }
+  footer { color:#475569; font-size:10px; margin-top:18px; text-align:right; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>RLHF(PPO) vs DPO vs GRPO：结构、显存与成本对比</h1></div>
+<div class="subtitle">同一问题：偏好 / 奖励信号如何进入策略更新 &nbsp;·&nbsp; 三列同尺度横向比较</div>
+<div class="diagram-card">
+<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="700" fill="url(#grid)"/>
+
+  <!-- row guide labels on the left -->
+  <g fill="#64748b" font-size="10">
+    <text x="8" y="168">训练信号</text>
+    <text x="8" y="268">显存中的模型</text>
+    <text x="8" y="378">在线采样</text>
+    <text x="8" y="448">算力成本</text>
+    <text x="8" y="518">训练稳定性</text>
+    <text x="8" y="600">适用场景</text>
+  </g>
+
+  <!-- column RLHF -->
+  <g>
+    <rect x="80" y="110" width="340" height="540" rx="8" fill="#0f172a"/>
+    <rect x="80" y="110" width="340" height="540" rx="8" fill="rgba(76,29,149,0.18)" stroke="#a78bfa" stroke-width="1.5"/>
+    <rect x="80" y="110" width="340" height="44" rx="8" fill="rgba(76,29,149,0.45)"/>
+    <text x="250" y="138" text-anchor="middle" fill="#e2e8f0" font-size="13">RLHF (PPO)</text>
+    <line x1="80" y1="210" x2="420" y2="210" stroke="#1e293b"/>
+    <line x1="80" y1="340" x2="420" y2="340" stroke="#1e293b"/>
+    <line x1="80" y1="410" x2="420" y2="410" stroke="#1e293b"/>
+    <line x1="80" y1="480" x2="420" y2="480" stroke="#1e293b"/>
+    <line x1="80" y1="550" x2="420" y2="550" stroke="#1e293b"/>
+
+    <text x="250" y="172" text-anchor="middle" fill="#cbd5e1" font-size="10.5">奖励模型 RM 打分</text>
+    <!-- 4 model chips 2x2 -->
+    <g font-size="10">
+      <rect x="100" y="232" width="140" height="40" rx="6" fill="rgba(76,29,149,0.35)" stroke="#a78bfa"/>
+      <text x="170" y="256" text-anchor="middle" fill="#e2e8f0">Actor 训练</text>
+      <rect x="260" y="232" width="140" height="40" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8"/>
+      <text x="330" y="256" text-anchor="middle" fill="#cbd5e1">Ref 冻结</text>
+      <rect x="100" y="284" width="140" height="40" rx="6" fill="rgba(76,29,149,0.35)" stroke="#a78bfa"/>
+      <text x="170" y="308" text-anchor="middle" fill="#e2e8f0">Critic 训练</text>
+      <rect x="260" y="284" width="140" height="40" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8"/>
+      <text x="330" y="308" text-anchor="middle" fill="#cbd5e1">RM 冻结</text>
+    </g>
+    <text x="250" y="378" text-anchor="middle" fill="#cbd5e1" font-size="10.5">需要，在线 rollout</text>
+    <text x="250" y="448" text-anchor="middle" fill="#fb923c" font-size="11">高（四模型驻留）</text>
+    <text x="250" y="518" text-anchor="middle" fill="#fbbf24" font-size="10.5">较低，对超参敏感</text>
+    <text x="250" y="585" text-anchor="middle" fill="#cbd5e1" font-size="10">通用对话</text>
+    <text x="250" y="606" text-anchor="middle" fill="#cbd5e1" font-size="10">开放式偏好对齐</text>
+  </g>
+
+  <!-- column DPO -->
+  <g>
+    <rect x="440" y="110" width="340" height="540" rx="8" fill="#0f172a"/>
+    <rect x="440" y="110" width="340" height="540" rx="8" fill="rgba(8,51,68,0.18)" stroke="#22d3ee" stroke-width="1.5"/>
+    <rect x="440" y="110" width="340" height="44" rx="8" fill="rgba(8,51,68,0.45)"/>
+    <text x="610" y="138" text-anchor="middle" fill="#e2e8f0" font-size="13">DPO 家族</text>
+    <line x1="440" y1="210" x2="780" y2="210" stroke="#1e293b"/>
+    <line x1="440" y1="340" x2="780" y2="340" stroke="#1e293b"/>
+    <line x1="440" y1="410" x2="780" y2="410" stroke="#1e293b"/>
+    <line x1="440" y1="480" x2="780" y2="480" stroke="#1e293b"/>
+    <line x1="440" y1="550" x2="780" y2="550" stroke="#1e293b"/>
+
+    <text x="610" y="166" text-anchor="middle" fill="#cbd5e1" font-size="10.5">成对偏好 (chosen/rejected)</text>
+    <text x="610" y="184" text-anchor="middle" fill="#94a3b8" font-size="9">隐式奖励，无 RM</text>
+    <g font-size="10">
+      <rect x="470" y="252" width="130" height="44" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee"/>
+      <text x="535" y="279" text-anchor="middle" fill="#e2e8f0">Policy 训练</text>
+      <rect x="620" y="252" width="130" height="44" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8"/>
+      <text x="685" y="279" text-anchor="middle" fill="#cbd5e1">Ref 冻结</text>
+    </g>
+    <text x="610" y="378" text-anchor="middle" fill="#cbd5e1" font-size="10.5">离线不需要 / 在线需要</text>
+    <text x="610" y="448" text-anchor="middle" fill="#34d399" font-size="11">中低</text>
+    <text x="610" y="518" text-anchor="middle" fill="#34d399" font-size="10.5">高，实现简单</text>
+    <text x="610" y="585" text-anchor="middle" fill="#cbd5e1" font-size="10">低成本偏好对齐</text>
+    <text x="610" y="606" text-anchor="middle" fill="#cbd5e1" font-size="10">替代 RLHF 的首选</text>
+  </g>
+
+  <!-- column GRPO -->
+  <g>
+    <rect x="800" y="110" width="360" height="540" rx="8" fill="#0f172a"/>
+    <rect x="800" y="110" width="360" height="540" rx="8" fill="rgba(6,78,59,0.18)" stroke="#34d399" stroke-width="1.5"/>
+    <rect x="800" y="110" width="360" height="44" rx="8" fill="rgba(6,78,59,0.45)"/>
+    <text x="980" y="138" text-anchor="middle" fill="#e2e8f0" font-size="13">GRPO (RLVR)</text>
+    <line x1="800" y1="210" x2="1160" y2="210" stroke="#1e293b"/>
+    <line x1="800" y1="340" x2="1160" y2="340" stroke="#1e293b"/>
+    <line x1="800" y1="410" x2="1160" y2="410" stroke="#1e293b"/>
+    <line x1="800" y1="480" x2="1160" y2="480" stroke="#1e293b"/>
+    <line x1="800" y1="550" x2="1160" y2="550" stroke="#1e293b"/>
+
+    <text x="980" y="166" text-anchor="middle" fill="#cbd5e1" font-size="10.5">规则判题奖励</text>
+    <text x="980" y="184" text-anchor="middle" fill="#94a3b8" font-size="9">组内相对优势，无 Critic</text>
+    <g font-size="10">
+      <rect x="830" y="252" width="130" height="44" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399"/>
+      <text x="895" y="279" text-anchor="middle" fill="#e2e8f0">Policy 训练</text>
+      <rect x="1000" y="252" width="130" height="44" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8"/>
+      <text x="1065" y="279" text-anchor="middle" fill="#cbd5e1" font-size="10">Ref 冻结</text>
+    </g>
+    <text x="980" y="378" text-anchor="middle" fill="#cbd5e1" font-size="10.5">需要，每组 G 条采样</text>
+    <text x="980" y="448" text-anchor="middle" fill="#fbbf24" font-size="11">中（去 Critic）</text>
+    <text x="980" y="518" text-anchor="middle" fill="#fbbf24" font-size="10.5">中高，依赖奖励设计</text>
+    <text x="980" y="585" text-anchor="middle" fill="#cbd5e1" font-size="10">数学 / 代码 / 逻辑</text>
+    <text x="980" y="606" text-anchor="middle" fill="#cbd5e1" font-size="10">训练推理模型</text>
+  </g>
+</svg>
+</div>
+<div class="cards">
+  <div class="card">
+    <div class="card-header"><div class="card-dot violet"></div><h3>RLHF 瓶颈</h3></div>
+    <ul>
+      <li>&bull; Actor/Ref/Critic/RM 四模型显存</li>
+      <li>&bull; Critic 训练是效率核心痛点</li>
+      <li>&bull; PPO 裁剪 + KL 维持稳定</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot cyan"></div><h3>DPO 取舍</h3></div>
+    <ul>
+      <li>&bull; 去 RM、去在线 RL，最易落地</li>
+      <li>&bull; 离线分布漂移，训练越久越偏</li>
+      <li>&bull; ORPO/SimPO 进一步去 Ref/SFT</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot emerald"></div><h3>GRPO 关键</h3></div>
+    <ul>
+      <li>&bull; 组均值/标准差当 baseline</li>
+      <li>&bull; 只需 Policy + Ref，省 Critic</li>
+      <li>&bull; 奖励可验证是成立前提</li>
+    </ul>
+  </div>
+</div>
+<footer>diagram 2 / 3 &middot; algorithm comparison &middot; dark SVG</footer>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post-Training 范式流水线</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:"JetBrains Mono",monospace; padding:28px 24px 40px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#34d399; box-shadow:0 0 8px #34d399; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:11px; margin-bottom:18px; }
+  .diagram-card { border:1px solid #1e293b; border-radius:12px; background:#0f172a; padding:10px; }
+  svg { width:100%; height:auto; display:block; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:22px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .card-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .violet{background:#a78bfa;} .emerald{background:#34d399;}
+  .card h3 { font-size:12px; color:#e2e8f0; }
+  .card ul { list-style:none; }
+  .card li { font-size:10.5px; color:#94a3b8; margin:6px 0; line-height:1.6; }
+  footer { color:#475569; font-size:10px; margin-top:18px; text-align:right; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>Post-Training 范式流水线：从基座模型到助手模型</h1></div>
+<div class="subtitle">PRE-TRAINING → SFT → PREFERENCE ALIGNMENT / RLVR → ASSISTANT MODEL  ·  闭环数据迭代</div>
+<div class="diagram-card">
+<svg viewBox="0 0 1200 680" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowAmber" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#fbbf24"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="680" fill="url(#grid)"/>
+
+  <!-- top signal banner -->
+  <rect x="40" y="50" width="1120" height="56" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+  <text x="60" y="74" fill="#cbd5e1" font-size="12">三类训练信号</text>
+  <text x="60" y="94" fill="#94a3b8" font-size="10.5">① 示范答案 (SFT)    ② 人类 / AI 偏好排序 (RM · DPO)    ③ 规则判题器的可验证奖励 (RLVR · GRPO)</text>
+
+  <!-- arrows drawn early (behind boxes) -->
+  <!-- base -> sft -->
+  <line x1="222" y1="350" x2="276" y2="350" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <!-- sft split -->
+  <path d="M 442 350 L 480 350 L 480 250 L 506 250" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M 442 350 L 492 350 L 492 450 L 506 450" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <!-- branches -> assistant -->
+  <path d="M 742 250 L 775 250 L 775 350 L 806 350" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M 742 450 L 790 450 L 790 362 L 806 362" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <!-- feedback loop -->
+  <path d="M 900 404 L 900 590 L 360 590 L 360 404" fill="none" stroke="#fbbf24" stroke-width="1.4" stroke-dasharray="6,4" marker-end="url(#arrowAmber)"/>
+  <rect x="480" y="578" width="260" height="24" rx="5" fill="#0f172a" stroke="#fbbf24" stroke-width="0.8"/>
+  <text x="492" y="594" fill="#fbbf24" font-size="10">部署反馈 → 新一轮数据迭代</text>
+
+  <!-- base model -->
+  <rect x="40" y="295" width="180" height="110" rx="8" fill="#0f172a"/>
+  <rect x="40" y="295" width="180" height="110" rx="8" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="130" y="340" text-anchor="middle" fill="#e2e8f0" font-size="13">Pre-training</text>
+  <text x="130" y="362" text-anchor="middle" fill="#cbd5e1" font-size="11">基座模型 Base Model</text>
+  <text x="130" y="384" text-anchor="middle" fill="#94a3b8" font-size="9">万亿 token · 下一token预测</text>
+
+  <!-- SFT -->
+  <rect x="280" y="295" width="160" height="110" rx="8" fill="#0f172a"/>
+  <rect x="280" y="295" width="160" height="110" rx="8" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="360" y="340" text-anchor="middle" fill="#e2e8f0" font-size="13">SFT</text>
+  <text x="360" y="362" text-anchor="middle" fill="#cbd5e1" font-size="10.5">监督微调</text>
+  <text x="360" y="384" text-anchor="middle" fill="#94a3b8" font-size="9">示范答案 · 冷启动</text>
+
+  <!-- preference alignment -->
+  <rect x="510" y="195" width="230" height="110" rx="8" fill="#0f172a"/>
+  <rect x="510" y="195" width="230" height="110" rx="8" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="625" y="232" text-anchor="middle" fill="#e2e8f0" font-size="12">偏好对齐 Alignment</text>
+  <text x="625" y="254" text-anchor="middle" fill="#cbd5e1" font-size="10">RLHF(PPO) · DPO 家族</text>
+  <text x="625" y="274" text-anchor="middle" fill="#94a3b8" font-size="9">RLAIF / Constitutional AI</text>
+
+  <!-- RLVR / GRPO -->
+  <rect x="510" y="395" width="230" height="110" rx="8" fill="#0f172a"/>
+  <rect x="510" y="395" width="230" height="110" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="625" y="432" text-anchor="middle" fill="#e2e8f0" font-size="12">RLVR</text>
+  <text x="625" y="454" text-anchor="middle" fill="#cbd5e1" font-size="10">可验证奖励强化学习 · GRPO</text>
+  <text x="625" y="474" text-anchor="middle" fill="#94a3b8" font-size="9">数学 / 代码 / 逻辑判题</text>
+
+  <!-- assistant -->
+  <rect x="810" y="295" width="180" height="110" rx="8" fill="#0f172a"/>
+  <rect x="810" y="295" width="180" height="110" rx="8" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="900" y="340" text-anchor="middle" fill="#e2e8f0" font-size="12.5">助手模型</text>
+  <text x="900" y="362" text-anchor="middle" fill="#cbd5e1" font-size="10.5">Assistant / Reasoning</text>
+  <text x="900" y="384" text-anchor="middle" fill="#94a3b8" font-size="9">蒸馏下沉到小模型</text>
+
+  <!-- legend -->
+  <g font-size="10">
+    <rect x="40" y="630" width="12" height="12" rx="2" fill="rgba(30,41,59,0.6)" stroke="#94a3b8"/>
+    <text x="58" y="640" fill="#94a3b8">基座</text>
+    <rect x="110" y="630" width="12" height="12" rx="2" fill="rgba(8,51,68,0.5)" stroke="#22d3ee"/>
+    <text x="128" y="640" fill="#94a3b8">SFT</text>
+    <rect x="180" y="630" width="12" height="12" rx="2" fill="rgba(76,29,149,0.5)" stroke="#a78bfa"/>
+    <text x="198" y="640" fill="#94a3b8">偏好对齐</text>
+    <rect x="270" y="630" width="12" height="12" rx="2" fill="rgba(6,78,59,0.5)" stroke="#34d399"/>
+    <text x="288" y="640" fill="#94a3b8">RLVR/GRPO</text>
+    <line x1="380" y1="636" x2="404" y2="636" stroke="#fbbf24" stroke-dasharray="5,3" stroke-width="1.4"/>
+    <text x="410" y="640" fill="#94a3b8">反馈回路</text>
+  </g>
+</svg>
+</div>
+<div class="cards">
+  <div class="card">
+    <div class="card-header"><div class="card-dot cyan"></div><h3>地基：SFT</h3></div>
+    <ul>
+      <li>&bull; 一切后训练的入口，冷启动可读性</li>
+      <li>&bull; 少量高质量数据优于大量普通数据</li>
+      <li>&bull; 只在 response token 上计损失</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot violet"></div><h3>两条对齐路线</h3></div>
+    <ul>
+      <li>&bull; RLHF(PPO) 效果好但贵、不稳</li>
+      <li>&bull; DPO 家族去 RM，性价比高</li>
+      <li>&bull; RLAIF / CAI 用原则+AI 扩规模</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot emerald"></div><h3>推理时代</h3></div>
+    <ul>
+      <li>&bull; RLVR 规则奖励，避免 RM 失真</li>
+      <li>&bull; GRPO 去 Critic，组相对优势</li>
+      <li>&bull; R1 范式：冷启动→RL→蒸馏</li>
+    </ul>
+  </div>
+</div>
+<footer>diagram 1 / 3 · Post-Training pipeline · dark SVG</footer>
+</body>
+</html>

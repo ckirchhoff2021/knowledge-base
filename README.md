@@ -32,6 +32,7 @@
 |---|---|
 | [**JEV 决策小模型**](https://ckirchhoff2021.github.io/knowledge-base/models/jev-decision/report.html) | System One 架构、类型安全约束解码与决策流水线 |
 | [**SkillOpt 论文分析**](https://ckirchhoff2021.github.io/knowledge-base/models/skillopt/report.html) | 轨迹驱动的文本空间技能优化器 |
+| [**Post-Training 后训练技术**](https://ckirchhoff2021.github.io/knowledge-base/models/post-training/report.html) | 后训练全景：SFT、RLHF、DPO 家族、RLAIF/CAI、RLVR/GRPO 与 R1 冷启动—蒸馏范式 |
 
 ### 🌱 生活方法论
 
