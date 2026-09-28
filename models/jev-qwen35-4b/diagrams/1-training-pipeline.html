@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jev 模型训练与转换流水线</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:"JetBrains Mono",monospace; padding:28px 24px 40px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#22d3ee; box-shadow:0 0 8px #22d3ee; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:11px; margin-bottom:18px; }
+  .diagram-card { border:1px solid #1e293b; border-radius:12px; background:#0f172a; padding:10px; }
+  svg { width:100%; height:auto; display:block; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:22px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .card-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .rose{background:#fb7185;}
+  .card h3 { font-size:12px; }
+  .card ul { list-style:none; }
+  .card li { font-size:10.5px; color:#94a3b8; margin:6px 0; line-height:1.6; }
+  footer { color:#475569; font-size:10px; margin-top:18px; text-align:right; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>Jev-like 训练与转换流水线（Qwen3.5-4B）</h1></div>
+<div class="subtitle">DATA → SFT → CALIBRATION → EVAL GATE → CONVERT → DEPLOY，难例回流形成闭环</div>
+<div class="diagram-card">
+<svg viewBox="0 0 1200 640" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowRose" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#fb7185"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="640" fill="url(#grid)"/>
+
+  <!-- main flow arrows -->
+  <line x1="224" y1="230" x2="262" y2="230" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="426" y1="230" x2="464" y2="230" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="628" y1="230" x2="666" y2="230" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="830" y1="230" x2="868" y2="230" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- feedback loop from deploy back to data -->
+  <path d="M 960 300 L 960 430 L 130 430 L 130 292" fill="none" stroke="#fb7185" stroke-width="1.4" stroke-dasharray="6,4" marker-end="url(#arrowRose)"/>
+  <rect x="420" y="418" width="360" height="24" rx="5" fill="#0f172a" stroke="#fb7185" stroke-width="0.8"/>
+  <text x="432" y="434" fill="#fb7185" font-size="10">线上难例 / 分桶错误回流 → 数据生成器再训</text>
+
+  <!-- gate fail branch -->
+  <path d="M 748 276 L 748 340 L 546 340 L 546 276" fill="none" stroke="#fbbf24" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <rect x="560" y="328" width="180" height="22" rx="5" fill="#0f172a" stroke="#fbbf24" stroke-width="0.8"/>
+  <text x="570" y="343" fill="#fbbf24" font-size="9.5">不达标：回定位数据/校准</text>
+
+  <!-- 1 data -->
+  <rect x="40" y="160" width="180" height="140" rx="8" fill="#0f172a"/>
+  <rect x="40" y="160" width="180" height="140" rx="8" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="130" y="190" text-anchor="middle" fill="#e2e8f0" font-size="12">① 数据工程</text>
+  <text x="130" y="216" text-anchor="middle" fill="#cbd5e1" font-size="9.5">四元组 + 程序真值</text>
+  <text x="130" y="236" text-anchor="middle" fill="#94a3b8" font-size="9">硬负例 / 无信号 / skip</text>
+  <text x="130" y="256" text-anchor="middle" fill="#94a3b8" font-size="9">5万~10万 · 按规则族切分</text>
+  <text x="130" y="280" text-anchor="middle" fill="#94a3b8" font-size="9">校准集独立不重叠</text>
+
+  <!-- 2 SFT -->
+  <rect x="266" y="160" width="156" height="140" rx="8" fill="#0f172a"/>
+  <rect x="266" y="160" width="156" height="140" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="344" y="190" text-anchor="middle" fill="#e2e8f0" font-size="12">② SFT</text>
+  <text x="344" y="216" text-anchor="middle" fill="#cbd5e1" font-size="9.5">Qwen3.5-4B + LoRA</text>
+  <text x="344" y="236" text-anchor="middle" fill="#94a3b8" font-size="9">单 token 答案</text>
+  <text x="344" y="256" text-anchor="middle" fill="#94a3b8" font-size="9">只计答案 token CE</text>
+  <text x="344" y="276" text-anchor="middle" fill="#94a3b8" font-size="9">关闭 thinking</text>
+
+  <!-- 3 calibration -->
+  <rect x="468" y="160" width="156" height="140" rx="8" fill="#0f172a"/>
+  <rect x="468" y="160" width="156" height="140" rx="8" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="546" y="190" text-anchor="middle" fill="#e2e8f0" font-size="12">③ 概率校准</text>
+  <text x="546" y="216" text-anchor="middle" fill="#cbd5e1" font-size="9.5">temperature scaling</text>
+  <text x="546" y="236" text-anchor="middle" fill="#94a3b8" font-size="9">独立校准集</text>
+  <text x="546" y="256" text-anchor="middle" fill="#94a3b8" font-size="9">不够再 isotonic</text>
+  <text x="546" y="276" text-anchor="middle" fill="#94a3b8" font-size="9">可选：GRPO 单步强化</text>
+
+  <!-- 4 eval gate -->
+  <rect x="670" y="160" width="156" height="140" rx="8" fill="#0f172a"/>
+  <rect x="670" y="160" width="156" height="140" rx="8" fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="748" y="190" text-anchor="middle" fill="#e2e8f0" font-size="12">④ 评估门禁</text>
+  <text x="748" y="214" text-anchor="middle" fill="#cbd5e1" font-size="9">F1 / 全对率</text>
+  <text x="748" y="232" text-anchor="middle" fill="#94a3b8" font-size="9">ECE / Brier</text>
+  <text x="748" y="250" text-anchor="middle" fill="#94a3b8" font-size="9">skip 召回 · OOD</text>
+  <text x="748" y="268" text-anchor="middle" fill="#94a3b8" font-size="9">合法率 = 100%</text>
+  <text x="748" y="286" text-anchor="middle" fill="#94a3b8" font-size="9">P95 ≤ 300ms</text>
+
+  <!-- 5 convert -->
+  <rect x="872" y="160" width="144" height="140" rx="8" fill="#0f172a"/>
+  <rect x="872" y="160" width="144" height="140" rx="8" fill="rgba(120,53,15,0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="944" y="190" text-anchor="middle" fill="#e2e8f0" font-size="12">⑤ 格式转换</text>
+  <text x="944" y="216" text-anchor="middle" fill="#cbd5e1" font-size="9.5">merged 16bit</text>
+  <text x="944" y="236" text-anchor="middle" fill="#94a3b8" font-size="9">LoRA adapter</text>
+  <text x="944" y="256" text-anchor="middle" fill="#94a3b8" font-size="9">Q4_K_M GGUF</text>
+  <text x="944" y="276" text-anchor="middle" fill="#94a3b8" font-size="9">≈2.74GB</text>
+
+  <!-- 6 deploy -->
+  <rect x="1040" y="160" width="124" height="140" rx="8" fill="#0f172a"/>
+  <rect x="1040" y="160" width="124" height="140" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="1102" y="190" text-anchor="middle" fill="#e2e8f0" font-size="12">⑥ 部署</text>
+  <text x="1102" y="216" text-anchor="middle" fill="#cbd5e1" font-size="9.5">vLLM/SGLang</text>
+  <text x="1102" y="236" text-anchor="middle" fill="#94a3b8" font-size="9">Ollama</text>
+  <text x="1102" y="256" text-anchor="middle" fill="#94a3b8" font-size="9">约束解码</text>
+  <text x="1102" y="276" text-anchor="middle" fill="#94a3b8" font-size="9">阈值级联</text>
+
+  <!-- legend -->
+  <g font-size="10">
+    <line x1="40" y1="500" x2="66" y2="500" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+    <text x="74" y="504" fill="#94a3b8">主流程</text>
+    <line x1="150" y1="500" x2="176" y2="500" stroke="#fbbf24" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+    <text x="184" y="504" fill="#94a3b8">门禁不通过回退</text>
+    <line x1="320" y1="500" x2="346" y2="500" stroke="#fb7185" stroke-dasharray="6,4" marker-end="url(#arrowRose)"/>
+    <text x="354" y="504" fill="#94a3b8">线上难例回流</text>
+  </g>
+</svg>
+</div>
+<div class="cards">
+  <div class="card">
+    <div class="card-header"><div class="card-dot cyan"></div><h3>数据是门槛</h3></div>
+    <ul>
+      <li>· 程序真值为主，零标注</li>
+      <li>· 硬负例 + 无信号 + skip</li>
+      <li>· 按规则族分组防泄漏</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot emerald"></div><h3>训练分两级</h3></div>
+    <ul>
+      <li>· SFT 拿准确率</li>
+      <li>· 独立校准修概率</li>
+      <li>· GRPO 仅按需启用</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot rose"></div><h3>门禁与闭环</h3></div>
+    <ul>
+      <li>· 指标全达标才转换上线</li>
+      <li>· 约束解码保证 100% 合法</li>
+      <li>· 难例回流持续迭代</li>
+    </ul>
+  </div>
+</div>
+<footer>diagram 1 / 3 · training &amp; conversion pipeline · dark SVG</footer>
+</body>
+</html>

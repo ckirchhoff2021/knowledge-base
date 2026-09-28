@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基于 Qwen3.5-4B 的 Jev 决策模型训练方案设计</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:960px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:32px; }
+  h1 { font-size:27px; line-height:1.4; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin-right:8px; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  .callout { border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin:18px 0; background:var(--panel); }
+  .callout.warn { border-color:var(--amber); }
+  .callout.key { border-color:var(--green); }
+  .callout .title { font-weight:600; margin-bottom:6px; font-size:14px; }
+  .callout.key .title { color:var(--green); }
+  .callout.warn .title { color:var(--amber); }
+  figure { margin:24px 0; }
+  figure iframe { width:100%; height:820px; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>基于 Qwen3.5-4B 的 Jev 决策模型训练方案设计</h1>
+  <div>
+    <span class="badge">Jev-like</span>
+    <span class="badge">Qwen3.5-4B</span>
+    <span class="badge">LoRA / 校准 / 约束解码</span>
+  </div>
+  <div class="meta" style="margin-top:10px">
+    配套《Jev 决策小模型技术调研报告》的工程落地篇　·　📅 2026-09-28
+  </div>
+</header>
+
+<div class="callout warn">
+  <div class="title">定位与免责</div>
+  官方 Jev 闭源（结构/数据/RLCD 未披露），本方案训练的是 <strong>Jev-like 决策模型</strong>（单步结构化判别 + 拒答出口 + 概率校准），非官方逐字节复刻。本文为技术方案设计，<strong>不构成投资建议、不推荐具体商业产品</strong>；标注"建议/参考"的参数需小流量验证，上线风险由实施方自担。
+</div>
+
+<nav class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#sec1">背景与训练目标</a></li>
+    <li><a href="#sec2">总体方案：双路线选型与全流程</a></li>
+    <li><a href="#sec3">基座模型：Qwen3.5-4B 特性与适配</a></li>
+    <li><a href="#sec4">数据工程方案</a></li>
+    <li><a href="#sec5">模型改造方案</a></li>
+    <li><a href="#sec6">训练方案：SFT → 校准 → 可选强化</a></li>
+    <li><a href="#sec7">评估方案与验收标准</a></li>
+    <li><a href="#sec8">格式转换与部署方案</a></li>
+    <li><a href="#sec9">资源预算与进度排期</a></li>
+    <li><a href="#sec10">风险分析与对策</a></li>
+    <li><a href="#sec11">结论与工程 Checklist</a></li>
+    <li><a href="#sec12">参考资料与可信度声明</a></li>
+  </ol>
+</nav>
+
+<h2 id="sec1">一、背景与训练目标</h2>
+<p>客服分流、风控拦截、审批路由、A/B 实验判读等场景，本质是<strong>高频、结构化、可枚举选项的单步判断</strong>。通用大模型逐次生成自然语言答案存在解析失败、延迟高、成本高三个问题。Jev 范式让小模型直接输出"选项 + 概率"：输出约束在候选集内（类型安全，解析成功率 100%）、单前向决策低成本、概率可写入确定性代码做阈值级联。</p>
+<h3>1.2 为什么选 Qwen3.5-4B</h3>
+<table>
+  <tr><th>维度</th><th>匹配点</th></tr>
+  <tr><td>能力足够</td><td>4B 结构化理解与中文能力明显强于 0.5B/1B</td></tr>
+  <tr><td>资源可承受</td><td>bf16 LoRA 约 10GB 显存；Q4_K_M 约 2.74GB，可边缘部署</td></tr>
+  <tr><td>架构先进</td><td>GDN 线性注意力 + 全注意力混合（约 3:1），吞吐高</td></tr>
+  <tr><td>生态成熟</td><td>Unsloth 支持 SFT/GRPO；vLLM/SGLang/Ollama 全链路</td></tr>
+  <tr><td>多模态</td><td>原生图文，可消费截图、表单、扫描件</td></tr>
+</table>
+<h3>1.3 目标与非目标</h3>
+<p><strong>目标：</strong>在业务评测集达到约定准确率/F1；输出 100% 合法、无信号主动拒答；概率校准后 ECE 达标；产出 16bit、GGUF、在线服务三种形态。<strong>非目标：</strong>不复刻官方 RLCD；不做开放式生成；本阶段不做多步轨迹强化（决策是单步 bandit）。</p>
+<h3>1.4 验收指标（建议起步线）</h3>
+<table>
+  <tr><th>指标</th><th>目标值</th><th>说明</th></tr>
+  <tr><td>全对率</td><td>≥ 90%</td><td>级联兜底口径另算</td></tr>
+  <tr><td>单字段 Macro-F1</td><td>≥ 0.85</td><td>类别不均衡时主看</td></tr>
+  <tr><td>输出合法率</td><td>100%</td><td>约束解码保证</td></tr>
+  <tr><td>无信号 skip 召回</td><td>≥ 0.95</td><td>防止没信息硬选</td></tr>
+  <tr><td>ECE</td><td>≤ 0.05</td><td>校准核心 KPI</td></tr>
+  <tr><td>Brier score</td><td>≤ 0.15</td><td>越小越好</td></tr>
+  <tr><td>P95 延迟</td><td>≤ 300ms</td><td>vLLM 批服务口径</td></tr>
+  <tr><td>级联后整体准确率</td><td>≥ 0.96</td><td>兜底比例 ≤ 15%</td></tr>
+</table>
+<blockquote>以上准确率为<strong>工程目标值而非 Jev 官方数据</strong>，须以业务评测集实测为准。</blockquote>
+
+<h2 id="sec2">二、总体方案：双路线选型与全流程</h2>
+<h3>2.1 两条技术路线</h3>
+<table>
+  <tr><th>维度</th><th>路线 A：单 token 约束解码</th><th>路线 B：readout 打分头</th></tr>
+  <tr><td>输出</td><td>字母 A/B/C 或 S(skip)</td><td>问题向量 × 候选向量打分</td></tr>
+  <tr><td>候选项</td><td>写进 prompt，运行时可变</td><td>运行时可变（≤255）</td></tr>
+  <tr><td>结构改动</td><td>无</td><td>新增图外打分头</td></tr>
+  <tr><td>转 GGUF/Ollama</td><td>顺畅</td><td>不支持，需自托管</td></tr>
+  <tr><td>训练</td><td>标准 SFT(LoRA)</td><td>LoRA + 打分头联合训练</td></tr>
+  <tr><td>适用</td><td>绝大多数业务（主推）</td><td>候选极多/跨字段共享表示</td></tr>
+</table>
+<div class="callout key">
+  <div class="title">选型结论</div>
+  4B 基座下首选路线 A：不改结构、转换部署零障碍；仅当候选集合极大且 prompt 化实测有损失时，对该字段单独启用 B 并坚持 HF/vLLM 自托管。
+</div>
+<h3>2.2 全流程六阶段</h3>
+<pre><code>①数据工程 → ②SFT(LoRA) → ③概率校准 → ④评估门禁 → ⑤格式转换 → ⑥部署级联
+   ↑________________________ 难例回流 / 反馈 ________________________|</code></pre>
+<p>数据用程序真值 + 教师软标签，造硬负例/无信号/拒答样本；SFT 主体冻结 + LoRA 只对答案 token 计 CE；独立校准集做 temperature scaling；评估四件套达标才转换；合并 16bit 与 Q4_K_M GGUF；上线做阈值级联，难例回流再训。</p>
+<figure>
+  <iframe src="diagrams/1-training-pipeline.html" loading="lazy"></iframe>
+  <figcaption>图 1 · 训练与转换流水线</figcaption>
+</figure>
+
+<h2 id="sec3">三、基座模型：Qwen3.5-4B 特性与适配</h2>
+<table>
+  <tr><th>项目</th><th>说明</th></tr>
+  <tr><td>型号</td><td>Qwen/Qwen3.5-4B（2026 开源小模型系列 0.8B/2B/4B/9B 之一）</td></tr>
+  <tr><td>架构</td><td>Gated DeltaNet(GDN) 线性注意力 + 标准全注意力，约 3:1 混合</td></tr>
+  <tr><td>多模态</td><td>原生图文（亦有纯文本 Base 版）</td></tr>
+  <tr><td>体积</td><td>BF16 约 8.4GB；Q4_K_M 约 2.74GB；Int4 推理约 3GB 显存</td></tr>
+</table>
+<h3>3.2 混合架构对训练的三点影响（勿照搬 Qwen2.5）</h3>
+<ol>
+  <li><strong>LoRA 挂载点先打印确认</strong>：训练前列出 <code>model.named_modules()</code>，核对注意力投影与 MLP 是否齐全，GDN 线性注意力投影命名可能不同，按实际名挂载；</li>
+  <li><strong>GDN 有状态/门控</strong>：线性注意力带循环状态，packed 训练掩码必须正确，避免跨样本状态串扰；</li>
+  <li><strong>MTP 不在决策阶段启用</strong>：多 token 预测会改变答案分布，训练/导出保持单 token 答案。</li>
+</ol>
+<h3>3.3 关闭 thinking</h3>
+<p>在 chat template/配置设置 <code>enable_thinking=False</code>，上线再用解码 logit 约束只放行答案字符集双保险；喂样本验证输出只有一个合法字符后再批量训练。</p>
+<pre><code>pip install unsloth vllm sglang           # 转换另需 llama.cpp
+huggingface-cli download Qwen/Qwen3.5-4B # 或 ModelScope 拉取</code></pre>
+
+<h2 id="sec4">四、数据工程方案</h2>
+<p>每条样本为四元组，标签以程序真值为主（规则引擎/模拟器精确打标），教师强模型软标签为辅：</p>
+<pre><code>sample = {
+  "task_id": "risk_rule_family_07",          # 规则族，用于分组切分
+  "state": "订单金额:199.99; 用户风险分:62",   # 材料（可含图片）
+  "question": "是否需要人工复核该订单？",
+  "options": ["自动放行","拦截","转人工"],       # 运行时可变
+  "correct_idx": 2,                           # -1 = 无信息→skip
+  "teacher_probs": [0.1, 0.2, 0.7]            # 可选软标签
+}</code></pre>
+<table>
+  <tr><th>必造样本</th><th>构造</th><th>目的</th></tr>
+  <tr><td>硬负例（约 25%）</td><td>199.99 vs 200.00、同义改写、缺字段、否定语序</td><td>学真实判据而非表面词</td></tr>
+  <tr><td>无信号（约 15%）</td><td>删除解题所需字段，标签=skip</td><td>没信息时拒答</td></tr>
+  <tr><td>显式拒答</td><td>选项内置 other/none/skip</td><td>合法逃生出口</td></tr>
+</table>
+<table>
+  <tr><th>数据集</th><th>建议规模</th><th>用途</th></tr>
+  <tr><td>训练集</td><td>5万～10万 episode</td><td>LoRA SFT</td></tr>
+  <tr><td>校准集</td><td>5千～1万（不重叠）</td><td>temperature/isotonic</td></tr>
+  <tr><td>验证集</td><td>3千～5千</td><td>选模、早停</td></tr>
+  <tr><td>测试集</td><td>5千～1万（含 OOD 规则族）</td><td>最终门禁</td></tr>
+</table>
+<p><strong>防泄漏：</strong>按规则族/模板/生成器种子分组切分，训练测试不共享规则脚本，保留整组未见规则族；先用 1 万条冒烟跑通再放大。</p>
+
+<h2 id="sec5">五、模型改造方案</h2>
+<h3>5.1 路线 A：LoRA + 单 token（主推）</h3>
+<pre><code>from unsloth import FastLanguageModel
+model, tok = FastLanguageModel.from_pretrained(
+    model_name="Qwen/Qwen3.5-4B", max_seq_length=4096, load_in_4bit=False)
+# target_modules 必须以 model.named_modules() 实际结果为准（GDN 混合架构）
+model = FastLanguageModel.get_peft_model(
+    model, r=32, lora_alpha=32, lora_dropout=0.0,
+    target_modules=["q_proj","k_proj","v_proj","o_proj",
+                    "gate_proj","up_proj","down_proj"])
+
+def to_messages(ex):
+    opts = "\n".join(f"{chr(65+i)}. {o}" for i,o in enumerate(ex["options"]))
+    ans = chr(65+ex["correct_idx"]) if ex["correct_idx"] >= 0 else "S"
+    return {"messages": [
+        {"role":"system","content":"只输出单个字母；信息不足输出 S。不要解释。"},
+        {"role":"user","content":f"{ex['state']}\n问题:{ex['question']}\n{opts}"},
+        {"role":"assistant","content":ans}]}</code></pre>
+<p>只对 assistant 答案 token 计 loss（completion-only mask）；多子问题用 attention 掩码隔离。</p>
+<h3>5.2 路线 B：readout 打分头（可选，自托管）</h3>
+<pre><code>def readout_logits(q_hidden, opt_hiddens):
+    d = q_hidden.shape[-1]
+    return (opt_hiddens @ q_hidden) / (d ** 0.5)   # softmax 即概率，K 可变
+# Boolean(K=2)：p = sigmoid(z_true - z_false)</code></pre>
+<p>该头是图外模块，GGUF/llama.cpp 不支持，只能 HF/vLLM 自托管并注册结构。</p>
+<figure>
+  <iframe src="diagrams/2-decision-heads.html" loading="lazy"></iframe>
+  <figcaption>图 2 · 双路线决策头设计</figcaption>
+</figure>
+<h3>5.3 LoRA 超参（建议起步）</h3>
+<table>
+  <tr><th>超参</th><th>建议值</th><th>说明</th></tr>
+  <tr><td>r / alpha</td><td>32 / 32</td><td>4B 上 16～64 之间</td></tr>
+  <tr><td>lora_dropout</td><td>0.0</td><td>数据小取 0.05</td></tr>
+  <tr><td>target_modules</td><td>注意力 + MLP 全投影</td><td>以实际模块名为准</td></tr>
+  <tr><td>max_seq_length</td><td>4096</td><td>按 state 长度调</td></tr>
+</table>
+
+<h2 id="sec6">六、训练方案：SFT → 校准 → 可选强化</h2>
+<h3>6.1 SFT</h3>
+<pre><code>loss_hard = CrossEntropy(logits, correct_idx)        # 重罚自信答错
+loss_soft = KL(teacher_probs || model_probs)         # 可选蒸馏
+loss = loss_hard + 0.5 * loss_soft</code></pre>
+<table>
+  <tr><th>项目</th><th>建议值</th></tr>
+  <tr><td>epochs</td><td>2～3（先 1 轮看曲线）</td></tr>
+  <tr><td>有效 batch</td><td>32～64（梯度累积）</td></tr>
+  <tr><td>学习率</td><td>1e-4（5e-5～2e-4）</td></tr>
+  <tr><td>schedule</td><td>cosine，warmup 3%，bf16</td></tr>
+</table>
+<p>监控训练/验证 loss、答案合法率、无信号切片 skip 比例与混淆矩阵；完成后冻结 <code>sft-v1</code> 再校准。</p>
+<h3>6.2 概率校准（独立数据）</h3>
+<pre><code># 方案 A：temperature scaling（先做，半天见效）
+校准后概率 = softmax(logits / T)      # T&gt;1 抹平过度自信，仅学标量 T
+# 方案 B：isotonic regression（A 不够时，注意过拟合）</code></pre>
+<p>校准集与训练/测试严格不重叠；校准后 ECE、Brier 显著改善且测试不反弹才算通过。</p>
+<h3>6.3 可选：单步校准强化（GRPO）</h3>
+<pre><code>A_i = (r_i - mean(r)) / (std(r) + eps)             # 组采样，无需 Critic
+reward_brier   = -(p_correct - 1)**2                # 负 Brier
+reward_log     = log(p_correct)                     # 对数评分
+reward_unknown = entropy(p) - miss(skip)            # 无信息鼓励高熵/拒答
+reward_ece     = -ECE_buckets(p, y)                 # 分桶惩罚 + KL 约束</code></pre>
+<p>单步任务后校准通常已足够，强化列为可选项。</p>
+<h3>6.4 训练计划</h3>
+<table>
+  <tr><th>迭代</th><th>数据</th><th>出口</th></tr>
+  <tr><td>第 0 轮冒烟</td><td>5千～1万</td><td>跑通链路、核对 GDN 模块名与掩码</td></tr>
+  <tr><td>第 1 轮</td><td>5万～10万</td><td>SFT + 校准，达门禁即灰度</td></tr>
+  <tr><td>第 2 轮</td><td>+ 线上难例</td><td>难例回流再训，必要时 GRPO</td></tr>
+</table>
+
+<h2 id="sec7">七、评估方案与验收标准</h2>
+<p><strong>四件套：</strong>准确性（全对率 + Macro-F1）、校准（可靠性曲线/ECE/Brier）、泛化切片（OOD/硬负例/无信号）、拒答质量（skip 召回与误拒）。</p>
+<table>
+  <tr><th>维度</th><th>指标</th><th>门禁</th></tr>
+  <tr><td>准确</td><td>单字段 Macro-F1 / 全对率</td><td>≥ 0.85 / ≥ 0.90</td></tr>
+  <tr><td>合法</td><td>输出合法率</td><td>= 1.00</td></tr>
+  <tr><td>校准</td><td>ECE / Brier</td><td>≤ 0.05 / ≤ 0.15</td></tr>
+  <tr><td>拒答</td><td>skip 召回 / 误拒率</td><td>≥ 0.95 / ≤ 0.05</td></tr>
+  <tr><td>泛化</td><td>OOD F1 较同分布下降</td><td>≤ 5 个百分点</td></tr>
+  <tr><td>效率</td><td>P95 延迟</td><td>≤ 300ms</td></tr>
+</table>
+<p><strong>系统级：</strong>加兜底后整体准确率 ≥0.96、兜底比例 ≤15%、每千题成本、P50/P95 延迟、prompt 同义改写稳定性。任一不达标回第 6 章定位，不放行。</p>
+
+<h2 id="sec8">八、格式转换与部署方案</h2>
+<pre><code># ① 合并 LoRA → 16bit safetensors（vLLM/SGLang）
+model.save_pretrained_merged("jev-qwen35-4b", save_method="merged_16bit")
+# ② 仅 LoRA 适配器（便于 A/B 与回滚）
+model.save_pretrained("jev-qwen35-4b-lora")
+# ③ GGUF（Ollama/llama.cpp）
+model.save_pretrained_gguf("jev-qwen35-4b-gguf", quantization_method="q4_k_m")</code></pre>
+<p><strong>约束解码：</strong>vLLM 用 guided/structured outputs 的 <code>choices=["A","B","C","S"]</code>；SGLang 用 choices/约束生成并复用 KV 缓存做多字段并行；Ollama/llama.cpp 用 grammar(GBNF) 或 logit bias 限制答案字符集。prompt 与解码层双约束，合法率必须 100%。</p>
+<pre><code>python -m vllm.entrypoints.openai.api_server --model ./jev-qwen35-4b --port 8000
+# 请求侧对答案字段传 guided_choice=["A","B","C","S"]
+# Ollama：ollama create jev-qwen -f Modelfile  （FROM ./...q4_k_m.gguf）</code></pre>
+<pre><code>def decide(p, field):
+    if field.skippable and p.argmax() == SKIP: return route("human","no_signal")
+    if p.max() &gt;= 0.90: return auto_execute()     # 高置信自动
+    if p.max() &gt;= 0.60: return verify_with_llm()   # 中置信复核
+    return route("human")                          # 低置信人工</code></pre>
+<figure>
+  <iframe src="diagrams/3-deployment-cascade.html" loading="lazy"></iframe>
+  <figcaption>图 3 · 部署级联与难例回流</figcaption>
+</figure>
+
+<h2 id="sec9">九、资源预算与进度排期</h2>
+<table>
+  <tr><th>环节</th><th>建议配置</th><th>显存/耗时（参考）</th></tr>
+  <tr><td>SFT（bf16 LoRA）</td><td>1×24GB 或 A10</td><td>约 10GB 起；5万～10万样本约 1～2 天</td></tr>
+  <tr><td>SFT（4bit）</td><td>1×12GB</td><td>更省显存、略增时间</td></tr>
+  <tr><td>校准</td><td>CPU/单卡</td><td>数小时（采集 logits）</td></tr>
+  <tr><td>可选 GRPO</td><td>1×24GB+</td><td>采样开销大，按需</td></tr>
+  <tr><td>在线推理</td><td>BF16≈8GB / Int4≈3GB</td><td>P95 ≤ 300ms</td></tr>
+</table>
+<table>
+  <tr><th>周次</th><th>主要工作</th><th>产出</th></tr>
+  <tr><td>第 1 周</td><td>环境、核对 GDN 模块名、数据生成器与切分、关 thinking</td><td>冒烟数据 + 单 token 底座</td></tr>
+  <tr><td>第 2 周</td><td>冒烟训练跑通全链路、三种格式与约束解码 demo</td><td>端到端打通</td></tr>
+  <tr><td>第 3 周</td><td>正式 SFT、校准、评估门禁、迭代数据</td><td>达门禁 sft-v1</td></tr>
+  <tr><td>第 4 周</td><td>服务化、级联阈值、压测、灰度与监控、难例回流</td><td>灰度版本 + 运维手册</td></tr>
+</table>
+
+<h2 id="sec10">十、风险分析与对策</h2>
+<table>
+  <tr><th>风险</th><th>表现</th><th>对策</th></tr>
+  <tr><td>照搬 Qwen2.5 模块名</td><td>LoRA 挂载失败/漏 GDN 层</td><td>打印 named_modules() 按实际名挂载</td></tr>
+  <tr><td>thinking 未关净</td><td>输出非单 token、延迟高</td><td>配置关闭 + 解码硬约束</td></tr>
+  <tr><td>packed 状态串扰</td><td>GDN 循环状态泄漏</td><td>严格掩码，冒烟先不 pack</td></tr>
+  <tr><td>数据泄漏</td><td>测试虚高</td><td>按规则族分组，保留 OOD</td></tr>
+  <tr><td>只准不校准</td><td>概率不能写阈值</td><td>独立校准集 + ECE/Brier 门禁</td></tr>
+  <tr><td>无信息硬选</td><td>缺字段随机选</td><td>15% 无信号样本 + skip 门禁</td></tr>
+  <tr><td>上游错误传导</td><td>OCR 错被高置信选中</td><td>复核日志 + 低置信转人工</td></tr>
+  <tr><td>自定义头无法转换</td><td>GGUF 部署失败</td><td>默认路线 A；B 仅自托管</td></tr>
+  <tr><td>分布漂移</td><td>线上准确率下滑</td><td>分桶监控 + 难例回流再训</td></tr>
+</table>
+
+<h2 id="sec11">十一、结论与工程 Checklist</h2>
+<ol>
+  <li><strong>Qwen3.5-4B + LoRA 单 token 约束解码是性价比最高的 Jev-like 路线</strong>，不改结构、转换零障碍；</li>
+  <li><strong>真正门槛是数据</strong>：硬负例、无信号、按规则族切分比调参更决定成败；</li>
+  <li><strong>校准是独立阶段</strong>：SFT 不保证概率可用，temperature scaling 先做、ECE/Brier 门禁；</li>
+  <li><strong>GDN 混合架构需专门核对</strong>：LoRA 挂载点与 packed 掩码不能照搬 Qwen2.5；</li>
+  <li><strong>价值在级联而非单点</strong>：判别器 + 大模型 + 确定性代码 + 人工兜底；</li>
+  <li><strong>强化非必需</strong>：单步任务后校准通常足够，GRPO 按需启用。</li>
+</ol>
+<div class="callout key">
+  <div class="title">上线前 Checklist</div>
+  <ul>
+    <li>☐ 真实业务分布评测集；同时报告全对率与单字段 Macro-F1</li>
+    <li>☐ 含硬负例/边界样本、无信号对照组；测 skip 召回/误拒</li>
+    <li>☐ 校准：可靠性曲线、ECE、Brier 分桶核对</li>
+    <li>☐ 选项内置 other/skip；关 thinking；解码约束到合法字符集（100% 合法）</li>
+    <li>☐ LoRA target_modules 已按 GDN 实际模块名核对；三种产物转换验证</li>
+    <li>☐ P50/P95 延迟、每千题成本、兜底比例压测</li>
+    <li>☐ 阈值/权限/兜底留在确定性代码；先灰度低风险节点；监控与难例回流就绪</li>
+  </ul>
+</div>
+
+<h2 id="sec12">十二、参考资料与可信度声明</h2>
+<h4 style="margin:14px 0 8px">同知识库</h4>
+<ul><li><a href="../jev-decision/report.html">《Jev 决策小模型技术调研报告》</a></li></ul>
+<h4 style="margin:14px 0 8px">Qwen3.5 模型与架构</h4>
+<ol>
+  <li>通义开源 Qwen3.5 小模型系列（0.8B/2B/4B/9B，含 Base、原生多模态）— <a href="https://news.aibase.com/zh/news/25861">news.aibase.com/zh/news/25861</a></li>
+  <li>《Qwen3.5 架构与特性解读》— <a href="https://zhuanlan.zhihu.com/p/2007067339640824570">zhuanlan.zhihu.com/p/2007067339640824570</a></li>
+  <li>《Qwen 3.5 核心架构深度解构》（GDN 与全注意力约 3:1）— <a href="https://zhuanlan.zhihu.com/p/2006877212054406855">zhuanlan.zhihu.com/p/2006877212054406855</a></li>
+  <li>《Qwen3.5 架构最全拆解：Linear Attention 源码配图》— <a href="https://zhuanlan.zhihu.com/p/2006241509226350575">zhuanlan.zhihu.com/p/2006241509226350575</a></li>
+  <li>NVIDIA Megatron Bridge：Qwen 3.5（Gated DeltaNet 混合架构）— <a href="https://docs.nvidia.com/nemo/megatron-bridge/0.4.0/models/vlm/qwen35-vl.html">docs.nvidia.com/.../qwen35-vl</a></li>
+</ol>
+<h4 style="margin:14px 0 8px">微调、量化与部署</h4>
+<ol start="6">
+  <li>《Qwen3.5 0.8B/2B/4B/9B 本地部署指南，微调教程》— <a href="https://zhuanlan.zhihu.com/p/2012668704182260051">zhuanlan.zhihu.com/p/2012668704182260051</a></li>
+  <li>《Qwen3.5 微调教程，从零到部署全打通》（4B bf16 LoRA≈10GB）— <a href="https://cloud.tencent.com/developer/article/2660244">cloud.tencent.com/developer/article/2660244</a></li>
+  <li>《transformers 正式支持 GGUF》（BF16≈8.42GB、Q4_K_M≈2.74GB）— <a href="https://zhuanlan.zhihu.com/p/2087499209826119998">zhuanlan.zhihu.com/p/2087499209826119998</a></li>
+  <li>vLLM 结构化输出指南 — <a href="http://www.rhkb.cn/news/75758.html">rhkb.cn/news/75758.html</a></li>
+  <li>《保证 LLM 输出正确 JSON：约束解码的三年进化》— <a href="https://zhuanlan.zhihu.com/p/2072788272552724391">zhuanlan.zhihu.com/p/2072788272552724391</a></li>
+</ol>
+<h4 style="margin:14px 0 8px">校准与强化</h4>
+<ol start="11">
+  <li>《LLM 后训练基础：GRPO》— <a href="https://zhuanlan.zhihu.com/p/2011234086350512242">zhuanlan.zhihu.com/p/2011234086350512242</a></li>
+  <li>《用 Unsloth 打造推理增强大模型》（LoRA+4bit+GRPO）— <a href="https://zhuanlan.zhihu.com/p/1971584422504531922">zhuanlan.zhihu.com/p/1971584422504531922</a></li>
+</ol>
+<div class="callout warn">
+  <div class="title">可信度声明</div>
+  <ul>
+    <li>Qwen3.5-4B 架构、体积、显存、生态来自公开发布与上述教程；模块名/显存以本地 <code>named_modules()</code> 与冒烟实测为准；</li>
+    <li>超参（r=32、lr=1e-4、数据规模、阈值、门禁）均为<strong>工程起步建议值，非官方配方</strong>；</li>
+    <li>官方 <strong>RLCD 无公开论文/代码</strong>，第 6 章校准与强化是标准方法的工程化落地，不代表官方实现；</li>
+    <li>F1≥0.85、全对率≥0.90、ECE≤0.05 等是<strong>方案目标线，非 Jev 承诺</strong>，以真实评测集结果为准。</li>
+  </ul>
+</div>
+
+<div class="footer">
+  基于 Qwen3.5-4B 的 Jev 决策模型训练方案设计 · 公开资料 + 同库 Jev 调研 · 2026-09-28
+</div>
+
+</div>
+</body>
+</html>

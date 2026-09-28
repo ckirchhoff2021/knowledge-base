@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 3 个话题。
+大模型与后训练方向的论文分析，共 4 个话题。
 
 ---
 
@@ -21,3 +21,10 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 系统梳理大模型后训练技术全景：SFT、RLHF(PPO)、奖励模型 ORM/PRM、DPO 家族（IPO/KTO/ORPO/SimPO）、RLAIF 与 Constitutional AI、RFT/STaR、RLVR 与 GRPO，以及 DeepSeek-R1 的冷启动—大规模 RL—蒸馏范式。含方法演进谱系（2017–2025）、横向对比、关键实验数据、核心 Loss 与 GRPO/DPO 伪代码和工程落地 checklist。信源为 16 篇知乎文章与其引用的 arXiv 论文交叉验证。
 
 📅 2026-09-24 ｜ 🖼 架构图 3 张 ｜ 📄 [Markdown](post-training/report.md)
+
+### [Jev 决策模型训练方案（Qwen3.5-4B）](jev-qwen35-4b/report.html)
+
+以 Qwen3.5-4B 为基座复现 Jev-like 决策模型的完整工程方案：单 token 约束解码 vs readout 打分头双路线选型、GDN 混合架构适配与关闭 thinking、数据四元组与硬负例/无信号/拒答构造、LoRA SFT + temperature 概率校准 + 可选 GRPO、评估四件套门禁、合并/GGUF 转换与 vLLM/Ollama 部署、阈值级联与难例回流。含四周排期、资源预算与风险对策，3 张架构图。
+
+📅 2026-09-28 ｜ 🖼 架构图 3 张 ｜ 📄 [Markdown](jev-qwen35-4b/report.md)
+

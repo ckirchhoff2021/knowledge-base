@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>部署级联与难例回流</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:"JetBrains Mono",monospace; padding:28px 24px 40px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#fbbf24; box-shadow:0 0 8px #fbbf24; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:11px; margin-bottom:18px; }
+  .diagram-card { border:1px solid #1e293b; border-radius:12px; background:#0f172a; padding:10px; }
+  svg { width:100%; height:auto; display:block; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:22px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .card-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .emerald{background:#34d399;} .amber{background:#fbbf24;} .rose{background:#fb7185;}
+  .card h3 { font-size:12px; }
+  .card ul { list-style:none; }
+  .card li { font-size:10.5px; color:#94a3b8; margin:6px 0; line-height:1.6; }
+  footer { color:#475569; font-size:10px; margin-top:18px; text-align:right; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>上线级联：判别器 + 阈值路由 + 难例回流</h1></div>
+<div class="subtitle">Qwen3.5-4B 只做判别；阈值、权限、兜底全部在确定性代码中</div>
+<div class="diagram-card">
+<svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowEm" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#34d399"/>
+    </marker>
+    <marker id="arrowRo" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#fb7185"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="600" fill="url(#grid)"/>
+
+  <!-- input -->
+  <rect x="40" y="250" width="150" height="90" rx="8" fill="#0f172a"/>
+  <rect x="40" y="250" width="150" height="90" rx="8" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="115" y="288" text-anchor="middle" fill="#e2e8f0" font-size="11">业务请求</text>
+  <text x="115" y="310" text-anchor="middle" fill="#94a3b8" font-size="9">state + question</text>
+
+  <line x1="190" y1="295" x2="228" y2="295" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- decision model -->
+  <rect x="232" y="230" width="200" height="130" rx="8" fill="#0f172a"/>
+  <rect x="232" y="230" width="200" height="130" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="332" y="266" text-anchor="middle" fill="#e2e8f0" font-size="12">Jev 判别器</text>
+  <text x="332" y="288" text-anchor="middle" fill="#cbd5e1" font-size="9.5">Qwen3.5-4B + LoRA</text>
+  <text x="332" y="308" text-anchor="middle" fill="#94a3b8" font-size="9">约束解码 A/B/C/S</text>
+  <text x="332" y="328" text-anchor="middle" fill="#94a3b8" font-size="9">校准概率 p</text>
+  <text x="332" y="348" text-anchor="middle" fill="#94a3b8" font-size="9">P95 ≤ 300ms</text>
+
+  <line x1="432" y1="295" x2="470" y2="295" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- threshold router (deterministic code) -->
+  <rect x="474" y="230" width="200" height="130" rx="8" fill="#0f172a"/>
+  <rect x="474" y="230" width="200" height="130" rx="8" fill="rgba(120,53,15,0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="574" y="266" text-anchor="middle" fill="#e2e8f0" font-size="12">阈值路由（代码）</text>
+  <text x="574" y="290" text-anchor="middle" fill="#fcd34d" font-size="9.5">p ≥ 0.90 自动</text>
+  <text x="574" y="310" text-anchor="middle" fill="#fcd34d" font-size="9.5">0.60~0.90 复核</text>
+  <text x="574" y="330" text-anchor="middle" fill="#fcd34d" font-size="9.5">&lt;0.60 或 skip 人工</text>
+  <text x="574" y="350" text-anchor="middle" fill="#94a3b8" font-size="9">阈值/权限外置</text>
+
+  <!-- three branches -->
+  <path d="M 674 268 L 730 268 L 730 130 L 768 130" fill="none" stroke="#34d399" stroke-width="1.6" marker-end="url(#arrowEm)"/>
+  <path d="M 674 295 L 768 295" fill="none" stroke="#fbbf24" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M 674 322 L 730 322 L 730 460 L 768 460" fill="none" stroke="#fb7185" stroke-width="1.6" marker-end="url(#arrowRo)"/>
+
+  <!-- auto -->
+  <rect x="772" y="90" width="200" height="80" rx="8" fill="#0f172a"/>
+  <rect x="772" y="90" width="200" height="80" rx="8" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="872" y="122" text-anchor="middle" fill="#e2e8f0" font-size="11">自动执行</text>
+  <text x="872" y="146" text-anchor="middle" fill="#94a3b8" font-size="9">仅可逆低风险节点</text>
+
+  <!-- verify by LLM -->
+  <rect x="772" y="255" width="200" height="80" rx="8" fill="#0f172a"/>
+  <rect x="772" y="255" width="200" height="80" rx="8" fill="rgba(120,53,15,0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="872" y="287" text-anchor="middle" fill="#e2e8f0" font-size="11">大模型复核</text>
+  <text x="872" y="311" text-anchor="middle" fill="#94a3b8" font-size="9">给出解释 / 二次校验</text>
+
+  <!-- human -->
+  <rect x="772" y="420" width="200" height="80" rx="8" fill="#0f172a"/>
+  <rect x="772" y="420" width="200" height="80" rx="8" fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="872" y="452" text-anchor="middle" fill="#e2e8f0" font-size="11">转人工</text>
+  <text x="872" y="476" text-anchor="middle" fill="#94a3b8" font-size="9">低置信 / 无信号 skip</text>
+
+  <!-- monitoring + feedback -->
+  <rect x="1010" y="255" width="150" height="80" rx="8" fill="#0f172a"/>
+  <rect x="1010" y="255" width="150" height="80" rx="8" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.4"/>
+  <text x="1085" y="287" text-anchor="middle" fill="#e2e8f0" font-size="10.5">分桶监控</text>
+  <text x="1085" y="309" text-anchor="middle" fill="#94a3b8" font-size="9">准确率/漂移</text>
+  <path d="M 972 285 L 1008 290" fill="none" stroke="#22d3ee" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <path d="M 1085 335 L 1085 540 L 332 540 L 332 364" fill="none" stroke="#fb7185" stroke-width="1.4" stroke-dasharray="6,4" marker-end="url(#arrowRo)"/>
+  <rect x="430" y="528" width="330" height="24" rx="5" fill="#0f172a" stroke="#fb7185" stroke-width="0.8"/>
+  <text x="442" y="544" fill="#fb7185" font-size="10">难例回流：再标注 → 再训练 → 灰度更新</text>
+
+  <text x="600" y="575" text-anchor="middle" fill="#94a3b8" font-size="9.5">目标：级联后整体准确率 ≥ 0.96，兜底比例 ≤ 15%</text>
+</svg>
+</div>
+<div class="cards">
+  <div class="card">
+    <div class="card-header"><div class="card-dot emerald"></div><h3>高分自动</h3></div>
+    <ul>
+      <li>· p ≥ 0.90 直接执行</li>
+      <li>· 仅限可逆低风险动作</li>
+      <li>· 日志全留存可回溯</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot amber"></div><h3>中分复核</h3></div>
+    <ul>
+      <li>· 大模型二次校验补解释</li>
+      <li>· 兼顾准确率与成本</li>
+      <li>· 阈值随业务可调</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot rose"></div><h3>低分兜底</h3></div>
+    <ul>
+      <li>· 低置信/skip 转人工</li>
+      <li>· 难例回流持续优化</li>
+      <li>· 监控分布漂移</li>
+    </ul>
+  </div>
+</div>
+<footer>diagram 3 / 3 · deployment cascade · dark SVG</footer>
+</body>
+</html>
