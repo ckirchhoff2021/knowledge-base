@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>理财年度操作日历</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#020617; color:#e2e8f0; font-family:"JetBrains Mono",monospace; padding:28px 24px 40px; }
+  .header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#fbbf24; box-shadow:0 0 8px #fbbf24; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  h1 { font-size:18px; font-weight:600; }
+  .subtitle { color:#94a3b8; font-size:11px; margin-bottom:18px; }
+  .diagram-card { border:1px solid #1e293b; border-radius:12px; background:#0f172a; padding:10px; }
+  svg { width:100%; height:auto; display:block; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:22px; }
+  .card { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:16px; }
+  .card-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .card-dot { width:8px; height:8px; border-radius:50%; }
+  .cyan{background:#22d3ee;} .emerald{background:#34d399;} .amber{background:#fbbf24;}
+  .card h3 { font-size:12px; }
+  .card ul { list-style:none; }
+  .card li { font-size:10.5px; color:#94a3b8; margin:6px 0; line-height:1.6; }
+  footer { color:#475569; font-size:10px; margin-top:18px; text-align:right; }
+</style>
+</head>
+<body>
+<div class="header"><div class="dot"></div><h1>理财操作日历：把动作固定到具体时间</h1></div>
+<div class="subtitle">DAILY · MONTHLY · QUARTERLY · YEARLY —— 自动化优先，全年耗时极少</div>
+<div class="diagram-card">
+<svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="600" fill="url(#grid)"/>
+
+  <!-- four frequency lanes -->
+  <!-- DAILY -->
+  <rect x="40" y="60" width="1120" height="100" rx="8" fill="#0f172a"/>
+  <rect x="40" y="60" width="1120" height="100" rx="8" fill="rgba(8,51,68,0.28)" stroke="#22d3ee" stroke-width="1.4"/>
+  <text x="62" y="92" fill="#22d3ee" font-size="13" font-weight="600">每天 DAILY</text>
+  <text x="62" y="120" fill="#cbd5e1" font-size="11">睡前 2 分钟记当天支出</text>
+  <text x="62" y="142" fill="#94a3b8" font-size="9.5">归入：固定 / 必需 / 弹性 三类</text>
+
+  <!-- MONTHLY -->
+  <rect x="40" y="180" width="1120" height="110" rx="8" fill="#0f172a"/>
+  <rect x="40" y="180" width="1120" height="110" rx="8" fill="rgba(6,78,59,0.28)" stroke="#34d399" stroke-width="1.4"/>
+  <text x="62" y="212" fill="#34d399" font-size="13" font-weight="600">每月 MONTHLY</text>
+  <text x="62" y="240" fill="#cbd5e1" font-size="11">发薪后 1~2 天：自动补应急金 + 自动定投扣款（无需手动）</text>
+  <text x="62" y="264" fill="#94a3b8" font-size="9.5">发薪前一天：统计三类支出，超支项次月修正</text>
+
+  <!-- QUARTERLY -->
+  <rect x="40" y="310" width="1120" height="100" rx="8" fill="#0f172a"/>
+  <rect x="40" y="310" width="1120" height="100" rx="8" fill="rgba(120,53,15,0.28)" stroke="#fbbf24" stroke-width="1.4"/>
+  <text x="62" y="342" fill="#fbbf24" font-size="13" font-weight="600">每季 QUARTERLY</text>
+  <text x="62" y="370" fill="#cbd5e1" font-size="11">季度首周末复盘：储蓄率 / 应急金 / 定投是否正常</text>
+  <text x="62" y="392" fill="#94a3b8" font-size="9.5">检查是否触及预设止盈线，到了才执行卖出</text>
+
+  <!-- YEARLY -->
+  <rect x="40" y="430" width="1120" height="110" rx="8" fill="#0f172a"/>
+  <rect x="40" y="430" width="1120" height="110" rx="8" fill="rgba(76,29,149,0.28)" stroke="#a78bfa" stroke-width="1.4"/>
+  <text x="62" y="462" fill="#a78bfa" font-size="13" font-weight="600">每年 YEARLY（如 12 月最后一个周末）</text>
+  <text x="62" y="490" fill="#cbd5e1" font-size="11">再平衡：实际比例 vs 目标比例，偏离 ≥ 5 个百分点才调整</text>
+  <text x="62" y="514" fill="#94a3b8" font-size="9.5">检视保险保额是否随收入增长；更新个人投资手册</text>
+</svg>
+</div>
+<div class="cards">
+  <div class="card">
+    <div class="card-header"><div class="card-dot cyan"></div><h3>自动化优先</h3></div>
+    <ul>
+      <li>· 转账、定投全部设为自动</li>
+      <li>· 真正需要手动的只有记账和复盘</li>
+      <li>· 每月总耗时不到 30 分钟</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot emerald"></div><h3>纪律而非预测</h3></div>
+    <ul>
+      <li>· 不判断高低点，按日历执行</li>
+      <li>· 止盈靠预设线，不靠感觉</li>
+      <li>· 下跌不操作，继续扣款</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-dot amber"></div><h3>少动即赢</h3></div>
+    <ul>
+      <li>· 再平衡偏离不到 5% 不动</li>
+      <li>· 避免频繁交易吃掉收益</li>
+      <li>· 每年集中处理一次保险与手册</li>
+    </ul>
+  </div>
+</div>
+<footer>wealth practice · annual operation calendar · dark SVG</footer>
+</body>
+</html>

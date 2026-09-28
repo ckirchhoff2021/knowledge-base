@@ -42,6 +42,7 @@
 | [**长期失眠就医指南**](https://ckirchhoff2021.github.io/knowledge-base/life/insomnia-treatment/guide.html) | 症状、治疗流程、杭州医院与异地医保 |
 | [**提升感知力与心平气和**](https://ckirchhoff2021.github.io/knowledge-base/life/mindfulness/guide.html) | 情绪不受外界干扰的完整方法论 |
 | [**小白理财资产配置**](https://ckirchhoff2021.github.io/knowledge-base/life/wealth-management/guide.html) | 从零开始的资产配置系统与学习路径 |
+| [**小白理财实战手册**](https://ckirchhoff2021.github.io/knowledge-base/life/wealth-practice/guide.html) | 照着做的一年行动方案：开户、预算、应急金、保险、定投到止盈的完整操作 |
 
 ---
 
