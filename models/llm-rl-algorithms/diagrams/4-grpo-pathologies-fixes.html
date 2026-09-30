@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · GRPO病理与修复</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 920" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="920" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 4 · GRPO 病理与修复映射</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">R1 之后的研究主线：定位 GRPO 的四类病理，DAPO / Dr.GRPO / GSPO 给出对应修复</text>
+
+  <!-- 左列：病理 -->
+  <rect x="60" y="115" width="380" height="40" rx="8" fill="#161b22" stroke="#f85149"/>
+  <text x="250" y="141" fill="#f85149" font-size="14" font-weight="700" text-anchor="middle">GRPO 病理（问题）</text>
+
+  <rect x="60" y="175" width="380" height="90" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="203" fill="#e6edf3" font-size="13" font-weight="700">① 零优势浪费</text>
+  <text x="80" y="227" fill="#8b949e" font-size="12">组内奖励全同（全对/全错）</text>
+  <text x="80" y="249" fill="#8b949e" font-size="12">σ=0，该 prompt 不产生梯度</text>
+
+  <rect x="60" y="295" width="380" height="90" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="323" fill="#e6edf3" font-size="13" font-weight="700">② Clip 退化</text>
+  <text x="80" y="347" fill="#8b949e" font-size="12">关键推理 token 概率极低</text>
+  <text x="80" y="369" fill="#8b949e" font-size="12">ratio 总在裁剪区，梯度消失</text>
+
+  <rect x="60" y="415" width="380" height="90" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="443" fill="#e6edf3" font-size="13" font-weight="700">③ 长度膨胀偏置</text>
+  <text x="80" y="467" fill="#8b949e" font-size="12">长度归一化+std 归一化的组合</text>
+  <text x="80" y="489" fill="#8b949e" font-size="12">错误回答被人为拉长</text>
+
+  <rect x="60" y="535" width="380" height="90" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="563" fill="#e6edf3" font-size="13" font-weight="700">④ Token 级噪声 / MoE 不稳</text>
+  <text x="80" y="587" fill="#8b949e" font-size="12">token 级 ratio 方差大</text>
+  <text x="80" y="609" fill="#8b949e" font-size="12">MoE 路由使单 token 估计更噪</text>
+
+  <!-- 右列：修复 -->
+  <rect x="760" y="115" width="380" height="40" rx="8" fill="#161b22" stroke="#3fb950"/>
+  <text x="950" y="141" fill="#3fb950" font-size="14" font-weight="700" text-anchor="middle">修复方案</text>
+
+  <rect x="760" y="175" width="380" height="90" rx="8" fill="#161b22" stroke="#d29922"/>
+  <text x="780" y="203" fill="#d29922" font-size="13" font-weight="700">DAPO · Dynamic Sampling</text>
+  <text x="780" y="227" fill="#8b949e" font-size="12">零优势 prompt 重新采样</text>
+  <text x="780" y="249" fill="#8b949e" font-size="12">动态维持有效样本规模</text>
+
+  <rect x="760" y="295" width="380" height="90" rx="8" fill="#161b22" stroke="#d29922"/>
+  <text x="780" y="323" fill="#d29922" font-size="13" font-weight="700">DAPO · Clip-Higher</text>
+  <text x="780" y="347" fill="#8b949e" font-size="12">放宽正优势上界（ε_high=0.28）</text>
+  <text x="780" y="369" fill="#8b949e" font-size="12">好动作继续增强，保住探索</text>
+
+  <rect x="760" y="415" width="380" height="90" rx="8" fill="#161b22" stroke="#d29922"/>
+  <text x="780" y="443" fill="#d29922" font-size="13" font-weight="700">Dr.GRPO · 去除偏置源</text>
+  <text x="780" y="467" fill="#8b949e" font-size="12">移除有偏的归一化组合</text>
+  <text x="780" y="489" fill="#8b949e" font-size="12">回答变短且性能不降</text>
+
+  <rect x="760" y="535" width="380" height="90" rx="8" fill="#161b22" stroke="#d29922"/>
+  <text x="780" y="563" fill="#d29922" font-size="13" font-weight="700">GSPO · 序列级优化</text>
+  <text x="780" y="587" fill="#8b949e" font-size="12">ratio/clipping 以整条序列定义</text>
+  <text x="780" y="609" fill="#8b949e" font-size="12">显著稳定 MoE 的 RL 训练</text>
+
+  <!-- 中间额外修复补充 -->
+  <rect x="470" y="175" width="260" height="90" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="490" y="203" fill="#58a6ff" font-size="12" font-weight="700">DAPO 另两项</text>
+  <text x="490" y="227" fill="#8b949e" font-size="11">Token-level loss：长短回答</text>
+  <text x="490" y="245" fill="#8b949e" font-size="11">梯度不互相稀释</text>
+
+  <rect x="470" y="295" width="260" height="90" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="490" y="323" fill="#58a6ff" font-size="12" font-weight="700">Overlong Reward Shaping</text>
+  <text x="490" y="347" fill="#8b949e" font-size="11">截断但已含正确答案</text>
+  <text x="490" y="365" fill="#8b949e" font-size="11">给软奖励而非 0</text>
+
+  <!-- 箭头 -->
+  <line x1="440" y1="220" x2="466" y2="220" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="734" y1="220" x2="758" y2="220" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="440" y1="340" x2="466" y2="340" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="734" y1="340" x2="758" y2="340" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="440" y1="460" x2="758" y2="460" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="440" y1="580" x2="758" y2="580" stroke="#8b949e" stroke-width="1.5"/>
+
+  <!-- info cards -->
+  <g>
+    <rect x="60" y="690" width="346" height="140" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="80" y="718" fill="#58a6ff" font-size="13" font-weight="600">关键观察</text>
+    <text x="80" y="744" fill="#e6edf3" font-size="12">改进不靠新数学，而靠消除</text>
+    <text x="80" y="768" fill="#8b949e" font-size="12">工程细节引入的偏置</text>
+    <text x="80" y="798" fill="#8b949e" font-size="11">越精简的配方往往越强</text>
+  </g>
+  <g>
+    <rect x="427" y="690" width="346" height="140" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="447" y="718" fill="#58a6ff" font-size="13" font-weight="600">代表数据（一手摘要）</text>
+    <text x="447" y="744" fill="#e6edf3" font-size="12">DAPO：32B，AIME24 50 分</text>
+    <text x="447" y="768" fill="#e6edf3" font-size="12">Dr.GRPO：7B，AIME24 43.3%</text>
+    <text x="447" y="798" fill="#8b949e" font-size="11">GSPO 已用于 Qwen3</text>
+  </g>
+  <g>
+    <rect x="794" y="690" width="346" height="140" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="814" y="718" fill="#58a6ff" font-size="13" font-weight="600">选型直觉</text>
+    <text x="814" y="744" fill="#e6edf3" font-size="12">先诊断命中哪类病理</text>
+    <text x="814" y="768" fill="#8b949e" font-size="12">再选对应修复，不必全上</text>
+    <text x="814" y="798" fill="#8b949e" font-size="11">监控 clip fraction/长度/KL</text>
+  </g>
+</svg>
+</body></html>

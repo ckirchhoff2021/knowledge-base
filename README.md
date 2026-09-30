@@ -35,6 +35,7 @@
 | [**Post-Training 后训练技术**](https://ckirchhoff2021.github.io/knowledge-base/models/post-training/report.html) | 后训练全景：SFT、RLHF、DPO 家族、RLAIF/CAI、RLVR/GRPO 与 R1 冷启动—蒸馏范式 |
 | [**Jev 训练方案 · Qwen3.5-4B**](https://ckirchhoff2021.github.io/knowledge-base/models/jev-qwen35-4b/report.html) | 4B 基座复现 Jev-like：LoRA SFT + 概率校准 + 约束解码，含数据/训练/转换/级联全流程 |
 | [**Transformer × 位置编码**](https://ckirchhoff2021.github.io/knowledge-base/models/transformer-pe/report.html) | 架构全解：RoPE/ALiBi 原理取舍与 PI/NTK/YaRN 长上下文扩展 |
+| [**大模型强化学习算法**](https://ckirchhoff2021.github.io/knowledge-base/models/llm-rl-algorithms/report.html) | PPO 深度拆解 · GRPO/DAPO/Dr.GRPO/GSPO · RLVR 与 R1 流程 |
 
 ### 🌱 生活方法论
 

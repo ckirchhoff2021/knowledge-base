@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 大模型RL范式全景</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 860" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="860" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 大模型强化学习范式全景</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">RL 在大模型中承担两个角色：对齐人类偏好（RLHF/RLAIF）与激发推理能力（RLVR），二者共用同一套策略优化算法</text>
+
+  <!-- 基座 -->
+  <rect x="430" y="115" width="340" height="56" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="600" y="140" fill="#e6edf3" font-size="14" font-weight="700" text-anchor="middle">SFT 模型（会照做）</text>
+  <text x="600" y="159" fill="#8b949e" font-size="11" text-anchor="middle">但不知道「哪个更好」，也无法超越示范</text>
+
+  <!-- 两条路线标题 -->
+  <rect x="60" y="220" width="510" height="40" rx="8" fill="#161b22" stroke="#bc8cff"/>
+  <text x="315" y="246" fill="#bc8cff" font-size="15" font-weight="700" text-anchor="middle">路线 A · 对齐偏好 RLHF / RLAIF</text>
+
+  <rect x="630" y="220" width="510" height="40" rx="8" fill="#161b22" stroke="#3fb950"/>
+  <text x="885" y="246" fill="#3fb950" font-size="15" font-weight="700" text-anchor="middle">路线 B · 可验证奖励 RLVR</text>
+
+  <!-- RLHF 流 -->
+  <rect x="60" y="280" width="240" height="60" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="180" y="305" fill="#e6edf3" font-size="13" text-anchor="middle">人类两两比较回答</text>
+  <text x="180" y="325" fill="#8b949e" font-size="11" text-anchor="middle">chosen / rejected</text>
+
+  <rect x="60" y="370" width="240" height="60" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="180" y="395" fill="#e6edf3" font-size="13" text-anchor="middle">训练奖励模型 RM</text>
+  <text x="180" y="415" fill="#8b949e" font-size="11" text-anchor="middle">标量打分网络</text>
+
+  <rect x="330" y="325" width="240" height="60" rx="8" fill="#161b22" stroke="#d29922"/>
+  <text x="450" y="350" fill="#e6edf3" font-size="13" text-anchor="middle">Policy 采样回答</text>
+  <text x="450" y="370" fill="#8b949e" font-size="11" text-anchor="middle">RM 打分（+KL 约束）</text>
+
+  <!-- RLVR 流 -->
+  <rect x="630" y="280" width="240" height="60" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="750" y="305" fill="#e6edf3" font-size="13" text-anchor="middle">可验证任务数据集</text>
+  <text x="750" y="325" fill="#8b949e" font-size="11" text-anchor="middle">数学 / 代码 / STEM</text>
+
+  <rect x="630" y="370" width="240" height="60" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="750" y="395" fill="#e6edf3" font-size="13" text-anchor="middle">规则 / 程序验证器</text>
+  <text x="750" y="415" fill="#8b949e" font-size="11" text-anchor="middle">答案匹配 · 单测 · 0/1</text>
+
+  <rect x="900" y="325" width="240" height="60" rx="8" fill="#161b22" stroke="#d29922"/>
+  <text x="1020" y="350" fill="#e6edf3" font-size="13" text-anchor="middle">Policy 采样回答</text>
+  <text x="1020" y="370" fill="#8b949e" font-size="11" text-anchor="middle">客观奖励（无偏、廉价）</text>
+
+  <!-- 共同的算法层 -->
+  <rect x="60" y="470" width="1080" height="130" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="600" y="500" fill="#58a6ff" font-size="15" font-weight="700" text-anchor="middle">共用的策略优化算法（本报告焦点）</text>
+  <rect x="100" y="520" width="180" height="52" rx="8" fill="#0d1117" stroke="#bc8cff"/>
+  <text x="190" y="551" fill="#bc8cff" font-size="13" text-anchor="middle">PPO（带 Critic）</text>
+  <rect x="320" y="520" width="180" height="52" rx="8" fill="#0d1117" stroke="#3fb950"/>
+  <text x="410" y="551" fill="#3fb950" font-size="13" text-anchor="middle">GRPO（组相对）</text>
+  <rect x="540" y="520" width="200" height="52" rx="8" fill="#0d1117" stroke="#d29922"/>
+  <text x="640" y="545" fill="#d29922" font-size="12" text-anchor="middle">RLOO / ReMax /</text>
+  <text x="640" y="562" fill="#d29922" font-size="12" text-anchor="middle">REINFORCE++</text>
+  <rect x="780" y="520" width="320" height="52" rx="8" fill="#0d1117" stroke="#f85149"/>
+  <text x="940" y="545" fill="#f85149" font-size="12" text-anchor="middle">DAPO / Dr.GRPO / GSPO</text>
+  <text x="940" y="562" fill="#8b949e" font-size="11" text-anchor="middle">GRPO 病理修复</text>
+
+  <!-- 连线 -->
+  <line x1="600" y1="171" x2="315" y2="218" stroke="#8b949e" stroke-width="1.2"/>
+  <line x1="600" y1="171" x2="885" y2="218" stroke="#8b949e" stroke-width="1.2"/>
+  <line x1="180" y1="340" x2="180" y2="368" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="300" y1="400" x2="328" y2="360" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="750" y1="340" x2="750" y2="368" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="870" y1="400" x2="898" y2="360" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="450" y1="387" x2="450" y2="468" stroke="#8b949e" stroke-width="1.2" stroke-dasharray="4 4"/>
+  <line x1="1020" y1="387" x2="1020" y2="468" stroke="#8b949e" stroke-width="1.2" stroke-dasharray="4 4"/>
+
+  <!-- info cards -->
+  <g>
+    <rect x="60" y="650" width="346" height="120" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="80" y="678" fill="#58a6ff" font-size="13" font-weight="600">本质区别</text>
+    <text x="80" y="704" fill="#e6edf3" font-size="12">不给标准答案，只给分数</text>
+    <text x="80" y="728" fill="#8b949e" font-size="12">模型靠试错自己找更优策略</text>
+    <text x="80" y="752" fill="#8b949e" font-size="11">因此能探索出示范之外的解法</text>
+  </g>
+  <g>
+    <rect x="427" y="650" width="346" height="120" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="447" y="678" fill="#58a6ff" font-size="13" font-weight="600">R1 的启示</text>
+    <text x="447" y="704" fill="#e6edf3" font-size="12">纯 RL 即可涌现推理模式</text>
+    <text x="447" y="728" fill="#8b949e" font-size="12">自我反思 · 验证 · 策略切换</text>
+    <text x="447" y="752" fill="#8b949e" font-size="11">无需大量人工推理标注</text>
+  </g>
+  <g>
+    <rect x="794" y="650" width="346" height="120" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="814" y="678" fill="#58a6ff" font-size="13" font-weight="600">非 RL 对照</text>
+    <text x="814" y="704" fill="#e6edf3" font-size="12">DPO 等直接偏好优化</text>
+    <text x="814" y="728" fill="#8b949e" font-size="12">无交互、无奖励、无提升</text>
+    <text x="814" y="752" fill="#8b949e" font-size="11">本文仅作对比，不展开</text>
+  </g>
+</svg>
+</body></html>

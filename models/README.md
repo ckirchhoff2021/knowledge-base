@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 5 个话题。
+大模型与后训练方向的论文分析，共 6 个话题。
 
 ---
 
@@ -33,3 +33,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 系统拆解 Transformer 架构（缩放点积注意力、多头机制、FFN、残差与归一化、编解码器结构），并重点剖析**位置编码为什么不可或缺**：自注意力的置换等变性，以及正弦编码、可学习编码、相对位置编码（Shaw/T5）、**RoPE 旋转编码**、**ALiBi 线性偏置**的原理与取舍。进一步解释上下文长度与位置编码的深层关系，以及 PI、NTK、YaRN、LongRoPE 长文本扩展技术（内插 vs 外推、分频段缩放，直至 200 万 Token）。信源为 9 篇 arXiv 原始论文（编号经 arXiv API 逐一核实）与知乎高赞文章交叉验证。
 
 📅 2026-09-30 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](transformer-pe/report.md)
+
+### [大模型常用强化学习算法](llm-rl-algorithms/report.html)
+
+从策略梯度（Policy Gradient）与 MDP 建模出发，深度剖析大模型 RL 算法：经典基线 **PPO**（重要性采样、clip 信任域、GAE、Critic、KL 惩罚），Critic-Free 家族 **RLOO / ReMax / REINFORCE++**，以及当代主流 **GRPO**（组相对优势、token clip、KL 无偏估计）与其改进变体 **DAPO**（clip-higher、动态采样、token-level loss、超长软奖励）、**Dr.GRPO**（去除长度膨胀偏置）、**GSPO**（序列级优化，稳 MoE）。并梳理 RLHF/RLAIF/RLVR 三种奖励范式、reward hacking 对策与 DeepSeek-R1 多阶段流程。信源为 13 篇 arXiv 原始论文（编号经 arXiv API 逐一核实）与知乎高赞文章交叉验证。
+
+📅 2026-09-30 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](llm-rl-algorithms/report.md)

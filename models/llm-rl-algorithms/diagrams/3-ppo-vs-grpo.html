@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · PPO vs GRPO</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></seed:tool_call>
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="900" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 3 · PPO vs GRPO：训练结构对比</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">核心差别：PPO 需要同规模 Critic 学习 token 级价值；GRPO 用同 prompt 的 G 条采样做组相对比较，显存近乎减半</text>
+
+  <!-- PPO 区 -->
+  <rect x="60" y="110" width="510" height="560" rx="12" fill="none" stroke="#bc8cff" stroke-width="1.5" stroke-dasharray="8 5"/>
+  <text x="315" y="142" fill="#bc8cff" font-size="18" font-weight="700" text-anchor="middle">PPO（Actor-Critic）</text>
+
+  <rect x="100" y="170" width="200" height="70" rx="8" fill="#161b22" stroke="#3fb950"/>
+  <text x="200" y="200" fill="#3fb950" font-size="13" font-weight="700" text-anchor="middle">Policy（训练）</text>
+  <text x="200" y="222" fill="#8b949e" font-size="11" text-anchor="middle">生成回答</text>
+
+  <rect x="330" y="170" width="200" height="70" rx="8" fill="#161b22" stroke="#d29922"/>
+  <text x="430" y="200" fill="#d29922" font-size="13" font-weight="700" text-anchor="middle">Critic（训练）</text>
+  <text x="430" y="222" fill="#8b949e" font-size="11" text-anchor="middle">估 V(s)，与 Policy 同规模</text>
+
+  <rect x="100" y="280" width="200" height="70" rx="8" fill="#161b22" stroke="#94a3b8"/>
+  <text x="200" y="310" fill="#94a3b8" font-size="13" font-weight="700" text-anchor="middle">Reference（冻结）</text>
+  <text x="200" y="332" fill="#8b949e" font-size="11" text-anchor="middle">KL 约束</text>
+
+  <rect x="330" y="280" width="200" height="70" rx="8" fill="#161b22" stroke="#94a3b8"/>
+  <text x="430" y="310" fill="#94a3b8" font-size="13" font-weight="700" text-anchor="middle">Reward Model（冻结）</text>
+  <text x="430" y="332" fill="#8b949e" font-size="11" text-anchor="middle">回答打分</text>
+
+  <rect x="100" y="390" width="430" height="100" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="120" y="418" fill="#e6edf3" font-size="13" font-weight="700">优势计算</text>
+  <text x="120" y="444" fill="#8b949e" font-size="12">token 级 GAE：A_t = Σ(γλ)^l δ_l</text>
+  <text x="120" y="468" fill="#8b949e" font-size="12">稀疏奖励下 Critic 难训、超参敏感</text>
+
+  <rect x="100" y="520" width="430" height="110" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="120" y="548" fill="#e6edf3" font-size="13" font-weight="700">目标（KL 在奖励里）</text>
+  <text x="120" y="576" fill="#8b949e" font-size="12">E[min(ρ·A, clip(ρ)·A)] − c1·L_VF</text>
+  <text x="120" y="602" fill="#8b949e" font-size="12">r′ = r − β·log(πθ/πref)（token 级）</text>
+
+  <!-- GRPO 区 -->
+  <rect x="630" y="110" width="510" height="560" rx="12" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="8 5"/>
+  <text x="885" y="142" fill="#3fb950" font-size="18" font-weight="700" text-anchor="middle">GRPO（无 Critic）</text>
+
+  <rect x="670" y="170" width="200" height="70" rx="8" fill="#161b22" stroke="#3fb950"/>
+  <text x="770" y="200" fill="#3fb950" font-size="13" font-weight="700" text-anchor="middle">Policy（训练）</text>
+  <text x="770" y="222" fill="#8b949e" font-size="11" text-anchor="middle">每 prompt 采样 G 条</text>
+
+  <rect x="900" y="170" width="200" height="70" rx="8" fill="#161b22" stroke="#94a3b8"/>
+  <text x="1000" y="200" fill="#94a3b8" font-size="13" font-weight="700" text-anchor="middle">Reference（冻结）</text>
+  <text x="1000" y="222" fill="#8b949e" font-size="11" text-anchor="middle">KL 约束</text>
+
+  <rect x="670" y="280" width="430" height="70" rx="8" fill="#161b22" stroke="#94a3b8"/>
+  <text x="885" y="310" fill="#94a3b8" font-size="13" font-weight="700" text-anchor="middle">Reward：RM（RLHF）或规则验证器（RLVR）</text>
+  <text x="885" y="332" fill="#8b949e" font-size="11" text-anchor="middle">无需额外 Critic 模型</text>
+
+  <rect x="670" y="390" width="430" height="100" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="690" y="418" fill="#e6edf3" font-size="13" font-weight="700">优势计算（回答级标量）</text>
+  <text x="690" y="444" fill="#8b949e" font-size="12">A_i = (r_i − μ_group) / (σ_group + eps)</text>
+  <text x="690" y="468" fill="#8b949e" font-size="12">广播给该回答所有 token</text>
+
+  <rect x="670" y="520" width="430" height="110" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="690" y="548" fill="#e6edf3" font-size="13" font-weight="700">目标（KL 直接在损失里）</text>
+  <text x="690" y="576" fill="#8b949e" font-size="12">(1/G)Σ min(ρ_t·A, clip(ρ_t)·A) − β·KL</text>
+  <text x="690" y="602" fill="#8b949e" font-size="12">KL 无偏估计：ρ_ref − log ρ_ref − 1</text>
+
+  <!-- info cards -->
+  <g>
+    <rect x="60" y="710" width="346" height="120" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="80" y="738" fill="#58a6ff" font-size="13" font-weight="600">显存对比</text>
+    <text x="80" y="764" fill="#e6edf3" font-size="12">PPO：2 个同规模训练模型</text>
+    <text x="80" y="788" fill="#8b949e" font-size="12">GRPO：仅 Policy 训练</text>
+    <text x="80" y="812" fill="#8b949e" font-size="11">训练态显存近乎减半</text>
+  </g>
+  <g>
+    <rect x="427" y="710" width="346" height="120" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="447" y="738" fill="#58a6ff" font-size="13" font-weight="600">优势粒度</text>
+    <text x="447" y="764" fill="#e6edf3" font-size="12">PPO：token 级（精细）</text>
+    <text x="447" y="788" fill="#8b949e" font-size="12">GRPO：回答级（粗但稳）</text>
+    <text x="447" y="812" fill="#8b949e" font-size="11">代价：牺牲 token 信用分配</text>
+  </g>
+  <g>
+    <rect x="794" y="710" width="346" height="120" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="814" y="738" fill="#58a6ff" font-size="13" font-weight="600">采样成本</text>
+    <text x="814" y="764" fill="#e6edf3" font-size="12">GRPO 每 prompt 采样 G 条</text>
+    <text x="814" y="788" fill="#8b949e" font-size="12">生成量增大，靠高并发抵消</text>
+    <text x="814" y="812" fill="#8b949e" font-size="11">vLLM rollout 是关键设施</text>
+  </g>
+</svg>
+</body></html>
