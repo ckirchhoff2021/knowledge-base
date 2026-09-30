@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · Transformer 整体架构</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 860" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="860" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 1 · Transformer 整体架构（Encoder–Decoder）</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">出自《Attention Is All You Need》(2017)：左右各 N=6 层，注意力负责 token 间通信，FFN 负责逐位置加工</text>
+
+  <!-- 输入 -->
+  <rect x="80" y="120" width="150" height="56" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="155" y="145" fill="#e6edf3" font-size="13" text-anchor="middle">输入 Token IDs</text>
+  <text x="155" y="164" fill="#8b949e" font-size="11" text-anchor="middle">BPE / SentencePiece</text>
+
+  <!-- Embedding + PE -->
+  <rect x="80" y="210" width="150" height="56" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+  <text x="155" y="234" fill="#e6edf3" font-size="13" text-anchor="middle">词嵌入 + 位置编码</text>
+  <text x="155" y="253" fill="#8b949e" font-size="11" text-anchor="middle">Token + Position</text>
+
+  <!-- Encoder 边界 -->
+  <rect x="290" y="110" width="330" height="380" rx="12" fill="none" stroke="#30363d" stroke-width="1.5" stroke-dasharray="8 5"/>
+  <text x="455" y="135" fill="#58a6ff" font-size="15" font-weight="700" text-anchor="middle">Encoder × N（编码器）</text>
+
+  <!-- Encoder block -->
+  <rect x="320" y="160" width="270" height="130" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="455" y="188" fill="#bc8cff" font-size="13" font-weight="600" text-anchor="middle">多头自注意力 (Multi-Head)</text>
+  <text x="455" y="212" fill="#8b949e" font-size="11" text-anchor="middle">Q · K · V 缩放点积</text>
+  <text x="455" y="232" fill="#8b949e" font-size="11" text-anchor="middle">8 头并行 · d_k=64</text>
+  <text x="455" y="258" fill="#3fb950" font-size="11" text-anchor="middle">残差 + LayerNorm</text>
+
+  <rect x="320" y="320" width="270" height="120" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="455" y="350" fill="#d29922" font-size="13" font-weight="600" text-anchor="middle">前馈网络 FFN</text>
+  <text x="455" y="374" fill="#8b949e" font-size="11" text-anchor="middle">逐位置 · 升维 4× 再降维</text>
+  <text x="455" y="396" fill="#8b949e" font-size="11" text-anchor="middle">ReLU / GELU / SwiGLU</text>
+  <text x="455" y="420" fill="#3fb950" font-size="11" text-anchor="middle">残差 + LayerNorm</text>
+
+  <!-- Decoder 边界 -->
+  <rect x="700" y="110" width="380" height="470" rx="12" fill="none" stroke="#30363d" stroke-width="1.5" stroke-dasharray="8 5"/>
+  <text x="890" y="135" fill="#58a6ff" font-size="15" font-weight="700" text-anchor="middle">Decoder × N（解码器）</text>
+
+  <rect x="730" y="160" width="320" height="110" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="890" y="187" fill="#bc8cff" font-size="13" font-weight="600" text-anchor="middle">掩码多头自注意力</text>
+  <text x="890" y="211" fill="#f85149" font-size="11" text-anchor="middle">Causal Mask：只见过去，不可见未来</text>
+  <text x="890" y="235" fill="#3fb950" font-size="11" text-anchor="middle">残差 + LayerNorm</text>
+
+  <rect x="730" y="300" width="320" height="110" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="890" y="327" fill="#bc8cff" font-size="13" font-weight="600" text-anchor="middle">交叉注意力 Cross-Attention</text>
+  <text x="890" y="351" fill="#8b949e" font-size="11" text-anchor="middle">Q 来自 Decoder · K/V 来自 Encoder</text>
+  <text x="890" y="375" fill="#3fb950" font-size="11" text-anchor="middle">残差 + LayerNorm</text>
+
+  <rect x="730" y="440" width="320" height="110" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="890" y="467" fill="#d29922" font-size="13" font-weight="600" text-anchor="middle">前馈网络 FFN</text>
+  <text x="890" y="491" fill="#8b949e" font-size="11" text-anchor="middle">逐位置非线性变换</text>
+  <text x="890" y="515" fill="#3fb950" font-size="11" text-anchor="middle">残差 + LayerNorm</text>
+
+  <!-- 输出 -->
+  <rect x="970" y="620" width="160" height="56" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="1050" y="644" fill="#e6edf3" font-size="13" text-anchor="middle">Linear + Softmax</text>
+  <text x="1050" y="663" fill="#8b949e" font-size="11" text-anchor="middle">下一 Token 概率</text>
+
+  <!-- 箭头 -->
+  <line x1="155" y1="176" x2="155" y2="208" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="230" y1="238" x2="318" y2="238" stroke="#8b949e" stroke-width="1.5"/>
+  <path d="M455 290 L455 318" stroke="#8b949e" stroke-width="1.5"/>
+  <path d="M590 230 L728 230" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <path d="M590 380 L728 355" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <line x1="890" y1="272" x2="890" y2="298" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="890" y1="412" x2="890" y2="438" stroke="#8b949e" stroke-width="1.5"/>
+  <path d="M890 552 L890 600 L1050 600 L1050 618" fill="none" stroke="#8b949e" stroke-width="1.5"/>
+
+  <!-- 变体标注 -->
+  <rect x="80" y="620" width="500" height="120" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="100" y="648" fill="#e6edf3" font-size="13" font-weight="700">现代大模型的三种取舍</text>
+  <text x="100" y="674" fill="#8b949e" font-size="12">• Encoder-only（双向）：BERT —— 理解 / 分类 / 抽取</text>
+  <text x="100" y="696" fill="#8b949e" font-size="12">• Decoder-only（因果）：GPT / LLaMA / Qwen —— 当代 LLM 主流</text>
+  <text x="100" y="718" fill="#8b949e" font-size="12">• Encoder-Decoder：T5 / BART —— 翻译 / 摘要</text>
+
+  <!-- info cards -->
+  <g>
+    <rect x="60" y="770" width="346" height="72" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="80" y="796" fill="#58a6ff" font-size="13" font-weight="600">注意力层</text>
+    <text x="80" y="820" fill="#e6edf3" font-size="12">token 之间的全局信息混合</text>
+  </g>
+  <g>
+    <rect x="427" y="770" width="346" height="72" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="447" y="796" fill="#58a6ff" font-size="13" font-weight="600">FFN 层</text>
+    <text x="447" y="820" fill="#e6edf3" font-size="12">大部分参数所在，存储知识</text>
+  </g>
+  <g>
+    <rect x="794" y="770" width="346" height="72" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="814" y="796" fill="#58a6ff" font-size="13" font-weight="600">残差 + LN</text>
+    <text x="814" y="820" fill="#e6edf3" font-size="12">让数十层堆叠仍可训练</text>
+  </g>
+</svg>
+</body></html>

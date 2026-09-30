@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · 长上下文扩展</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 920" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="920" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 4 · 上下文扩展：外推 vs 内插，与分频段缩放</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">训练长度 L → 目标 L′：直接延伸（外推）易崩，压缩回去（内插）更稳；诀窍是高频外推、低频内插</text>
+
+  <!-- 外推示意 -->
+  <text x="60" y="125" fill="#f85149" font-size="14" font-weight="700">① 外推 Extrapolation（不稳定）</text>
+  <rect x="60" y="140" width="1080" height="70" rx="8" fill="#161b22" stroke="#30363d"/>
+  <rect x="80" y="155" width="560" height="40" rx="6" fill="rgba(63,185,80,0.15)" stroke="#3fb950"/>
+  <text x="360" y="180" fill="#3fb950" font-size="12" text-anchor="middle">训练过的位置区间 [0, L)</text>
+  <rect x="650" y="155" width="470" height="40" rx="6" fill="rgba(248,81,73,0.12)" stroke="#f85149" stroke-dasharray="6 4"/>
+  <text x="885" y="180" fill="#f85149" font-size="12" text-anchor="middle">陌生新位置 [L, L′)：分数可能灾难性爆大</text>
+
+  <!-- 内插示意 -->
+  <text x="60" y="255" fill="#3fb950" font-size="14" font-weight="700">② 内插 Interpolation（稳定，PI）</text>
+  <rect x="60" y="270" width="1080" height="70" rx="8" fill="#161b22" stroke="#30363d"/>
+  <rect x="80" y="285" width="1040" height="40" rx="6" fill="rgba(63,185,80,0.15)" stroke="#3fb950"/>
+  <text x="600" y="310" fill="#3fb950" font-size="12" text-anchor="middle">把 L′ 个位置整体压缩映射回 [0, L)：pos′ = pos / s（s = L′/L）</text>
+  <text x="60" y="368" fill="#8b949e" font-size="12">PI 论文理论结果：内插注意力分数上界比外推约小 600 倍 · LLaMA 7B–65B 扩至 32K，&lt;1000 步微调</text>
+
+  <!-- 分频段 -->
+  <text x="60" y="408" fill="#bc8cff" font-size="14" font-weight="700">③ 分频段：高频外推 + 低频内插（NTK / YaRN）</text>
+  <rect x="60" y="424" width="1080" height="170" rx="10" fill="#161b22" stroke="#30363d"/>
+  <!-- 频率轴 -->
+  <line x1="100" y1="470" x2="1100" y2="470" stroke="#8b949e" stroke-width="1.5"/>
+  <text x="100" y="452" fill="#8b949e" font-size="12">高频（低维，管近处）</text>
+  <text x="1080" y="452" fill="#8b949e" font-size="12" text-anchor="end">低频（高维，管远处）</text>
+  <circle cx="180" cy="470" r="7" fill="#f85149"/>
+  <circle cx="560" cy="470" r="7" fill="#d29922"/>
+  <circle cx="1020" cy="470" r="7" fill="#3fb950"/>
+  <text x="180" y="500" fill="#f85149" font-size="12" text-anchor="middle">不缩放</text>
+  <text x="180" y="520" fill="#8b949e" font-size="11" text-anchor="middle">保近位分辨率</text>
+  <text x="560" y="500" fill="#d29922" font-size="12" text-anchor="middle">斜坡过渡 ramp</text>
+  <text x="560" y="520" fill="#8b949e" font-size="11" text-anchor="middle">YaRN 平滑分段</text>
+  <text x="1020" y="500" fill="#3fb950" font-size="12" text-anchor="middle">完全内插 ÷s</text>
+  <text x="1020" y="520" fill="#8b949e" font-size="11" text-anchor="middle">远处映射回熟悉区</text>
+  <text x="600" y="566" fill="#8b949e" font-size="12" text-anchor="middle">NTK：整体放大 base 实现非均匀改变；YaRN：按波长显式分段 + 注意力温度锐化（少 10× token、2.5× 步数）</text>
+
+  <!-- LongRoPE -->
+  <text x="60" y="636" fill="#58a6ff" font-size="14" font-weight="700">④ 非均匀 + 渐进（LongRoPE，2024）</text>
+  <rect x="60" y="652" width="1080" height="86" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="680" fill="#8b949e" font-size="12">• 搜索每个频率维度各自的最优缩放因子：免微调即可约 8× 扩展</text>
+  <text x="80" y="706" fill="#8b949e" font-size="12">• 渐进式：先微调 256K → 再做第二次内插 → 2048K（约 200 万 token），仅约 1K 步</text>
+  <text x="80" y="728" fill="#8b949e" font-size="12">• 短上下文恢复微调，保证原始窗口性能不掉</text>
+
+  <!-- info cards -->
+  <g>
+    <rect x="60" y="780" width="346" height="110" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="80" y="806" fill="#58a6ff" font-size="13" font-weight="600">两个正交瓶颈</text>
+    <text x="80" y="830" fill="#e6edf3" font-size="12">位置编码 → 解决表示</text>
+    <text x="80" y="852" fill="#e6edf3" font-size="12">O(n²) → Flash/稀疏注意力</text>
+    <text x="80" y="876" fill="#8b949e" font-size="11">两者缺一不可</text>
+  </g>
+  <g>
+    <rect x="427" y="780" width="346" height="110" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="447" y="806" fill="#58a6ff" font-size="13" font-weight="600">扩展方法演进</text>
+    <text x="447" y="830" fill="#e6edf3" font-size="12">PI → NTK → YaRN</text>
+    <text x="447" y="852" fill="#e6edf3" font-size="12">→ LongRoPE</text>
+    <text x="447" y="876" fill="#8b949e" font-size="11">均匀→分段→非均匀</text>
+  </g>
+  <g>
+    <rect x="794" y="780" width="346" height="110" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="814" y="806" fill="#58a6ff" font-size="13" font-weight="600">上下文量级</text>
+    <text x="814" y="830" fill="#e6edf3" font-size="12">2K/4K → 128K</text>
+    <text x="814" y="852" fill="#e6edf3" font-size="12">→ 1M → 2M</text>
+    <text x="814" y="876" fill="#8b949e" font-size="11">长上下文越来越廉价</text>
+  </g>
+</svg>
+</body></html>

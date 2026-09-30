@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 位置编码方案谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="900" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 3 · 位置编码方案谱系：从「绝对」到「相对」</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">主线：注入位置从「词向量加法」移向「注意力计算内部」；信息从「我在第几位」转为「我和你相隔多远」</text>
+
+  <!-- 三大类列标题 -->
+  <rect x="60" y="115" width="320" height="40" rx="8" fill="#161b22" stroke="#58a6ff"/>
+  <text x="220" y="141" fill="#58a6ff" font-size="14" font-weight="700" text-anchor="middle">绝对位置编码</text>
+
+  <rect x="440" y="115" width="320" height="40" rx="8" fill="#161b22" stroke="#3fb950"/>
+  <text x="600" y="141" fill="#3fb950" font-size="14" font-weight="700" text-anchor="middle">相对位置编码</text>
+
+  <rect x="820" y="115" width="320" height="40" rx="8" fill="#161b22" stroke="#bc8cff"/>
+  <text x="980" y="141" fill="#bc8cff" font-size="14" font-weight="700" text-anchor="middle">作用于注意力计算</text>
+
+  <!-- 绝对列：Sinusoidal -->
+  <rect x="60" y="180" width="320" height="150" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="80" y="210" fill="#e6edf3" font-size="15" font-weight="700">Sinusoidal 正弦 (2017)</text>
+  <text x="80" y="236" fill="#8b949e" font-size="12">PE(pos,2i)=sin(pos/10000^(2i/d))</text>
+  <text x="80" y="258" fill="#8b949e" font-size="12">固定公式 · 无参数 · 高频近/低频远</text>
+  <text x="80" y="280" fill="#8b949e" font-size="12">相对位置可由线性变换表达（间接）</text>
+  <text x="80" y="310" fill="#d29922" font-size="12">代表：原始 Transformer</text>
+
+  <!-- 绝对列：Learned -->
+  <rect x="60" y="350" width="320" height="150" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="80" y="380" fill="#e6edf3" font-size="15" font-weight="700">Learned 可学习 (2018)</text>
+  <text x="80" y="406" fill="#8b949e" font-size="12">查找表：每个位置一个可训练向量</text>
+  <text x="80" y="428" fill="#8b949e" font-size="12">直接加到词向量</text>
+  <text x="80" y="450" fill="#f85149" font-size="12">硬长度上限，几乎不可外推</text>
+  <text x="80" y="480" fill="#d29922" font-size="12">代表：BERT(512) · GPT-2(1024)</text>
+
+  <!-- 相对列 -->
+  <rect x="440" y="180" width="320" height="320" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="460" y="210" fill="#e6edf3" font-size="15" font-weight="700">Relative Position</text>
+  <text x="460" y="240" fill="#8b949e" font-size="13" font-weight="600">Shaw et al. (2018)</text>
+  <text x="460" y="264" fill="#8b949e" font-size="12">为每种相对距离引入可学习向量</text>
+  <text x="460" y="286" fill="#8b949e" font-size="12">裁剪到最大窗口 k</text>
+  <line x1="460" y1="310" x2="740" y2="310" stroke="#30363d"/>
+  <text x="460" y="340" fill="#8b949e" font-size="13" font-weight="600">T5 Relative Bias (2019)</text>
+  <text x="460" y="364" fill="#8b949e" font-size="12">分数上加 b_bucket(相对距离)</text>
+  <text x="460" y="386" fill="#8b949e" font-size="12">近距离细桶 · 远距离对数粗桶</text>
+  <text x="460" y="408" fill="#8b949e" font-size="12">每个头一套偏置</text>
+  <text x="460" y="448" fill="#3fb950" font-size="12">直接编码相对距离 · 平移不变</text>
+  <text x="460" y="478" fill="#d29922" font-size="12">代表：T5 · DeBERTa</text>
+
+  <!-- RoPE -->
+  <rect x="820" y="180" width="320" height="150" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+  <text x="840" y="210" fill="#e6edf3" font-size="15" font-weight="700">RoPE 旋转 (2021)</text>
+  <text x="840" y="236" fill="#8b949e" font-size="12">q_m=R(m)q · k_n=R(n)k</text>
+  <text x="840" y="258" fill="#8b949e" font-size="12">内积只依赖 (m−n) · 远程衰减</text>
+  <text x="840" y="280" fill="#3fb950" font-size="12">无参数 · 易扩展（PI/NTK/YaRN）</text>
+  <text x="840" y="310" fill="#d29922" font-size="12">LLaMA · Qwen · DeepSeek</text>
+
+  <!-- ALiBi -->
+  <rect x="820" y="350" width="320" height="150" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+  <text x="840" y="380" fill="#e6edf3" font-size="15" font-weight="700">ALiBi 线性偏置 (2021)</text>
+  <text x="840" y="406" fill="#8b949e" font-size="12">分数加 m_h·(i−j) 距离惩罚</text>
+  <text x="840" y="428" fill="#8b949e" font-size="12">无位置嵌入 · 每头不同斜率</text>
+  <text x="840" y="450" fill="#3fb950" font-size="12">强外推：Train Short, Test Long</text>
+  <text x="840" y="480" fill="#d29922" font-size="12">BLOOM · Baichuan2-13B</text>
+
+  <!-- 演进箭头 -->
+  <path d="M 380 255 L 438 255" stroke="#8b949e" stroke-width="2"/>
+  <path d="M 760 255 L 818 255" stroke="#8b949e" stroke-width="2"/>
+  <text x="600" y="540" fill="#6e7681" font-size="12" text-anchor="middle">演进方向：相对化 · 注意力内注入 · 外推能力增强</text>
+
+  <!-- 其他 -->
+  <rect x="60" y="570" width="1080" height="110" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="598" fill="#e6edf3" font-size="14" font-weight="700">其他研究性方案</text>
+  <text x="80" y="626" fill="#8b949e" font-size="12">• XPos (2022)：RoPE + 指数位置衰减，改善外推</text>
+  <text x="80" y="650" fill="#8b949e" font-size="12">• KERPLE：可学习的核化幂律/指数距离衰减</text>
+  <text x="600" y="626" fill="#8b949e" font-size="12">• NoPE：语音等强顺序结构场景的无编码尝试</text>
+  <text x="600" y="650" fill="#8b949e" font-size="12">• CoPE / Sandwich：多层或输出侧的灵活注入</text>
+
+  <!-- info cards -->
+  <g>
+    <rect x="60" y="800" width="346" height="76" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="80" y="826" fill="#58a6ff" font-size="13" font-weight="600">注入位置</text>
+    <text x="80" y="850" fill="#e6edf3" font-size="12">词向量 → 注意力分数 → Q/K 本身</text>
+  </g>
+  <g>
+    <rect x="427" y="800" width="346" height="76" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="447" y="826" fill="#58a6ff" font-size="13" font-weight="600">承载信息</text>
+    <text x="447" y="850" fill="#e6edf3" font-size="12">顺序 · 相对距离 · 方向</text>
+  </g>
+  <g>
+    <rect x="794" y="800" width="346" height="76" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="814" y="826" fill="#58a6ff" font-size="13" font-weight="600">当代主流</text>
+    <text x="814" y="850" fill="#e6edf3" font-size="12">RoPE 为主，ALiBi 强外推见长</text>
+  </g>
+</svg>
+</body></html>
