@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 6 个话题。
+大模型与后训练方向的论文分析，共 7 个话题。
 
 ---
 
@@ -39,3 +39,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 从策略梯度（Policy Gradient）与 MDP 建模出发，深度剖析大模型 RL 算法：经典基线 **PPO**（重要性采样、clip 信任域、GAE、Critic、KL 惩罚），Critic-Free 家族 **RLOO / ReMax / REINFORCE++**，以及当代主流 **GRPO**（组相对优势、token clip、KL 无偏估计）与其改进变体 **DAPO**（clip-higher、动态采样、token-level loss、超长软奖励）、**Dr.GRPO**（去除长度膨胀偏置）、**GSPO**（序列级优化，稳 MoE）。并梳理 RLHF/RLAIF/RLVR 三种奖励范式、reward hacking 对策与 DeepSeek-R1 多阶段流程。信源为 13 篇 arXiv 原始论文（编号经 arXiv API 逐一核实）与知乎高赞文章交叉验证。
 
 📅 2026-09-30 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](llm-rl-algorithms/report.md)
+
+### [Agentic RL 智能体强化学习](agentic-rl/report.html)
+
+聚焦多轮环境下的大模型强化学习：从单轮 RLVR 到 Agentic RL 的五个本质差异（轨迹级优化、极稀疏延迟奖励、有状态随机环境、长 rollout、天然 off-policy）；系统梳理七类训练病理——**回声陷阱**（奖励方差悬崖+梯度尖峰，RAGEN）、**模板坍塌**（推理与输入无关，RAGEN-2）、**交互坍塌**（工具越用越少，ASTER）、reasoning 与 tool-use 的梯度冲突、犹豫/无效轮次与 staleness；四族算法方案：StarPO、**GiGPO**（组中组步级信用分配）、SPA-RL（进展归因）、ARPO（熵自适应采样）、T²PO（不确定性引导，ICML 2026 Spotlight）、DART（推理/工具双 LoRA）；并覆盖可验证环境规模化、奖励工程、异步训练基础设施（partial rollout、Agent Swarm、弹性伸缩）与 Kimi K2、MiniMax Forge、GLM-5 阶段化 RL 路线。信源为 19 篇 arXiv 原始论文（编号经 API 逐一核实）与知乎高赞综述。
+
+📅 2026-10-10 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](agentic-rl/report.md)

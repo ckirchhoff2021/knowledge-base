@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · Agentic RL七类病理</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="900" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 2 · 多轮环境下的七类训练病理</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">直接把 GRPO 搬进多轮 agent 环境会触发的失败模式，按信号 / 优化 / 行为与分布三类组织</text>
+
+  <!-- 中心 -->
+  <rect x="430" y="110" width="340" height="60" rx="10" fill="#161b22" stroke="#f85149" stroke-width="1.5"/>
+  <text x="600" y="137" fill="#f85149" font-size="15" font-weight="700" text-anchor="middle">GRPO 直接用于多轮 Agent</text>
+  <text x="600" y="157" fill="#8b949e" font-size="11" text-anchor="middle">长轨迹 · 稀疏奖励 · 有状态环境 · 异步采样</text>
+
+  <!-- 信号类 -->
+  <rect x="60" y="210" width="340" height="180" rx="10" fill="#161b22" stroke="#d29922"/>
+  <text x="80" y="238" fill="#d29922" font-size="14" font-weight="700">信号类</text>
+  <text x="80" y="268" fill="#e6edf3" font-size="12.5" font-weight="600">① 长程信用分配困难</text>
+  <text x="80" y="290" fill="#8b949e" font-size="11">一个 0/1 归因给上万 token</text>
+  <text x="80" y="320" fill="#e6edf3" font-size="12.5" font-weight="600">② 回声陷阱 Echo Trap</text>
+  <text x="80" y="342" fill="#8b949e" font-size="11">奖励方差悬崖 + 梯度尖峰（RAGEN）</text>
+  <text x="80" y="372" fill="#8b949e" font-size="11">策略–环境正反馈自我强化</text>
+
+  <!-- 优化类 -->
+  <rect x="430" y="210" width="340" height="180" rx="10" fill="#161b22" stroke="#f85149"/>
+  <text x="450" y="238" fill="#f85149" font-size="14" font-weight="700">优化类</text>
+  <text x="450" y="268" fill="#e6edf3" font-size="12.5" font-weight="600">③ 训练崩溃 / KL 与梯度爆炸</text>
+  <text x="450" y="290" fill="#8b949e" font-size="11">换随机种子也可能崩（T²PO）</text>
+  <text x="450" y="320" fill="#e6edf3" font-size="12.5" font-weight="600">④ 想–做梯度冲突</text>
+  <text x="450" y="342" fill="#8b949e" font-size="11">reasoning 与 tool-use 梯度反向</text>
+  <text x="450" y="372" fill="#8b949e" font-size="11">LEAS 量化证实（DART）</text>
+
+  <!-- 行为类 -->
+  <rect x="800" y="210" width="340" height="180" rx="10" fill="#161b22" stroke="#bc8cff"/>
+  <text x="820" y="238" fill="#bc8cff" font-size="14" font-weight="700">行为与分布类</text>
+  <text x="820" y="266" fill="#e6edf3" font-size="12" font-weight="600">⑤ 模板坍塌</text>
+  <text x="820" y="287" fill="#8b949e" font-size="11">推理与输入无关的固定套路（RAGEN-2）</text>
+  <text x="820" y="314" fill="#e6edf3" font-size="12" font-weight="600">⑥ 犹豫 / 无效轮次 / 交互坍塌</text>
+  <text x="820" y="335" fill="#8b949e" font-size="11">低信息空转；工具越用越少（ASTER）</text>
+  <text x="820" y="362" fill="#e6edf3" font-size="12" font-weight="600">⑦ 分布偏移</text>
+  <text x="820" y="382" fill="#8b949e" font-size="11">stale policy + 环境漂移</text>
+
+  <!-- 对症映射 -->
+  <rect x="60" y="440" width="1080" height="200" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="472" fill="#3fb950" font-size="14" font-weight="700">对症的代表性修复</text>
+  <line x1="80" y1="484" x2="1120" y2="484" stroke="#30363d"/>
+  <text x="80" y="512" fill="#8b949e" font-size="12">① 信用分配 → GiGPO 步级组优势 · SPA-RL 进展归因</text>
+  <text x="80" y="542" fill="#8b949e" font-size="12">②③ 崩溃/回声 → StarPO-S 轨迹稳定化 · T²PO 不确定性引导探索</text>
+  <text x="80" y="572" fill="#8b949e" font-size="12">④ 梯度冲突 → DART 推理/工具双 LoRA · GLM 式阶段化 RL</text>
+  <text x="80" y="602" fill="#8b949e" font-size="12">⑤⑥ 坍塌/空转 → SimpleTIR 过滤无效轮次 · 高交互密度冷启动 · 熵监控</text>
+  <text x="80" y="632" fill="#8b949e" font-size="12">⑦ 分布偏移 → partial rollout 重用 · staleness 过滤 · token 级 clipping</text>
+
+  <!-- info cards -->
+  <g>
+    <rect x="60" y="690" width="346" height="140" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="80" y="718" fill="#58a6ff" font-size="13" font-weight="600">最早能观测到的信号</text>
+    <text x="80" y="744" fill="#e6edf3" font-size="12">奖励方差骤降</text>
+    <text x="80" y="768" fill="#8b949e" font-size="12">工具调用频率异常下滑</text>
+    <text x="80" y="796" fill="#8b949e" font-size="11">→ 看板必须有这两个指标</text>
+  </g>
+  <g>
+    <rect x="427" y="690" width="346" height="140" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="447" y="718" fill="#58a6ff" font-size="13" font-weight="600">隐蔽性最强</text>
+    <text x="447" y="744" fill="#e6edf3" font-size="12">模板坍塌：表面格式多样</text>
+    <text x="447" y="768" fill="#8b949e" font-size="12">实质与输入无关</text>
+    <text x="447" y="796" fill="#8b949e" font-size="11">需互信息诊断，不能只看 CoT 长度</text>
+  </g>
+  <g>
+    <rect x="794" y="690" width="346" height="140" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="814" y="718" fill="#58a6ff" font-size="13" font-weight="600">共性根因</text>
+    <text x="814" y="744" fill="#e6edf3" font-size="12">稀疏信号 + 高方差 + 长回路</text>
+    <text x="814" y="768" fill="#8b949e" font-size="12">使「无效行为」获得强化</text>
+    <text x="814" y="796" fill="#8b949e" font-size="11">→ 保探索 · 保梯度 · 控分布</text>
+  </g>
+</svg>
+</body></html>

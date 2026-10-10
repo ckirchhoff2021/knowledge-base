@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · Agentic RL算法谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 920" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="920" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 3 · Agentic RL 算法方案谱系</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">在 GRPO 等单轮算法之上，沿四个方向修补多轮环境带来的问题；2025 上半年先解决「会用工具」，下半年起主攻「训得稳」</text>
+
+ <!-- 基座 -->
+  <rect x="370" y="108" width="460" height="56" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="600" y="134" fill="#e6edf3" font-size="14" font-weight="700" text-anchor="middle">单轮策略优化基座</text>
+  <text x="600" y="153" fill="#8b949e" font-size="11" text-anchor="middle">REINFORCE++ / PPO / GRPO + RLVR</text>
+
+  <!-- 四列标题 -->
+  <rect x="60" y="200" width="255" height="38" rx="8" fill="#161b22" stroke="#3fb950"/>
+  <text x="187" y="225" fill="#3fb950" font-size="13" font-weight="700" text-anchor="middle">① 细粒度信用分配</text>
+
+  <rect x="335" y="200" width="255" height="38" rx="8" fill="#161b22" stroke="#bc8cff"/>
+  <text x="462" y="225" fill="#bc8cff" font-size="13" font-weight="700" text-anchor="middle">② 探索与稳定控制</text>
+
+  <rect x="610" y="200" width="255" height="38" rx="8" fill="#161b22" stroke="#d29922"/>
+  <text x="737" y="225" fill="#d29922" font-size="13" font-weight="700" text-anchor="middle">③ 参数/阶段解耦</text>
+
+  <rect x="885" y="200" width="255" height="38" rx="8" fill="#161b22" stroke="#f85149"/>
+  <text x="1012" y="225" fill="#f85149" font-size="13" font-weight="700" text-anchor="middle">④ 工具学习与奖励</text>
+
+  <!-- 列1 -->
+  <rect x="60" y="255" width="255" height="120" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="78" y="282" fill="#e6edf3" font-size="12.5" font-weight="700">GiGPO（组中组）</text>
+  <text x="78" y="306" fill="#8b949e" font-size="11">同状态步跨轨迹组比较</text>
+  <text x="78" y="328" fill="#8b949e" font-size="11">步级优势 · critic-free</text>
+  <text x="78" y="356" fill="#58a6ff" font-size="10.5">arXiv:2505.10978</text>
+
+  <rect x="60" y="390" width="255" height="110" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="78" y="417" fill="#e6edf3" font-size="12.5" font-weight="700">SPA-RL</text>
+  <text x="78" y="441" fill="#8b949e" font-size="11">最终奖励再分配为</text>
+  <text x="78" y="463" fill="#8b949e" font-size="11">逐步进展增量奖励</text>
+  <text x="78" y="487" fill="#58a6ff" font-size="10.5">arXiv:2505.20732</text>
+
+  <!-- 列2 -->
+  <rect x="335" y="255" width="255" height="100" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="353" y="282" fill="#e6edf3" font-size="12.5" font-weight="700">StarPO / StarPO-S</text>
+  <text x="353" y="306" fill="#8b949e" font-size="11">轨迹级框架，抑制</text>
+  <text x="353" y="328" fill="#8b949e" font-size="11">回声陷阱梯度尖峰</text>
+  <text x="353" y="348" fill="#58a6ff" font-size="10.5">RAGEN · 2504.20073</text>
+
+  <rect x="335" y="370" width="255" height="100" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="353" y="397" fill="#e6edf3" font-size="12.5" font-weight="700">ARPO</text>
+  <text x="353" y="421" fill="#8b949e" font-size="11">熵自适应采样平衡</text>
+  <text x="353" y="443" fill="#8b949e" font-size="11">推理与工具，省一半调用</text>
+  <text x="353" y="463" fill="#58a6ff" font-size="10.5">arXiv:2507.19849</text>
+
+  <rect x="335" y="485" width="255" height="105" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="353" y="512" fill="#e6edf3" font-size="12.5" font-weight="700">T²PO · SimpleTIR</text>
+  <text x="353" y="536" fill="#8b949e" font-size="11">不确定性引导探索；</text>
+  <text x="353" y="558" fill="#8b949e" font-size="11">过滤无效轮次轨迹</text>
+  <text x="353" y="582" fill="#58a6ff" font-size="10.5">ICML26 Spotlight · 2509.02479</text>
+
+  <!-- 列3 -->
+  <rect x="610" y="255" width="255" height="110" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="628" y="282" fill="#e6edf3" font-size="12.5" font-weight="700">DART 双 LoRA</text>
+  <text x="628" y="306" fill="#8b949e" font-size="11">推理 / 工具各一适配器</text>
+  <text x="628" y="328" fill="#8b949e" font-size="11">梯度路径互不干扰</text>
+  <text x="628" y="352" fill="#58a6ff" font-size="10.5">arXiv:2602.00994</text>
+
+  <rect x="610" y="380" width="255" height="110" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="628" y="407" fill="#e6edf3" font-size="12.5" font-weight="700">阶段化 RL（GLM）</text>
+  <text x="628" y="431" fill="#8b949e" font-size="11">Reasoning → Agentic</text>
+  <text x="628" y="453" fill="#8b949e" font-size="11">→ General 顺序推进</text>
+  <text x="628" y="477" fill="#8b949e" font-size="10.5">时序解耦 + 跨阶段蒸馏</text>
+
+  <!-- 列4 -->
+  <rect x="885" y="255" width="255" height="110" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="903" y="282" fill="#e6edf3" font-size="12.5" font-weight="700">TORL · ReTool</text>
+  <text x="903" y="306" fill="#8b949e" font-size="11">RL 自主探索工具策略；</text>
+  <text x="903" y="328" fill="#8b949e" font-size="11">推理中动态穿插执行</text>
+  <text x="903" y="352" fill="#58a6ff" font-size="10.5">2503.23383 · 2504.11536</text>
+
+  <rect x="885" y="380" width="255" height="110" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="903" y="407" fill="#e6edf3" font-size="12.5" font-weight="700">ToolRL · OTC</text>
+  <text x="903" y="431" fill="#8b949e" font-size="11">奖励设计原则；</text>
+  <text x="903" y="453" fill="#8b949e" font-size="11">最少调用次数约束</text>
+  <text x="903" y="477" fill="#58a6ff" font-size="10.5">2504.13958 · 2504.14870</text>
+
+  <rect x="885" y="505" width="255" height="85" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="903" y="532" fill="#e6edf3" font-size="12.5" font-weight="700">ZeroSearch</text>
+  <text x="903" y="556" fill="#8b949e" font-size="11">模拟搜索训练真实检索</text>
+  <text x="903" y="578" fill="#58a6ff" font-size="10.5">arXiv:2505.04588</text>
+
+  <!-- 连线 -->
+  <path d="M520 166 L200 198" stroke="#8b949e" stroke-width="1.2"/>
+  <path d="M560 166 L462 198" stroke="#8b949e" stroke-width="1.2"/>
+  <path d="M640 166 L737 198" stroke="#8b949e" stroke-width="1.2"/>
+  <path d="M690 166 L1012 198" stroke="#8b949e" stroke-width="1.2"/>
+
+  <!-- info cards -->
+  <g>
+    <rect x="60" y="650" width="346" height="150" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="80" y="678" fill="#58a6ff" font-size="13" font-weight="600">时间脉络</text>
+    <text x="80" y="704" fill="#e6edf3" font-size="12">2025 H1：学会用工具</text>
+    <text x="80" y="728" fill="#8b949e" font-size="12">2025 H2：信用分配与稳定性</text>
+    <text x="80" y="752" fill="#8b949e" font-size="12">2026：崩溃机理与系统化解法</text>
+    <text x="80" y="780" fill="#8b949e" font-size="11">主线：从「能用」到「训得稳、训得久」</text>
+  </g>
+  <g>
+    <rect x="427" y="650" width="346" height="150" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="447" y="678" fill="#58a6ff" font-size="13" font-weight="600">共同倾向</text>
+    <text x="447" y="704" fill="#e6edf3" font-size="12">坚持 critic-free</text>
+    <text x="447" y="728" fill="#8b949e" font-size="12">不引入同规模价值模型</text>
+    <text x="447" y="752" fill="#8b949e" font-size="12">靠采样结构造更细的优势</text>
+    <text x="447" y="780" fill="#8b949e" font-size="11">显存友好是硬约束</text>
+  </g>
+  <g>
+    <rect x="794" y="650" width="346" height="150" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="814" y="678" fill="#58a6ff" font-size="13" font-weight="600">矛盾的两种解法</text>
+    <text x="814" y="704" fill="#e6edf3" font-size="12">梯度冲突 → DART 结构解耦</text>
+    <text x="814" y="728" fill="#8b949e" font-size="12">梯度冲突 → GLM 时序解耦</text>
+    <text x="814" y="756" fill="#8b949e" font-size="11">同一问题，空间 vs 时间两条路</text>
+  </g>
+</svg>
+</body></html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · Agentic RL异步训练系统</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="900" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 4 · Agentic RL 异步训练系统与三难权衡</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">rollout 拉长到分钟/小时级后，瓶颈从 loss 设计转为吞吐 × 稳定 × 灵活的系统工程</text>
+
+  <!-- 三难权衡三角 -->
+  <polygon points="230,200 430,200 330,330" fill="none" stroke="#d29922" stroke-width="1.5"/>
+  <circle cx="230" cy="200" r="6" fill="#d29922"/>
+  <circle cx="430" cy="200" r="6" fill="#d29922"/>
+  <circle cx="330" cy="330" r="6" fill="#d29922"/>
+  <text x="230" y="185" fill="#e6edf3" font-size="13" font-weight="700" text-anchor="middle">吞吐</text>
+  <text x="430" y="185" fill="#e6edf3" font-size="13" font-weight="700" text-anchor="middle">Agent 灵活性</text>
+  <text x="330" y="355" fill="#e6edf3" font-size="13" font-weight="700" text-anchor="middle">稳定性</text>
+  <text x="330" y="260" fill="#8b949e" font-size="11" text-anchor="middle">不可兼得</text>
+  <text x="330" y="278" fill="#8b949e" font-size="11" text-anchor="middle">（MiniMax Forge）</text>
+
+  <!-- 主闭环 -->
+  <!-- 任务池 -->
+  <rect x="540" y="140" width="150" height="60" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="615" y="168" fill="#e6edf3" font-size="13" font-weight="700" text-anchor="middle">任务池</text>
+  <text x="615" y="188" fill="#8b949e" font-size="11" text-anchor="middle">可验证环境百万级</text>
+
+  <!-- Rollout 集群 -->
+  <rect x="820" y="130" width="320" height="100" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+  <text x="980" y="158" fill="#3fb950" font-size="13" font-weight="700" text-anchor="middle">Rollout 集群（弹性伸缩）</text>
+  <text x="840" y="184" fill="#8b949e" font-size="11">vLLM 高并发生成 + 工具沙箱</text>
+  <text x="840" y="206" fill="#8b949e" font-size="11">AgentJet 蜂群：按负载动态扩缩</text>
+
+  <!-- 缓冲区 -->
+  <rect x="820" y="290" width="320" height="100" rx="10" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+  <text x="980" y="318" fill="#d29922" font-size="13" font-weight="700" text-anchor="middle">轨迹缓冲区</text>
+  <text x="840" y="344" fill="#8b949e" font-size="11">按策略版本/质量分桶</text>
+  <text x="840" y="366" fill="#8b949e" font-size="11">staleness 过滤 · 无效轮次过滤</text>
+
+  <!-- Trainer -->
+  <rect x="540" y="290" width="220" height="100" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+  <text x="650" y="318" fill="#bc8cff" font-size="13" font-weight="700" text-anchor="middle">Trainer（异步取批）</text>
+  <text x="560" y="344" fill="#8b949e" font-size="11">GiGPO/GRPO 类优化</text>
+  <text x="560" y="366" fill="#8b949e" font-size="11">token 级 clip · 双 LoRA</text>
+
+  <!-- 权重回流 -->
+  <rect x="540" y="440" width="600" height="70" rx="10" fill="#161b22" stroke="#f85149"/>
+  <text x="840" y="470" fill="#f85149" font-size="13" font-weight="700" text-anchor="middle">新权重回流：partial rollout 续采（K1.5），未完成轨迹不丢弃</text>
+  <text x="840" y="494" fill="#8b949e" font-size="11" text-anchor="middle">限制落后版本数 · 过旧轨迹降权（SkyRL 异步调度）</text>
+
+  <!-- 箭头 -->
+  <line x1="690" y1="170" x2="816" y2="170" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="980" y1="232" x2="980" y2="286" stroke="#8b949e" stroke-width="1.5"/>
+  <line x1="818" y1="340" x2="764" y2="340" stroke="#8b949e" stroke-width="1.5"/>
+  <path d="M650 392 L650 420 L650 438" stroke="#8b949e" stroke-width="1.5"/>
+  <path d="M540 475 L470 475 L470 180 L536 166" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="6 4"/>
+
+  <!-- 关键技术列表 -->
+  <rect x="60" y="560" width="1080" height="120" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="590" fill="#e6edf3" font-size="14" font-weight="700">让闭环转起来的五项关键技术</text>
+  <text x="80" y="620" fill="#8b949e" font-size="12">① Partial Rollout Reuse（摊薄长轨迹成本）　② Actor/Rollout 分离（训练与生成各用最优引擎）</text>
+  <text x="80" y="648" fill="#8b949e" font-size="12">③ 弹性伸缩蜂群（AgentJet）　④ Staleness 控制（版本上限/降权/token 级 clip）</text>
+  <text x="80" y="676" fill="#8b949e" font-size="12">⑤ 阶段化 RL + 跨阶段蒸馏（GLM：Reasoning → Agentic → General 顺序推进）</text>
+
+  <!-- info cards -->
+  <g>
+    <rect x="60" y="720" width="346" height="110" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="80" y="748" fill="#58a6ff" font-size="13" font-weight="600">瓶颈本质</text>
+    <text x="80" y="774" fill="#e6edf3" font-size="12">分钟/小时级 rollout 使</text>
+    <text x="80" y="798" fill="#8b949e" font-size="12">GPU 利用率成为主要成本</text>
+  </g>
+  <g>
+    <rect x="427" y="720" width="346" height="110" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="447" y="748" fill="#58a6ff" font-size="13" font-weight="600">代表框架</text>
+    <text x="447" y="774" fill="#e6edf3" font-size="12">Forge（MiniMax）· SkyRL</text>
+    <text x="447" y="798" fill="#8b949e" font-size="12">AgentJet（通义）· PARL/Swarm（K2）</text>
+  </g>
+  <g>
+    <rect x="794" y="720" width="346" height="110" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="814" y="748" fill="#58a6ff" font-size="13" font-weight="600">优化器也在进化</text>
+    <text x="814" y="774" fill="#e6edf3" font-size="12">K2 MuonClip：Muon + QK-clip</text>
+    <text x="814" y="798" fill="#8b949e" font-size="11">15.5T token 预训练零 loss spike</text>
+  </g>
+</svg>
+</body></html>
