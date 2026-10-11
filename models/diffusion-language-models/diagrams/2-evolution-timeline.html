@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · 扩散语言模型演进时间线</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="900" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="24" font-weight="700">图 2 · 扩散语言模型十年演进：从连续扩散玩具到 100B 规模与商业部署</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13">三条支线汇合：扩散生成理论（蓝）· 文本离散扩散（绿）· 大模型工程化与规模化（金）。所有论文编号均经 arXiv API 核实</text>
+
+  <!-- 主轴 -->
+  <line x1="90" y1="120" x2="90" y2="850" stroke="#30363d" stroke-width="3"/>
+
+  <!-- 阶段色带 -->
+  <rect x="100" y="118" width="1050" height="150" rx="8" fill="rgba(88,166,255,0.05)"/>
+  <rect x="100" y="278" width="1050" height="180" rx="8" fill="rgba(63,185,80,0.05)"/>
+  <rect x="100" y="468" width="1050" height="382" rx="8" fill="rgba(210,153,34,0.05)"/>
+
+  <text x="112" y="142" fill="#58a6ff" font-size="14" font-weight="700">阶段一 · 理论奠基（2015–2022）：扩散从图像走向离散文本</text>
+  <!-- 节点 -->
+  <g font-size="12">
+    <circle cx="90" cy="175" r="6" fill="#58a6ff"/>
+    <text x="112" y="172" fill="#e6edf3" font-weight="700">2015 · Sohl-Dickstein《Deep Unsupervised Learning using Nonequilibrium Thermodynamics》[1503.03585]</text>
+    <text x="112" y="190" fill="#8b949e">首次提出离散状态空间上的扩散概率模型（前向加噪 + 学习反向马尔可夫链），DDPM 的直接思想源头</text>
+
+    <circle cx="90" cy="225" r="6" fill="#58a6ff"/>
+    <text x="112" y="222" fill="#e6edf3" font-weight="700">2019–2021 · Mask-Predict [1904.09324] · D3PM [2107.03006] · Argmax Flows [2102.05379] · SUNDA [2112.06749]</text>
+    <text x="112" y="240" fill="#8b949e">非自回归机器翻译的并行解码；吸收态（mask）/多项式两类离散噪声核定型；迭代去噪自编码器用于文本</text>
+  </g>
+
+  <text x="112" y="302" fill="#3fb950" font-size="14" font-weight="700">阶段二 · 文本扩散成形（2022–2024）：连续嵌入路线与离散路线分野</text>
+  <g font-size="12">
+    <circle cx="90" cy="335" r="6" fill="#3fb950"/>
+    <text x="112" y="332" fill="#e6edf3" font-weight="700">2022 · 连续嵌入路线：Diffusion-LM [2205.14217]（可控文本生成）· SED [2211.04236] · CDCD [2211.15089]</text>
+    <text x="112" y="350" fill="#8b949e">把 token 映到连续向量做高斯扩散，再「rounding」回词表——可控性强，但硬投影破坏似然界、易漂到无效区域</text>
+
+    <circle cx="90" cy="385" r="6" fill="#3fb950"/>
+    <text x="112" y="382" fill="#e6edf3" font-weight="700">2024 · 离散路线成熟：SEDD [2310.16834]（score entropy，直接估计数据分布比率）· MD4 [2406.04329]（简化广义掩码扩散）</text>
+    <text x="112" y="400" fill="#8b949e">同年 DiffuSeq 把扩散用于 seq2seq；《Diffusion of Thought》[2402.07754] 首次让扩散模型做思维链推理；立场论文 [2406.11473]</text>
+    <text x="112" y="420" fill="#8b949e">关键转折：从 BERT 式「单轮掩码补全」升级为「连续时间多步马尔可夫去噪」，具备 principled 生成模型地位</text>
+    <text x="112" y="440" fill="#8b949e">规模瓶颈：这一阶段模型普遍 ≤ 1B，质量与 AR 差距明显，被视为学术好奇而非工程选项</text>
+  </g>
+
+  <text x="112" y="492" fill="#d29922" font-size="14" font-weight="700">阶段三 · 规模化与商业化（2025–2026）：8B 对标、商业 API、100B、MoE、连续潜空间、RL 后训练</text>
+  <g font-size="11.5">
+    <circle cx="90" cy="525" r="6" fill="#d29922"/>
+    <text x="112" y="522" fill="#e6edf3" font-weight="700">2025-02 · LLaDA-8B [2502.09992]（人大 GSAI，从零预训练，对标 LLaMA3-8B，缓解逆转诅咒）</text>
+    <text x="112" y="540" fill="#8b949e">同月 Inception Labs 发布 Mercury（首个商业级扩散 LLM，H100 上 737/1,109 TPS，比速度优化前沿模型快约 10×）[2506.17298 技术报告]</text>
+
+    <circle cx="90" cy="575" r="6" fill="#d29922"/>
+    <text x="112" y="572" fill="#e6edf3" font-weight="700">2025-03 · Block Diffusion [2503.09573]：在 AR 与扩散之间插值的块级生成，奠定 block-AR + KV cache 工程范式</text>
+
+    <circle cx="90" cy="610" r="6" fill="#d29922"/>
+    <text x="112" y="607" fill="#e6edf3" font-weight="700">2025-05 · LLaDA 1.5（VRPO 方差缩减偏好优化）[2505.19223] · LLaDA-V 扩散多模态 · Google 发布 Gemini Diffusion（闭源实验模型）</text>
+
+    <circle cx="90" cy="645" r="6" fill="#d29922"/>
+    <text x="112" y="642" fill="#e6edf3" font-weight="700">2025-08 · Dream 7B [2508.15487]（港大/华为诺亚，AR 初始化 + token 级噪声重调度，当时最强开源 DLM）</text>
+    <text x="112" y="660" fill="#8b949e">同月 Seed Diffusion [2508.02193]（字节大规模高速扩散）；VILA-Lab 发布首篇系统综述 [2508.10875]</text>
+
+    <circle cx="90" cy="695" r="6" fill="#d29922"/>
+    <text x="112" y="692" fill="#e6edf3" font-weight="700">2025-09 · LLaDA-MoE-7B-A1B：首个从零预训练的扩散 MoE（推理仅激活 ~1B 即超 LLaDA 1.5 8B）；Dream-Coder 7B [2509.01142]</text>
+
+    <circle cx="90" cy="730" r="6" fill="#d29922"/>
+    <text x="112" y="727" fill="#e6edf3" font-weight="700">2025-12 → 2026-02 · LLaDA 2.0 把扩散语言模型扩到 100B [2512.15745]；Mercury 2 成为首个「推理型」扩散 LLM</text>
+
+    <circle cx="90" cy="765" r="6" fill="#d29922"/>
+    <text x="112" y="762" fill="#e6edf3" font-weight="700">2026-05 · 字节 Seed 开源 Cola DLM [2605.06548]：Text VAE + 块因果 DiT 的连续潜空间扩散，全局语义与局部文本解耦，登 HF Daily</text>
+
+    <circle cx="90" cy="800" r="6" fill="#d29922"/>
+    <text x="112" y="797" fill="#e6edf3" font-weight="700">2026-06 · iLLaDA-8B [2606.25331]（12T token 全双向预训练）；DiffusionGemma 成为首个 vLLM 原生支持的 dLLM</text>
+
+    <circle cx="90" cy="835" r="6" fill="#d29922"/>
+    <text x="112" y="832" fill="#e6edf3" font-weight="700">2026-07–10 · Google DeepMind DiffusionGemma 26B-A4B [2608.00146]：AR 权重热启动 + SFT + 采样器蒸馏×RL，~1,500 TPS、双模解码</text>
+    <text x="112" y="850" fill="#8b949e">2026-10 月 arXiv 仍在密集产出（Plan-and-Patch Agent 规划、Flow LM 高效推理、DLM 量化、AR 后训练权重迁移等每周数篇）</text>
+  </g>
+</svg>
+</body></html>

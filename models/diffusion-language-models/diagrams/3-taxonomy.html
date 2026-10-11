@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 扩散语言模型技术路线谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 920" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="920" fill="#0d1117"/>
+  <text x="60" y="50" fill="#e6edf3" font-size="24" font-weight="700">图 3 · 扩散语言模型的四条技术路线与块级混合层</text>
+  <text x="60" y="78" fill="#8b949e" font-size="13">分类轴：扩散作用的空间（离散 token / 连续嵌入 / 连续潜变量）× 前向噪声核（吸收掩码 / 多项式均匀）。2025 年后主流收敛到「离散扩散 + 块级自回归外壳」，潜空间路线在 2026 年复兴</text>
+
+  <!-- 四个路线卡片 -->
+  <!-- 路线1 离散掩码 -->
+  <rect x="50" y="105" width="540" height="240" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+  <text x="70" y="135" fill="#3fb950" font-size="16" font-weight="700">① 离散掩码扩散（Absorbing / Masked）</text>
+  <g font-size="12" fill="#8b949e">
+    <text x="70" y="162">前向：干净 token 以概率 t 被替换为独立 [MASK] 吸收态</text>
+    <text x="70" y="182">反向：Transformer 对全部掩码位置预测原 token，按置信度逐批解蔽</text>
+    <text x="70" y="202">训练：随机采样 t，对噪声序列做去噪交叉熵（等价于 ELBO）</text>
+  </g>
+  <rect x="70" y="216" width="500" height="52" rx="6" fill="#0d1117" stroke="#30363d"/>
+  <text x="84" y="238" fill="#e6edf3" font-size="12" font-weight="700">代表：LLaDA / LLaDA 1.5 / iLLaDA / Dream 7B / SEDD / MD4</text>
+  <text x="84" y="258" fill="#8b949e" font-size="11.5">优势：实现最简单（改几行训练代码）、语义稳定、无 rounding 误差</text>
+  <text x="70" y="292" fill="#f85149" font-size="11.5">短板：已解蔽 token 在同一块内默认冻结（半自校正）；纯掩码路径表达力受限</text>
+  <text x="70" y="316" fill="#d29922" font-size="11.5">补救：Dream 的 context-adaptive token 级噪声重调度；lookahead unmasking；DMax 激进并行解蔽</text>
+
+  <!-- 路线2 多项式 -->
+  <rect x="610" y="105" width="540" height="240" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="630" y="135" fill="#58a6ff" font-size="16" font-weight="700">② 多项式 / 均匀扩散（Multinomial / CTMC）</text>
+  <g font-size="12" fill="#8b949e">
+    <text x="630" y="162">前向：token 以 κₜ 保留、以 (1−κₜ)/V 概率在整个词表均匀跳转</text>
+    <text x="630" y="182">反向：连续时间马尔可夫链（CTMC）+ discrete flow matching 给出精确转移</text>
+    <text x="630" y="202">采样：predictor-corrector、Ψ-sampler、并行时间采样等丰富求解器</text>
+  </g>
+  <rect x="630" y="216" width="500" height="52" rx="6" fill="#0d1117" stroke="#30363d"/>
+  <text x="644" y="238" fill="#e6edf3" font-size="12" font-weight="700">代表：D3PM · Argmax Flows · DiffusionGemma · Nemotron-Diffusion</text>
+  <text x="644" y="258" fill="#8b949e" font-size="11.5">优势：任何 token 在收敛前都可继续跳变 → 真正的全程自我纠错</text>
+  <text x="630" y="292" fill="#f85149" font-size="11.5">短板：高熵阶段噪声大，少步采样易退化；采样器设计复杂</text>
+  <text x="630" y="316" fill="#d29922" font-size="11.5">补救：熵约束解蔽 + 温度退火（0.8→0.4）+ 自适应停止（平均 12/48 步）</text>
+
+  <!-- 路线3 连续嵌入 -->
+  <rect x="50" y="370" width="540" height="225" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+  <text x="70" y="400" fill="#bc8cff" font-size="16" font-weight="700">③ 连续嵌入扩散（Continuous Embedding，2022 初代路线）</text>
+  <g font-size="12" fill="#8b949e">
+    <text x="70" y="427">token → 可训练连续向量 → 高斯扩散/流匹配 → 最近邻投影回词表</text>
+    <text x="70" y="447">变体：Diffusion-LM/SED 硬 rounding；CDCD 直接预测类别 logits；self-conditioning</text>
+  </g>
+  <rect x="70" y="462" width="500" height="40" rx="6" fill="#0d1117" stroke="#30363d"/>
+  <text x="84" y="487" fill="#e6edf3" font-size="12" font-weight="700">代表：Diffusion-LM · SED · CDCD · SSD-LM · DiffuSeq</text>
+  <text x="70" y="526" fill="#3fb950" font-size="11.5">优势：可直接复用图像扩散的求解器；可控生成（句法/情感约束）效果好</text>
+  <text x="70" y="550" fill="#f85149" font-size="11.5">短板：硬 rounding 破坏似然界；有效嵌入只占高维空间测度近 0，易漂到无效区</text>
+  <text x="70" y="578" fill="#8b949e" font-size="11.5">2026 年新进展：ELF 放弃逐步 token 监督、hyperspherical flows、flow map 单步生成使其复兴</text>
+
+  <!-- 路线4 潜空间 -->
+  <rect x="610" y="370" width="540" height="225" rx="10" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+  <text x="630" y="400" fill="#d29922" font-size="16" font-weight="700">④ 连续潜空间扩散（Latent Diffusion，2026 新主流候选）</text>
+  <g font-size="12" fill="#8b949e">
+    <text x="630" y="427">Text VAE 把整段文本压成短连续隐序列；DiT 在隐空间做 flow matching</text>
+    <text x="630" y="447">扩散搬运的是「语义先验」而非恢复 token：全局组织与局部措辞解耦</text>
+  </g>
+  <rect x="630" y="462" width="500" height="40" rx="6" fill="#0d1117" stroke="#30363d"/>
+  <text x="644" y="487" fill="#e6edf3" font-size="12" font-weight="700">代表：Cola DLM（字节 Seed）· AURORA-LM · Cosmos / TEncDM</text>
+  <text x="630" y="526" fill="#3fb950" font-size="11.5">优势：天然全局语义规划、压缩序列长度、与图像/视频扩散共享架构（多模态统一）</text>
+  <text x="630" y="550" fill="#f85149" font-size="11.5">短板：两阶段训练、VAE 信息瓶颈与重建误差、scaling 曲线尚在验证早期</text>
+  <text x="630" y="578" fill="#8b949e" font-size="11.5">Cola：块因果 DiT + 分类器自由引导 + 全链路 KV cache，已提供 OpenAI 兼容 API</text>
+
+  <!-- 混合层 -->
+  <rect x="50" y="625" width="1100" height="130" rx="10" fill="#0a0e14" stroke="#39c5cf" stroke-width="1.5"/>
+  <text x="70" y="655" fill="#39c5cf" font-size="16" font-weight="700">⑤ 块级混合层（Block-AR）—— 2025 后所有大模型的共同工程外壳</text>
+  <g font-size="12.5" fill="#8b949e">
+    <text x="70" y="683">因果编码器把 prompt + 已完成块写入 KV 缓存 → 双向解码器在 256 token「画布」内并行去噪 → 干净块回写 KV → 下一块</text>
+    <text x="70" y="707">插值光谱：块长 = 1 即纯 AR；块长 = 全文即纯扩散。Block Diffusion [2503.09573] 给出可学习的块长插值</text>
+    <text x="70" y="731">采用者：Mercury / Gemini Diffusion / Seed Diffusion / DiffusionGemma / FastDLLM / LLaDA 2.0；NVIDIA Nemotron-Diffusion 更进一步做 AR/扩散/自推测三模统一</text>
+  </g>
+
+  <!-- 底部采样器 -->
+  <rect x="50" y="775" width="1100" height="115" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="70" y="805" fill="#e6edf3" font-size="15" font-weight="700">横切关注点 · 采样器与推理压缩（独立于架构的算法层）</text>
+  <g font-size="12" fill="#8b949e">
+    <text x="70" y="832">置信度/熵排序解蔽（MaskGIT 式）· semi-autoregressive 重排 · predictor-corrector · 自适应停止 · 温度退火</text>
+    <text x="70" y="856">采样器蒸馏（progressive / consistency / discrete MMD [2603.20155]）把 48 步压到 ~12 步；并行时间采样 [2607.00773]；dVoting / DMax / SAID / Flash-dLLM 做系统级加速</text>
+    <text x="70" y="880">后训练：DPO/VRPO 偏好对齐 [2505.19223] · D1/DiffusionNFT/Flow-GRPO 扩散 RL · DiffusionGemma 的 SD·RL（奖励提升与步数压缩联合优化）</text>
+  </g>
+</svg>
+</body></html>

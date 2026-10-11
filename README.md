@@ -37,6 +37,7 @@
 | [**Transformer × 位置编码**](https://ckirchhoff2021.github.io/knowledge-base/models/transformer-pe/report.html) | 架构全解：RoPE/ALiBi 原理取舍与 PI/NTK/YaRN 长上下文扩展 |
 | [**大模型强化学习算法**](https://ckirchhoff2021.github.io/knowledge-base/models/llm-rl-algorithms/report.html) | PPO 深度拆解 · GRPO/DAPO/Dr.GRPO/GSPO · RLVR 与 R1 流程 |
 | [**Agentic RL 智能体强化学习**](https://ckirchhoff2021.github.io/knowledge-base/models/agentic-rl/report.html) | 多轮环境训练：回声陷阱/模板坍塌/交互坍塌 · GiGPO/T²PO/DART · 异步RL系统 |
+| [**扩散语言模型 DLM**](https://ckirchhoff2021.github.io/knowledge-base/models/diffusion-language-models/report.html) | 非自回归新范式：LLaDA/Mercury/Cola/DiffusionGemma · Block-AR · 采样器压缩 · SD·RL，单 H100 约 1500 TPS |
 
 ### 🌱 生活方法论
 

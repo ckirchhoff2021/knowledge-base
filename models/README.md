@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 7 个话题。
+大模型与后训练方向的论文分析，共 8 个话题。
 
 ---
 
@@ -45,3 +45,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 聚焦多轮环境下的大模型强化学习：从单轮 RLVR 到 Agentic RL 的五个本质差异（轨迹级优化、极稀疏延迟奖励、有状态随机环境、长 rollout、天然 off-policy）；系统梳理七类训练病理——**回声陷阱**（奖励方差悬崖+梯度尖峰，RAGEN）、**模板坍塌**（推理与输入无关，RAGEN-2）、**交互坍塌**（工具越用越少，ASTER）、reasoning 与 tool-use 的梯度冲突、犹豫/无效轮次与 staleness；四族算法方案：StarPO、**GiGPO**（组中组步级信用分配）、SPA-RL（进展归因）、ARPO（熵自适应采样）、T²PO（不确定性引导，ICML 2026 Spotlight）、DART（推理/工具双 LoRA）；并覆盖可验证环境规模化、奖励工程、异步训练基础设施（partial rollout、Agent Swarm、弹性伸缩）与 Kimi K2、MiniMax Forge、GLM-5 阶段化 RL 路线。信源为 19 篇 arXiv 原始论文（编号经 API 逐一核实）与知乎高赞综述。
 
 📅 2026-10-10 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](agentic-rl/report.md)
+
+### [扩散语言模型（DLM）](diffusion-language-models/report.html)
+
+当 Transformer 不再只从左往右写：系统梳理 2015–2026 年扩散语言模型的数学原理、四条技术路线（掩码/多项/score-entropy/连续潜空间）、Block-AR 工程外壳、采样器与推理压缩（48 步压到平均 12 步）、扩散原生后训练（VRPO、SD·RL），以及 LLaDA/LLaDA2.0、Mercury、Dream、Seed Diffusion、字节 Cola DLM、Google DiffusionGemma、NVIDIA Nemotron 等前沿系统的实测数据与能力边界（DiffusionGemma 单 H100 约 1500 TPS、约 20 TPF）。信源为 37 篇 arXiv 原始论文（编号经 arXiv 官网逐一核实）与官方技术报告交叉验证。
+
+📅 2026-10-11 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](diffusion-language-models/report.md)
