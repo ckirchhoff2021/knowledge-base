@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 世界模型五大技术路线分类学</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 860" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="860" fill="#0d1117"/>
+  <text x="60" y="50" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 世界模型技术谱系：五大路线与代表系统</text>
+  <text x="60" y="78" fill="#8b949e" font-size="13">共同目标：学习环境动力学 P(sₜ₊₁ | sₜ, aₜ)，赋予智能体「预测 · 规划 · 想象学习」三大能力；分歧在于「在哪个空间做预测」</text>
+
+  <rect x="420" y="104" width="360" height="60" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="600" y="130" fill="#58a6ff" font-size="17" font-weight="700" text-anchor="middle">世界模型 World Model</text>
+  <text x="600" y="152" fill="#8b949e" font-size="12" text-anchor="middle">P(sₜ₊₁ | sₜ, aₜ)　预测 · 规划 · 想象</text>
+
+  <g stroke="#30363d" stroke-width="1.4" fill="none">
+    <path d="M520,164 L150,206"/><path d="M560,164 L380,206"/><path d="M600,164 L610,206"/>
+    <path d="M640,164 L840,206"/><path d="M680,164 L1060,206"/>
+  </g>
+
+  <g>
+    <rect x="40" y="210" width="220" height="244" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.4"/>
+    <rect x="40" y="210" width="220" height="32" rx="10" fill="#3fb950" opacity="0.16"/>
+    <text x="150" y="232" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">① 潜空间模型式 RL</text>
+    <text x="56" y="266" fill="#e6edf3" font-size="12" font-weight="700">预测空间：紧凑潜状态</text>
+    <text x="56" y="288" fill="#8b949e" font-size="11">VAE/RSSM 压缩观测，在潜空间</text>
+    <text x="56" y="304" fill="#8b949e" font-size="11">学动力学，actor-critic 想象训练</text>
+    <line x1="56" y1="318" x2="244" y2="318" stroke="#30363d"/>
+    <text x="56" y="338" fill="#9ecbff" font-size="11">· World Models (2018)</text>
+    <text x="56" y="358" fill="#9ecbff" font-size="11">· PlaNet / RSSM</text>
+    <text x="56" y="378" fill="#9ecbff" font-size="11">· Dreamer V1–V4</text>
+    <text x="56" y="398" fill="#9ecbff" font-size="11">· IRIS / TWM / DIAMOND</text>
+    <text x="56" y="424" fill="#3fb950" font-size="10.5">优势：数据效率极高</text>
+    <text x="56" y="442" fill="#f85149" font-size="10.5">瓶颈：模型保真度 / 策略作弊</text>
+  </g>
+
+  <g>
+    <rect x="270" y="210" width="220" height="244" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.4"/>
+    <rect x="270" y="210" width="220" height="32" rx="10" fill="#bc8cff" opacity="0.16"/>
+    <text x="380" y="232" fill="#bc8cff" font-size="13.5" font-weight="700" text-anchor="middle">② 联合嵌入预测 JEPA</text>
+    <text x="286" y="266" fill="#e6edf3" font-size="12" font-weight="700">预测空间：抽象表征</text>
+    <text x="286" y="288" fill="#8b949e" font-size="11">弃像素重建，在嵌入空间预测</text>
+    <text x="286" y="304" fill="#8b949e" font-size="11">可预测部分（基于能量 EBM）</text>
+    <line x1="286" y1="318" x2="474" y2="318" stroke="#30363d"/>
+    <text x="286" y="338" fill="#9ecbff" font-size="11">· LeCun 2022 路线图</text>
+    <text x="286" y="358" fill="#9ecbff" font-size="11">· I-JEPA / V-JEPA</text>
+    <text x="286" y="378" fill="#9ecbff" font-size="11">· V-JEPA 2 / 2-AC</text>
+    <text x="286" y="398" fill="#9ecbff" font-size="11">· AMI Labs（LeCun 创业）</text>
+    <text x="286" y="424" fill="#bc8cff" font-size="10.5">优势：高效因果抽象</text>
+    <text x="286" y="442" fill="#f85149" font-size="10.5">瓶颈：不直接生成画面/长程</text>
+  </g>
+
+  <g>
+    <rect x="500" y="210" width="220" height="244" rx="10" fill="#161b22" stroke="#d29922" stroke-width="1.4"/>
+    <rect x="500" y="210" width="220" height="32" rx="10" fill="#d29922" opacity="0.16"/>
+    <text x="610" y="232" fill="#d29922" font-size="13.5" font-weight="700" text-anchor="middle">③ 生成式交互仿真</text>
+    <text x="516" y="266" fill="#e6edf3" font-size="12" font-weight="700">预测空间：像素 / 视觉token</text>
+    <text x="516" y="288" fill="#8b949e" font-size="11">生成实时响应动作的未来画面</text>
+    <text x="516" y="304" fill="#8b949e" font-size="11">＝神经仿真器 / 可玩生成环境</text>
+    <line x1="516" y1="318" x2="704" y2="318" stroke="#30363d"/>
+    <text x="516" y="338" fill="#9ecbff" font-size="11">· Genie 1 / 2 / 3</text>
+    <text x="516" y="358" fill="#9ecbff" font-size="11">· GameNGen / Oasis</text>
+    <text x="516" y="378" fill="#9ecbff" font-size="11">· Matrix-Game / Dreamer 4</text>
+    <text x="516" y="398" fill="#9ecbff" font-size="11">· Sora（世界模拟器叙事）</text>
+    <text x="516" y="424" fill="#d29922" font-size="10.5">优势：逼真、可直接交互</text>
+    <text x="516" y="442" fill="#f85149" font-size="10.5">瓶颈：sim-to-real 尚未证实</text>
+  </g>
+
+  <g>
+    <rect x="730" y="210" width="220" height="244" rx="10" fill="#161b22" stroke="#39c5cf" stroke-width="1.4"/>
+    <rect x="730" y="210" width="220" height="32" rx="10" fill="#39c5cf" opacity="0.16"/>
+    <text x="840" y="232" fill="#39c5cf" font-size="13.5" font-weight="700" text-anchor="middle">④ 显式 3D 空间智能</text>
+    <text x="746" y="266" fill="#e6edf3" font-size="12" font-weight="700">预测空间：三维几何</text>
+    <text x="746" y="288" fill="#8b949e" font-size="11">显式重建几何/深度/位置，生成</text>
+    <text x="746" y="304" fill="#8b949e" font-size="11">可编辑可导航可导出的 3D 世界</text>
+    <line x1="746" y1="318" x2="934" y2="318" stroke="#30363d"/>
+    <text x="746" y="338" fill="#9ecbff" font-size="11">· World Labs Marble</text>
+    <text x="746" y="358" fill="#9ecbff" font-size="11">· 腾讯 HunyuanWorld</text>
+    <text x="746" y="378" fill="#9ecbff" font-size="11">· NeRF / Gaussian Splatting</text>
+    <text x="746" y="398" fill="#9ecbff" font-size="11">· HY-World 2.0 / WorldPlay</text>
+    <text x="746" y="424" fill="#39c5cf" font-size="10.5">优势：空间一致性强</text>
+    <text x="746" y="442" fill="#f85149" font-size="10.5">瓶颈：动态物理理解弱</text>
+  </g>
+
+  <g>
+    <rect x="960" y="210" width="200" height="244" rx="10" fill="#161b22" stroke="#f85149" stroke-width="1.4"/>
+    <rect x="960" y="210" width="200" height="32" rx="10" fill="#f85149" opacity="0.16"/>
+    <text x="1060" y="232" fill="#f85149" font-size="12.5" font-weight="700" text-anchor="middle">⑤ 物理状态 / WFM 平台</text>
+    <text x="976" y="266" fill="#e6edf3" font-size="11.5" font-weight="700">预测空间：统一物理状态</text>
+    <text x="976" y="288" fill="#8b949e" font-size="10.5">全模态潜空间预测「下一物理</text>
+    <text x="976" y="304" fill="#8b949e" font-size="10.5">状态」，平台化 / 数据工厂</text>
+    <line x1="976" y1="318" x2="1144" y2="318" stroke="#30363d"/>
+    <text x="976" y="338" fill="#9ecbff" font-size="11">· NVIDIA Cosmos</text>
+    <text x="976" y="358" fill="#9ecbff" font-size="11">· 智源悟界 Physis</text>
+    <text x="976" y="378" fill="#9ecbff" font-size="11">· Emu3.5 / RoboBrain</text>
+    <text x="976" y="398" fill="#9ecbff" font-size="11">· 生数 Motus（WAM）</text>
+    <text x="976" y="424" fill="#f85149" font-size="10.5">优势：合成数据/落地近</text>
+    <text x="976" y="442" fill="#f85149" font-size="10.5">瓶颈：开放度/可复现参差</text>
+  </g>
+
+  <rect x="40" y="486" width="1120" height="150" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="60" y="516" fill="#e6edf3" font-size="14" font-weight="700">严格世界模型的四项硬判据 ——「视频生成 ≠ 世界模型」</text>
+  <g font-size="12">
+    <rect x="60" y="532" width="262" height="86" rx="8" fill="#0d1117" stroke="#30363d"/>
+    <text x="74" y="556" fill="#58a6ff" font-weight="700">① 动作 / 干预条件性</text>
+    <text x="74" y="578" fill="#8b949e" font-size="11">能回答「如果我这样做，会怎样」</text>
+    <text x="74" y="596" fill="#8b949e" font-size="11">的反事实问题 P(s′|s,a)</text>
+
+    <rect x="338" y="532" width="262" height="86" rx="8" fill="#0d1117" stroke="#30363d"/>
+    <text x="352" y="556" fill="#3fb950" font-weight="700">② 物理 / 因果一致性</text>
+    <text x="352" y="578" fill="#8b949e" font-size="11">满足重力、碰撞、遮挡、接触、</text>
+    <text x="352" y="596" fill="#8b949e" font-size="11">对象持久性与因果关系</text>
+
+    <rect x="616" y="532" width="262" height="86" rx="8" fill="#0d1117" stroke="#30363d"/>
+    <text x="630" y="556" fill="#d29922" font-weight="700">③ 长时程一致性</text>
+    <text x="630" y="578" fill="#8b949e" font-size="11">离开视野的物体属性保持，</text>
+    <text x="630" y="596" fill="#8b949e" font-size="11">长 rollout 不漂移、不退化</text>
+
+    <rect x="894" y="532" width="266" height="86" rx="8" fill="#0d1117" stroke="#30363d"/>
+    <text x="908" y="556" fill="#bc8cff" font-weight="700">④ 可用于规划 / 控制</text>
+    <text x="908" y="578" fill="#8b949e" font-size="11">预测能真正提升下游决策：</text>
+    <text x="908" y="596" fill="#8b949e" font-size="11">MPC、想象内 RL、零样本动作</text>
+  </g>
+  <text x="60" y="648" fill="#8b949e" font-size="11.5">分层提示：L1 严格物理世界模型（① ② ③ 多数）＞ L2 3D 世界生成（④）＞ L3 世界-行动模型 WAM ＞ L4 广义视频生成（Sora/Seedance/Wan 等，多数不满足判据①④）。</text>
+
+  <rect x="40" y="668" width="1120" height="156" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="60" y="698" fill="#e6edf3" font-size="14" font-weight="700">三大核心能力</text>
+  <g font-size="12">
+    <rect x="60" y="714" width="350" height="90" rx="8" fill="#0d1117" stroke="#3fb950"/>
+    <text x="78" y="740" fill="#3fb950" font-size="13" font-weight="700">预测 Prediction</text>
+    <text x="78" y="764" fill="#8b949e" font-size="11">前向推演动作后果 / 未来状态</text>
+    <text x="78" y="784" fill="#8b949e" font-size="11">（NSP：Next-State Prediction）</text>
+
+    <rect x="425" y="714" width="350" height="90" rx="8" fill="#0d1117" stroke="#58a6ff"/>
+    <text x="443" y="740" fill="#58a6ff" font-size="13" font-weight="700">规划 Planning</text>
+    <text x="443" y="764" fill="#8b949e" font-size="11">想象多条未来，能量/奖励最小化</text>
+    <text x="443" y="784" fill="#8b949e" font-size="11">选出动作序列（MPC / actor-critic）</text>
+
+    <rect x="790" y="714" width="370" height="90" rx="8" fill="#0d1117" stroke="#bc8cff"/>
+    <text x="808" y="740" fill="#bc8cff" font-size="13" font-weight="700">想象学习 Imagination RL</text>
+    <text x="808" y="764" fill="#8b949e" font-size="11">完全在模型生成的「梦」中训练策略</text>
+    <text x="808" y="784" fill="#8b949e" font-size="11">安全、廉价、可无限试错</text>
+  </g>
+</svg>
+</body></html>

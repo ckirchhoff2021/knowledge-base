@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 8 个话题。
+大模型与后训练方向的论文分析，共 9 个话题。
 
 ---
 
@@ -51,3 +51,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 当 Transformer 不再只从左往右写：系统梳理 2015–2026 年扩散语言模型的数学原理、四条技术路线（掩码/多项/score-entropy/连续潜空间）、Block-AR 工程外壳、采样器与推理压缩（48 步压到平均 12 步）、扩散原生后训练（VRPO、SD·RL），以及 LLaDA/LLaDA2.0、Mercury、Dream、Seed Diffusion、字节 Cola DLM、Google DiffusionGemma、NVIDIA Nemotron 等前沿系统的实测数据与能力边界（DiffusionGemma 单 H100 约 1500 TPS、约 20 TPF）。信源为 37 篇 arXiv 原始论文（编号经 arXiv 官网逐一核实）与官方技术报告交叉验证。
 
 📅 2026-10-11 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](diffusion-language-models/report.md)
+
+### [世界模型（World Models）](world-models/report.html)
+
+智源《2026 十大 AI 技术趋势》第 1 位方向——从「预测下一个词」迈向「预测世界下一状态」（Next-State Prediction）。系统梳理世界模型的形式化定义 P(s′|s,a)、L1–L4 抽象层级与三大核心能力（可交互预测/物理一致/动作条件）；1943–2026 思想源流（Craik 心智模型、Sutton Dyna、Ha & Schmidhuber《World Models》VAE+MDN-RNN、PlaNet/Dreamer 潜空间想象 RL、LeCun JEPA）；五大技术路线（像素生成式 Sora/Genie/GameNGen、潜空间动力学 IRIS/DIAMOND/Dreamer、JEPA 表征空间预测、显式 3D 空间智能 World Labs/腾讯混元、物理状态 NSP 智源 Physis）；深度拆解 Genie 3（首个实时可交互、720p/24fps/数分钟、无论文）、V-JEPA 2-AC（100 万小时视频预训练 + 62 小时机器人数据零样本规划，arXiv:2506.09985）、Dreamer 4（纯离线数据 Minecraft 挖钻，单 H100 ≥20fps，arXiv:2509.24527）三大旗舰；世界模型与 VLA 的条件分布互补关系及融合架构；NVIDIA Cosmos（Predict/Transfer/Reason + 合成数据蓝图）、智源悟界 Emu3/Emu3.5/Physis、World Labs Marble、AMI Labs、腾讯 HunyuanWorld、生数 Motus 等 2025–2026 产业地图；以及 PSNR/SSIM/FVD 局限、WorldModelBench 反事实一致性等评测体系与长时程漂移、sim2real、模型利用等开放问题。信源为 20+ 篇 arXiv 原始论文（编号经 arXiv 官方 API 逐一核实）与 DeepMind/Meta/NVIDIA/OpenAI/智源官方及新华社、知乎专栏交叉验证。
+
+📅 2026-10-12 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](world-models/report.md)

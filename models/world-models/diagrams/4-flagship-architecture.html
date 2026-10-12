@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · 三大旗舰架构对比</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1240 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1240" height="900" fill="#0d1117"/>
+  <text x="60" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 4 · 三大旗舰技术架构对比：观测编码 → 动力学预测 → 动作/规划</text>
+  <text x="60" y="76" fill="#8b949e" font-size="13">V-JEPA 2-AC（紫·表征预测）｜Genie 3（黄·像素自回归，架构据发布会口述）｜Dreamer 4（绿·潜空间想象RL）</text>
+
+  <!-- ============ 列 1 V-JEPA 2 ============ -->
+  <rect x="40" y="104" width="370" height="720" rx="12" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+  <rect x="40" y="104" width="370" height="46" rx="12" fill="#bc8cff" opacity="0.16"/>
+  <text x="225" y="134" fill="#bc8cff" font-size="16" font-weight="700" text-anchor="middle">V-JEPA 2 / 2-AC（Meta FAIR）</text>
+
+  <!-- 输入 -->
+  <rect x="64" y="168" width="322" height="56" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <text x="80" y="190" fill="#e6edf3" font-size="12.5" font-weight="700">输入</text>
+  <text x="80" y="210" fill="#8b949e" font-size="11">100 万小时无标签互联网视频 + 100 万图像</text>
+
+  <!-- 编码器 -->
+  <rect x="64" y="240" width="322" height="72" rx="8" fill="#0d1117" stroke="#bc8cff"/>
+  <text x="80" y="263" fill="#bc8cff" font-size="12.5" font-weight="700">① 视觉编码器（≤1B 参数 ViT）</text>
+  <text x="80" y="283" fill="#8b949e" font-size="10.5">mask-denoising 特征预测目标</text>
+  <text x="80" y="300" fill="#8b949e" font-size="10.5">在表征空间预测，不重建像素</text>
+
+  <!-- 动作条件预测器 -->
+  <rect x="64" y="328" width="322" height="86" rx="8" fill="#0d1117" stroke="#bc8cff"/>
+  <text x="80" y="351" fill="#bc8cff" font-size="12.5" font-weight="700">② V-JEPA 2-AC 动作条件预测器</text>
+  <text x="80" y="371" fill="#8b949e" font-size="10.5">300M Transformer，block-causal 注意力</text>
+  <text x="80" y="388" fill="#8b949e" font-size="10.5">自回归预测下一帧表征 | 动作 + 历史状态</text>
+  <text x="80" y="405" fill="#3fb950" font-size="10.5">仅用 Droid 数据集中 &lt;62 小时机器人视频</text>
+
+  <!-- 规划 -->
+  <rect x="64" y="430" width="322" height="72" rx="8" fill="#0d1117" stroke="#bc8cff"/>
+  <text x="80" y="453" fill="#bc8cff" font-size="12.5" font-weight="700">③ MPC 规划（能量最小化）</text>
+  <text x="80" y="473" fill="#8b949e" font-size="10.5">以图像目标为 sub-goal，在想象中选动作</text>
+  <text x="80" y="490" fill="#8b949e" font-size="10.5">无需奖励、无需任务特定训练</text>
+
+  <!-- 输出 -->
+  <rect x="64" y="518" width="322" height="60" rx="8" fill="#0d1117" stroke="#3fb950"/>
+  <text x="80" y="541" fill="#3fb950" font-size="12.5" font-weight="700">输出：零样本机械臂动作</text>
+  <text x="80" y="561" fill="#8b949e" font-size="10.5">两个实验室 Franka 零样本 pick-and-place</text>
+
+  <!-- 关键指标 -->
+  <rect x="64" y="596" width="322" height="210" rx="8" fill="#0a0e14" stroke="#30363d"/>
+  <text x="80" y="620" fill="#e6edf3" font-size="12" font-weight="700">关键指标</text>
+  <text x="80" y="644" fill="#9ecbff" font-size="11">· SSv2 动作理解 77.3 top-1</text>
+  <text x="80" y="666" fill="#9ecbff" font-size="11">· Epic-Kitchens 动作预判 39.7 R@5</text>
+  <text x="80" y="688" fill="#9ecbff" font-size="11">· PerceptionTest 84.0（8B 视频QA）</text>
+  <text x="80" y="710" fill="#9ecbff" font-size="11">· TempCompass 76.9</text>
+  <text x="80" y="738" fill="#f85149" font-size="11">局限：对相机位姿敏感</text>
+  <text x="80" y="758" fill="#f85149" font-size="11">长时程规划误差累积</text>
+  <text x="80" y="784" fill="#8b949e" font-size="10.5">论文 arXiv:2506.09985（2025-06）</text>
+
+  <!-- ============ 列 2 Genie 3 ============ -->
+  <rect x="435" y="104" width="370" height="720" rx="12" fill="#161b22" stroke="#d29922" stroke-width="1.6"/>
+  <rect x="435" y="104" width="370" height="46" rx="12" fill="#d29922" opacity="0.16"/>
+  <text x="620" y="134" fill="#d29922" font-size="16" font-weight="700" text-anchor="middle">Genie 3（Google DeepMind）</text>
+
+  <rect x="459" y="168" width="322" height="56" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <text x="475" y="190" fill="#e6edf3" font-size="12.5" font-weight="700">输入</text>
+  <text x="475" y="210" fill="#8b949e" font-size="11">文本提示生成世界（街景数据做现实锚定）</text>
+
+  <rect x="459" y="240" width="322" height="72" rx="8" fill="#0d1117" stroke="#d29922"/>
+  <text x="475" y="263" fill="#d29922" font-size="12.5" font-weight="700">① 自回归逐帧生成</text>
+  <text x="475" y="283" fill="#8b949e" font-size="10.5">「一次生成一帧，回看此前内容」</text>
+  <text x="475" y="300" fill="#8b949e" font-size="10.5">无硬编码物理引擎，规律从数据学</text>
+
+  <rect x="459" y="328" width="322" height="86" rx="8" fill="#0d1117" stroke="#d29922"/>
+  <text x="475" y="351" fill="#d29922" font-size="12.5" font-weight="700">② 长时记忆 / 对象持久性</text>
+  <text x="475" y="371" fill="#8b949e" font-size="10.5">每秒多次回溯查询约一分钟前信息</text>
+  <text x="475" y="388" fill="#8b949e" font-size="10.5">记忆被称为规模下的「涌现」属性</text>
+  <text x="475" y="405" fill="#8b949e" font-size="10.5">打碎的花瓶离开再回来仍在原地</text>
+
+  <rect x="459" y="430" width="322" height="72" rx="8" fill="#0d1117" stroke="#d29922"/>
+  <text x="475" y="453" fill="#d29922" font-size="12.5" font-weight="700">③ 实时交互 + 可提示事件</text>
+  <text x="475" y="473" fill="#8b949e" font-size="10.5">键盘/鼠标操作角色；一条提示改天气等</text>
+  <text x="475" y="490" fill="#8b949e" font-size="10.5">前向模拟供 SIMA 等智能体训练</text>
+
+  <rect x="459" y="518" width="322" height="60" rx="8" fill="#0d1117" stroke="#3fb950"/>
+  <text x="475" y="541" fill="#3fb950" font-size="12.5" font-weight="700">输出：可实时游玩的 3D 世界</text>
+  <text x="475" y="561" fill="#8b949e" font-size="10.5">720p · 24fps · 连续一致性数分钟</text>
+
+  <rect x="459" y="596" width="322" height="210" rx="8" fill="#0a0e14" stroke="#30363d"/>
+  <text x="475" y="620" fill="#e6edf3" font-size="12" font-weight="700">关键事实</text>
+  <text x="475" y="644" fill="#9ecbff" font-size="11">· 首个实时可交互世界模型</text>
+  <text x="475" y="666" fill="#9ecbff" font-size="11">· Genie 2 仅 10–20s → 数分钟</text>
+  <text x="475" y="688" fill="#9ecbff" font-size="11">· SIMA 三个仓库导航任务成功</text>
+  <text x="475" y="710" fill="#9ecbff" font-size="11">· 对标 GameNGen / Veo</text>
+  <text x="475" y="738" fill="#f85149" font-size="11">局限：物理仍失真、动作集有限</text>
+  <text x="475" y="758" fill="#f85149" font-size="11">仅数分钟，训练需数小时</text>
+  <text x="475" y="784" fill="#8b949e" font-size="10.5">无公开论文，仅官方博客（2025-08-05）</text>
+
+  <!-- ============ 列 3 Dreamer 4 ============ -->
+  <rect x="830" y="104" width="370" height="720" rx="12" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+  <rect x="830" y="104" width="370" height="46" rx="12" fill="#3fb950" opacity="0.16"/>
+  <text x="1015" y="134" fill="#3fb950" font-size="16" font-weight="700" text-anchor="middle">Dreamer 4（DeepMind）</text>
+
+  <rect x="854" y="168" width="322" height="56" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <text x="870" y="190" fill="#e6edf3" font-size="12.5" font-weight="700">输入</text>
+  <text x="870" y="210" fill="#8b949e" font-size="11">2.5K 小时离线视频（仅 ~100h 带动作标签）</text>
+
+  <rect x="854" y="240" width="322" height="72" rx="8" fill="#0d1117" stroke="#3fb950"/>
+  <text x="870" y="263" fill="#3fb950" font-size="12.5" font-weight="700">① 因果分词器</text>
+  <text x="870" y="283" fill="#8b949e" font-size="10.5">掩码自编码（MSE+LPIPS）压成连续潜表示</text>
+  <text x="870" y="300" fill="#8b949e" font-size="10.5">强制时间因果，支持逐帧解码</text>
+
+  <rect x="854" y="328" width="322" height="86" rx="8" fill="#0d1117" stroke="#3fb950"/>
+  <text x="870" y="351" fill="#3fb950" font-size="12.5" font-weight="700">② block-causal Transformer 动力学</text>
+  <text x="870" y="371" fill="#8b949e" font-size="10.5">动作/表征交错序列；轴向+稀疏时间注意力</text>
+  <text x="870" y="388" fill="#8b949e" font-size="10.5">shortcut forcing：4 步 ≈ 64 步（16×）</text>
+
+  <rect x="854" y="430" width="322" height="72" rx="8" fill="#0d1117" stroke="#3fb950"/>
+  <text x="870" y="453" fill="#3fb950" font-size="12.5" font-weight="700">③ 想象内 RL（冻结世界模型）</text>
+  <text x="870" y="473" fill="#8b949e" font-size="10.5">BC + 奖励头 → PMPO 策略优化</text>
+  <text x="870" y="490" fill="#8b949e" font-size="10.5">KL 约束到 BC 先验，纯离线无交互</text>
+
+  <rect x="854" y="518" width="322" height="60" rx="8" fill="#0d1117" stroke="#3fb950"/>
+  <text x="870" y="541" fill="#3fb950" font-size="12.5" font-weight="700">输出：Minecraft 挖钻智能体</text>
+  <text x="870" y="561" fill="#8b949e" font-size="10.5">2 万+ 动作长程任务，单 H100 ≥20fps</text>
+
+  <rect x="854" y="596" width="322" height="210" rx="8" fill="#0a0e14" stroke="#30363d"/>
+  <text x="870" y="620" fill="#e6edf3" font-size="12" font-weight="700">关键指标</text>
+  <text x="870" y="644" fill="#9ecbff" font-size="11">· 首个纯离线 Minecraft 挖到钻石</text>
+  <text x="870" y="666" fill="#9ecbff" font-size="11">· 挖钻成功率 0.7%（60 分钟回合）</text>
+  <text x="870" y="688" fill="#9ecbff" font-size="11">· 铁镐里程碑 29%，石镐 &gt;90%</text>
+  <text x="870" y="710" fill="#9ecbff" font-size="11">· 数据量约为 VPT 的 1/100</text>
+  <text x="870" y="738" fill="#f85149" font-size="11">局限：端到端成功率仍低</text>
+  <text x="870" y="758" fill="#f85149" font-size="11">长时程漂移、模型被策略利用风险</text>
+  <text x="870" y="784" fill="#8b949e" font-size="10.5">论文 arXiv:2509.24527（2025-09-29）</text>
+
+  <!-- 底部横向对比 -->
+  <rect x="40" y="844" width="1160" height="44" rx="8" fill="#0a0e14" stroke="#30363d"/>
+  <text x="60" y="872" fill="#8b949e" font-size="11.5">共性：都先学「感知编码 → 动作条件动力学」，再接「规划/策略」。差异：JEPA 在<tspan fill="#bc8cff">抽象表征</tspan>预测、不生成像素；Genie 3 走<tspan fill="#d29922">高保真像素自回归</tspan>、主打可玩仿真；Dreamer 4 在<tspan fill="#3fb950">紧凑潜空间</tspan>做高速想象 RL、主打离线训练智能体。</text>
+</svg>
+</body></html>
