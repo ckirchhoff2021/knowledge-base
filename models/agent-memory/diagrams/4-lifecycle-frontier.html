@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · 记忆生命周期与2026前沿战场</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1120 860" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1120" height="860" fill="#0d1117"/>
+  <text x="56" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 4 · 记忆全生命周期闭环（上）与 2026 四大前沿战场（下）</text>
+  <text x="56" y="74" fill="#8b949e" font-size="13">记忆是「写入 → 组织 → 检索 → 更新 / 遗忘」的闭环系统，而非一次性存取；每一环都对应独立的工程与研究问题</text>
+
+  <!-- Agent 节点（中心驱动） -->
+  <rect x="450" y="110" width="220" height="64" rx="12" fill="#15101f" stroke="#bc8cff" stroke-width="1.6"/>
+  <text x="560" y="138" fill="#bc8cff" font-size="16" font-weight="700" text-anchor="middle">LLM Agent</text>
+  <text x="560" y="160" fill="#8b949e" font-size="11.5" text-anchor="middle">感知 · 规划 · 工具调用 · 行动</text>
+
+  <!-- 四阶段管道 -->
+  <!-- 1 写入 -->
+  <rect x="56" y="230" width="232" height="150" rx="10" fill="#0a0e14" stroke="#39c5cf" stroke-width="1.4"/>
+  <text x="72" y="258" fill="#39c5cf" font-size="15" font-weight="700">① 写入 Encode</text>
+  <text x="72" y="284" fill="#e6edf3" font-size="12">全量历史 vs 原子事实抽取</text>
+  <text x="72" y="306" fill="#e6edf3" font-size="12">谁决定：工作流写死 / Agent 自决</text>
+  <text x="72" y="328" fill="#8b949e" font-size="11.5">代表：Mem0 抽取、A-MEM 笔记</text>
+  <text x="72" y="356" fill="#f85149" font-size="11.5">风险：抽取误差在写入即累积</text>
+
+  <!-- 2 组织存储 -->
+  <rect x="312" y="230" width="232" height="150" rx="10" fill="#0a0e14" stroke="#58a6ff" stroke-width="1.4"/>
+  <text x="328" y="258" fill="#58a6ff" font-size="15" font-weight="700">② 组织 / 存储</text>
+  <text x="328" y="284" fill="#e6edf3" font-size="12">Markdown(git) · 向量库 · 图谱</text>
+  <text x="328" y="306" fill="#e6edf3" font-size="12">作用域：user/agent/run/org</text>
+  <text x="328" y="328" fill="#8b949e" font-size="11.5">代表：Letta、Zep、MemOS</text>
+  <text x="328" y="356" fill="#8b949e" font-size="11.5">多租户隔离 + 来源归因</text>
+
+  <!-- 3 检索 -->
+  <rect x="568" y="230" width="232" height="150" rx="10" fill="#0a0e14" stroke="#3fb950" stroke-width="1.4"/>
+  <text x="584" y="258" fill="#3fb950" font-size="15" font-weight="700">③ 检索 Retrieve</text>
+  <text x="584" y="284" fill="#e6edf3" font-size="12">语义 + BM25 + 实体 / 图遍历</text>
+  <text x="584" y="306" fill="#e6edf3" font-size="12">多路融合 + reranker 重排</text>
+  <text x="584" y="328" fill="#8b949e" font-size="11.5">代表：Mem0 多信号、HippoRAG PPR</text>
+  <text x="584" y="356" fill="#d29922" font-size="11.5">约束：token / 延迟预算</text>
+
+  <!-- 4 更新/遗忘 -->
+  <rect x="824" y="230" width="240" height="150" rx="10" fill="#1a1506" stroke="#d29922" stroke-width="1.4"/>
+  <text x="840" y="258" fill="#d29922" font-size="15" font-weight="700">④ 更新 / 巩固 / 遗忘</text>
+  <text x="840" y="284" fill="#e6edf3" font-size="12">ADD/UPDATE/DELETE · 演化</text>
+  <text x="840" y="306" fill="#e6edf3" font-size="12">双时序失效 · Auto Dream 巩固</text>
+  <text x="840" y="328" fill="#8b949e" font-size="11.5">代表：Zep、A-MEM、Claude Code</text>
+  <text x="840" y="356" fill="#f85149" font-size="11.5">陈旧度策略须在写入前定义</text>
+
+  <!-- 箭头 -->
+  <g stroke="#8b949e" stroke-width="2" fill="#8b949e">
+    <line x1="288" y1="305" x2="306" y2="305"/><polygon points="310,305 300,300 300,310"/>
+    <line x1="544" y1="305" x2="562" y2="305"/><polygon points="566,305 556,300 556,310"/>
+    <line x1="800" y1="305" x2="818" y2="305"/><polygon points="822,305 812,300 812,310"/>
+  </g>
+  <!-- 反馈回路：④ 回到 Agent，Agent 再到① -->
+  <path d="M 944 380 L 944 420 L 560 420 L 560 178" fill="none" stroke="#bc8cff" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <polygon points="560,174 555,186 565,186" fill="#bc8cff"/>
+  <text x="700" y="413" fill="#bc8cff" font-size="11.5">检索结果注入上下文，行动结果再沉淀为新记忆（闭环）</text>
+  <path d="M 172 380 L 172 200 L 450 142" fill="none" stroke="#39c5cf" stroke-width="1.4" stroke-dasharray="4 4"/>
+  <polygon points="446,140 436,146 442,150" fill="#39c5cf"/>
+
+  <!-- 分隔 -->
+  <line x1="56" y1="470" x2="1064" y2="470" stroke="#30363d"/>
+  <text x="56" y="506" fill="#e6edf3" font-size="17" font-weight="700">2026 四大前沿战场</text>
+
+  <!-- 四张前沿卡 -->
+  <rect x="56" y="526" width="244" height="290" rx="10" fill="#1a0d0c" stroke="#f85149" stroke-width="1.3"/>
+  <text x="74" y="556" fill="#f85149" font-size="14.5" font-weight="700">A · 自进化记忆</text>
+  <text x="74" y="584" fill="#e6edf3" font-size="12">用未来检索/任务奖励</text>
+  <text x="74" y="604" fill="#e6edf3" font-size="12">学习「该记什么」</text>
+  <text x="74" y="634" fill="#8b949e" font-size="11.5">Evo-Memory 2511.20857</text>
+  <text x="74" y="654" fill="#8b949e" font-size="11.5">CHIME 2609.02074</text>
+  <text x="74" y="674" fill="#8b949e" font-size="11.5">MindMemOS 2608.12428</text>
+  <text x="74" y="708" fill="#3fb950" font-size="11.5">最活跃线程</text>
+  <text x="74" y="734" fill="#8b949e" font-size="11">弥合压缩 vs 保留之争</text>
+
+  <rect x="316" y="526" width="244" height="290" rx="10" fill="#1a0d0c" stroke="#f85149" stroke-width="1.3"/>
+  <text x="334" y="556" fill="#f85149" font-size="14.5" font-weight="700">B · 程序记忆复利</text>
+  <text x="334" y="584" fill="#e6edf3" font-size="12">经验沉淀为可复用技能</text>
+  <text x="334" y="604" fill="#e6edf3" font-size="12">Agent 自改常驻规则</text>
+  <text x="334" y="634" fill="#8b949e" font-size="11.5">Reflexion 2303.11366</text>
+  <text x="334" y="654" fill="#8b949e" font-size="11.5">ExpeL 2308.10144</text>
+  <text x="334" y="674" fill="#8b949e" font-size="11.5">Voyager 2305.16291</text>
+  <text x="334" y="708" fill="#d29922" font-size="11.5">长期价值最高 / 成熟度最低</text>
+  <text x="334" y="734" fill="#f85149" font-size="11">污染规则可长期潜伏</text>
+
+  <rect x="576" y="526" width="244" height="290" rx="10" fill="#1a0d0c" stroke="#f85149" stroke-width="1.3"/>
+  <text x="594" y="556" fill="#f85149" font-size="14.5" font-weight="700">C · 多 Agent 记忆协调</text>
+  <text x="594" y="584" fill="#e6edf3" font-size="12">群体知识归属 / 合并</text>
+  <text x="594" y="604" fill="#e6edf3" font-size="12">命名空间隔离 vs 共享</text>
+  <text x="594" y="634" fill="#8b949e" font-size="11.5">MemOS 统一记忆池（-72% token）</text>
+  <text x="594" y="654" fill="#8b949e" font-size="11.5">Claude Code 子 Agent 隔离</text>
+  <text x="594" y="684" fill="#8b949e" font-size="11.5">来源归因（谁讲的话）</text>
+  <text x="594" y="714" fill="#3fb950" font-size="11.5">类比分布式版本控制</text>
+
+  <rect x="836" y="526" width="228" height="290" rx="10" fill="#1a0d0c" stroke="#f85149" stroke-width="1.3"/>
+  <text x="854" y="556" fill="#f85149" font-size="14.5" font-weight="700">D · 隐私 / 可删除性</text>
+  <text x="854" y="584" fill="#e6edf3" font-size="12">跨会话记忆抽取攻击</text>
+  <text x="854" y="604" fill="#e6edf3" font-size="12">记忆访问即安全边界</text>
+  <text x="854" y="634" fill="#8b949e" font-size="11.5">2502.13172（ACL 2025）</text>
+  <text x="854" y="664" fill="#8b949e" font-size="11.5">GDPR 被遗忘权难落地：</text>
+  <text x="854" y="684" fill="#8b949e" font-size="11.5">难外科式删除而不损连贯</text>
+  <text x="854" y="714" fill="#3fb950" font-size="11.5">需命名空间隔离 + 审计</text>
+
+  <text x="56" y="846" fill="#8b949e" font-size="12">核心范式：记忆是「被重构」而非「被原样取回」（arXiv:2606.06036）——每次读取都在重新解释并可能更新记忆。</text>
+</svg>
+</body></html>

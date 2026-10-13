@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 智能体记忆分类学</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1100 820" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1100" height="820" fill="#0d1117"/>
+  <text x="60" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 智能体记忆的三正交轴分类学（形式 × 认知功能 × 动态性）</text>
+  <text x="60" y="74" fill="#8b949e" font-size="13">据《Memory in the Age of AI Agents》(arXiv:2512.13564) 与《A Survey on the Memory Mechanism》(arXiv:2404.13501) 整理</text>
+
+  <!-- 顶部三正交轴 -->
+  <!-- 形式轴 -->
+  <rect x="60" y="100" width="313" height="96" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.4"/>
+  <text x="78" y="126" fill="#58a6ff" font-size="15" font-weight="700">① 形式轴 Form · 住在哪里</text>
+  <text x="78" y="150" fill="#e6edf3" font-size="12.5">参数记忆：冻结在权重中</text>
+  <text x="78" y="170" fill="#e6edf3" font-size="12.5">激活记忆：KV-Cache / 隐状态</text>
+  <text x="78" y="190" fill="#e6edf3" font-size="12.5">外部记忆：文本 / 向量 / 图</text>
+
+  <!-- 认知功能轴 -->
+  <rect x="393" y="100" width="314" height="96" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.4"/>
+  <text x="411" y="126" fill="#bc8cff" font-size="15" font-weight="700">② 认知功能轴 · 是哪种记忆</text>
+  <text x="411" y="150" fill="#e6edf3" font-size="12.5">工作 / 情景 / 语义 / 程序</text>
+  <text x="411" y="170" fill="#8b949e" font-size="12">对系统设计最具指导意义</text>
+  <text x="411" y="190" fill="#8b949e" font-size="12">（详见下方四类卡片）</text>
+
+  <!-- 动态轴 -->
+  <rect x="727" y="100" width="313" height="96" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.4"/>
+  <text x="745" y="126" fill="#3fb950" font-size="15" font-weight="700">③ 动态轴 Dynamics · 如何变化</text>
+  <text x="745" y="150" fill="#e6edf3" font-size="12.5">读 · 写 · 更新</text>
+  <text x="745" y="170" fill="#e6edf3" font-size="12.5">矛盾消解 · 遗忘 / 过期</text>
+  <text x="745" y="190" fill="#8b949e" font-size="12">记忆是活对象，非只读日志</text>
+
+  <text x="60" y="236" fill="#e6edf3" font-size="16" font-weight="700">认知功能轴四类记忆（映射人类记忆系统）</text>
+
+  <!-- 2x2 四类卡片 -->
+  <!-- 工作记忆 -->
+  <rect x="60" y="252" width="485" height="150" rx="10" fill="#0a0e14" stroke="#30363d" stroke-width="1.2"/>
+  <rect x="60" y="252" width="6" height="150" rx="3" fill="#39c5cf"/>
+  <text x="84" y="284" fill="#39c5cf" font-size="17" font-weight="700">工作记忆 Working</text>
+  <text x="84" y="310" fill="#8b949e" font-size="12">对应：工作记忆 / 当下注意</text>
+  <text x="84" y="334" fill="#e6edf3" font-size="12.5">存：系统指令、工具 schema、最近若干轮</text>
+  <text x="84" y="358" fill="#e6edf3" font-size="12.5">载体：上下文窗口本身</text>
+  <text x="84" y="384" fill="#3fb950" font-size="12">成熟度：高</text>
+
+  <!-- 情景记忆 -->
+  <rect x="555" y="252" width="485" height="150" rx="10" fill="#0a0e14" stroke="#30363d" stroke-width="1.2"/>
+  <rect x="555" y="252" width="6" height="150" rx="3" fill="#d29922"/>
+  <text x="579" y="284" fill="#d29922" font-size="17" font-weight="700">情景记忆 Episodic</text>
+  <text x="579" y="310" fill="#8b949e" font-size="12">对应：海马体 / 亲身经历</text>
+  <text x="579" y="334" fill="#e6edf3" font-size="12.5">存：发生了什么、顺序、结果（带时间/任务标记）</text>
+  <text x="579" y="358" fill="#e6edf3" font-size="12.5">实现：Generative Agents、EM-LLM、A-MEM</text>
+  <text x="579" y="384" fill="#3fb950" font-size="12">成熟度：中高</text>
+
+  <!-- 语义记忆 -->
+  <rect x="60" y="418" width="485" height="150" rx="10" fill="#0a0e14" stroke="#30363d" stroke-width="1.2"/>
+  <rect x="60" y="418" width="6" height="150" rx="3" fill="#58a6ff"/>
+  <text x="84" y="450" fill="#58a6ff" font-size="17" font-weight="700">语义记忆 Semantic</text>
+  <text x="84" y="476" fill="#8b949e" font-size="12">对应：通用事实与概念</text>
+  <text x="84" y="500" fill="#e6edf3" font-size="12.5">存：与事件解耦的事实、偏好、关系、规则</text>
+  <text x="84" y="524" fill="#e6edf3" font-size="12.5">实现：MemoryBank、Mem0、Zep 图谱</text>
+  <text x="84" y="550" fill="#3fb950" font-size="12">成熟度：高</text>
+
+  <!-- 程序记忆（高亮） -->
+  <rect x="555" y="418" width="485" height="150" rx="10" fill="#1a1206" stroke="#f85149" stroke-width="1.6"/>
+  <rect x="555" y="418" width="6" height="150" rx="3" fill="#f85149"/>
+  <text x="579" y="450" fill="#f85149" font-size="17" font-weight="700">程序记忆 Procedural</text>
+  <text x="579" y="476" fill="#8b949e" font-size="12">对应：技能 / 肌肉记忆</text>
+  <text x="579" y="500" fill="#e6edf3" font-size="12.5">存：「怎么做」工作流、工具习惯、评审规范</text>
+  <text x="579" y="524" fill="#e6edf3" font-size="12.5">实现：Letta 自改 core、LangMem、ExpeL、Voyager</text>
+  <text x="579" y="550" fill="#f85149" font-size="12">成熟度：最低 ｜ 长期复利价值最高</text>
+
+  <!-- 底部经验结论 -->
+  <rect x="60" y="600" width="980" height="180" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="82" y="632" fill="#e6edf3" font-size="15" font-weight="700">关键经验结论</text>
+  <text x="82" y="662" fill="#e6edf3" font-size="13">• 语义记忆增强对「小模型」收益最显著；更强的模型从「情景记忆」获得的边际价值更高。</text>
+  <text x="82" y="690" fill="#e6edf3" font-size="13">• 程序记忆让 Agent 内化团队约定、避免某类反复出现的错误，价值随时间复合，但生产框架成熟度最低。</text>
+  <text x="82" y="718" fill="#e6edf3" font-size="13">• MemOS 主张把参数 / 激活 / 外部三类记忆统一为「一等资源」治理；多数框架目前只能管理外部记忆。</text>
+  <text x="82" y="746" fill="#8b949e" font-size="12">注：三轴彼此正交，任一记忆条目都可同时在三个轴上定位，例如「外部 × 情景 × 可演化」= A-MEM 笔记。</text>
+</svg>
+</body></html>

@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 9 个话题。
+大模型与后训练方向的论文分析，共 10 个话题。
 
 ---
 
@@ -57,3 +57,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 智源《2026 十大 AI 技术趋势》第 1 位方向——从「预测下一个词」迈向「预测世界下一状态」（Next-State Prediction）。系统梳理世界模型的形式化定义 P(s′|s,a)、L1–L4 抽象层级与三大核心能力（可交互预测/物理一致/动作条件）；1943–2026 思想源流（Craik 心智模型、Sutton Dyna、Ha & Schmidhuber《World Models》VAE+MDN-RNN、PlaNet/Dreamer 潜空间想象 RL、LeCun JEPA）；五大技术路线（像素生成式 Sora/Genie/GameNGen、潜空间动力学 IRIS/DIAMOND/Dreamer、JEPA 表征空间预测、显式 3D 空间智能 World Labs/腾讯混元、物理状态 NSP 智源 Physis）；深度拆解 Genie 3（首个实时可交互、720p/24fps/数分钟、无论文）、V-JEPA 2-AC（100 万小时视频预训练 + 62 小时机器人数据零样本规划，arXiv:2506.09985）、Dreamer 4（纯离线数据 Minecraft 挖钻，单 H100 ≥20fps，arXiv:2509.24527）三大旗舰；世界模型与 VLA 的条件分布互补关系及融合架构；NVIDIA Cosmos（Predict/Transfer/Reason + 合成数据蓝图）、智源悟界 Emu3/Emu3.5/Physis、World Labs Marble、AMI Labs、腾讯 HunyuanWorld、生数 Motus 等 2025–2026 产业地图；以及 PSNR/SSIM/FVD 局限、WorldModelBench 反事实一致性等评测体系与长时程漂移、sim2real、模型利用等开放问题。信源为 20+ 篇 arXiv 原始论文（编号经 arXiv 官方 API 逐一核实）与 DeepMind/Meta/NVIDIA/OpenAI/智源官方及新华社、知乎专栏交叉验证。
 
 📅 2026-10-12 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](world-models/report.md)
+
+### [智能体记忆（Agent Memory）](agent-memory/report.html)
+
+2025 末–2026 最热 Agent 基础设施方向：Agent 正从「无状态对话」走向「终身学习」。基于《Memory in the Age of AI Agents》（arXiv:2512.13564，Hugging Face 2025-12 Daily Paper #1）等 25 篇 arXiv 论文，系统拆解记忆三正交轴（形式 × 认知功能 × 动态性）与工作 / 情景 / 语义 / 程序四类认知记忆；梳理由此及彼的六代架构演进——朴素全上下文/RAG → ReadAgent 压缩 → MemGPT/Letta OS 换页 → Mem0 事实抽取 → Zep 双时序知识图谱 → A-MEM 卡片盒自组织，并讲透 MemOS 参数/激活/外部三类记忆统一治理；覆盖写入—组织—检索—更新/遗忘生命周期、LoCoMo/LongMemEval/BEAM 基准矩阵与横评方法论陷阱、2026 自进化记忆前沿（Evo-Memory/CHIME/MindMemOS）、隐私抽取攻击与可删除性等开放问题。厂商自报数据均标注「厂商口径」。
+
+📅 2026-10-13 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](agent-memory/report.md)

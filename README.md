@@ -39,6 +39,7 @@
 | [**Agentic RL 智能体强化学习**](https://ckirchhoff2021.github.io/knowledge-base/models/agentic-rl/report.html) | 多轮环境训练：回声陷阱/模板坍塌/交互坍塌 · GiGPO/T²PO/DART · 异步RL系统 |
 | [**扩散语言模型 DLM**](https://ckirchhoff2021.github.io/knowledge-base/models/diffusion-language-models/report.html) | 非自回归新范式：LLaDA/Mercury/Cola/DiffusionGemma · Block-AR · 采样器压缩 · SD·RL，单 H100 约 1500 TPS |
 | [**世界模型 World Models**](https://ckirchhoff2021.github.io/knowledge-base/models/world-models/report.html) | 从预测下一个词到预测世界下一状态（NSP）：五大路线 · Genie 3/V-JEPA 2/Dreamer 4 · 世界模型×VLA · Cosmos/悟界 |
+| [**智能体记忆 Agent Memory**](https://ckirchhoff2021.github.io/knowledge-base/models/agent-memory/report.html) | 从无状态对话到终身学习：四类认知记忆 · 六代架构（MemGPT/Mem0/Zep/A-MEM）· MemOS · 自进化记忆 |
 
 ### 🌱 生活方法论
 

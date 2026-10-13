@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 六代记忆架构定位</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1100 780" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1100" height="780" fill="#0d1117"/>
+  <text x="60" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 3 · 六代记忆架构在「自主组织程度 × 时间 / 关系建模」坐标系上的定位</text>
+  <text x="60" y="74" fill="#8b949e" font-size="13">横轴：记忆结构由开发者写死 → 由 Agent 运行中自主生成 / 演化；纵轴：是否显式建模时间有效期与实体关系</text>
+
+  <!-- 绘图区 -->
+  <rect x="120" y="110" width="880" height="560" fill="#0a0e14" stroke="#30363d"/>
+  <g stroke="#161b22" stroke-width="1">
+    <line x1="340" y1="110" x2="340" y2="670"/><line x1="560" y1="110" x2="560" y2="670"/><line x1="780" y1="110" x2="780" y2="670"/>
+    <line x1="120" y1="297" x2="1000" y2="297"/><line x1="120" y1="483" x2="1000" y2="483"/>
+  </g>
+  <!-- 坐标轴 -->
+  <line x1="120" y1="670" x2="1000" y2="670" stroke="#8b949e" stroke-width="2"/>
+  <line x1="120" y1="110" x2="120" y2="670" stroke="#8b949e" stroke-width="2"/>
+  <polygon points="1000,670 988,664 988,676" fill="#8b949e"/>
+  <polygon points="120,110 114,122 126,122" fill="#8b949e"/>
+  <text x="560" y="708" fill="#e6edf3" font-size="14" font-weight="700" text-anchor="middle">记忆结构自主化程度（写死的 schema / 工作流  →  Agent 自主链接、演化、自学习）</text>
+  <text x="46" y="390" fill="#e6edf3" font-size="14" font-weight="700" text-anchor="middle" transform="rotate(-90 46 390)">显式时间 / 关系建模</text>
+  <text x="130" y="132" fill="#3fb950" font-size="11">强：有效期 + 关系图</text>
+  <text x="130" y="660" fill="#8b949e" font-size="11">弱：扁平 / 纯向量</text>
+
+  <!-- 一代 全上下文/RAG：左下 -->
+  <circle cx="180" cy="600" r="12" fill="#8b949e"/>
+  <text x="180" y="632" fill="#8b949e" font-size="12" font-weight="700" text-anchor="middle">① 全上下文 / 朴素 RAG</text>
+  <text x="180" y="648" fill="#8b949e" font-size="10" text-anchor="middle">无结构 · 无时间</text>
+
+  <!-- 二代 ReadAgent：左中下 -->
+  <circle cx="250" cy="520" r="12" fill="#3fb950"/>
+  <text x="250" y="552" fill="#3fb950" font-size="12" font-weight="700" text-anchor="middle">② ReadAgent</text>
+  <text x="250" y="568" fill="#8b949e" font-size="10" text-anchor="middle">gist 写时压缩</text>
+
+  <!-- 三代 MemGPT/Letta：中，中下（分层，无显式时间，Agent 有一定自主） -->
+  <circle cx="430" cy="470" r="14" fill="#bc8cff"/>
+  <text x="430" y="502" fill="#bc8cff" font-size="12.5" font-weight="700" text-anchor="middle">③ MemGPT / Letta</text>
+  <text x="430" y="518" fill="#8b949e" font-size="10" text-anchor="middle">OS 分层 · 函数调用换页 · 程序记忆</text>
+
+  <!-- 四代 Mem0：中偏右，中部（事实抽取，弱时间） -->
+  <circle cx="560" cy="430" r="14" fill="#58a6ff"/>
+  <text x="560" y="402" fill="#58a6ff" font-size="12.5" font-weight="700" text-anchor="middle">④ Mem0</text>
+  <text x="560" y="386" fill="#8b949e" font-size="10" text-anchor="middle">ADD/UPDATE/DELETE · 实体链接 · 默认无有效期</text>
+
+  <!-- 五代 Zep：中偏右上（强时间，结构由系统建） -->
+  <circle cx="640" cy="230" r="14" fill="#d29922"/>
+  <text x="640" y="205" fill="#d29922" font-size="12.5" font-weight="700" text-anchor="middle">⑤ Zep / Graphiti</text>
+  <text x="640" y="189" fill="#8b949e" font-size="10" text-anchor="middle">双时序图谱 · 事实自动失效</text>
+
+  <!-- HippoRAG：右中（图关系，自主一般） -->
+  <circle cx="760" cy="360" r="12" fill="#f85149"/>
+  <text x="760" y="392" fill="#f85149" font-size="12" font-weight="700" text-anchor="middle">HippoRAG / EM-LLM</text>
+  <text x="760" y="408" fill="#8b949e" font-size="10" text-anchor="middle">图 PPR / 事件边界</text>
+
+  <!-- 六代 A-MEM：右上 -->
+  <circle cx="830" cy="250" r="15" fill="#f85149"/>
+  <text x="830" y="222" fill="#f85149" font-size="13" font-weight="700" text-anchor="middle">⑥ A-MEM</text>
+  <text x="830" y="206" fill="#8b949e" font-size="10" text-anchor="middle">卡片盒自组织 · 记忆演化</text>
+
+  <!-- MemOS：右上更自主（统一治理） -->
+  <circle cx="900" cy="180" r="15" fill="#f85149"/>
+  <text x="900" y="156" fill="#f85149" font-size="13" font-weight="700" text-anchor="middle">MemOS</text>
+  <text x="900" y="140" fill="#8b949e" font-size="10" text-anchor="middle">三类记忆统一生命周期</text>
+
+  <!-- 自进化前沿 2026 星形区 -->
+  <rect x="700" y="500" width="280" height="150" rx="10" fill="#1a0d0c" stroke="#f85149" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="840" y="528" fill="#f85149" font-size="13" font-weight="700" text-anchor="middle">2026 前沿：自进化 / 可学习记忆</text>
+  <text x="718" y="554" fill="#e6edf3" font-size="11.5">• 用未来检索 / 任务结果作奖励</text>
+  <text x="718" y="576" fill="#e6edf3" font-size="11.5">• 学习「该记什么」而非固定启发式</text>
+  <text x="718" y="598" fill="#e6edf3" font-size="11.5">• Evo-Memory / CHIME / MindMemOS</text>
+  <text x="718" y="620" fill="#8b949e" font-size="11">• 弥合「写时压缩 vs 读时保留」</text>
+  <line x1="800" y1="500" x2="870" y2="262" stroke="#f85149" stroke-width="1" stroke-dasharray="3 4" opacity="0.6"/>
+
+  <!-- 权衡注记 -->
+  <text x="130" y="740" fill="#8b949e" font-size="12">注：定位为示意，非精确量化；越靠右记忆越「活」、越靠上越能处理事实随时间变化。生产系统多为多代组合。</text>
+</svg>
+</body></html>
