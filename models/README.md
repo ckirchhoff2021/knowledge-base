@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 10 个话题。
+大模型与后训练方向的论文分析，共 11 个话题。
 
 ---
 
@@ -63,3 +63,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 2025 末–2026 最热 Agent 基础设施方向：Agent 正从「无状态对话」走向「终身学习」。基于《Memory in the Age of AI Agents》（arXiv:2512.13564，Hugging Face 2025-12 Daily Paper #1）等 25 篇 arXiv 论文，系统拆解记忆三正交轴（形式 × 认知功能 × 动态性）与工作 / 情景 / 语义 / 程序四类认知记忆；梳理由此及彼的六代架构演进——朴素全上下文/RAG → ReadAgent 压缩 → MemGPT/Letta OS 换页 → Mem0 事实抽取 → Zep 双时序知识图谱 → A-MEM 卡片盒自组织，并讲透 MemOS 参数/激活/外部三类记忆统一治理；覆盖写入—组织—检索—更新/遗忘生命周期、LoCoMo/LongMemEval/BEAM 基准矩阵与横评方法论陷阱、2026 自进化记忆前沿（Evo-Memory/CHIME/MindMemOS）、隐私抽取攻击与可删除性等开放问题。厂商自报数据均标注「厂商口径」。
 
 📅 2026-10-13 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](agent-memory/report.md)
+
+### [视觉-语言-动作模型（VLA）](vla-embodied/report.html)
+
+智源《2026 十大 AI 技术趋势》第 2 位方向——让大模型从「描述世界」走向「改变世界」。基于 44 篇 arXiv 原始论文（编号经官方 API 逐一核实），系统梳理 VLA 四代技术源流（SayCan / Code as Policies 模块化时代 → RT-1 / RT-2 端到端 → Open X-Embodiment 跨本体与 π0 / OpenVLA-OFT 连续生成式 → 人形机器人全栈开源）；深潜动作表示光谱（离散 token / DCT 压缩的 FAST / 连续回归 / 扩散 / 流匹配）与自回归离散头、扩散头、流匹配头三类生成头；讲透 System 2 VLM + System 1 动作专家的双系统架构（GR00T N1、Figure Helix）、跨本体泛化（OXE 统一动作空间、HPT 本体 token、跨本体注意力）、真机/人类视频/合成/跨域对齐四类数据来源；横评 π0.5、Gemini Robotics（含 Robotics-ER）、OpenVLA-OFT、SmolVLA、RDT-1B、GR-2、RoboBrain、SpatialVLA/EnerVerse；覆盖仿真/仿真化真机/真机三层评测体系（LIBERO、SimplerEnv）与 sim-to-real gap、长尾、延迟、安全、世界模型融合等六大开放问题；并给出 2025–2026 海内外产业地图（含 8 款开源人形 VLA）与选型 Checklist。厂商自报数据均标注「厂商口径」。
+
+📅 2026-10-14 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](vla-embodied/report.md)

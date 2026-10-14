@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · 评测与开放问题</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1160 920" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1160" height="920" fill="#0d1117"/>
+  <text x="50" y="44" fill="#e6edf3" font-size="24" font-weight="700">图 4 · VLA 评测体系、2025–2026 产业地图与开放问题</text>
+  <text x="50" y="72" fill="#8b949e" font-size="13">核心难题：仿真基准分数与真机成功率脱钩；通用人形 VLA 进入「数据—本体—泛化」三线竞赛</text>
+
+  <!-- 左：评测矩阵 -->
+  <text x="50" y="112" fill="#58a6ff" font-size="16" font-weight="700">A · 评测体系（仿真 → 真机，闭环成功率为准）</text>
+  <g font-size="11.5">
+    <rect x="50" y="126" width="520" height="44" rx="8" fill="#161b22" stroke="#39c5cf"/>
+    <text x="66" y="153" fill="#39c5cf" font-weight="700">仿真操作基准：</text>
+    <text x="160" y="153" fill="#e6edf3">LIBERO（终身学习/空间/任务）· CALVIN（长程语言条件）</text>
+    <rect x="50" y="178" width="520" height="44" rx="8" fill="#161b22" stroke="#bc8cff"/>
+    <text x="66" y="205" fill="#bc8cff" font-weight="700">仿真评估真机策略：</text>
+    <text x="182" y="205" fill="#e6edf3">SimplerEnv（在仿真里评测真实策略，成本远低于真机）</text>
+    <rect x="50" y="230" width="520" height="44" rx="8" fill="#161b22" stroke="#d29922"/>
+    <text x="66" y="257" fill="#d29922" font-weight="700">真机/平台基准：</text>
+    <text x="160" y="257" fill="#e6edf3">RoboChallenge（π0.5 基线）· Open X 跨本体 · RoboMIND</text>
+  </g>
+  <!-- 方法论陷阱 -->
+  <rect x="50" y="290" width="520" height="150" rx="10" fill="#0a0e14" stroke="#f85149" stroke-width="1.5"/>
+  <text x="66" y="318" fill="#f85149" font-size="14" font-weight="700">评测方法论的四个陷阱</text>
+  <text x="66" y="346" fill="#e6edf3" font-size="12">① 开环损失（MSE/动作误差）与闭环任务成功率弱相关</text>
+  <text x="66" y="370" fill="#e6edf3" font-size="12">② 仿真到真机的 domain gap：仿真高分可能真机崩塌</text>
+  <text x="66" y="394" fill="#e6edf3" font-size="12">③ 评测任务集 / 本体 / 提示词不一致，横评常不可比</text>
+  <text x="66" y="418" fill="#e6edf3" font-size="12">④ 长尾与分布外任务被平均成功率掩盖，需报告方差与失败模式</text>
+
+  <!-- 右上：产业地图 -->
+  <text x="600" y="112" fill="#3fb950" font-size="16" font-weight="700">B · 2025–2026 旗舰系统与产业地图</text>
+  <g font-size="11">
+    <rect x="600" y="126" width="255" height="150" rx="9" fill="#0a0e14" stroke="#3fb950"/>
+    <text x="614" y="150" fill="#3fb950" font-weight="700">海外旗舰</text>
+    <text x="614" y="172" fill="#e6edf3">Physical Intelligence：π0/π0.5（流匹配）</text>
+    <text x="614" y="192" fill="#e6edf3">Google DeepMind：Gemini Robotics(+ER)</text>
+    <text x="614" y="212" fill="#e6edf3">NVIDIA：GR00T N1 / N1.7（人形基座）</text>
+    <text x="614" y="232" fill="#e6edf3">Figure：Helix（双系统，本机 VLA）</text>
+    <text x="614" y="256" fill="#8b949e">斯坦福：OpenVLA / Mobile ALOHA / HPT</text>
+
+    <rect x="875" y="126" width="235" height="150" rx="9" fill="#0a0e14" stroke="#d29922"/>
+    <text x="889" y="150" fill="#d29922" font-weight="700">国产开源（2025.11–2026）</text>
+    <text x="889" y="172" fill="#e6edf3">宇树 UnifoLM-VLA-0（Qwen2.5-VL）</text>
+    <text x="889" y="192" fill="#e6edf3">优必选 Thinker 4B（全栈开源）</text>
+    <text x="889" y="212" fill="#e6edf3">千寻 Spirit v1.5 · 小米 MiMo-Embodied</text>
+    <text x="889" y="232" fill="#e6edf3">灵波 LingBot-VLA · 地平线 HoloBrain-0</text>
+    <text x="889" y="256" fill="#e6edf3">智平方 AlphaBrain · 智源 RoboBrain</text>
+  </g>
+  <!-- 数据平台 -->
+  <rect x="600" y="290" width="510" height="150" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="616" y="318" fill="#e6edf3" font-size="14" font-weight="700">数据 / 平台底座</text>
+  <text x="616" y="344" fill="#8b949e" font-size="11.5">真机数据集：Open X-Embodiment · DROID · AgiBot World Colosseo · RoboMIND(2.0)</text>
+  <text x="616" y="368" fill="#8b949e" font-size="11.5">人类视频：Ego4D 类第一视角（GR00T N1.7 宣称 2 万+小时，厂商口径）</text>
+  <text x="616" y="392" fill="#8b949e" font-size="11.5">仿真/合成：Isaac Sim · Cosmos · MimicGen · DreamGen（世界模型造数据）</text>
+  <text x="616" y="416" fill="#8b949e" font-size="11.5">趋势：从「开源模型」走向「模型+数据+工具链+评测」全栈生态开源</text>
+
+  <!-- 下：开放问题/前沿战场 -->
+  <text x="50" y="484" fill="#bc8cff" font-size="16" font-weight="700">C · 六大开放问题与 2026 前沿战场</text>
+  <g font-size="11.5">
+    <rect x="50" y="500" width="340" height="100" rx="9" fill="#0a0e14" stroke="#30363d"/>
+    <rect x="50" y="500" width="6" height="100" rx="3" fill="#39c5cf"/>
+    <text x="74" y="528" fill="#39c5cf" font-weight="700">① 数据效率与缩放律</text>
+    <text x="74" y="552" fill="#e6edf3">真机数据昂贵：人类视频能否稳定转</text>
+    <text x="74" y="572" fill="#e6edf3">化为动作？灵巧性缩放律是否成立</text>
+    <text x="74" y="590" fill="#8b949e">合成数据会否导致模型坍缩/自蒸馏</text>
+
+    <rect x="410" y="500" width="340" height="100" rx="9" fill="#0a0e14" stroke="#30363d"/>
+    <rect x="410" y="500" width="6" height="100" rx="3" fill="#3fb950"/>
+    <text x="434" y="528" fill="#3fb950" font-weight="700">② 跨本体泛化</text>
+    <text x="434" y="552" fill="#e6edf3">不同构型/自由度/相机：统一动作</text>
+    <text x="434" y="572" fill="#e6edf3">空间与本体条件化，少量演示快速</text>
+    <text x="434" y="590" fill="#8b949e">适配（100–150 条）能否规模化</text>
+
+    <rect x="770" y="500" width="340" height="100" rx="9" fill="#0a0e14" stroke="#30363d"/>
+    <rect x="770" y="500" width="6" height="100" rx="3" fill="#d29922"/>
+    <text x="794" y="528" fill="#d29922" font-weight="700">③ 长程任务与记忆</text>
+    <text x="794" y="552" fill="#e6edf3">整屋清扫等数十步任务：子目标分</text>
+    <text x="794" y="572" fill="#e6edf3">解、错误恢复、跨回合记忆仍不稳</text>
+    <text x="794" y="590" fill="#8b949e">与 Agent Memory / 世界模型融合</text>
+  </g>
+  <g font-size="11.5">
+    <rect x="50" y="612" width="340" height="100" rx="9" fill="#0a0e14" stroke="#30363d"/>
+    <rect x="50" y="612" width="6" height="100" rx="3" fill="#bc8cff"/>
+    <text x="74" y="640" fill="#bc8cff" font-weight="700">④ 推理效率与端侧</text>
+    <text x="74" y="664" fill="#e6edf3">高频闭环要求低延迟：小模型、量</text>
+    <text x="74" y="684" fill="#e6edf3">化、异步推理、动作头步数压缩</text>
+    <text x="74" y="702" fill="#8b949e">端侧芯片上跑 VLA 是落地关键</text>
+
+    <rect x="410" y="612" width="340" height="100" rx="9" fill="#0a0e14" stroke="#30363d"/>
+    <rect x="410" y="612" width="6" height="100" rx="3" fill="#f85149"/>
+    <text x="434" y="640" fill="#f85149" font-weight="700">⑤ 安全可信与可解释</text>
+    <text x="434" y="664" fill="#e6edf3">运行时监控、越界拒动、动作可证</text>
+    <text x="434" y="684" fill="#e6edf3">伪/证书化；对抗数据投毒（开源风险）</text>
+    <text x="434" y="702" fill="#8b949e">人机协作场景的安全水位</text>
+
+    <rect x="770" y="612" width="340" height="100" rx="9" fill="#0a0e14" stroke="#30363d"/>
+    <rect x="770" y="612" width="6" height="100" rx="3" fill="#58a6ff"/>
+    <text x="794" y="640" fill="#58a6ff" font-weight="700">⑥ VLA × RL × 世界模型</text>
+    <text x="794" y="664" fill="#e6edf3">用世界模型想象训练、用闭环成功</text>
+    <text x="794" y="684" fill="#e6edf3">率做 RL 奖励，超越纯模仿；动作</text>
+    <text x="794" y="702" fill="#8b949e">—预测一体化（World Action Model）</text>
+  </g>
+
+  <text x="50" y="752" fill="#8b949e" font-size="12">信源：LIBERO 2306.03310 · CALVIN 2112.03227 · SimplerEnv 2405.05941 · Open X 2310.08864 · RoboMIND 2412.13877 · AgiBot World 2503.06669</text>
+  <text x="50" y="776" fill="#8b949e" font-size="12">HumanPlus 2406.10454 · MimicGen 2310.17596 · DreamGen 2505.12705 · GR00T N1.7 据 NVIDIA 官方（厂商口径）；国产系统据各厂商发布与产业媒体。</text>
+  <text x="50" y="812" fill="#e6edf3" font-size="13" font-weight="700">总判断：</text>
+  <text x="118" y="812" fill="#8b949e" font-size="12.5">VLA 是大模型走出数字世界、兑现物理价值的主接口；2026 竞争焦点从「谁的骨干大」转向「谁的数据闭环 + 本体适配 + 端侧实时」更优。</text>
+</svg>
+</body></html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · VLA 演进谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1160 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1160" height="900" fill="#0d1117"/>
+  <text x="50" y="44" fill="#e6edf3" font-size="24" font-weight="700">图 2 · VLA / 机器人基础模型 2022–2026 技术演进谱系</text>
+  <text x="50" y="72" fill="#8b949e" font-size="13">四条主线交织：语言落地 → 端到端 VLA → 跨本体与数据缩放 → 生成式动作头与通用人形（编号均经 arXiv 核实）</text>
+
+  <!-- 主轴 -->
+  <line x1="80" y1="430" x2="1110" y2="430" stroke="#30363d" stroke-width="3"/>
+  <g fill="#8b949e" font-size="13" text-anchor="middle">
+    <text x="140" y="462">2022</text><text x="330" y="462">2023</text><text x="520" y="462">2024</text>
+    <text x="710" y="462">2025 上</text><text x="900" y="462">2025 下</text><text x="1070" y="462">2026</text>
+  </g>
+  <g fill="#58a6ff">
+    <circle cx="140" cy="430" r="6"/><circle cx="330" cy="430" r="6"/><circle cx="520" cy="430" r="6"/>
+    <circle cx="710" cy="430" r="6"/><circle cx="900" cy="430" r="6"/><circle cx="1070" cy="430" r="6"/>
+  </g>
+
+  <!-- 上方事件（语言落地 + 数据集） -->
+  <g font-size="11.5">
+    <!-- 2022 -->
+    <line x1="140" y1="430" x2="140" y2="360" stroke="#39c5cf" stroke-width="1.4"/>
+    <rect x="70" y="300" width="150" height="60" rx="8" fill="#0a0e14" stroke="#39c5cf"/>
+    <text x="145" y="322" text-anchor="middle" fill="#39c5cf" font-weight="700">SayCan</text>
+    <text x="145" y="340" text-anchor="middle" fill="#e6edf3">LLM 落地：语言约束</text>
+    <text x="145" y="355" text-anchor="middle" fill="#8b949e">× 可供性 2204.01691</text>
+
+    <line x1="140" y1="300" x2="140" y2="250" stroke="#39c5cf" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <rect x="70" y="190" width="150" height="58" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="145" y="212" text-anchor="middle" fill="#e6edf3" font-weight="700">Inner Monologue</text>
+    <text x="145" y="230" text-anchor="middle" fill="#8b949e">闭环语言反馈</text>
+    <text x="145" y="244" text-anchor="middle" fill="#8b949e">2207.05608</text>
+
+    <!-- 2023 -->
+    <line x1="330" y1="430" x2="330" y2="360" stroke="#39c5cf" stroke-width="1.4"/>
+    <rect x="262" y="300" width="150" height="60" rx="8" fill="#0a0e14" stroke="#39c5cf"/>
+    <text x="337" y="322" text-anchor="middle" fill="#39c5cf" font-weight="700">RT-2</text>
+    <text x="337" y="340" text-anchor="middle" fill="#e6edf3">首个 VLA：动作当 token</text>
+    <text x="337" y="355" text-anchor="middle" fill="#8b949e">2307.15818</text>
+
+    <line x1="330" y1="300" x2="330" y2="250" stroke="#bc8cff" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <rect x="262" y="190" width="150" height="58" rx="8" fill="#161b22" stroke="#bc8cff"/>
+    <text x="337" y="210" text-anchor="middle" fill="#bc8cff" font-weight="700">Open X-Embodiment</text>
+    <text x="337" y="228" text-anchor="middle" fill="#e6edf3">跨本体数据/RT-X</text>
+    <text x="337" y="243" text-anchor="middle" fill="#8b949e">2310.08864</text>
+
+    <!-- 2024 数据集/基座 -->
+    <line x1="520" y1="430" x2="520" y2="360" stroke="#3fb950" stroke-width="1.4"/>
+    <rect x="452" y="300" width="150" height="60" rx="8" fill="#0a0e14" stroke="#3fb950"/>
+    <text x="527" y="322" text-anchor="middle" fill="#3fb950" font-weight="700">OpenVLA 7B</text>
+    <text x="527" y="340" text-anchor="middle" fill="#e6edf3">970k 演示开源基线</text>
+    <text x="527" y="355" text-anchor="middle" fill="#8b949e">2406.09246</text>
+
+    <line x1="520" y1="300" x2="520" y2="250" stroke="#3fb950" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <rect x="452" y="190" width="150" height="58" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="527" y="210" text-anchor="middle" fill="#e6edf3" font-weight="700">DROID / Octo</text>
+    <text x="527" y="228" text-anchor="middle" fill="#8b949e">大规模真机数据集/策略</text>
+    <text x="527" y="243" text-anchor="middle" fill="#8b949e">2403.12945 / 2405.12213</text>
+
+    <!-- 2025上 -->
+    <line x1="710" y1="430" x2="710" y2="360" stroke="#d29922" stroke-width="1.4"/>
+    <rect x="642" y="300" width="150" height="60" rx="8" fill="#0a0e14" stroke="#d29922"/>
+    <text x="717" y="322" text-anchor="middle" fill="#d29922" font-weight="700">π0.5 / GR00T N1</text>
+    <text x="717" y="340" text-anchor="middle" fill="#e6edf3">开放世界 + 人形基座</text>
+    <text x="717" y="355" text-anchor="middle" fill="#8b949e">2504.16054 / .14734</text>
+
+    <line x1="710" y1="300" x2="710" y2="250" stroke="#d29922" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <rect x="642" y="190" width="150" height="58" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="717" y="210" text-anchor="middle" fill="#e6edf3" font-weight="700">Gemini Robotics</text>
+    <text x="717" y="228" text-anchor="middle" fill="#8b949e">VLA + ER 双模型</text>
+    <text x="717" y="243" text-anchor="middle" fill="#8b949e">2503.20020</text>
+
+    <!-- 2025下 数据/世界模型 -->
+    <line x1="900" y1="430" x2="900" y2="360" stroke="#bc8cff" stroke-width="1.4"/>
+    <rect x="832" y="300" width="150" height="60" rx="8" fill="#0a0e14" stroke="#bc8cff"/>
+    <text x="907" y="322" text-anchor="middle" fill="#bc8cff" font-weight="700">RoboBrain 2.0</text>
+    <text x="907" y="340" text-anchor="middle" fill="#e6edf3">统一脑模型 / 长程</text>
+    <text x="907" y="355" text-anchor="middle" fill="#8b949e">2507.02029</text>
+
+    <line x1="900" y1="300" x2="900" y2="250" stroke="#bc8cff" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <rect x="832" y="190" width="150" height="58" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="907" y="210" text-anchor="middle" fill="#e6edf3" font-weight="700">DreamGen 等</text>
+    <text x="907" y="228" text-anchor="middle" fill="#8b949e">视频世界模型造数据</text>
+    <text x="907" y="243" text-anchor="middle" fill="#8b949e">2505.12705</text>
+
+    <!-- 2026 -->
+    <line x1="1070" y1="430" x2="1070" y2="360" stroke="#f85149" stroke-width="1.4"/>
+    <rect x="994" y="300" width="150" height="60" rx="8" fill="#0a0e14" stroke="#f85149"/>
+    <text x="1069" y="320" text-anchor="middle" fill="#f85149" font-weight="700">通用人形 VLA 爆发</text>
+    <text x="1069" y="338" text-anchor="middle" fill="#e6edf3">全身/灵巧手/端侧</text>
+    <text x="1069" y="354" text-anchor="middle" fill="#8b949e">GR00T N1.7 · 国产开源</text>
+
+    <line x1="1070" y1="300" x2="1070" y2="250" stroke="#f85149" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <rect x="994" y="190" width="150" height="58" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="1069" y="208" text-anchor="middle" fill="#e6edf3" font-weight="700">RoboBrain 2.5</text>
+    <text x="1069" y="226" text-anchor="middle" fill="#8b949e">深度+时序统一</text>
+    <text x="1069" y="241" text-anchor="middle" fill="#8b949e">2601.14352</text>
+  </g>
+
+  <!-- 下方事件（动作表示/策略学习） -->
+  <g font-size="11.5">
+    <!-- 2022 RT1 -->
+    <line x1="140" y1="430" x2="140" y2="500" stroke="#39c5cf" stroke-width="1.4"/>
+    <rect x="70" y="500" width="150" height="58" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="145" y="522" text-anchor="middle" fill="#e6edf3" font-weight="700">RT-1</text>
+    <text x="145" y="540" text-anchor="middle" fill="#8b949e">大规模真机 Transformer</text>
+    <text x="145" y="554" text-anchor="middle" fill="#8b949e">2212.06817</text>
+
+    <!-- 2023 ACT / Diffusion Policy -->
+    <line x1="330" y1="430" x2="330" y2="500" stroke="#bc8cff" stroke-width="1.4"/>
+    <rect x="262" y="500" width="150" height="72" rx="8" fill="#0a0e14" stroke="#bc8cff"/>
+    <text x="337" y="520" text-anchor="middle" fill="#bc8cff" font-weight="700">ACT / Diffusion Policy</text>
+    <text x="337" y="538" text-anchor="middle" fill="#e6edf3">动作块 + 扩散动作</text>
+    <text x="337" y="554" text-anchor="middle" fill="#8b949e">2304.13705 / 2303.04137</text>
+
+    <!-- 2024 pi0 RDT -->
+    <line x1="520" y1="430" x2="520" y2="500" stroke="#3fb950" stroke-width="1.4"/>
+    <rect x="452" y="500" width="150" height="72" rx="8" fill="#0a0e14" stroke="#3fb950"/>
+    <text x="527" y="520" text-anchor="middle" fill="#3fb950" font-weight="700">π0 / RDT-1B</text>
+    <text x="527" y="538" text-anchor="middle" fill="#e6edf3">流匹配 / 双臂扩散基座</text>
+    <text x="527" y="555" text-anchor="middle" fill="#8b949e">2410.24164 / .07864</text>
+
+    <!-- 2025上 FAST OFT -->
+    <line x1="710" y1="430" x2="710" y2="500" stroke="#d29922" stroke-width="1.4"/>
+    <rect x="642" y="500" width="150" height="72" rx="8" fill="#0a0e14" stroke="#d29922"/>
+    <text x="717" y="520" text-anchor="middle" fill="#d29922" font-weight="700">FAST / OpenVLA-OFT</text>
+    <text x="717" y="538" text-anchor="middle" fill="#e6edf3">高效动作 token / 微调配方</text>
+    <text x="717" y="555" text-anchor="middle" fill="#8b949e">2501.09747 / 2502.19645</text>
+
+    <!-- 2025下 SmolVLA -->
+    <line x1="900" y1="430" x2="900" y2="500" stroke="#bc8cff" stroke-width="1.4"/>
+    <rect x="832" y="500" width="150" height="72" rx="8" fill="#0a0e14" stroke="#bc8cff"/>
+    <text x="907" y="520" text-anchor="middle" fill="#bc8cff" font-weight="700">SmolVLA 等小模型</text>
+    <text x="907" y="538" text-anchor="middle" fill="#e6edf3">单卡训练 / CPU 部署</text>
+    <text x="907" y="555" text-anchor="middle" fill="#8b949e">2506.01844</text>
+
+    <!-- 2026 动作token/世界动作融合 -->
+    <line x1="1070" y1="430" x2="1070" y2="500" stroke="#f85149" stroke-width="1.4"/>
+    <rect x="994" y="500" width="150" height="72" rx="8" fill="#0a0e14" stroke="#f85149"/>
+    <text x="1069" y="520" text-anchor="middle" fill="#f85149" font-weight="700">世界模型 × 动作</text>
+    <text x="1069" y="538" text-anchor="middle" fill="#e6edf3">TOAST / 一步去噪 / VLA-RL</text>
+    <text x="1069" y="555" text-anchor="middle" fill="#8b949e">2610.00899 等</text>
+  </g>
+
+  <!-- 底部三燃料/趋势条 -->
+  <text x="50" y="630" fill="#e6edf3" font-size="15" font-weight="700">贯穿演进的三条技术主线</text>
+  <g font-size="12.5">
+    <rect x="50" y="646" width="342" height="120" rx="10" fill="#0a0e14" stroke="#30363d"/>
+    <rect x="50" y="646" width="6" height="120" rx="3" fill="#39c5cf"/>
+    <text x="74" y="676" fill="#39c5cf" font-size="14" font-weight="700">① 语言如何「接地」到动作</text>
+    <text x="74" y="702" fill="#e6edf3">SayCan 用 LLM 只做高层打分 → Code as</text>
+    <text x="74" y="722" fill="#e6edf3">Policies 生成代码 → RT-2 把动作变成</text>
+    <text x="74" y="742" fill="#e6edf3">token，语言与控制首次共享同一权重</text>
+
+    <rect x="410" y="646" width="342" height="120" rx="10" fill="#0a0e14" stroke="#30363d"/>
+    <rect x="410" y="646" width="6" height="120" rx="3" fill="#3fb950"/>
+    <text x="434" y="676" fill="#3fb950" font-size="14" font-weight="700">② 数据与跨本体缩放</text>
+    <text x="434" y="702" fill="#e6edf3">Open X / DROID / AgiBot World 汇聚真机</text>
+    <text x="434" y="722" fill="#e6edf3">数据；人类视频与仿真合成补长尾；</text>
+    <text x="434" y="742" fill="#e6edf3">统一动作空间与跨本体注意力是关键</text>
+
+    <rect x="770" y="646" width="340" height="120" rx="10" fill="#0a0e14" stroke="#30363d"/>
+    <rect x="770" y="646" width="6" height="120" rx="3" fill="#d29922"/>
+    <text x="794" y="676" fill="#d29922" font-size="14" font-weight="700">③ 动作生成器的演化</text>
+    <text x="794" y="702" fill="#e6edf3">离散自回归 → 扩散（多模态/平滑）→</text>
+    <text x="794" y="722" fill="#e6edf3">流匹配（快）→ 双系统快慢分层；动作</text>
+    <text x="794" y="742" fill="#e6edf3">块与异步推理把频率推到 200–300Hz</text>
+  </g>
+
+  <text x="50" y="800" fill="#8b949e" font-size="12">注：年份为 arXiv 首次提交年份；同一系统多个里程碑取代表论文编号。Gemini Robotics-ER 与 Gemini Robotics 同载于 arXiv:2503.20020。</text>
+  <text x="50" y="824" fill="#8b949e" font-size="12">2026 年产业侧国产开源 VLA（宇树 UnifoLM、优必选 Thinker、千寻 Spirit、小米 MiMo-Embodied、灵波 LingBot、地平线 HoloBrain、智平方 AlphaBrain）密集发布。</text>
+</svg>
+</body></html>

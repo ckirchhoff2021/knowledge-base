@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · VLA 架构解剖</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1160 940" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1160" height="940" fill="#0d1117"/>
+  <text x="50" y="44" fill="#e6edf3" font-size="24" font-weight="700">图 3 · VLA 核心架构解剖：动作表示、三类生成头与双系统分工</text>
+  <text x="50" y="72" fill="#8b949e" font-size="13">同一个 VLM 骨干，差别集中在「如何把隐状态变成连续动作」——这是决定精度、频率与多模态能力的主战场</text>
+
+  <!-- 左：动作表示光谱 -->
+  <text x="50" y="112" fill="#58a6ff" font-size="16" font-weight="700">A · 动作表示光谱</text>
+  <line x1="70" y1="150" x2="540" y2="150" stroke="#30363d" stroke-width="3"/>
+  <circle cx="90" cy="150" r="7" fill="#39c5cf"/><circle cx="520" cy="150" r="7" fill="#d29922"/>
+  <text x="90" y="180" text-anchor="middle" fill="#39c5cf" font-size="12.5" font-weight="700">离散 token</text>
+  <text x="90" y="198" text-anchor="middle" fill="#8b949e" font-size="11">RT-2 / OpenVLA</text>
+  <text x="305" y="180" text-anchor="middle" fill="#bc8cff" font-size="12.5" font-weight="700">压缩离散 token</text>
+  <text x="305" y="198" text-anchor="middle" fill="#8b949e" font-size="11">FAST（DCT 分词，吞吐↑）</text>
+  <text x="520" y="180" text-anchor="middle" fill="#d29922" font-size="12.5" font-weight="700">连续向量</text>
+  <text x="520" y="198" text-anchor="middle" fill="#8b949e" font-size="11">扩散 / 流匹配 / L1 回归</text>
+
+  <g font-size="11.5">
+    <rect x="50" y="216" width="240" height="86" rx="9" fill="#0a0e14" stroke="#30363d"/>
+    <text x="66" y="240" fill="#39c5cf" font-weight="700">离散化（bin/语言 token）</text>
+    <text x="66" y="262" fill="#e6edf3">直接复用成熟 LLM 采样与推理栈</text>
+    <text x="66" y="281" fill="#f85149">量化误差、逐 token 慢、高频受限</text>
+
+    <rect x="310" y="216" width="240" height="86" rx="9" fill="#0a0e14" stroke="#30363d"/>
+    <text x="326" y="240" fill="#d29922" font-weight="700">连续表示</text>
+    <text x="326" y="262" fill="#e6edf3">精度高、可整块并行、控制平滑</text>
+    <text x="326" y="281" fill="#f85149">需专门生成头与去噪/求解步数</text>
+  </g>
+
+  <!-- 右：三类生成头 -->
+  <text x="600" y="112" fill="#3fb950" font-size="16" font-weight="700">B · 三类动作生成头对比</text>
+  <g font-size="11.5">
+    <rect x="600" y="126" width="170" height="176" rx="9" fill="#0a0e14" stroke="#39c5cf"/>
+    <text x="685" y="150" text-anchor="middle" fill="#39c5cf" font-weight="700" font-size="13">自回归 (AR)</text>
+    <text x="614" y="174" fill="#e6edf3">• 动作当文本 token</text>
+    <text x="614" y="194" fill="#e6edf3">• 因果链、可复用 KV</text>
+    <text x="614" y="214" fill="#e6edf3">• 代表 RT-2/OpenVLA</text>
+    <text x="614" y="240" fill="#3fb950">✓ 简单、语义对齐好</text>
+    <text x="614" y="262" fill="#f85149">✗ 串行慢、误差累积</text>
+    <text x="614" y="288" fill="#8b949e">FAST 分词大幅提吞吐</text>
+
+    <rect x="788" y="126" width="170" height="176" rx="9" fill="#0a0e14" stroke="#bc8cff"/>
+    <text x="873" y="150" text-anchor="middle" fill="#bc8cff" font-weight="700" font-size="13">扩散 (Diffusion)</text>
+    <text x="802" y="174" fill="#e6edf3">• 对动作块迭代去噪</text>
+    <text x="802" y="194" fill="#e6edf3">• 天然建模多模态</text>
+    <text x="802" y="214" fill="#e6edf3">• Diffusion Policy/RDT</text>
+    <text x="802" y="240" fill="#3fb950">✓ 平滑、多解任务强</text>
+    <text x="802" y="262" fill="#f85149">✗ 多步去噪延迟高</text>
+    <text x="802" y="288" fill="#8b949e">GR00T 用 DiT 做 System1</text>
+
+    <rect x="976" y="126" width="170" height="176" rx="9" fill="#0a0e14" stroke="#d29922"/>
+    <text x="1061" y="150" text-anchor="middle" fill="#d29922" font-weight="700" font-size="13">流匹配 (Flow)</text>
+    <text x="990" y="174" fill="#e6edf3">• 学噪声→动作的流</text>
+    <text x="990" y="194" fill="#e6edf3">• 少步即可采样</text>
+    <text x="990" y="214" fill="#e6edf3">• π0/π0.5/Gemini</text>
+    <text x="990" y="240" fill="#3fb950">✓ 快、灵巧、高频</text>
+    <text x="990" y="262" fill="#f85149">✗ 训练/工程较新</text>
+    <text x="990" y="288" fill="#8b949e">连续动作专家挂在 VLM</text>
+  </g>
+
+  <!-- 中：双系统架构 -->
+  <text x="50" y="350" fill="#bc8cff" font-size="16" font-weight="700">C · 双系统（Dual-System / Hierarchical）架构 —— GR00T N1、π0.5、Helix 的共同选择</text>
+  <!-- System2 -->
+  <rect x="50" y="368" width="520" height="150" rx="12" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+  <text x="70" y="398" fill="#bc8cff" font-size="15" font-weight="700">System 2 · 慢思考（VLM，~10Hz 或更低）</text>
+  <text x="70" y="424" fill="#e6edf3" font-size="12.5">理解指令、场景与物体；输出语言子目标 / 语义路点 / 检测框</text>
+  <text x="70" y="448" fill="#e6edf3" font-size="12.5">π0.5：高层语义子任务预测；Gemini Robotics-ER：3D 框/对应/抓取</text>
+  <text x="70" y="472" fill="#e6edf3" font-size="12.5">处理开放世界、长程规划、新任务（100 条演示即可学新短程任务）</text>
+  <text x="70" y="500" fill="#8b949e" font-size="11.5">大模型、低频率、强泛化 ——「想清楚做什么」</text>
+  <!-- arrow -->
+  <line x1="570" y1="443" x2="612" y2="443" stroke="#58a6ff" stroke-width="2.2" marker-end="url(#a3)"/>
+  <text x="591" y="434" text-anchor="middle" fill="#58a6ff" font-size="10.5">条件</text>
+  <!-- System1 -->
+  <rect x="616" y="368" width="494" height="150" rx="12" fill="#0a0e14" stroke="#3fb950" stroke-width="1.6"/>
+  <text x="636" y="398" fill="#3fb950" font-size="15" font-weight="700">System 1 · 快反应（动作专家，50–300Hz）</text>
+  <text x="636" y="424" fill="#e6edf3" font-size="12.5">扩散 Transformer / 流模型，以 System2 隐状态为条件</text>
+  <text x="636" y="448" fill="#e6edf3" font-size="12.5">实时输出关节/末端动作块，保证平滑、抖动小、可接触密集作业</text>
+  <text x="636" y="472" fill="#e6edf3" font-size="12.5">端侧小模型（地平线 HoloMotion 小脑宣称 300FPS）</text>
+  <text x="636" y="500" fill="#8b949e" font-size="11.5">小模型、高频率、强实时 ——「稳定地做出来」</text>
+
+  <!-- 训练数据 pipeline -->
+  <text x="50" y="566" fill="#d29922" font-size="16" font-weight="700">D · 训练数据三燃料与后训练流水线</text>
+  <g font-size="11.5">
+    <rect x="50" y="584" width="220" height="92" rx="9" fill="#0a0e14" stroke="#39c5cf"/>
+    <text x="64" y="608" fill="#39c5cf" font-weight="700">① 真机遥操作演示</text>
+    <text x="64" y="630" fill="#e6edf3">OXE 100万+ / DROID 76k</text>
+    <text x="64" y="649" fill="#e6edf3">AgiBot World / RoboMIND</text>
+    <text x="64" y="668" fill="#8b949e">贵但分布真实</text>
+
+    <rect x="290" y="584" width="220" height="92" rx="9" fill="#0a0e14" stroke="#bc8cff"/>
+    <text x="304" y="608" fill="#bc8cff" font-weight="700">② 人类第一视角视频</text>
+    <text x="304" y="630" fill="#e6edf3">Ego4D 类海量视频</text>
+    <text x="304" y="649" fill="#e6edf3">GR00T N1.7：2万+小时</text>
+    <text x="304" y="668" fill="#8b949e">无动作标签，需对齐</text>
+
+    <rect x="530" y="584" width="220" height="92" rx="9" fill="#0a0e14" stroke="#d29922"/>
+    <text x="544" y="608" fill="#d29922" font-weight="700">③ 仿真 / 世界模型合成</text>
+    <text x="544" y="630" fill="#e6edf3">Isaac/Cosmos、MimicGen</text>
+    <text x="544" y="649" fill="#e6edf3">DreamGen 视频造数据</text>
+    <text x="544" y="668" fill="#8b949e">破 sim2real 与长尾</text>
+  </g>
+  <line x1="750" y1="630" x2="792" y2="630" stroke="#58a6ff" stroke-width="2" marker-end="url(#a3)"/>
+
+  <rect x="796" y="584" width="314" height="92" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+  <text x="812" y="608" fill="#3fb950" font-weight="700" font-size="12.5">后训练：预训练 VLM → 动作后训练 → 适配</text>
+  <text x="812" y="630" fill="#e6edf3" font-size="11.5">共训 co-training · 动作头微调 · OFT 配方</text>
+  <text x="812" y="649" fill="#e6edf3" font-size="11.5">新本体少量演示(100–150条)/RL 微调</text>
+  <text x="812" y="668" fill="#8b949e" font-size="11">LoRA/量化 → 端侧部署</text>
+
+  <!-- 底部关键指标/结论条 -->
+  <g font-size="12">
+    <rect x="50" y="700" width="1060" height="120" rx="10" fill="#0a0e14" stroke="#30363d"/>
+    <text x="70" y="728" fill="#e6edf3" font-weight="700" font-size="13">决定 VLA 落地的四个工程旋钮：</text>
+    <text x="70" y="754" fill="#39c5cf">① 动作表示</text><text x="150" y="754" fill="#8b949e">离散 vs 连续、单步 vs 动作块（chunk）</text>
+    <text x="430" y="754" fill="#bc8cff">② 控制频率</text><text x="510" y="754" fill="#8b949e">异步推理：感知与动作解耦，执行不等推理</text>
+    <text x="800" y="754" fill="#d29922">③ 跨本体</text><text x="870" y="754" fill="#8b949e">统一动作空间 / 本体 token / 跨本体注意力</text>
+    <text x="70" y="786" fill="#3fb950">④ 数据配比</text><text x="150" y="786" fill="#8b949e">真机:人类视频:合成 的混合与共训方式，决定泛化与成本</text>
+    <text x="600" y="786" fill="#f85149">⚠ 评测</text><text x="650" y="786" fill="#8b949e">仿真分数 ≠ 真机成功率，须闭环真机评测（见图 4）</text>
+  </g>
+
+  <text x="50" y="852" fill="#8b949e" font-size="12">据 π0/π0.5（arXiv:2410.24164 / 2504.16054）、GR00T N1（2503.14734）、OpenVLA/OpenVLA-OFT（2406.09246 / 2502.19645）、FAST（2501.09747）、Diffusion Policy（2303.04137）整理。</text>
+  <text x="50" y="876" fill="#8b949e" font-size="12">厂商自报的频率/数据时长（如 300FPS、2 万小时）为厂商口径，未经独立复现。</text>
+
+  <defs>
+    <marker id="a3" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#58a6ff"/></marker>
+  </defs>
+</svg>
+</body></html>
