@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 注意力复杂度与两种计算范式</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 820" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="820" fill="#0d1117"/>
+  <text x="60" y="50" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 二次注意力 vs 线性/循环注意力：复杂度、KV 缓存与对偶形式</text>
+  <text x="60" y="78" fill="#8b949e" font-size="13">核心分歧：历史信息是「显式存下所有 K/V（随长度增长）」还是「压缩进固定大小状态（与长度无关）」</text>
+
+  <!-- LEFT: softmax attention -->
+  <rect x="50" y="110" width="520" height="360" rx="12" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
+  <rect x="50" y="110" width="520" height="40" rx="12" fill="#f85149" opacity="0.14"/>
+  <text x="70" y="137" fill="#f85149" font-size="17" font-weight="700">Softmax 自注意力（Transformer）</text>
+
+  <text x="70" y="178" fill="#e6edf3" font-size="13.5" font-weight="700">oₜ = Σⱼ softmax(qₜᵀkⱼ) · vⱼ</text>
+  <text x="70" y="208" fill="#8b949e" font-size="12.5">历史 = 不断追加的 KV 列表（无压缩）</text>
+
+  <!-- KV blocks growing -->
+  <g font-size="11">
+    <rect x="70" y="228" width="70" height="34" rx="5" fill="#21304a" stroke="#58a6ff"/><text x="105" y="249" fill="#9ecbff" text-anchor="middle">K₁V₁</text>
+    <rect x="150" y="228" width="70" height="34" rx="5" fill="#21304a" stroke="#58a6ff"/><text x="185" y="249" fill="#9ecbff" text-anchor="middle">K₂V₂</text>
+    <rect x="230" y="228" width="70" height="34" rx="5" fill="#21304a" stroke="#58a6ff"/><text x="265" y="249" fill="#9ecbff" text-anchor="middle">K₃V₃</text>
+    <text x="318" y="249" fill="#8b949e" font-size="16">···</text>
+    <rect x="350" y="228" width="70" height="34" rx="5" fill="#21304a" stroke="#58a6ff"/><text x="385" y="249" fill="#9ecbff" text-anchor="middle">KₜVₜ</text>
+    <text x="445" y="249" fill="#f85149" font-size="13">→ 随 L 线性增长</text>
+  </g>
+  <line x1="70" y1="286" x2="540" y2="286" stroke="#30363d"/>
+  <text x="70" y="312" fill="#e6edf3" font-size="12.5">解码每步需读取全部历史 → 每 token 成本 O(L)</text>
+  <text x="70" y="338" fill="#f85149" font-size="13" font-weight="700">计算复杂度：O(L²·d)</text>
+  <text x="70" y="364" fill="#f85149" font-size="13" font-weight="700">KV 缓存：O(L·d)，长上下文显存爆炸</text>
+  <text x="70" y="396" fill="#3fb950" font-size="12.5">优势：精确检索 / 内容寻址 / 无需压缩历史</text>
+  <text x="70" y="422" fill="#3fb950" font-size="12.5">训练并行：全序列矩阵乘，天然高度并行</text>
+  <text x="70" y="450" fill="#8b949e" font-size="11.5">代表：标准 Transformer、MLA/GQA（仍是 softmax）</text>
+
+  <!-- RIGHT: linear / recurrent -->
+  <rect x="630" y="110" width="520" height="360" rx="12" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+  <rect x="630" y="110" width="520" height="40" rx="12" fill="#3fb950" opacity="0.14"/>
+  <text x="650" y="137" fill="#3fb950" font-size="17" font-weight="700">线性注意力 / 现代 RNN（固定状态）</text>
+
+  <text x="650" y="178" fill="#e6edf3" font-size="13.5" font-weight="700">Sₜ = f(Sₜ₋₁, kₜ, vₜ)，　oₜ = Sₜ qₜ</text>
+  <text x="650" y="208" fill="#8b949e" font-size="12.5">历史 = 固定大小矩阵状态（被压缩）</text>
+
+  <!-- fixed state -->
+  <g>
+    <rect x="700" y="226" width="120" height="70" rx="8" fill="#12261a" stroke="#3fb950" stroke-width="1.5"/>
+    <text x="760" y="258" fill="#7ee787" text-anchor="middle" font-size="13" font-weight="700">状态 S</text>
+    <text x="760" y="280" fill="#8b949e" text-anchor="middle" font-size="11">d × d 矩阵</text>
+    <path d="M820,261 L880,261" stroke="#3fb950" stroke-width="2" marker-end="url(#ar)"/>
+    <rect x="882" y="226" width="120" height="70" rx="8" fill="#12261a" stroke="#3fb950" stroke-width="1.5"/>
+    <text x="942" y="258" fill="#7ee787" text-anchor="middle" font-size="13" font-weight="700">状态 S′</text>
+    <text x="942" y="280" fill="#8b949e" text-anchor="middle" font-size="11">同样大小</text>
+    <text x="1030" y="265" fill="#3fb950" font-size="13">与 L 无关</text>
+  </g>
+  <line x1="650" y1="318" x2="1120" y2="318" stroke="#30363d"/>
+  <text x="650" y="344" fill="#e6edf3" font-size="12.5">解码每步只更新固定状态 → 每 token 成本 O(1)</text>
+  <text x="650" y="370" fill="#3fb950" font-size="13" font-weight="700">计算复杂度：O(L·d²)</text>
+  <text x="650" y="396" fill="#3fb950" font-size="13" font-weight="700">状态缓存：O(d²)，常数，无 KV 爆炸</text>
+  <text x="650" y="428" fill="#f85149" font-size="12.5">短板：固定状态容量有限，精确检索（大海捞针）难</text>
+  <text x="650" y="454" fill="#8b949e" font-size="11.5">代表：线性注意力 / Mamba(SSM) / RWKV / TTT / DeltaNet</text>
+
+  <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3fb950"/></marker></defs>
+
+  <!-- BOTTOM: duality -->
+  <rect x="50" y="500" width="1100" height="270" rx="12" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+  <rect x="50" y="500" width="1100" height="40" rx="12" fill="#bc8cff" opacity="0.13"/>
+  <text x="70" y="527" fill="#bc8cff" font-size="17" font-weight="700">关键统一视角：线性 = 循环（Linear Attention 对偶 / SSD）</text>
+
+  <text x="70" y="572" fill="#e6edf3" font-size="13">① 并行（训练）形式：O = (QKᵀ) V，用结合律重组为 (QKᵀ)V = Q(KᵀV)</text>
+  <text x="70" y="600" fill="#9ecbff" font-size="12.5">　　分块（chunkwise）并行 → 训练时像注意力一样吃满 GPU，亚二次复杂度</text>
+  <text x="70" y="634" fill="#e6edf3" font-size="13">② 循环（推理）形式：Sₜ = Sₜ₋₁ + vₜkₜᵀ，oₜ = Sₜqₜ → 解码时像 RNN 一样常数状态</text>
+  <text x="70" y="662" fill="#9ecbff" font-size="12.5">　　同一组权重、两种执行路径：训练要并行，推理要省显存——二者兼得</text>
+  <text x="70" y="696" fill="#d29922" font-size="12.5">Mamba-2 的结构化状态空间对偶（SSD）证明 SSM 与带掩码的线性注意力是同一对象的两面；</text>
+  <text x="70" y="722" fill="#d29922" font-size="12.5">DeltaNet 进一步证明：Delta 规则更新 ≡ 对状态做一步在线梯度下降（与 TTT-Linear 在特定条件下等价）。</text>
+  <text x="70" y="752" fill="#8b949e" font-size="11.5">结论：线性注意力、门控 RNN、SSM、TTT 正在收敛为同一个「可并行训练的线性循环状态空间」框架。</text>
+</svg>
+</body></html>

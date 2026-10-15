@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · 四大旗舰混合架构的层排列与关键指标</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1240 940" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1240" height="940" fill="#0d1117"/>
+  <text x="50" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 4 · 四大旗舰混合架构：层排列模式 × 规模 × 关键指标</text>
+  <text x="50" y="76" fill="#8b949e" font-size="13">共同范式：少数全注意力层负责精确召回，多数线性/循环层负责长程吞吐；差异在比例、混合算子与位置编码</text>
+
+  <!-- legend -->
+  <g font-size="12">
+    <rect x="700" y="96" width="16" height="16" rx="3" fill="#f85149"/><text x="722" y="109" fill="#e6edf3">全注意力（softmax/MLA）</text>
+    <rect x="900" y="96" width="16" height="16" rx="3" fill="#3fb950"/><text x="922" y="109" fill="#e6edf3">线性/循环层</text>
+  </g>
+
+  <!-- ============ Kimi Linear ============ -->
+  <rect x="40" y="128" width="1160" height="180" rx="12" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
+  <text x="60" y="158" fill="#f85149" font-size="16" font-weight="700">Kimi Linear（2025.10，Moonshot）</text>
+  <text x="60" y="184" fill="#8b949e" font-size="12">KDA + MLA 分层混合；48B 总参 / 3B 激活；NoPE；开源权重 + KDA 内核 + vLLM</text>
+  <!-- pattern: mostly KDA, a few MLA -->
+  <g>
+    <!-- 16 cells: 3 MLA (red), 13 KDA (green) -->
+    <g id="kl-cells"></g>
+  </g>
+  <g>
+    <rect x="60" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="106" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="152" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="198" y="200" width="40" height="26" rx="4" fill="#f85149"/><rect x="244" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="290" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="336" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="382" y="200" width="40" height="26" rx="4" fill="#f85149"/><rect x="428" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="474" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="520" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="566" y="200" width="40" height="26" rx="4" fill="#f85149"/><rect x="612" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="658" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="704" y="200" width="40" height="26" rx="4" fill="#3fb950"/><rect x="750" y="200" width="40" height="26" rx="4" fill="#3fb950"/>
+  </g>
+  <text x="60" y="252" fill="#3fb950" font-size="12.5" font-weight="700">KV 缓存 −75%　·　1M 上下文解码最高 6×　·　短/长上下文 + RL 全 regime 反超全 MLA</text>
+  <text x="60" y="280" fill="#d29922" font-size="12">意义：首次公平对比下混合线性注意力「全面超越」全注意力；KDA 后被放大至 Kimi K3（2.8T）</text>
+
+  <!-- ============ MiniMax-01 ============ -->
+  <rect x="40" y="324" width="1160" height="160" rx="12" fill="#161b22" stroke="#d29922" stroke-width="1.6"/>
+  <text x="60" y="354" fill="#d29922" font-size="16" font-weight="700">MiniMax-01（2025.01，MiniMax）</text>
+  <text x="60" y="380" fill="#8b949e" font-size="12">每 8 层 = 7 Lightning Attention + 1 softmax；456B 总参 / 45.9B 激活，32 专家；RoPE</text>
+  <g>
+    <rect x="60" y="396" width="40" height="26" rx="4" fill="#3fb950"/><rect x="106" y="396" width="40" height="26" rx="4" fill="#3fb950"/><rect x="152" y="396" width="40" height="26" rx="4" fill="#3fb950"/><rect x="198" y="396" width="40" height="26" rx="4" fill="#3fb950"/><rect x="244" y="396" width="40" height="26" rx="4" fill="#3fb950"/><rect x="290" y="396" width="40" height="26" rx="4" fill="#3fb950"/><rect x="336" y="396" width="40" height="26" rx="4" fill="#3fb950"/><rect x="382" y="396" width="40" height="26" rx="4" fill="#f85149"/>
+    <text x="446" y="414" fill="#8b949e" font-size="12">× N 组</text>
+  </g>
+  <text x="60" y="452" fill="#3fb950" font-size="12.5" font-weight="700">推理支持 4M token　·　线性注意力 + MoE 首个数百 B 商用基础模型</text>
+  <text x="60" y="476" fill="#8b949e" font-size="11.5">配套 Varlen Ring Attention / LASP+ 解决变长批处理与超长序列并行</text>
+
+  <!-- ============ Jamba-1.5 ============ -->
+  <rect x="40" y="500" width="1160" height="170" rx="12" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+  <text x="60" y="530" fill="#bc8cff" font-size="16" font-weight="700">Jamba-1.5（2024.08，AI21 Labs）</text>
+  <text x="60" y="556" fill="#8b949e" font-size="12">Attention : Mamba ≈ 1 : 7；398B 总参 / 94B 激活（Large），MoE 16 专家 top-2；256K 上下文</text>
+  <g>
+    <rect x="60" y="572" width="40" height="26" rx="4" fill="#f85149"/><rect x="106" y="572" width="40" height="26" rx="4" fill="#3fb950"/><rect x="152" y="572" width="40" height="26" rx="4" fill="#3fb950"/><rect x="198" y="572" width="40" height="26" rx="4" fill="#3fb950"/><rect x="244" y="572" width="40" height="26" rx="4" fill="#3fb950"/><rect x="290" y="572" width="40" height="26" rx="4" fill="#3fb950"/><rect x="336" y="572" width="40" height="26" rx="4" fill="#3fb950"/><rect x="382" y="572" width="40" height="26" rx="4" fill="#3fb950"/>
+    <text x="446" y="590" fill="#8b949e" font-size="12">× 9 block</text>
+  </g>
+  <text x="60" y="628" fill="#3fb950" font-size="12.5" font-weight="700">RULER 平均 95.7%（256K）　·　256K 下 KV 缓存仅 9GB（LLaMA-3.1-70B 需 80GB）</text>
+  <text x="60" y="654" fill="#8b949e" font-size="11.5">ExpertsInt8：MoE 权重 INT8，8×80GB GPU 即可跑 256K，质量无损</text>
+
+  <!-- ============ RWKV-7 ============ -->
+  <rect x="40" y="686" width="1160" height="160" rx="12" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+  <text x="60" y="716" fill="#3fb950" font-size="16" font-weight="700">RWKV-7 Goose（2025.03，Bo Peng / RWKV 社区，Linux 基金会）</text>
+  <text x="60" y="742" fill="#8b949e" font-size="12">纯 RNN（无注意力），动态状态演化；矩阵状态 + 数据相关门；开源 0.1B–14B 全尺寸</text>
+  <g>
+    <rect x="60" y="758" width="600" height="26" rx="4" fill="#3fb950"/>
+    <text x="360" y="776" fill="#0d1117" text-anchor="middle" font-size="12" font-weight="700">全部为线性循环层（无 softmax 注意力，常数显存）</text>
+  </g>
+  <text x="60" y="814" fill="#3fb950" font-size="12.5" font-weight="700">表达力突破注意力/线性注意力的 TC0 上限；大上下文算力需求低 10–100×</text>
+  <text x="60" y="838" fill="#f85149" font-size="11.5">短板：对 prompt 格式敏感，回看/检索类任务偏弱（与「保留少量注意力层」的混合路线互补）</text>
+
+  <text x="40" y="888" fill="#8b949e" font-size="12">横评结论：纯 RNN（RWKV）最省但检索弱；保留 1/8–1/4 注意力层的混合（MiniMax/Jamba/Kimi）在召回与吞吐间取得最佳平衡。</text>
+  <text x="40" y="914" fill="#d29922" font-size="12">所有性能数字均来自各自技术报告（厂商口径）；架构比例依据论文描述绘制，为示意而非逐层数。</text>
+</svg>
+</body></html>

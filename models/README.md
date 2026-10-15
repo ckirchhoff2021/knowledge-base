@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 11 个话题。
+大模型与后训练方向的论文分析，共 12 个话题。
 
 ---
 
@@ -69,3 +69,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 智源《2026 十大 AI 技术趋势》第 2 位方向——让大模型从「描述世界」走向「改变世界」。基于 44 篇 arXiv 原始论文（编号经官方 API 逐一核实），系统梳理 VLA 四代技术源流（SayCan / Code as Policies 模块化时代 → RT-1 / RT-2 端到端 → Open X-Embodiment 跨本体与 π0 / OpenVLA-OFT 连续生成式 → 人形机器人全栈开源）；深潜动作表示光谱（离散 token / DCT 压缩的 FAST / 连续回归 / 扩散 / 流匹配）与自回归离散头、扩散头、流匹配头三类生成头；讲透 System 2 VLM + System 1 动作专家的双系统架构（GR00T N1、Figure Helix）、跨本体泛化（OXE 统一动作空间、HPT 本体 token、跨本体注意力）、真机/人类视频/合成/跨域对齐四类数据来源；横评 π0.5、Gemini Robotics（含 Robotics-ER）、OpenVLA-OFT、SmolVLA、RDT-1B、GR-2、RoboBrain、SpatialVLA/EnerVerse；覆盖仿真/仿真化真机/真机三层评测体系（LIBERO、SimplerEnv）与 sim-to-real gap、长尾、延迟、安全、世界模型融合等六大开放问题；并给出 2025–2026 海内外产业地图（含 8 款开源人形 VLA）与选型 Checklist。厂商自报数据均标注「厂商口径」。
 
 📅 2026-10-14 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](vla-embodied/report.md)
+
+### [线性注意力与混合架构（Linear Attention & Hybrids）](linear-attention/report.html)
+
+2025 末–2026 架构创新最活跃的方向——当注意力不再「二次」。基于 27 篇 arXiv 原始论文（编号经 arxiv.org 逐一核实），先建立统一视角：**线性注意力本质是「可并行训练的线性 RNN」**（矩阵值状态 Sₜ、训练用 chunkwise/parallel scan、推理为常数状态、无 KV 缓存），并与 softmax 注意力在复杂度、显存、召回能力上逐项对比；梳理 2017–2026 演进谱系（Linear Transformer → Fast Weight Programmers → RetNet → Mamba 选择性 SSM → Mamba-2 结构化状态空间对偶 SSD，四族收敛）；深潜五类状态更新规则——朴素线性累加 → 门控衰减（GLA/Mamba）→ Delta 规则纠错 → 门控 DeltaNet（Gated DeltaNet）→ **Kimi Delta Attention（KDA）多因子门控**，讲透 KDA 为何能在公平对比下首次全面反超全注意力；横评四大旗舰——**Kimi Linear**（3B/48B，KV 缓存 −75%、1M 上下文解码吞吐最高 ×6）、**MiniMax-01**（7 Lightning + 1 softmax、456B/45.9B 激活、支持 4M）、**Jamba/Jamba-1.5**（Transformer-Mamba-MoE、256K）、**RWKV-7「Goose」**（纯 RNN 动态状态演化、突破 TC0 上限）；并覆盖跨架构蒸馏/转换路线（HALO 仅 2.3B token、PostNAS、Jet-Nemotron）、RULER/NIAH 精确召回评测与六大开放问题（召回短板、状态容量、训练稳定性、内核碎片化、长度外推），给出工程落地 Checklist。厂商自报数据均标注「厂商口径」。
+
+📅 2026-10-15 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](linear-attention/report.md)

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · 线性/循环架构演进时间线</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1240 860" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1240" height="860" fill="#0d1117"/>
+  <text x="50" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 2 · 线性注意力 / 现代 RNN / 混合架构演进（2017–2026）</text>
+  <text x="50" y="76" fill="#8b949e" font-size="13">主线：从「去 softmax 的朴素线性注意力」→「可选择/可遗忘的 SSM」→「Delta 规则可改写」→「门控 DeltaNet 追平并反超」→「规模化混合架构落地」</text>
+
+  <!-- spine -->
+  <line x1="90" y1="110" x2="90" y2="820" stroke="#30363d" stroke-width="3"/>
+
+  <!-- nodes -->
+  <g font-size="12">
+    <!-- 2017 -->
+    <circle cx="90" cy="120" r="7" fill="#8b949e"/>
+    <text x="115" y="116" fill="#d29922" font-size="14" font-weight="700">2017 · Transformer 确立 softmax 注意力范式（Attention Is All You Need）</text>
+    <text x="115" y="136" fill="#8b949e">二次复杂度成为长上下文的根本瓶颈，也成为此后所有「线性化」工作的靶子</text>
+
+    <!-- 2020 -->
+    <circle cx="90" cy="180" r="7" fill="#58a6ff"/>
+    <text x="115" y="176" fill="#58a6ff" font-size="14" font-weight="700">2020 · 线性注意力开山：Katharopoulos「Transformers are RNNs」</text>
+    <text x="115" y="196" fill="#8b949e">去掉 softmax，用结合律把 (QKᵀ)V 变成线性 RNN；但只能加不能删，检索能力弱</text>
+
+    <!-- 2021 -->
+    <circle cx="90" cy="238" r="7" fill="#58a6ff"/>
+    <text x="115" y="234" fill="#58a6ff" font-size="14" font-weight="700">2021 · Fast Weight Programmers：线性注意力 = 快速权重编程器（Schlag/Irie/Schmidhuber）</text>
+    <text x="115" y="254" fill="#8b949e">把「状态矩阵」理解为被即时写入/改写的神经网络权重，为 Delta/TTT 路线埋下伏笔</text>
+
+    <!-- 2023a -->
+    <circle cx="90" cy="298" r="7" fill="#3fb950"/>
+    <text x="115" y="294" fill="#3fb950" font-size="14" font-weight="700">2023 · RetNet（ retention ，微软）/ RWKV「为 Transformer 时代重造 RNN」</text>
+    <text x="115" y="314" fill="#8b949e">指数衰减 + 数据无关门控；RWKV 用线性注意力式时间混合 + 通道混合，纯 RNN 也能规模化</text>
+
+    <!-- 2023b -->
+    <circle cx="90" cy="358" r="7" fill="#3fb950"/>
+    <text x="115" y="354" fill="#3fb950" font-size="14" font-weight="700">2023.12 · Mamba（选择性 SSM，S6）：输入相关的动态参数，硬件感知扫描</text>
+    <text x="115" y="374" fill="#8b949e">首次让线性时间模型在语言建模上接近 Transformer；同期 GLA 给出硬件高效门控线性注意力</text>
+
+    <!-- 2024a -->
+    <circle cx="90" cy="418" r="7" fill="#bc8cff"/>
+    <text x="115" y="414" fill="#bc8cff" font-size="14" font-weight="700">2024 上 · 混合架构成型：Jamba（3–3–5，Mamba+Attention+MoE）/ Griffin（GLA+局部注意力）</text>
+    <text x="115" y="438" fill="#8b949e">HGRN2 用外积把状态从 d 扩到 d²；Zoology 揭示「召回」是次二次模型的命门；xLSTM 复兴 LSTM</text>
+
+    <!-- 2024b -->
+    <circle cx="90" cy="482" r="7" fill="#bc8cff"/>
+    <text x="115" y="478" fill="#bc8cff" font-size="14" font-weight="700">2024 中 · Mamba-2 提出 SSD（SSM↔注意力对偶）；DeltaNet 把 Delta 规则并行化（NeurIPS'24）</text>
+    <text x="115" y="502" fill="#8b949e">TTT 层：把隐状态变成一个在测试序列上被梯度更新的小模型；GDN 把 Delta 规则装进 Mamba2（2024.12）</text>
+
+    <!-- 2025a -->
+    <circle cx="90" cy="548" r="7" fill="#d29922"/>
+    <text x="115" y="544" fill="#d29922" font-size="14" font-weight="700">2025.01 · MiniMax-01（Lightning Attention，4M 上下文，456B MoE）；Google Titans（测试时记忆）</text>
+    <text x="115" y="568" fill="#8b949e">线性混合架构首次进入数百 B 参数的商用基础模型；RWKV-7 Goose 用动态状态演化突破表达力上限</text>
+
+    <!-- 2025b -->
+    <circle cx="90" cy="612" r="7" fill="#d29922"/>
+    <text x="115" y="608" fill="#d29922" font-size="14" font-weight="700">2025 中 · Jamba-1.5（256K，RULER 95.7%）；Kimi K2 采用 MLA+线性注意力混合并开源</text>
+    <text x="115" y="632" fill="#8b949e">Gated DeltaNet 在公平对比中成为最强通用循环层；NVIDIA Jet-Nemotron 用 PostNAS 改造 Qwen3（最高 53.6× 吞吐）</text>
+
+    <!-- 2025c -->
+    <circle cx="90" cy="678" r="7" fill="#f85149"/>
+    <text x="115" y="674" fill="#f85149" font-size="14" font-weight="700">2025.10 · Kimi Linear / KDA：首次在公平对比下混合线性注意力「全面超越」全注意力</text>
+    <text x="115" y="698" fill="#8b949e">3B 激活 / 48B 总参数，KDA+MLA 分层混合：KV 缓存 −75%，1M 上下文解码最高 6×，开源权重与内核</text>
+
+    <!-- 2026 -->
+    <circle cx="90" cy="744" r="7" fill="#f85149"/>
+    <text x="115" y="740" fill="#f85149" font-size="14" font-weight="700">2026 · 低成本转换路线成熟：HALO/HypeNet 仅用 2.3B token 把 Qwen3 蒸馏成混合架构</text>
+    <text x="115" y="764" fill="#8b949e">Gated DeltaNet 2 等继续增强表达力；KDA 被放大到 Kimi K3（2.8T）级别——线性架构进入「主战场」</text>
+    <text x="115" y="800" fill="#8b949e" font-size="11.5">注：年份为论文首次公开/提交时间；颜色区分「理论奠基（蓝）→ 现代 RNN（绿）→ 对偶与混合（紫）→ 规模化（黄/红）」。</text>
+  </g>
+</svg>
+</body></html>

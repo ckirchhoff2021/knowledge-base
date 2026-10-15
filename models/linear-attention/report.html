@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>线性注意力与混合架构前沿技术报告</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:980px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:28px; }
+  h1 { font-size:28px; line-height:1.4; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin:0 8px 8px 0; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  figure { margin:28px 0; }
+  figure iframe { width:100%; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; word-break:break-all; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); word-break:normal; }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+
+</style>
+</head><body><div class="container">
+<header>
+  <h1>线性注意力与混合架构前沿技术报告：当注意力不再「二次」</h1>
+  <div><span class="badge">线性注意力</span><span class="badge">混合架构</span><span class="badge">Kimi Linear / KDA</span><span class="badge">Gated DeltaNet</span><span class="badge">Mamba / SSD</span><span class="badge">RWKV</span><span class="badge">TTT</span></div>
+  <div class="meta" style="margin-top:10px">
+    <span>信源：27 篇 arXiv 原始论文（编号经 arxiv.org 逐一核实）+ 各厂商技术报告 + 社区博客交叉验证</span>
+    &nbsp;·&nbsp;<span>报告日期：2026-10-15</span>
+  </div>
+</header>
+<nav class="toc"><h2>目录</h2><ol><li><a href="#sec1">摘要</a></li><li><a href="#sec2">0. 为什么是现在：二次注意力的墙</a></li><li><a href="#sec3">1. 统一视角：线性注意力 = 可并行训练的现代 RNN</a></li><li><a href="#sec4">2. 技术演进谱系（2017–2026）</a></li><li><a href="#sec5">3. 五类状态更新规则深度拆解</a></li><li><a href="#sec6">4. 前沿系统与旗舰架构</a></li><li><a href="#sec7">5. 评测体系与方法论陷阱</a></li><li><a href="#sec8">6. 工程落地：选型、部署与成本</a></li><li><a href="#sec9">7. 开放问题与未来展望</a></li><li><a href="#sec10">8. 结论</a></li><li><a href="#sec11">9. 参考文献</a></li></ol></nav>
+<blockquote>关键词：线性注意力（Linear Attention）、状态空间模型（SSM/Mamba）、门控循环、Delta 规则、Gated DeltaNet、Kimi Linear / KDA、混合架构（Hybrid Architecture）、KV 缓存、长上下文、Test-Time Training</blockquote>
+
+<blockquote>信源声明：本报告基于 <strong>27 篇 arXiv 原始论文</strong>（编号已通过 arxiv.org 摘要页逐一核实，标题与作者一一对应）、各厂商官方技术报告，以及作者公开博客交叉验证。凡厂商自报性能数据，均标注「厂商口径」。报告日期：2026-10-15。</blockquote>
+
+<h2 id="sec1">摘要</h2>
+
+<p>过去八年，大模型几乎等同于「Softmax 自回归 Transformer」。但自注意力对序列长度的<strong>二次复杂度</strong>，使其在长上下文场景中显存与算力成本急剧膨胀——KV 缓存随上下文线性增长，成为推理成本的主要来源。2023 年底以来，以 <strong>Mamba（选择性状态空间模型）</strong> 为代表的线性时间序列模型重新点燃了「取代或部分取代 Softmax 注意力」的希望；2024 年 Mamba-2 提出的<strong>结构化状态空间对偶（SSD）</strong>，在数学上把 SSM 与带掩码的线性注意力统一为同一对象；而 <strong>DeltaNet / Gated DeltaNet</strong> 通过把经典的 <strong>Delta 规则</strong>（误差校正更新）并行化，显著提升了固定大小状态下的精确召回能力。</p>
+
+<p>2025 年 10 月，月之暗面（Moonshot AI）发布的 <strong>Kimi Linear</strong> 技术报告成为标志性事件：在<strong>完全相同的训练配方</strong>下，其提出的 <strong>Kimi Delta Attention（KDA）</strong> 与 MLA 分层混合架构，在短上下文、长上下文与强化学习三种场景中<strong>全面超越</strong>纯全注意力基线，同时把 KV 缓存降低约 <strong>75%</strong>，在 100 万 token 上下文下解码吞吐最高提升 <strong>6 倍</strong>，并开源了权重与内核。这是线性注意力第一次在公平对比中「打赢」全注意力。此后 KDA 被进一步放大到 2.8T 参数的 Kimi K3 旗舰模型，标志着线性/混合架构从「备选」走向「主战场」。</p>
+
+<p>本报告系统梳理：（1）线性注意力的数学本质及其与 RNN、SSM 的对偶关系；（2）2017–2026 年的技术演进谱系；（3）五类状态更新规则（朴素线性、门控衰减、Delta 规则、门控 Delta、测试时训练）的原理与取舍；（4）Kimi Linear/KDA、MiniMax-01、Jamba、RWKV、Gated DeltaNet、TTT/Titans 等前沿系统的架构与实测数据；（5）评测体系、工程落地与开放问题。</p>
+
+<h2 id="sec2">0. 为什么是现在：二次注意力的墙</h2>
+
+<h3>0.1 Softmax 注意力的复杂度瓶颈</h3>
+
+<p>标准缩放点积注意力（单头）可写为：</p>
+
+<pre><code>并行形式：  O = softmax(Q Kᵀ / √dₕ) V          ∈ R^{L×d}
+循环形式：  oₜ = Σⱼ₌₁ᵗ softmax(qₜᵀkⱼ/√dₕ) vⱼ  ∈ R^d</code></pre>
+
+<p>其中 <code>L</code> 为序列长度，<code>d</code> 为头维度。注意力矩阵 <code>QKᵀ</code> 是 <code>L×L</code> 的，因此：</p>
+
+<ul>
+<li><strong>计算复杂度</strong>：<code>O(L²·d)</code>，随序列长度二次增长；</li>
+<li><strong>KV 缓存</strong>：自回归解码时需缓存全部历史 Key/Value，空间 <code>O(L·d)</code>，且每生成一个新 token 都要读取全部历史。</li>
+</ul>
+
+<p>即便有 FlashAttention（降低显存读写、不改变渐近复杂度）、GQA/MQA/MLA（压缩 KV 头数）等工程优化，注意力「随长度增长」的本质没有改变。在 Agent、长文档理解、代码库分析、视频/音频等动辄数十万到上百万 token 的场景下，KV 缓存成为<strong>推理显存与成本的最大单一来源</strong>。</p>
+
+<h3>0.2 三条破局思路</h3>
+
+<ol>
+<li><strong>稀疏注意力（Sparse Attention）</strong>：只计算部分 token 对（局部、块稀疏、路由式），亚二次但依赖特定模式，召回易受损；</li>
+<li><strong>线性 / 循环模型（Linear / Recurrent）</strong>：把历史压缩进<strong>固定大小状态</strong>，计算与显存对长度线性甚至常数；</li>
+<li><strong>混合架构（Hybrid Architecture）</strong>：堆叠少量 Softmax 注意力层（负责精确召回）与多数线性/循环层（负责长程吞吐），兼顾质量与效率。</li>
+</ol>
+
+<p>2023 年底至今的主线，正是第 2、3 条路线在「<strong>可并行训练</strong>」约束下的成熟与统一。</p>
+
+<figure>
+  <iframe src="diagrams/1-complexity.html" height="820" loading="lazy"></iframe>
+  <figcaption>图 1 · Softmax 二次注意力 vs 线性/循环注意力：复杂度、KV 缓存与对偶形式</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec3">1. 统一视角：线性注意力 = 可并行训练的现代 RNN</h2>
+
+<h3>1.1 去掉 Softmax，用结合律重组</h3>
+
+<p>线性注意力的核心做法是<strong>去掉 softmax</strong>（早期工作还包含特征映射与归一化项，后续研究表明这些并非必需）：</p>
+
+<pre><code>并行形式：  O = (Q Kᵀ) V
+循环形式：  oₜ = Σⱼ₌₁ᵗ (qₜᵀ kⱼ) vⱼ</code></pre>
+
+<p>去掉 softmax 本身不立即降低复杂度，但带来了关键的数学性质——<strong>线性（结合律）</strong>。利用矩阵乘法结合律：</p>
+
+<pre><code>(Q Kᵀ) V = Q (Kᵀ V)</code></pre>
+
+<p>定义矩阵值状态 <code>Sₜ = Σⱼ₌₁ᵗ vⱼ kⱼᵀ ∈ R^{d×d}</code>，则：</p>
+
+<pre><code>Sₜ = Sₜ₋₁ + vₜ kₜᵀ，      oₜ = Sₜ qₜ</code></pre>
+
+<p>这揭示了线性注意力的本质：<strong>一个带矩阵值状态的线性 RNN</strong>。推理时：</p>
+
+<ul>
+<li>自回归复杂度从 <code>O(L²d)</code> 降到 <code>O(L·d²)</code>；</li>
+<li>状态空间从 <code>O(L·d)</code> 降到 <code>O(d²)</code>，与序列长度无关。</li>
+</ul>
+
+<h3>1.2 状态扩展：为什么需要 d×d 的矩阵状态</h3>
+
+<p>传统 RNN（LSTM/GRU）隐状态维度通常与输入同量级，因为基于矩阵乘的状态更新代价高昂；但 RNN 只能靠循环状态记住全部历史，<strong>状态容量是检索能力的瓶颈</strong>。Mamba 明确提出「硬件高效的状态扩展」，而线性注意力式的<strong>外积更新</strong> <code>vₜkₜᵀ</code> 被证明是把状态从 <code>O(d)</code> 高效扩展到 <code>O(d²)</code> 的最优方式之一（Mamba-2 也采用这一策略）。</p>
+
+<h3>1.3 训练并行化：分块（Chunkwise）与并行扫描</h3>
+
+<p>线性 RNN 的历史短板是<strong>训练无法并行</strong>（必须按时间顺序递推）。现代线性注意力通过两条路解决：</p>
+
+<ul>
+<li><strong>分块并行（Chunkwise Parallel）</strong>：把序列切成块，块内用并行的注意力式计算，块间用循环状态传递，得到亚二次复杂度且对 GPU 友好（flash-linear-attention 库即此思路）；</li>
+<li><strong>并行扫描（Parallel Scan）</strong>：线性递推可用前缀扫描在 <code>O(log L)</code> 个并行步内算完（SSM/Mamba 路线）。</li>
+</ul>
+
+<p>关键结论：<strong>线性递推可并行，非线性递推不可并行</strong>。保持状态更新线性，就同时拿到了「训练像注意力一样并行」与「推理像 RNN 一样省显存」两大优势。</p>
+
+<h3>1.4 SSM 与注意力的对偶：Mamba-2 的 SSD</h3>
+
+<p>Mamba-2（Dao &amp; Gu, 2024）证明 SSM 与注意力在数学上高度相关，提出<strong>结构化状态空间对偶（Structured State-Space Duality, SSD）</strong>：某种带掩码的线性注意力可视为 SSM 的特例，反之亦然。这让 SSM 能直接复用为注意力优化的、面向 Tensor Core 的 matmul 内核，工程上大幅提速。</p>
+
+<p>至此，<strong>线性注意力、门控 RNN、SSM、（后续的）TTT 收敛为同一个「可并行训练的线性循环状态空间」框架</strong>——它们是同一对象在「并行形式 / 循环形式」下的不同呈现。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec4">2. 技术演进谱系（2017–2026）</h2>
+
+<figure>
+  <iframe src="diagrams/2-evolution.html" height="860" loading="lazy"></iframe>
+  <figcaption>图 2 · 线性注意力 / 现代 RNN / 混合架构演进时间线（2017–2026）</figcaption>
+</figure>
+
+<h3>2.1 理论奠基期（2017–2022）</h3>
+
+<ul>
+<li><strong>2017 · Transformer</strong>：Softmax 注意力确立范式，也立起「二次复杂度」这一靶子。</li>
+<li><strong>2020 · Linear Transformers（Katharopoulos et al.）</strong>：首次去掉 softmax，用结合律把注意力写成线性 RNN。但状态只能加、不能删，长序列记忆过载，质量明显落后。</li>
+<li><strong>2021 · Fast Weight Programmers（Schlag, Irie &amp; Schmidhuber）</strong>：把线性注意力的状态矩阵解释为被即时写入的「快速权重」，与 1992 年 Schmidhuber 的快速权重编程器统一，为 Delta 规则与 TTT 路线埋下伏笔。</li>
+</ul>
+
+<p>这一阶段的核心矛盾：<strong>线性很快，但打不过 Softmax</strong>。</p>
+
+<h3>2.2 现代 RNN 崛起（2023）</h3>
+
+<ul>
+<li><strong>RetNet（2023.07，微软）</strong>：提出 retention，结合指数衰减与并行/循环双重形式，主张做 Transformer 的「继任者」。</li>
+<li><strong>RWKV（2023.05）</strong>：用线性注意力式时间混合 + 通道混合，纯 RNN 也能以 Transformer 方式并行训练；后加入 Linux 基金会。</li>
+<li><strong>Mamba（2023.12，Gu &amp; Dao）</strong>：选择性 SSM（S6），让状态更新的 <code>B、C、Δ</code> 成为<strong>输入相关</strong>的动态参数，可按内容选择记忆/遗忘；配合硬件感知扫描内核，首次让线性时间模型在语言建模上接近 Transformer。</li>
+<li><strong>GLA（2023.12，Yang et al.）</strong>：门控线性注意力，用数据相关遗忘门 + 硬件高效训练，是后续大量工作的基础算子。</li>
+</ul>
+
+<h3>2.3 对偶、Delta 与混合成型（2024）</h3>
+
+<ul>
+<li><strong>HGRN2（2024.04）</strong>：用外积把分层门控 RNN 的状态从 <code>d</code> 扩到 <code>d²</code> 而不增参数，并给出线性注意力解释。</li>
+<li><strong>Zoology（2023.12 / 2024）</strong>：系统揭示「召回（recall）」是次二次模型的命门，并给出简单线性注意力在召回—吞吐间的平衡点。</li>
+<li><strong>Jamba（2024.03）/ Griffin（2024.02）</strong>：前者按「3–3–5」比例混合 Mamba、注意力与 MoE；后者用 GLA 门控循环 + 局部注意力。混合架构成型。</li>
+<li><strong>Mamba-2 / SSD（2024.05）</strong>：SSM↔注意力对偶，可复用 matmul 内核。</li>
+<li><strong>xLSTM（2024.05）</strong>：扩展 LSTM（sLSTM/mLSTM），复兴门控记忆并引入矩阵状态。</li>
+<li><strong>DeltaNet（2024.06，NeurIPS&#x27;24）</strong>：把 Delta 规则沿序列长度并行化，在 MQAR 联想召回上近乎满分。</li>
+<li><strong>TTT（2024.07）</strong>：把隐状态变成一个在测试序列上被自监督梯度更新的小模型。</li>
+<li><strong>GDN（2024.12）</strong>：Gated DeltaNetworks，把 Delta 规则装进 Mamba-2 块，在同等规模下稳定优于 Mamba-2。</li>
+</ul>
+
+<h3>2.4 规模化与「反超」（2025–2026）</h3>
+
+<ul>
+<li><strong>MiniMax-01（2025.01）</strong>：每 8 层 7 层 Lightning Attention + 1 层 softmax，456B 总参 / 45.9B 激活，推理支持 4M token。</li>
+<li><strong>Titans（2025.01，Google）</strong>：测试时记忆，引入神经长期记忆模块，在固定上下文记忆之外学习「该记什么」。</li>
+<li><strong>RWKV-7 Goose（2025.03）</strong>：动态状态演化，主张突破注意力/线性注意力的 TC0 表达力上限。</li>
+<li><strong>Jamba-1.5（2024.08 / 2025 部署）</strong>：256K 上下文，RULER 平均 95.7%，ExpertsInt8 量化。</li>
+<li><strong>Kimi K2（2025.07）</strong>：MLA + 线性注意力混合的万亿级 MoE，开源。</li>
+<li><strong>Jet-Nemotron（2025.08，NVIDIA）</strong>：用 Post Neural Architecture Search 改造 Qwen3，配合新 JetBlock，256K 生成吞吐最高 53.6×。</li>
+<li><strong>Kimi Linear / KDA（2025.10）</strong>：<strong>首次在公平对比下全面超越全注意力</strong>，成为本报告选定的标志性节点。</li>
+<li><strong>2026 · HALO/HypeNet</strong>：仅用 2.3B token（不到预训练数据的 0.01%）就把 Qwen3 蒸馏成混合架构，大幅降低中小团队进入门槛；Gated DeltaNet 2 等继续增强表达力；KDA 被放大到 2.8T 的 Kimi K3。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec5">3. 五类状态更新规则深度拆解</h2>
+
+<figure>
+  <iframe src="diagrams/3-update-rules.html" height="900" loading="lazy"></iframe>
+  <figcaption>图 3 · 五类线性循环层的状态更新规则：能不能遗忘、能不能改写</figcaption>
+</figure>
+
+<h3>3.1 朴素线性注意力：只能加</h3>
+
+<pre><code>Sₜ = Sₜ₋₁ + vₜ kₜᵀ</code></pre>
+
+<p>形式化地，线性注意力实现的是键值联想记忆 <code>S = Σ vᵢkᵢᵀ</code>。假设所有 key 单位归一化，检索 <code>kⱼ</code> 时：</p>
+
+<pre><code>S kⱼ = vⱼ + Σᵢ≠ⱼ (kᵢᵀkⱼ) vᵢ
+                 └── 检索误差 ──┘</code></pre>
+
+<p>要让误差为零，需要所有 key 两两<strong>正交</strong>；而 <code>d</code> 维空间最多容纳 <code>d</code> 个正交向量。这解释了为何增大头维度有效，也说明朴素线性注意力存在根本的「记忆过载」——只能加不能删，串扰随长度累积。</p>
+
+<h3>3.2 门控 / 指数衰减：能遗忘</h3>
+
+<pre><code>Sₜ = αₜ ⊙ Sₜ₋₁ + vₜ kₜᵀ</code></pre>
+
+<p>引入数据相关的遗忘门 <code>αₜ</code>，旧记忆按比例衰减后再写入。不同模型对门矩阵的参数化不同（外积结构以省参数）：</p>
+
+<ul>
+<li>衰减快速权重：<code>Gₜ = βₜ αₜᵀ</code></li>
+<li>GLA：<code>Gₜ = 1·αₜᵀ</code></li>
+<li>Mamba-1：<code>Gₜ = exp(−(Δₜ1ᵀ) ⊙ exp A)</code></li>
+<li>Mamba-2：<code>Gₜ = γₜ 11ᵀ</code></li>
+</ul>
+
+<p>门控显著缩小了与 Softmax 的差距，但「精确改写/复制」仍偏弱。</p>
+
+<h3>3.3 Delta 规则：按误差定向改写</h3>
+
+<p>Delta 规则是经典的误差校正学习原则：按「目标 − 当前预测」的差值调整参数。用于线性注意力：</p>
+
+<pre><code>Sₜ = Sₜ₋₁ − βₜ (Sₜ₋₁ kₜ − vₜ) kₜᵀ</code></pre>
+
+<p>其中 <code>βₜ</code> 是学习率，<code>Sₜ₋₁kₜ</code> 是当前对 key <code>kₜ</code> 的读出（旧值）。也可直观写成「先擦旧、再写新」：</p>
+
+<pre><code>vₜⁿᵉʷ = (1−βₜ) vₜᵒˡᵈ + βₜ vₜ
+Sₜ = Sₜ₋₁ − vₜᵒˡᵈ kₜᵀ + vₜⁿᵉʷ kₜᵀ</code></pre>
+
+<p><code>βₜ=0</code> 时记忆不变，<code>βₜ=1</code> 时完全覆盖旧值。DeltaNet 可由对每步在线 MSE 损失做一步梯度下降精确导出：</p>
+
+<pre><code>ℒₜ(S) = ½ ‖S kₜ − vₜ‖²
+Sₜ = Sₜ₋₁ − βₜ ∇ℒₜ(Sₜ₋₁)</code></pre>
+
+<p>在 MQAR（多查询联想召回）这一衡量次二次模型上下文召回的合成基准上，DeltaNet 取得近乎满分，且 MQAR 表现与真实语言建模中的「联想召回命中」强相关。</p>
+
+<h3>3.4 门控 + Delta：当前最强通用循环层</h3>
+
+<p>把「先衰减、再误差校正」结合：</p>
+
+<pre><code>Sₜ = αₜ ⊙ Sₜ₋₁ − βₜ ( (αₜ ⊙ Sₜ₋₁) kₜ − vₜ ) kₜᵀ</code></pre>
+
+<ul>
+<li><strong>GDN（Gated DeltaNetworks）</strong>：在 Mamba-2 块内把（多值）注意力算子替换为 Delta 规则，在语言建模、召回与长序列上以相同或更低算力稳定优于 Mamba-2。</li>
+<li><strong>Gated DeltaNet（2024.12，Yang et al.）</strong>：在 DeltaNet 基础上加入<strong>多通道遗忘门</strong>，把单通道衰减扩展为每通道独立门控，显著提升状态利用效率；在作者公平对比中成为通用循环层的最强基线。</li>
+<li><strong>KDA（Kimi Delta Attention，2025.10）</strong>：在 Gated DeltaNet 基础上引入<strong>更细粒度的数据相关门控</strong>。其核心洞察是：线性注意力本质是一个有限状态 RNN，隐状态是稀缺资源；更精细的门控让有限状态被更高效地用于跨超长序列的保留与召回。配合定制的分块算法（一种对角加低秩 DPLR 转移矩阵的特化形式），在 GPU 上无需奇异内核即可高速运行。</li>
+</ul>
+
+<h3>3.5 测试时训练 TTT：把更新推广为通用学习</h3>
+
+<pre><code>Wₜ = Wₜ₋₁ − η ∇ℓ(Wₜ₋₁; xₜ)，   oₜ = f(xₜ; Wₜ)</code></pre>
+
+<p>隐状态本身是一个模型 <code>f</code>（TTT-Linear 用线性模型，TTT-MLP 用两层 MLP），更新规则是自监督学习的一步（如重建被遮挡的输入）。在 125M–1.3B 规模上，TTT-Linear 追平或超过 Transformer 与 Mamba；与 Mamba 不同，它能像 Transformer 一样随上下文增多持续降低困惑度。Google <strong>Titans</strong> 进一步在测试时引入可学习的神经长期记忆。</p>
+
+<p>值得注意的是理论汇合：<strong>TTT-Linear 在去掉非线性组件、mini-batch 大小为 1 时与 DeltaNet 数学等价</strong>。Delta 规则与 TTT 是同一思想（把状态更新视为一次学习）的两个切面。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec6">4. 前沿系统与旗舰架构</h2>
+
+<figure>
+  <iframe src="diagrams/4-flagship.html" height="940" loading="lazy"></iframe>
+  <figcaption>图 4 · 四大旗舰混合架构：层排列模式 × 规模 × 关键指标</figcaption>
+</figure>
+
+<h3>4.1 Kimi Linear / KDA：标志性的「反超」</h3>
+
+<p><strong>论文</strong>：Kimi Team, *Kimi Linear: An Expressive, Efficient Attention Architecture*（arXiv:2510.26692，2025-10-30）。</p>
+
+<ul>
+<li><strong>架构</strong>：KDA（Kimi Delta Attention）+ MLA（Multi-Head Latent Attention，与 DeepSeek 同款）<strong>分层混合</strong>；预训练一个 <strong>48B 总参 / 3B 激活</strong>的模型。</li>
+<li><strong>位置编码</strong>：KDA 与 MLA 层均采用 <strong>NoPE</strong>（位置信息由循环/转移结构隐式承载）。</li>
+<li><strong>公平对比设计</strong>：在<strong>完全相同的训练配方</strong>（数据、优化器、token 数）下，仅替换注意力模块，比较 KDA+MLA 混合 vs 纯 MLA。</li>
+<li><strong>关键结果（厂商口径）</strong>： - 在短上下文、长上下文与强化学习（RL）<strong>三种 regime 下全面超越</strong>纯全 MLA 基线； - <strong>KV 缓存降低约 75%</strong>； - 在 <strong>100 万 token</strong> 上下文下，解码吞吐最高提升 <strong>6 倍</strong>；</li>
+<li><strong>开放程度</strong>：开源 KDA 内核、vLLM 实现，以及预训练与指令微调权重（Hugging Face），可在商用硬件上运行 3B/48B 模型。</li>
+</ul>
+
+<p><strong>为什么重要</strong>：这是线性注意力多年来第一次在受控、公平对比中不是「接近」而是「打赢」全注意力。它改变了每一次模型训练的算力预算方程；75% 的 KV 缓存下降对长上下文 Agent、RAG、代码库分析是直接的成本节约；开源的内核+权重提供了从论文到可运行模型的完整路径。</p>
+
+<p><strong>规模验证</strong>：KDA 在 9 个月后被放大到 <strong>Kimi K3</strong>（2.8T 总参 / 104B 激活的 MoE，原生多模态，1M 上下文）。公开分析指出 K3 大量使用 KDA 层（社区据 K3 论文统计约 69 个 KDA 层 + 24 个 Gated MLA 层），并加入注意力残差（Attention Residuals）等改进——这是在超大模型而非 3B 演示模型上验证了该架构。Kimi K2（arXiv:2507.20534）此前已在万亿级 MoE 上采用 MLA + 线性注意力混合。</p>
+
+<h3>4.2 MiniMax-01：线性注意力 + MoE 的数百 B 商用基座</h3>
+
+<p><strong>论文</strong>：*MiniMax-01: Scaling Foundation Models with Lightning Attention*（arXiv:2501.08313，2025-01-14）。</p>
+
+<ul>
+<li><strong>层模式</strong>：每 <strong>8 层 = 7 层 Lightning Attention（线性）+ 1 层 softmax 注意力</strong>；Lightning Attention 用平铺（tiling）策略把计算拆为块内（局部）与块间（全局），实现线性复杂度。</li>
+<li><strong>规模</strong>：<strong>456B 总参 / 45.9B 激活</strong>，32 专家 MoE；RoPE。</li>
+<li><strong>上下文</strong>：推理支持高达 <strong>4M token</strong>（当时无模型可及）。</li>
+<li><strong>系统配套</strong>：Varlen Ring Attention（变长、去 padding）、LASP+（线性注意力序列并行）、定制 CUDA 内核。</li>
+<li><strong>同期多模态</strong>：MiniMax-VL-01 用 512B 视觉-语言 token 训练。</li>
+</ul>
+
+<h3>4.3 Jamba / Jamba-1.5：混合 Mamba-Transformer-MoE</h3>
+
+<p><strong>论文</strong>：*Jamba*（arXiv:2403.19887）与 *Jamba-1.5: Hybrid Transformer-Mamba Models at Scale*（arXiv:2408.12570）。</p>
+
+<ul>
+<li><strong>架构</strong>：Attention : Mamba ≈ <strong>1 : 7</strong>，并叠加 MoE；Jamba-1.5-Large <strong>398B 总参 / 94B 激活</strong>（16 专家 top-2），有效上下文 <strong>256K</strong>（当时开放权重最长）。</li>
+<li><strong>关键结果（厂商口径）</strong>：RULER 在到 256K 的各长度上均 ≥93.9%，<strong>平均 95.7%</strong>，长上下文优于 GPT-4-1106、Gemini-1.5-pro；<strong>256K 下 KV 缓存仅约 9GB</strong>（LLaMA-3.1-70B 同长度需约 80GB），数量级下降。</li>
+<li><strong>ExpertsInt8</strong>：因 &gt;85% 权重在 MoE 层，将 MoE/MLP 权重以 INT8 存储、计算前反量化为 BF16，在 vLLM 的 fused_moe 内核中实现；免校准、秒级量化，使 Jamba-1.5-Large 在 <strong>8×80GB GPU</strong> 上处理 256K 而质量无损。</li>
+<li><strong>训练稳定性</strong>：提出 Activation Loss（<code>L_total = L_LM + α·L_activation</code>，<code>α=1e-5</code>），把激活幅值控制在 2K–3K，避免 FP16 推理时的数值问题。</li>
+<li><strong>一个值得记录的工程取舍</strong>：团队发现混合场景下 <strong>Mamba-1 + 注意力</strong>的组合反而优于 Mamba-2——交错的注意力层补偿了 Mamba-2 在孤立使用时的部分优势。</li>
+</ul>
+
+<h3>4.4 RWKV 系列：纯 RNN 路线</h3>
+
+<ul>
+<li><strong>RWKV</strong>（arXiv:2305.13048）：时间混合（线性注意力式）+ 通道混合，无注意力、常数显存、生成速度恒定，可像 GPT 一样并行训练。</li>
+<li><strong>RWKV-5/6 Eagle/Finch</strong>（arXiv:2404.05892）：引入<strong>矩阵值状态</strong>与动态循环。</li>
+<li><strong>RWKV-7 Goose</strong>（arXiv:2503.14456，2025-03-18）：<strong>动态状态演化（Dynamic State Evolution）</strong>，主张突破注意力/线性注意力范式的 <strong>TC0 表达力上限</strong>；开源 0.1B–14B 全尺寸，大上下文算力需求比 Transformer 低 <strong>10–100×</strong>。</li>
+<li><strong>短板</strong>：对 prompt 格式敏感；回看/检索类任务偏弱——这恰是「保留少量注意力层」的混合路线（Jamba/MiniMax/Kimi）相对纯 RNN 的价值所在。</li>
+</ul>
+
+<h3>4.5 Gated DeltaNet / GDN / DeltaNet：算法基石</h3>
+
+<ul>
+<li><strong>DeltaNet</strong>（arXiv:2406.06484，NeurIPS&#x27;24）：并行化 Delta 规则，MQAR 近乎满分。</li>
+<li><strong>GDN</strong>（arXiv:2412.06464，*Gated Delta Networks: Improving Mamba2 with Delta Rule*）：把 Delta 规则写进 Mamba-2 块，作者给出的多组公平对比显示其在语言建模与召回上稳定优于 Mamba-2。</li>
+<li><strong>Gated DeltaNet</strong>：在 DeltaNet 上加入多通道遗忘门（社区与后续工作如 Gated DeltaNet 2 持续增强表达力）。</li>
+</ul>
+
+<h3>4.6 TTT / Titans / Griffin / xLSTM / Jet-Nemotron / HALO</h3>
+
+<ul>
+<li><strong>TTT</strong>（arXiv:2407.04620）：隐状态即模型，更新即自监督一步。</li>
+<li><strong>Titans</strong>（arXiv:2501.00663，*Learning to Memorize at Test Time*）：在测试时学习的神经长期记忆。</li>
+<li><strong>Griffin</strong>（arXiv:2402.19427，Google DeepMind）：GLA 门控循环 + 局部注意力混合。</li>
+<li><strong>xLSTM</strong>（arXiv:2405.04517）：sLSTM/mLSTM，复兴并扩展 LSTM 记忆。</li>
+<li><strong>Jet-Nemotron</strong>（arXiv:2508.15884，NVIDIA，NeurIPS 2025）：两大创新——<strong>Post Neural Architecture Search（PostNAS）</strong>先定位预训练 Transformer 中关键注意力层的最优放置、再搜索更优块设计；<strong>JetBlock</strong> 用动态卷积 + 硬件感知搜索增强线性注意力。把 Qwen3 等改造后，256K 生成吞吐最高 <strong>53.6×</strong>（H100，最大 batch），Jet-Nemotron-2B/4B 分别比 Qwen3-1.7B-Base 快 21×/47×。</li>
+<li><strong>HALO / HypeNet</strong>（arXiv:2601.22156，清华 + ModelBest，2026-01）：跨架构蒸馏流水线，先用注意力权重迁移初始化、隐藏状态对齐，再做<strong>高效注意力层选择</strong>（决定保留哪些层不转换）、知识蒸馏与微调；配合 <strong>HyPE</strong>（RoPE + NoPE 的混合位置编码）实现强长度泛化。把 Qwen3 转成 HypeNet 仅需 <strong>2.3B token（&lt; 预训练数据的 0.01%）</strong>，性能与原模型相当、长上下文更优。对比此前蒸馏方法（Mamba-in-the-Llama 20B、RAD 20B、Jet-Nemotron 400B token），数据效率是数量级提升。</li>
+</ul>
+
+<h3>4.7 横向对比总表</h3>
+
+<table>
+<thead><tr>
+<th>系统</th>
+<th>时间</th>
+<th>混合算子 / 比例</th>
+<th>规模（总/激活）</th>
+<th>位置编码</th>
+<th>标志性指标（厂商口径）</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Kimi Linear</strong></td>
+<td>2025.10</td>
+<td>KDA + MLA 分层</td>
+<td>48B / 3B</td>
+<td>NoPE</td>
+<td>KV −75%；1M 解码 6×；全 regime 反超</td>
+</tr>
+<tr>
+<td><strong>MiniMax-01</strong></td>
+<td>2025.01</td>
+<td>7 Lightning + 1 softmax</td>
+<td>456B / 45.9B</td>
+<td>RoPE</td>
+<td>推理 4M；线性注意力+MoE 数百 B</td>
+</tr>
+<tr>
+<td><strong>Jamba-1.5</strong></td>
+<td>2024.08</td>
+<td>Attn:Mamba≈1:7 + MoE</td>
+<td>398B / 94B</td>
+<td>—</td>
+<td>RULER 95.7%；256K KV 仅 9GB</td>
+</tr>
+<tr>
+<td><strong>RWKV-7</strong></td>
+<td>2025.03</td>
+<td>纯 RNN，动态状态演化</td>
+<td>0.1B–14B</td>
+<td>隐式</td>
+<td>大上下文算力低 10–100×</td>
+</tr>
+<tr>
+<td><strong>GDN</strong></td>
+<td>2024.12</td>
+<td>Mamba2 块 + Delta 规则</td>
+<td>中小规模</td>
+<td>—</td>
+<td>同规模稳定优于 Mamba-2</td>
+</tr>
+<tr>
+<td><strong>TTT / Titans</strong></td>
+<td>2024–25</td>
+<td>隐状态即模型 + 神经记忆</td>
+<td>至 1.3B+</td>
+<td>—</td>
+<td>随上下文持续降困惑度</td>
+</tr>
+<tr>
+<td><strong>Jet-Nemotron</strong></td>
+<td>2025.08</td>
+<td>PostNAS + JetBlock</td>
+<td>2B / 4B</td>
+<td>—</td>
+<td>256K 吞吐最高 53.6×</td>
+</tr>
+<tr>
+<td><strong>HALO/HypeNet</strong></td>
+<td>2026.01</td>
+<td>蒸馏 + HyPE</td>
+<td>Qwen3 同档</td>
+<td>RoPE+NoPE</td>
+<td>仅 2.3B token 完成转换</td>
+</tr>
+</tbody></table>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec7">5. 评测体系与方法论陷阱</h2>
+
+<h3>5.1 合成诊断基准：便宜但要看对维度</h3>
+
+<ul>
+<li><strong>MQAR（多查询联想召回）</strong>：字母↔数字映射后批量召回，直接测上下文联想召回；DeltaNet 在此近乎满分。MQAR 与真实语言建模的召回命中强相关，是筛选架构的低成本前置实验。</li>
+<li><strong>Zoology</strong>（arXiv:2312.04927）：系统测量并改进高效语言模型的「召回」，指出召回是次二次模型的主要误差来源，并给出简单线性注意力在召回—吞吐间的平衡。</li>
+<li><strong>MAD 类多任务记忆诊断</strong>：在压缩、模糊召回、上下文召回、记忆、含噪召回、选择性复制等多个维度上分别打分。公开数据中，不同架构「偏科」明显——例如 DeltaNet 在上下文/含噪召回与选择性复制上接近满分，但在「记忆（长序列被动保留）」维度偏弱；Mamba 在选择性复制上偏弱。<strong>单一平均分可能掩盖架构特性，需逐维度解读</strong>。</li>
+</ul>
+
+<h3>5.2 长上下文基准</h3>
+
+<ul>
+<li><strong>RULER / Needle-in-a-Haystack（NIAH）</strong>：检索类任务历来是线性注意力的阿喀琉斯之踵。Jamba-1.5 在 RULER 上 256K 平均 95.7%；但社区也反复强调：<strong>效率数字漂亮的同时，必须在真实大海捞针任务上与同尺寸全注意力对比</strong>，这正是 KDA 仍需持续验证的开放点。</li>
+<li><strong>LongBench / SCROLLS</strong>：更贴近真实任务的长上下文套件。</li>
+<li><strong>长度泛化（length generalization）</strong>：在短上下文训练、长上下文测试。HALO 的 HyPE（RoPE+NoPE + 注意力 logits 缩放）即专门为混合架构的长度泛化设计。</li>
+</ul>
+
+<h3>5.3 方法论陷阱</h3>
+
+<ol>
+<li><strong>公平对比</strong>：必须控制数据、优化器、训练 token 与算力。Kimi Linear 的说服力正来自「同配方仅换模块」；反之，许多「超越」声明因训练预算不对等而不可比。</li>
+<li><strong>准确率 vs 计算开销</strong>：TTS/线性架构都要求把「准确率—FLOPs—墙钟时间—显存」联合评估，单看准确率或单看速度都会误导。</li>
+<li><strong>厂商口径</strong>：厂商技术报告中的峰值加速比（如 6×、53.6×）通常在最大 batch、特定上下文、特定硬件下测得，<strong>真实业务负载下收益会打折</strong>，需自行压测。</li>
+<li><strong>平均分别掩盖偏科</strong>：要用逐维度/逐长度的细粒度指标。</li>
+<li><strong>蒸馏 vs 架构创新的混淆</strong>：当一个模型同时使用前沿模型蒸馏与新架构时，需消融才能归因（Kimi Linear 讨论中即有此争论）。</li>
+</ol>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec8">6. 工程落地：选型、部署与成本</h2>
+
+<h3>6.1 三条路线怎么选</h3>
+
+<ul>
+<li><strong>纯 Softmax Transformer</strong>：质量与精确召回最稳，生态最成熟；但长上下文 KV 成本高。适合上下文不长、对召回要求极高、不愿承担新架构风险的场景。</li>
+<li><strong>纯线性/RNN（RWKV）</strong>：显存常数、生成速度恒定、超长上下文最省、端侧友好；但精确召回/回看偏弱、对格式敏感。适合超长流式、端侧、对成本极敏感且召回要求可通过工程缓解的场景。</li>
+<li><strong>混合架构（Kimi/MiniMax/Jamba/HALO）</strong>：保留少数（约 1/8–1/4）注意力层负责精确召回，多数线性层负责吞吐，是当前<strong>质量—效率的最佳平衡</strong>，也是本报告推荐的默认方向。</li>
+</ul>
+
+<h3>6.2 关键工程杠杆</h3>
+
+<ol>
+<li><strong>注意力层放置（layer placement）</strong>：并非所有注意力层同等重要。PostNAS、HALO 的注意力层选择、SMART 的输出分布偏移、KL-LS 的 KL 度量都在解决「保留哪几层」——这是混合架构质量的最大杠杆。</li>
+<li><strong>KV 缓存压缩</strong>：KDA −75%、Jamba 数量级下降，直接降低长上下文单并发显存与可服务并发数。</li>
+<li><strong>量化</strong>：Jamba ExpertsInt8（MoE INT8、免校准）、K3 的原生 MXFP4，使超大 MoE 可在更少/更主流 GPU 上部署。</li>
+<li><strong>推理框架</strong>：KDA/JetBlock 均提供 vLLM 实现；线性层的分块预填充（chunked prefilling）、前缀/radix 缓存、PD 分离等可叠加。</li>
+<li><strong>低成本获得混合模型</strong>：不必从零预训练——可用 HALO（2.3B token）或 PostNAS/Jet-Nemotron 从已有 Transformer（如 Qwen3）改造，大幅降低验证与落地成本。</li>
+</ol>
+
+<h3>6.3 落地 Checklist</h3>
+
+<ul>
+<li>[ ] 明确真实上下文长度分布与召回要求（多数业务其实不需要 1M）。</li>
+<li>[ ] 用 MQAR/Zoology 类低成本基准做架构初筛。</li>
+<li>[ ] 在<strong>自有数据、目标硬件</strong>上做准确率—吞吐—显存—延迟（含 p99）联合压测，勿只信厂商峰值。</li>
+<li>[ ] 对混合模型重点验证 NIAH/RULER 等精确召回，不被平均分迷惑。</li>
+<li>[ ] 优先评估开源混合权重 + vLLM 路径（Kimi Linear、Jamba、Jet-Nemotron、HypeNet），避免自研 CUDA 内核。</li>
+<li>[ ] 若改造自有模型，先用 HALO/PostNAS 做注意力层选择，再决定转换比例。</li>
+<li>[ ] 关注位置编码（NoPE / RoPE / HyPE）对长度外推的影响并做外推测试。</li>
+<li>[ ] 预留数值稳定性方案（如 Jamba 的 Activation Loss）与量化回归测试。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec9">7. 开放问题与未来展望</h2>
+
+<ol>
+<li><strong>精确召回仍是试金石</strong>。固定大小状态在理论上无法无损保存任意长历史（正交向量上限、记忆过载）。KDA 等在基准上大幅改善，但真实、对抗性的大海捞针与多跳检索仍需在更大规模、更多场景中持续验证。</li>
+<li><strong>状态容量与状态更新的极限</strong>。<code>d²</code> 矩阵状态 + 更强更新（Delta、门控 Delta、TTT-MLP）能逼近全注意力到什么程度？更高维/结构化状态（如三维状态、Mixture-of-Memories）是否带来下一阶收益，是活跃方向。</li>
+<li><strong>非线性状态更新的并行化</strong>。TTT-MLP 等更强更新受限于内存 I/O；如何在保持表达力的同时获得硬件高效的并行形式，仍未完全解决。</li>
+<li><strong>与 RL / 推理模型的协同</strong>。Kimi Linear 特别报告了在 RL regime 下同样反超全注意力——线性/混合架构对长链路思维链、Agent 多轮轨迹的影响值得深入研究（与本知识库《Agentic RL》报告形成呼应）。</li>
+<li><strong>蒸馏与架构创新的归因</strong>。如何干净地分离「蒸馏自前沿模型」与「新架构本身」的贡献，需要更严格的消融协议。</li>
+<li><strong>位置编码与长度外推</strong>。NoPE、RoPE、HyPE 各有取舍；混合架构中注意力层用 RoPE、RNN 层用 NoPE 的不一致如何系统性解决，仍在演进。</li>
+<li><strong>生态与标准化</strong>。内核（flash-linear-attention、各家 vLLM 插件）、量化（ExpertsInt8、MXFP4）、训练并行（Ring/LASP）正在快速标准化；一旦工具链成熟，混合架构可能成为新默认。</li>
+<li><strong>与扩散语言模型等新范式的关系</strong>。扩散语言模型解决「生成方向」问题，线性/混合架构解决「序列算子复杂度」问题，二者正交，未来可能组合（参见本知识库《扩散语言模型》报告）。</li>
+</ol>
+
+<p><strong>趋势研判</strong>：线性/混合架构不会「彻底取代」Softmax 注意力——少数注意力层在可预见未来仍是精确召回的保障；但「<strong>多数线性层 + 少数注意力层</strong>」很可能成为下一代基础模型的默认骨架，KDA 从 3B 验证到 2.8T 旗舰的 9 个月，已经给出了强烈信号。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec10">8. 结论</h2>
+
+<ol>
+<li>线性注意力的本质是<strong>带矩阵值状态的线性 RNN</strong>，靠结合律把二次注意力改写为线性递推；现代分块并行与并行扫描让它「训练像注意力、推理像 RNN」。</li>
+<li>进步的主线是<strong>状态更新规则的进化</strong>：从「只能加」（朴素线性）到「能遗忘」（门控）、「能按误差改写」（Delta）、「门控 + Delta」（GDN / Gated DeltaNet / KDA），再到「通用学习」（TTT/Titans）。更新越强，固定状态下的召回越接近全注意力。</li>
+<li><strong>混合是工程最优解</strong>：保留约 1/8–1/4 注意力层负责精确召回，多数线性层负责吞吐。MiniMax-01、Jamba、Kimi Linear 已在数百 B 到万亿级规模验证。</li>
+<li><strong>Kimi Linear/KDA 是标志性拐点</strong>：首次在公平对比下全面超越全注意力（KV −75%、1M 解码 6×），并被放大到 2.8T 的 K3；配合开源权重与内核，标志该方向从「备选」进入「主战场」。</li>
+<li>对从业者：默认关注混合架构，用低成本合成基准初筛、在自有负载上联合压测、优先走开源 + 蒸馏改造路径，并把精确召回与长度外推作为验收红线。</li>
+</ol>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec11">9. 参考文献</h2>
+
+<blockquote>以下 27 篇文献编号均已通过 arxiv.org 摘要页逐一核实（标题、作者、日期对应一致），核实时间 2026-10-15。</blockquote>
+
+<ol>
+<li>Vaswani et al. *Attention Is All You Need.* arXiv:1706.03762, 2017. https://arxiv.org/abs/1706.03762</li>
+<li>Katharopoulos et al. *Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention.* arXiv:2006.16236, 2020. https://arxiv.org/abs/2006.16236</li>
+<li>Schlag, Irie &amp; Schmidhuber. *Linear Transformers Are Secretly Fast Weight Programmers.* arXiv:2102.11174, 2021. https://arxiv.org/abs/2102.11174</li>
+<li>Sun et al. *Retentive Network: A Successor to Transformer for Large Language Models.* arXiv:2307.08621, 2023. https://arxiv.org/abs/2307.08621</li>
+<li>Peng et al. *RWKV: Reinventing RNNs for the Transformer Era.* arXiv:2305.13048, 2023. https://arxiv.org/abs/2305.13048</li>
+<li>Gu &amp; Dao. *Mamba: Linear-Time Sequence Modeling with Selective State Spaces.* arXiv:2312.00752, 2023. https://arxiv.org/abs/2312.00752</li>
+<li>Yang et al. *Gated Linear Attention Transformers with Hardware-Efficient Training (GLA).* arXiv:2312.06635, 2023. https://arxiv.org/abs/2312.06635</li>
+<li>Qin et al. *Hierarchically Gated Recurrent Neural Network for Sequence Modeling (HGRN).* arXiv:2311.04823, 2023. https://arxiv.org/abs/2311.04823</li>
+<li>Arora et al. *Zoology: Measuring and Improving Recall in Efficient Language Models.* arXiv:2312.04927, 2023. https://arxiv.org/abs/2312.04927</li>
+<li>Dao &amp; Gu. *Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality (Mamba-2).* arXiv:2405.21060, 2024. https://arxiv.org/abs/2405.21060</li>
+<li>Qin et al. *HGRN2: Gated Linear RNNs with State Expansion.* arXiv:2404.07904, 2024. https://arxiv.org/abs/2404.07904</li>
+<li>Lieber et al. *Jamba: A Hybrid Transformer-Mamba Language Model.* arXiv:2403.19887, 2024. https://arxiv.org/abs/2403.19887</li>
+<li>De et al. *Griffin: Mixing Gated Linear Recurrences with Local Attention for Efficient Language Models.* arXiv:2402.19427, 2024. https://arxiv.org/abs/2402.19427</li>
+<li>Beck et al. *xLSTM: Extended Long Short-Term Memory.* arXiv:2405.04517, 2024. https://arxiv.org/abs/2405.04517</li>
+<li>Yang et al. *Parallelizing Linear Transformers with the Delta Rule over Sequence Length (DeltaNet).* arXiv:2406.06484, 2024（NeurIPS 2024）. https://arxiv.org/abs/2406.06484</li>
+<li>Sun et al. *Learning to (Learn at Test Time): RNNs with Expressive Hidden States (TTT).* arXiv:2407.04620, 2024. https://arxiv.org/abs/2407.04620</li>
+<li>Jamba Team. *Jamba-1.5: Hybrid Transformer-Mamba Models at Scale.* arXiv:2408.12570, 2024. https://arxiv.org/abs/2408.12570</li>
+<li>Yang, Kautz &amp; Hatamizadeh. *Gated Delta Networks: Improving Mamba2 with Delta Rule (GDN).* arXiv:2412.06464, 2024. https://arxiv.org/abs/2412.06464</li>
+<li>MiniMax et al. *MiniMax-01: Scaling Foundation Models with Lightning Attention.* arXiv:2501.08313, 2025. https://arxiv.org/abs/2501.08313</li>
+<li>Behrouz et al. *Titans: Learning to Memorize at Test Time.* arXiv:2501.00663, 2025. https://arxiv.org/abs/2501.00663</li>
+<li>Peng et al. *RWKV-7 &quot;Goose&quot; with Expressive Dynamic State Evolution.* arXiv:2503.14456, 2025. https://arxiv.org/abs/2503.14456</li>
+<li>Peng et al. *Eagle and Finch: RWKV with Matrix-Valued States and Dynamic Recurrence (RWKV-5/6).* arXiv:2404.05892, 2024. https://arxiv.org/abs/2404.05892</li>
+<li>Kimi Team. *Kimi K2: Open Agentic Intelligence.* arXiv:2507.20534, 2025. https://arxiv.org/abs/2507.20534</li>
+<li>Gu et al. *Jet-Nemotron: Efficient Language Model with Post Neural Architecture Search.* arXiv:2508.15884, 2025（NeurIPS 2025）. https://arxiv.org/abs/2508.15884</li>
+<li>Kimi Team. *Kimi Linear: An Expressive, Efficient Attention Architecture.* arXiv:2510.26692, 2025. https://arxiv.org/abs/2510.26692</li>
+<li>Arora et al. *Simple Linear Attention Language Models Balance the Recall-Throughput Tradeoff.* arXiv:2402.18668, 2024. https://arxiv.org/abs/2402.18668</li>
+<li>Chen et al. *Hybrid Linear Attention Done Right: Efficient Distillation and Effective Architectures for Extremely Long Contexts (HALO/HypeNet).* arXiv:2601.22156, 2026. https://arxiv.org/abs/2601.22156</li>
+</ol>
+
+<h3>参考的其他信源（非 arXiv）</h3>
+
+<ul>
+<li>Songlin Yang. *DeltaNet Explained (Part I–III)*（作者官方博客，含线性注意力/DeltaNet 推导与 MAD/MQAR 数据）. https://sustcsonglin.github.io/blog/2024/deltanet-1</li>
+<li>flash-linear-attention 开源库（GLA / DeltaNet / Gated DeltaNet / KDA 等内核实现）. https://github.com/sustcsonglin/flash-linear-attention</li>
+<li>RWKV 官方 Wiki（RWKV-4/5/6/7 版本、论文链接与模型状态）. https://wiki.rwkv.com</li>
+<li>NVIDIA / NVlabs. *Jet-Nemotron* 官方仓库（PostNAS/JetBlock 说明与吞吐数据，厂商口径）. https://github.com/NVlabs/Jet-Nemotron</li>
+<li>Developers Digest. *Kimi Linear: An Attention Architecture That Outperforms Full Attention*（HN 讨论与 K3 采用 KDA 的社区分析，二次信源）. https://www.developersdigest.tech/blog/kimi-linear-attention-architecture-hn-analysis</li>
+</ul>
+<div class="footer">线性注意力与混合架构前沿技术报告 · 2026-10-15 · 所有 arXiv 编号已经逐一核实 · 图表为手工暗色 SVG</div>
+</div></body></html>

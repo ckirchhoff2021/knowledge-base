@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 五类状态更新规则对比</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1240 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1240" height="900" fill="#0d1117"/>
+  <text x="50" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 3 · 五类线性循环层的「状态更新规则」：能不能遗忘、能不能改写</text>
+  <text x="50" y="76" fill="#8b949e" font-size="13">所有层都维护一个矩阵状态 S（d×d）；差别在更新算子——这决定了召回精度与长序列稳定性</text>
+
+  <!-- column headers -->
+  <g font-size="12">
+    <!-- Row 1: vanilla linear attention -->
+    <rect x="40" y="104" width="1160" height="120" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.4"/>
+    <text x="60" y="134" fill="#58a6ff" font-size="15" font-weight="700">① 朴素线性注意力</text>
+    <text x="60" y="162" fill="#e6edf3" font-size="14">Sₜ = Sₜ₋₁ + vₜkₜᵀ</text>
+    <text x="430" y="162" fill="#8b949e" font-size="12.5">只能「加」，无法擦除 → 记忆过载，串扰累积</text>
+    <text x="60" y="192" fill="#f85149" font-size="12">遗忘：✗　改写：✗</text>
+    <text x="820" y="192" fill="#8b949e" font-size="12">代表：Linear Transformers (2020)</text>
+
+    <!-- Row 2: gated / decay -->
+    <rect x="40" y="240" width="1160" height="120" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.4"/>
+    <text x="60" y="270" fill="#3fb950" font-size="15" font-weight="700">② 门控 / 指数衰减（GLA · RetNet · Mamba）</text>
+    <text x="60" y="298" fill="#e6edf3" font-size="14">Sₜ = αₜ ⊙ Sₜ₋₁ + vₜkₜᵀ</text>
+    <text x="430" y="298" fill="#8b949e" font-size="12.5">数据相关的遗忘门 α，旧记忆按比例衰减后再写入</text>
+    <text x="60" y="328" fill="#3fb950" font-size="12">遗忘：✓（软衰减）　改写：△（间接覆盖）</text>
+    <text x="820" y="328" fill="#8b949e" font-size="12">代表：GLA / Retention / Mamba S6</text>
+
+    <!-- Row 3: delta rule -->
+    <rect x="40" y="376" width="1160" height="130" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.4"/>
+    <text x="60" y="406" fill="#bc8cff" font-size="15" font-weight="700">③ Delta 规则（误差校正）</text>
+    <text x="60" y="434" fill="#e6edf3" font-size="13.5">Sₜ = Sₜ₋₁ − βₜ(Sₜ₋₁kₜ − vₜ)kₜᵀ</text>
+    <text x="500" y="434" fill="#8b949e" font-size="12.5">先读出旧值，按「预测误差」精确擦除再写新值</text>
+    <text x="60" y="464" fill="#3fb950" font-size="12">遗忘：✓（定向擦除）　改写：✓（精确覆盖）</text>
+    <text x="60" y="490" fill="#d29922" font-size="11.5">等价于对在线 MSE 损失做一步梯度下降；MQAR 联想召回近乎满分</text>
+    <text x="820" y="478" fill="#8b949e" font-size="12">代表：DeltaNet (2024)</text>
+
+    <!-- Row 4: gated delta -->
+    <rect x="40" y="522" width="1160" height="130" rx="10" fill="#161b22" stroke="#d29922" stroke-width="1.4"/>
+    <text x="60" y="552" fill="#d29922" font-size="15" font-weight="700">④ 门控 + Delta 规则（当前最强通用循环层）</text>
+    <text x="60" y="580" fill="#e6edf3" font-size="13.5">Sₜ = αₜ ⊙ Sₜ₋₁ − βₜ(αₜ⊙Sₜ₋₁ kₜ − vₜ) kₜᵀ</text>
+    <text x="560" y="580" fill="#8b949e" font-size="12">先衰减再误差校正：兼具长程稳定与精确改写</text>
+    <text x="60" y="610" fill="#3fb950" font-size="12">遗忘：✓　改写：✓　长程稳定：✓</text>
+    <text x="60" y="636" fill="#d29922" font-size="11.5">GDN 把 DeltaNet 写进 Mamba2 块；Gated DeltaNet 加多通道遗忘门；KDA 再做更细粒度数据相关门控</text>
+    <text x="820" y="624" fill="#8b949e" font-size="12">代表：GDN / Gated DeltaNet / KDA</text>
+
+    <!-- Row 5: TTT -->
+    <rect x="40" y="668" width="1160" height="130" rx="10" fill="#161b22" stroke="#f85149" stroke-width="1.4"/>
+    <text x="60" y="698" fill="#f85149" font-size="15" font-weight="700">⑤ 测试时训练 TTT（隐状态本身是个模型）</text>
+    <text x="60" y="726" fill="#e6edf3" font-size="13.5">Wₜ = Wₜ₋₁ − η ∇ℓ(Wₜ₋₁; xₜ)，　oₜ = f(xₜ; Wₜ)</text>
+    <text x="560" y="726" fill="#8b949e" font-size="12">状态 = 小模型权重，更新 = 自监督学习一步</text>
+    <text x="60" y="756" fill="#3fb950" font-size="12">表达力：线性 / MLP 隐状态可选，潜力大</text>
+    <text x="60" y="782" fill="#d29922" font-size="11.5">TTT-Linear 在去非线性、批大小为 1 时与 DeltaNet 等价——两条路线在数学上汇合</text>
+    <text x="820" y="770" fill="#8b949e" font-size="12">代表：TTT-Linear / TTT-MLP / Titans</text>
+  </g>
+
+  <text x="50" y="842" fill="#8b949e" font-size="12">演进逻辑：① 只能加 → ② 能遗忘 → ③ 能按误差定向改写 → ④ 遗忘+改写兼得 → ⑤ 把「更新」推广为通用学习步骤。</text>
+  <text x="50" y="868" fill="#3fb950" font-size="12">能力越强的更新规则，越能在固定状态容量下逼近全注意力的精确检索——这是 KDA「反超」的根本原因。</text>
+</svg>
+</body></html>
