@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 12 个话题。
+大模型与后训练方向的论文分析，共 13 个话题。
 
 ---
 
@@ -75,3 +75,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 2025 末–2026 架构创新最活跃的方向——当注意力不再「二次」。基于 27 篇 arXiv 原始论文（编号经 arxiv.org 逐一核实），先建立统一视角：**线性注意力本质是「可并行训练的线性 RNN」**（矩阵值状态 Sₜ、训练用 chunkwise/parallel scan、推理为常数状态、无 KV 缓存），并与 softmax 注意力在复杂度、显存、召回能力上逐项对比；梳理 2017–2026 演进谱系（Linear Transformer → Fast Weight Programmers → RetNet → Mamba 选择性 SSM → Mamba-2 结构化状态空间对偶 SSD，四族收敛）；深潜五类状态更新规则——朴素线性累加 → 门控衰减（GLA/Mamba）→ Delta 规则纠错 → 门控 DeltaNet（Gated DeltaNet）→ **Kimi Delta Attention（KDA）多因子门控**，讲透 KDA 为何能在公平对比下首次全面反超全注意力；横评四大旗舰——**Kimi Linear**（3B/48B，KV 缓存 −75%、1M 上下文解码吞吐最高 ×6）、**MiniMax-01**（7 Lightning + 1 softmax、456B/45.9B 激活、支持 4M）、**Jamba/Jamba-1.5**（Transformer-Mamba-MoE、256K）、**RWKV-7「Goose」**（纯 RNN 动态状态演化、突破 TC0 上限）；并覆盖跨架构蒸馏/转换路线（HALO 仅 2.3B token、PostNAS、Jet-Nemotron）、RULER/NIAH 精确召回评测与六大开放问题（召回短板、状态容量、训练稳定性、内核碎片化、长度外推），给出工程落地 Checklist。厂商自报数据均标注「厂商口径」。
 
 📅 2026-10-15 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](linear-attention/report.md)
+
+### [智能体互联协议栈（MCP / A2A / AGENTS.md）](agent-interop/report.html)
+
+智源《2026 十大 AI 技术趋势》第 3 位方向——多智能体系统决定应用上限，Agent 时代的「TCP/IP」初具雏形。基于 19 篇 arXiv 原始论文（编号经 arxiv.org 逐一核实）与 MCP / A2A / AGENTS.md 官方规范、Linux 基金会公告交叉验证：先讲透 **N×M 定制集成 → N+M 标准互联** 的核心价值与「项目层 AGENTS.md / 工具层 MCP / 通信层 A2A」三层协议栈；深拆 **MCP**（Anthropic 2024-11 开源）的 Host-Client-Server 架构、1 个 Host 内多 Client 对多 Server 的 1:1 连接、Tools/Resources/Prompts 三原语、stdio 与 Streamable HTTP 双传输、elicitations/采样/资源链接与 OAuth 2.1+PKCE 授权；深拆 **A2A**（Google 2025-04 发布）的 `/.well-known/agent.json` Agent Card 能力发现、不透明智能体原则、有状态 Task 七态生命周期（submitted/working/input-required/completed/failed/canceled/unknown）与长任务 SSE 流式/推送；讲清 **AGENTS.md**（OpenAI 2025-08 发布，60,000+ 项目采用）与 CLAUDE.md/.cursorrules 的关系；横向对比 MCP 与 Function Calling/OpenAPI 及 AGNTCY、IBM ACP（已并入 A2A）、ANP、CoSAI 等竞品；用最大篇幅做**安全纵深**——致命三要素（私有数据×不可信数据×外部通信）、工具投毒/Rug Pull/工具影子/跨服务器级联、8+ 代表性 CVE（CVE-2025-6514 CVSS 9.6 等）与一手测量（MCPTox 投毒最高 72.8%、Breaking the Protocol 总体 ASR 52.8% vs 基线 26.4%、级联率 72.4%、仅 8.5% 服务器用 OAuth），并给出协议级/授权/执行/隔离/检测五层防御与 ATTESTMCP 缓解数据；最后梳理 2025-12-09 Anthropic 把 MCP 与 Block goose、OpenAI AGENTS.md 一同捐赠 Linux 基金会下新成立的 **AAIF**（白金会员 AWS/Anthropic/Block/Bloomberg/Cloudflare/Google/Microsoft/OpenAI）这一治理里程碑、生态注水测量（仅 49.1% 服务器记录有效）、工程落地 Checklist 与六大开放问题。厂商/第三方数据均标注口径。
+
+📅 2026-10-16 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](agent-interop/report.md)

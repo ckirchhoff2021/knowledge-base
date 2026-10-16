@@ -42,6 +42,7 @@
 | [**智能体记忆 Agent Memory**](https://ckirchhoff2021.github.io/knowledge-base/models/agent-memory/report.html) | 从无状态对话到终身学习：四类认知记忆 · 六代架构（MemGPT/Mem0/Zep/A-MEM）· MemOS · 自进化记忆 |
 | [**视觉-语言-动作模型 VLA**](https://ckirchhoff2021.github.io/knowledge-base/models/vla-embodied/report.html) | 从「描述世界」到「改变世界」：四代源流 · 动作表示光谱与三类生成头 · 双系统架构 · 跨本体泛化 · π0.5/Gemini Robotics/GR00T/OpenVLA · 人形机器人产业地图 |
 | [**线性注意力与混合架构**](https://ckirchhoff2021.github.io/knowledge-base/models/linear-attention/report.html) | 当注意力不再「二次」：线性注意力=可并行训练的线性 RNN · Mamba/SSD 统一视角 · 五类状态更新规则（→KDA）· Kimi Linear/MiniMax-01/Jamba/RWKV-7 横评 · 跨架构蒸馏 HALO/PostNAS · KV 缓存省 75%、1M 上下文吞吐 ×6 |
+| [**智能体互联协议栈 MCP/A2A**](https://ckirchhoff2021.github.io/knowledge-base/models/agent-interop/report.html) | Agent 时代的「TCP/IP」：N×M→N+M · 三层协议栈（AGENTS.md/MCP/A2A）· MCP Host-Client-Server 与三原语 · A2A Agent Card 与 Task 七态 · 工具投毒/Rug Pull/致命三要素/CVE · MCP 捐赠 Linux 基金会 AAIF |
 
 ### 🌱 生活方法论
 

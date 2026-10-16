@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · N×M 到 N+M 与三层协议栈</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 860" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="860" fill="#0d1117"/>
+  <text x="60" y="50" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 从 N×M 定制集成到 N+M 标准互联，与三层智能体协议栈</text>
+  <text x="60" y="78" fill="#8b949e" font-size="13">标准化的第一性价值：在模型与服务之间插入中立协议层，集成数随双方数量「加法」而非「乘法」增长</text>
+
+  <!-- LEFT: N x M mess -->
+  <rect x="50" y="105" width="500" height="330" rx="12" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
+  <rect x="50" y="105" width="500" height="38" rx="12" fill="#f85149" opacity="0.13"/>
+  <text x="70" y="131" fill="#f85149" font-size="16" font-weight="700">标准缺位：N×M 完全二分图（点对点胶水）</text>
+
+  <!-- left nodes: AI apps -->
+  <g font-size="11.5">
+    <rect x="80" y="170" width="92" height="30" rx="6" fill="#21304a" stroke="#58a6ff"/><text x="126" y="190" fill="#9ecbff" text-anchor="middle">AI 应用 1</text>
+    <rect x="80" y="225" width="92" height="30" rx="6" fill="#21304a" stroke="#58a6ff"/><text x="126" y="245" fill="#9ecbff" text-anchor="middle">AI 应用 2</text>
+    <rect x="80" y="280" width="92" height="30" rx="6" fill="#21304a" stroke="#58a6ff"/><text x="126" y="300" fill="#9ecbff" text-anchor="middle">AI 应用 3</text>
+  </g>
+  <!-- right nodes: services -->
+  <g font-size="11.5">
+    <rect x="430" y="170" width="92" height="30" rx="6" fill="#3a1d24" stroke="#f85149"/><text x="476" y="190" fill="#ffa198" text-anchor="middle">服务 A</text>
+    <rect x="430" y="225" width="92" height="30" rx="6" fill="#3a1d24" stroke="#f85149"/><text x="476" y="245" fill="#ffa198" text-anchor="middle">服务 B</text>
+    <rect x="430" y="280" width="92" height="30" rx="6" fill="#3a1d24" stroke="#f85149"/><text x="476" y="300" fill="#ffa198" text-anchor="middle">服务 C</text>
+  </g>
+  <!-- many crossing edges -->
+  <g stroke="#6e7681" stroke-width="1" opacity="0.55">
+    <line x1="172" y1="185" x2="430" y2="185"/><line x1="172" y1="185" x2="430" y2="240"/><line x1="172" y1="185" x2="430" y2="295"/>
+    <line x1="172" y1="240" x2="430" y2="185"/><line x1="172" y1="240" x2="430" y2="240"/><line x1="172" y1="240" x2="430" y2="295"/>
+    <line x1="172" y1="295" x2="430" y2="185"/><line x1="172" y1="295" x2="430" y2="240"/><line x1="172" y1="295" x2="430" y2="295"/>
+  </g>
+  <text x="300" y="252" fill="#f85149" font-size="30" font-weight="700" text-anchor="middle">N × M</text>
+  <text x="75" y="350" fill="#f85149" font-size="12.5">每套都要处理：能力发现 / schema / 鉴权 / 传输 / 流式 / 状态</text>
+  <text x="75" y="374" fill="#f85149" font-size="12.5">接口一改、模型一升级，胶水代码即失效，维护成本乘法膨胀</text>
+  <text x="75" y="406" fill="#8b949e" font-size="11.5">Function Calling 是模型层点对点能力，无法消除此 N×M</text>
+
+  <!-- arrow -->
+  <path d="M560,270 L600,270" stroke="#8b949e" stroke-width="3" marker-end="url(#arG)"/>
+  <text x="580" y="255" fill="#8b949e" font-size="12" text-anchor="middle">标准化</text>
+
+  <!-- RIGHT: N + M via protocol -->
+  <rect x="610" y="105" width="540" height="330" rx="12" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+  <rect x="610" y="105" width="540" height="38" rx="12" fill="#3fb950" opacity="0.13"/>
+  <text x="630" y="131" fill="#3fb950" font-size="16" font-weight="700">中立协议层：N+M（一次实现，处处复用）</text>
+
+  <g font-size="11.5">
+    <rect x="640" y="165" width="86" height="28" rx="6" fill="#21304a" stroke="#58a6ff"/><text x="683" y="184" fill="#9ecbff" text-anchor="middle">客户端 ×N</text>
+    <rect x="1030" y="165" width="92" height="28" rx="6" fill="#3a1d24" stroke="#f85149"/><text x="1076" y="184" fill="#ffa198" text-anchor="middle">服务器 ×M</text>
+  </g>
+  <!-- protocol bar -->
+  <rect x="760" y="235" width="220" height="64" rx="10" fill="#12261a" stroke="#3fb950" stroke-width="1.8"/>
+  <text x="870" y="263" fill="#7ee787" font-size="15" font-weight="700" text-anchor="middle">标准协议（JSON-RPC 2.0）</text>
+  <text x="870" y="286" fill="#8b949e" font-size="11.5" text-anchor="middle">发现 · 消息 · 传输 · 授权</text>
+  <g stroke="#3fb950" stroke-width="1.6" opacity="0.85">
+    <line x1="726" y1="179" x2="800" y2="235"/><line x1="1030" y1="179" x2="940" y2="235"/>
+  </g>
+  <text x="870" y="340" fill="#3fb950" font-size="28" font-weight="700" text-anchor="middle">N + M</text>
+  <text x="635" y="374" fill="#3fb950" font-size="12.5">每个 AI 应用实现一次客户端，每个服务实现一次服务器</text>
+  <text x="635" y="398" fill="#3fb950" font-size="12.5">工具自描述、可动态发现；类比 USB-C / ODBC / TCP·IP</text>
+  <text x="635" y="424" fill="#8b949e" font-size="11.5">不取代 Function Calling / OpenAPI，而是架在其上的连接层</text>
+
+  <defs><marker id="arG" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#8b949e"/></marker></defs>
+
+  <!-- BOTTOM: three-layer stack -->
+  <rect x="50" y="470" width="1100" height="350" rx="12" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+  <rect x="50" y="470" width="1100" height="38" rx="12" fill="#bc8cff" opacity="0.13"/>
+  <text x="70" y="496" fill="#bc8cff" font-size="16" font-weight="700">三层智能体协议栈：项目层（就地）· 工具层（纵向）· 通信层（横向）</text>
+
+  <!-- project layer -->
+  <rect x="80" y="525" width="1040" height="80" rx="9" fill="#1d2b45" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="105" y="556" fill="#9ecbff" font-size="14.5" font-weight="700">项目层 · AGENTS.md</text>
+  <text x="105" y="582" fill="#8b949e" font-size="12">随代码库分发的机器可读约定：编码规范 / 架构决策 / 测试 / 安全边界（前身 CLAUDE.md、.cursorrules）</text>
+  <text x="1090" y="560" fill="#9ecbff" font-size="11.5" text-anchor="end">OpenAI → AAIF（2025-12）</text>
+  <text x="1090" y="583" fill="#8b949e" font-size="11" text-anchor="end">6 万+ 项目采用 · 类比：给机器读的 README</text>
+
+  <!-- tool layer -->
+  <rect x="80" y="615" width="1040" height="80" rx="9" fill="#12261a" stroke="#3fb950" stroke-width="1.5"/>
+  <text x="105" y="646" fill="#7ee787" font-size="14.5" font-weight="700">工具层（纵向）· MCP</text>
+  <text x="105" y="672" fill="#8b949e" font-size="12">智能体 ↔ 工具/数据：Host–Client–Server，原语 Tools / Resources / Prompts，传输 stdio / Streamable HTTP</text>
+  <text x="1090" y="650" fill="#7ee787" font-size="11.5" text-anchor="end">Anthropic → AAIF（2025-12）</text>
+  <text x="1090" y="673" fill="#8b949e" font-size="11" text-anchor="end">9700 万月下载 · 1 万+ 服务器 · 类比：AI 的 USB-C</text>
+
+  <!-- comm layer -->
+  <rect x="80" y="705" width="1040" height="80" rx="9" fill="#2a1d3d" stroke="#bc8cff" stroke-width="1.5"/>
+  <text x="105" y="736" fill="#d2a8ff" font-size="14.5" font-weight="700">通信层（横向）· A2A</text>
+  <text x="105" y="762" fill="#8b949e" font-size="12">智能体 ↔ 智能体：Agent Card 能力发现 + 有状态 Task（七态），不暴露内部实现，HTTP + JSON-RPC + SSE</text>
+  <text x="1090" y="740" fill="#d2a8ff" font-size="11.5" text-anchor="end">Google → Linux 基金会（2025-06）</text>
+  <text x="1090" y="763" fill="#8b949e" font-size="11" text-anchor="end">150+ 组织 · 已吸收 IBM ACP · 类比：外交协议</text>
+</svg>
+</body></html>
