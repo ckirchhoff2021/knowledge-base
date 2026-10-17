@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 13 个话题。
+大模型与后训练方向的论文分析，共 14 个话题。
 
 ---
 
@@ -81,3 +81,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 智源《2026 十大 AI 技术趋势》第 3 位方向——多智能体系统决定应用上限，Agent 时代的「TCP/IP」初具雏形。基于 19 篇 arXiv 原始论文（编号经 arxiv.org 逐一核实）与 MCP / A2A / AGENTS.md 官方规范、Linux 基金会公告交叉验证：先讲透 **N×M 定制集成 → N+M 标准互联** 的核心价值与「项目层 AGENTS.md / 工具层 MCP / 通信层 A2A」三层协议栈；深拆 **MCP**（Anthropic 2024-11 开源）的 Host-Client-Server 架构、1 个 Host 内多 Client 对多 Server 的 1:1 连接、Tools/Resources/Prompts 三原语、stdio 与 Streamable HTTP 双传输、elicitations/采样/资源链接与 OAuth 2.1+PKCE 授权；深拆 **A2A**（Google 2025-04 发布）的 `/.well-known/agent.json` Agent Card 能力发现、不透明智能体原则、有状态 Task 七态生命周期（submitted/working/input-required/completed/failed/canceled/unknown）与长任务 SSE 流式/推送；讲清 **AGENTS.md**（OpenAI 2025-08 发布，60,000+ 项目采用）与 CLAUDE.md/.cursorrules 的关系；横向对比 MCP 与 Function Calling/OpenAPI 及 AGNTCY、IBM ACP（已并入 A2A）、ANP、CoSAI 等竞品；用最大篇幅做**安全纵深**——致命三要素（私有数据×不可信数据×外部通信）、工具投毒/Rug Pull/工具影子/跨服务器级联、8+ 代表性 CVE（CVE-2025-6514 CVSS 9.6 等）与一手测量（MCPTox 投毒最高 72.8%、Breaking the Protocol 总体 ASR 52.8% vs 基线 26.4%、级联率 72.4%、仅 8.5% 服务器用 OAuth），并给出协议级/授权/执行/隔离/检测五层防御与 ATTESTMCP 缓解数据；最后梳理 2025-12-09 Anthropic 把 MCP 与 Block goose、OpenAI AGENTS.md 一同捐赠 Linux 基金会下新成立的 **AAIF**（白金会员 AWS/Anthropic/Block/Bloomberg/Cloudflare/Google/Microsoft/OpenAI）这一治理里程碑、生态注水测量（仅 49.1% 服务器记录有效）、工程落地 Checklist 与六大开放问题。厂商/第三方数据均标注口径。
 
 📅 2026-10-16 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](agent-interop/report.md)
+
+### [AI Scientist 自主科研智能体（AI4S）](ai-scientist/report.html)
+
+智源《2026 十大 AI 技术趋势》第 4 位方向——AI 在科研中的角色正从辅助工具升级为自主研究的「AI 科学家」。基于 20 篇 arXiv/Nature 原始论文（编号经 arxiv.org 逐一核实），先厘清 **AI Scientist / AI4S / 科学基础模型 / Deep Research** 四个易混概念的边界；梳理 1965–2026 思想谱系（DENDRAL、Ross King 的 Adam/Eve、AlphaFold、ChemCrow/Coscientist）；深拆端到端**六层流水线**（想法→实验设计→写码执行→结果分析→论文写作→自动评审）与 Sakana v2 的**智能体树搜索 BFTS**（并行探索—剪枝—VLM 反馈）；横评三大旗舰——**Sakana AI Scientist**（v1 每篇 <$15、v2 $23–28、workshop 论文均分 6.33）、**Google Co-Scientist**（Gemini 六代理 + 想法锦标赛，肝纤维化候选阻断 91% 瘢痕反应，Nature 2026）、**FutureHouse**（PaperQA2/Robin/DISCO）；讲透自驱动实验室的**干智能—湿实验双闭环**（Berkeley A-Lab 17 天 41 种新材料、利物浦移动机器人 8 天 688 实验、Acceleration Consortium 2 亿加元）；盘点科学基础模型版图（AlphaFold 3、GNoME 220 万晶体、AlphaProteo、AlphaProof IMO 银牌）；用整章对 **2026 年 9 月密集「重大声明」做证据审计**——ART 酶系统（Anthropic 官方一手：约 950 agents、21 小时、210M token，功能未知、人类参与湿实验）、费马大定理 Lean 形式化（官方一手：11 天、1300 万行、约 60 亿 token，系形式化 Wiles 证明而非新证明）、Navier-Stokes（OpenAI 官方页 403，保持「待独立验证」）、N=4 SYM 九圈（已知方法+更多算力）；并覆盖 ScienceAgentBench/MLE-bench 评测、生物两用安全与 RSP、产业地图与中国布局（鄂维南/盘古气象/深势 DPA/新生探途）。厂商口径与待验证项均显式标注。
+
+📅 2026-10-17 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](ai-scientist/report.md)

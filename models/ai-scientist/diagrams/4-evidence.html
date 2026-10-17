@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · 2026年9月声明证据审计</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="900" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="25" font-weight="700">图 4 · 2026 年 9 月「AI 重大科学声明」证据审计</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13.5">一手官方页可直读者升级为「官方口径」；OpenAI 页 403、未经同行评审者保持「待独立验证」</text>
+
+  <!-- LEFT: evidence pyramid -->
+  <text x="250" y="128" fill="#e6edf3" font-size="16" font-weight="700" text-anchor="middle">证据等级金字塔</text>
+  <g font-size="12.5">
+    <polygon points="250,150 360,300 140,300" fill="#0f2a22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="250" y="200" fill="#7ee787" text-anchor="middle" font-weight="700">同行评审 + 独立复现</text>
+    <text x="250" y="222" fill="#8fe0a8" text-anchor="middle" font-size="11">AlphaFold/GNoME/AlphaProof</text>
+    <polygon points="140,300 360,300 400,400 100,400" fill="#12233a" stroke="#58a6ff" stroke-width="1.6"/>
+    <text x="250" y="345" fill="#9ecbff" text-anchor="middle" font-weight="700">官方公告 / 官方预印本</text>
+    <text x="250" y="368" fill="#8bb8e0" text-anchor="middle" font-size="11">ART · 费马（本轮已直读 200）</text>
+    <polygon points="100,400 400,400 440,500 60,500" fill="#33260a" stroke="#d29922" stroke-width="1.6"/>
+    <text x="250" y="445" fill="#e8c98a" text-anchor="middle" font-weight="700">第三方 / 媒体逐条溯源</text>
+    <text x="250" y="468" fill="#d8bd80" text-anchor="middle" font-size="11">N=4 九圈（CellCog 溯源）</text>
+    <polygon points="60,500 440,500 470,600 30,600" fill="#3a1d24" stroke="#f85149" stroke-width="1.6"/>
+    <text x="250" y="545" fill="#ffa198" text-anchor="middle" font-weight="700">聚合 / 营销站转述（最低）</text>
+    <text x="250" y="568" fill="#e89088" text-anchor="middle" font-size="11">Navier-Stokes（官方 403 未直读）</text>
+  </g>
+  <text x="250" y="632" fill="#8b949e" font-size="11.5" text-anchor="middle">原则：能读一手不引二手；受控 benchmark 不外推；厂商数字标口径</text>
+
+  <!-- RIGHT: claim-evidence matrix -->
+  <text x="800" y="128" fill="#e6edf3" font-size="16" font-weight="700" text-anchor="middle">声明 × 证据状态矩阵</text>
+  <g font-size="12">
+    <!-- header -->
+    <rect x="500" y="148" width="600" height="34" fill="#161b22" stroke="#30363d"/>
+    <text x="540" y="170" fill="#58a6ff" font-weight="700">声明</text>
+    <text x="800" y="170" fill="#58a6ff" font-weight="700">一手可读</text>
+    <text x="930" y="170" fill="#58a6ff" font-weight="700">同行评审</text>
+    <text x="1050" y="170" fill="#58a6ff" font-weight="700">结论</text>
+  </g>
+  <g font-size="11.5">
+    <!-- ART -->
+    <rect x="500" y="184" width="600" height="84" fill="#161b22" stroke="#30363d"/>
+    <text x="512" y="208" fill="#c9d1d9" font-weight="700">ART 新酶系统</text>
+    <text x="512" y="228" fill="#8b949e" font-size="10.5">约950 agents·21h·210M tok</text>
+    <text x="512" y="246" fill="#8b949e" font-size="10.5">200k RT·3.5k 候选·20 入围</text>
+    <text x="800" y="232" fill="#7ee787" text-anchor="middle">✅ 200</text>
+    <text x="930" y="232" fill="#d29922" text-anchor="middle">✗ 预印本</text>
+    <text x="1050" y="222" fill="#e8c98a" text-anchor="middle">官方口径</text>
+    <text x="1050" y="242" fill="#f0a8a0" text-anchor="middle" font-size="10">功能未知</text>
+
+    <!-- Fermat -->
+    <rect x="500" y="270" width="600" height="84" fill="#161b22" stroke="#30363d"/>
+    <text x="512" y="294" fill="#c9d1d9" font-weight="700">费马大定理 Lean 形式化</text>
+    <text x="512" y="314" fill="#8b949e" font-size="10.5">1300万行·29.5k定理·11天</text>
+    <text x="512" y="332" fill="#8b949e" font-size="10.5">约60亿 output token</text>
+    <text x="800" y="318" fill="#7ee787" text-anchor="middle">✅ 200</text>
+    <text x="930" y="318" fill="#d29922" text-anchor="middle">✗ 研究帖</text>
+    <text x="1050" y="308" fill="#e8c98a" text-anchor="middle">官方口径</text>
+    <text x="1050" y="328" fill="#8b949e" text-anchor="middle" font-size="10">形式化非新证</text>
+
+    <!-- Navier Stokes -->
+    <rect x="500" y="356" width="600" height="84" fill="#1a1518" stroke="#f85149" stroke-width="1.4"/>
+    <text x="512" y="380" fill="#c9d1d9" font-weight="700">Navier-Stokes 奇点解</text>
+    <text x="512" y="400" fill="#8b949e" font-size="10.5">声称证明 Clay 表述 C/D</text>
+    <text x="512" y="418" fill="#8b949e" font-size="10.5">多智能体 · 署名争议</text>
+    <text x="800" y="404" fill="#f85149" text-anchor="middle">⛔ 403</text>
+    <text x="930" y="404" fill="#f85149" text-anchor="middle">✗ 未评审</text>
+    <text x="1050" y="394" fill="#ffa198" text-anchor="middle">待独立验证</text>
+    <text x="1050" y="414" fill="#ffa198" text-anchor="middle" font-size="10">不作事实</text>
+
+    <!-- N=4 -->
+    <rect x="500" y="442" width="600" height="84" fill="#161b22" stroke="#30363d"/>
+    <text x="512" y="466" fill="#c9d1d9" font-weight="700">N=4 SYM 九圈振幅</text>
+    <text x="512" y="486" fill="#8b949e" font-size="10.5">较八圈纪录多一圈</text>
+    <text x="512" y="504" fill="#8b949e" font-size="10.5">约$100 bootstrap·Dixon 核验</text>
+    <text x="800" y="490" fill="#d29922" text-anchor="middle">~ guest post</text>
+    <text x="930" y="490" fill="#d29922" text-anchor="middle">✗</text>
+    <text x="1050" y="480" fill="#e8c98a" text-anchor="middle">第三方溯源</text>
+    <text x="1050" y="500" fill="#8b949e" text-anchor="middle" font-size="10">toy model·非新物理</text>
+  </g>
+
+  <!-- bottom takeaways -->
+  <rect x="500" y="548" width="600" height="190" rx="10" fill="#161b22" stroke="#39c5cf" stroke-width="1.6"/>
+  <text x="520" y="578" fill="#39c5cf" font-size="14.5" font-weight="700">审计要点</text>
+  <g font-size="12" fill="#c9d1d9">
+    <text x="520" y="606">① ART / 费马：官方页可直读 → 采信为「官方口径」，但均未经同行评审</text>
+    <text x="520" y="632">② ART 功能未知、人类做湿实验；费马是形式化已有证明——宣传须打折</text>
+    <text x="520" y="658">③ Navier-Stokes：官方 403 + 未评审 + 署名争议 → 明确「待独立验证」</text>
+    <text x="520" y="684">④ N=4 九圈：数学玩具模型、已知方法 + 更多算力，非真实粒子物理发现</text>
+    <text x="520" y="710">⑤ 共同点：算力与编排已能「规模化产出」，但科学把关仍由人类与时间完成</text>
+  </g>
+  <text x="60" y="830" fill="#8b949e" font-size="12.5">结论：2026-09 标志「科研产出的自动化」跑通，而非「科学发现的可靠性」跑通——二者不可混为一谈</text>
+</svg>
+</body></html>

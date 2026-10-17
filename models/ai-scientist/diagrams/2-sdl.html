@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · 自驱动实验室干-湿双闭环</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 820" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="820" fill="#0d1117"/>
+  <text x="60" y="52" fill="#e6edf3" font-size="25" font-weight="700">图 2 · 自驱动实验室（SDL）：干智能—湿实验双闭环</text>
+  <text x="60" y="80" fill="#8b949e" font-size="13.5">AI 在数字空间提假设、做主动学习；机器人在物理世界合成、原位表征；结果回流改进下一轮假设</text>
+
+  <!-- DRY loop -->
+  <rect x="60" y="120" width="500" height="430" rx="14" fill="#12233a" stroke="#58a6ff" stroke-width="1.8"/>
+  <rect x="60" y="120" width="500" height="42" rx="14" fill="#58a6ff" opacity="0.13"/>
+  <text x="82" y="148" fill="#58a6ff" font-size="17" font-weight="700">干智能（数字空间 · AI 大脑）</text>
+
+  <g font-size="12.5">
+    <rect x="90" y="186" width="200" height="58" rx="8" fill="#1b3355" stroke="#58a6ff"/>
+    <text x="190" y="210" fill="#9ecbff" text-anchor="middle" font-weight="700">假设 / 候选材料生成</text>
+    <text x="190" y="231" fill="#8bb8e0" text-anchor="middle">文献 LLM + 第一性原理计算</text>
+
+    <rect x="90" y="266" width="200" height="58" rx="8" fill="#1b3355" stroke="#58a6ff"/>
+    <text x="190" y="290" fill="#9ecbff" text-anchor="middle" font-weight="700">主动学习 / 实验选择</text>
+    <text x="190" y="311" fill="#8bb8e0" text-anchor="middle" font-size="11.5">挑信息量最大的下一个目标</text>
+
+    <rect x="90" y="346" width="200" height="58" rx="8" fill="#1b3355" stroke="#58a6ff"/>
+    <text x="190" y="370" fill="#9ecbff" text-anchor="middle" font-weight="700">实验协议 / 机器人程序</text>
+    <text x="190" y="391" fill="#8bb8e0" text-anchor="middle" font-size="11.5">生成 SLL / 控制脚本</text>
+
+    <rect x="330" y="266" width="200" height="58" rx="8" fill="#162a44" stroke="#39c5cf"/>
+    <text x="430" y="290" fill="#9cd8dd" text-anchor="middle" font-weight="700">数据分析与模型更新</text>
+    <text x="430" y="311" fill="#7fc2c8" text-anchor="middle" font-size="11.5">表征结果回流再训练</text>
+  </g>
+  <g stroke="#58a6ff" stroke-width="2" fill="#58a6ff">
+    <path d="M190,244 L190,264" marker-end="url(#b)"/>
+    <path d="M190,324 L190,344" marker-end="url(#b)"/>
+    <path d="M290,375 L330,300" marker-end="url(#c)"/>
+  </g>
+
+  <!-- WET loop -->
+  <rect x="640" y="120" width="500" height="430" rx="14" fill="#0f2a22" stroke="#3fb950" stroke-width="1.8"/>
+  <rect x="640" y="120" width="500" height="42" rx="14" fill="#3fb950" opacity="0.13"/>
+  <text x="662" y="148" fill="#3fb950" font-size="17" font-weight="700">湿实验（物理世界 · 机器人 + 仪器）</text>
+
+  <g font-size="12.5">
+    <rect x="670" y="186" width="200" height="58" rx="8" fill="#16352a" stroke="#3fb950"/>
+    <text x="770" y="210" fill="#8fe0a8" text-anchor="middle" font-weight="700">机器人合成 / 配液</text>
+    <text x="770" y="231" fill="#74c992" text-anchor="middle" font-size="11.5">机械臂 · 移动机器人 · 反应器</text>
+
+    <rect x="670" y="266" width="200" height="58" rx="8" fill="#16352a" stroke="#3fb950"/>
+    <text x="770" y="290" fill="#8fe0a8" text-anchor="middle" font-weight="700">原位表征</text>
+    <text x="770" y="311" fill="#74c992" text-anchor="middle" font-size="11.5">XRD · GC-MS · 光谱 · 显微</text>
+
+    <rect x="670" y="346" width="200" height="58" rx="8" fill="#16352a" stroke="#3fb950"/>
+    <text x="770" y="370" fill="#8fe0a8" text-anchor="middle" font-weight="700">成功 / 失败判定</text>
+    <text x="770" y="391" fill="#74c992" text-anchor="middle" font-size="11.5">客观真值由物理世界给出</text>
+
+    <rect x="910" y="266" width="200" height="58" rx="8" fill="#123026" stroke="#39c5cf"/>
+    <text x="1010" y="290" fill="#9cd8dd" text-anchor="middle" font-weight="700">LIMS / 实验数据湖</text>
+    <text x="1010" y="311" fill="#7fc2c8" text-anchor="middle" font-size="11.5">FAIR 化 · 可移植</text>
+  </g>
+  <g stroke="#3fb950" stroke-width="2" fill="#3fb950">
+    <path d="M770,244 L770,264" marker-end="url(#g)"/>
+    <path d="M770,324 L770,344" marker-end="url(#g)"/>
+    <path d="M870,375 L910,300" marker-end="url(#c)"/>
+  </g>
+
+  <!-- connecting arrows dry <-> wet -->
+  <path d="M560,375 L640,375" stroke="#d29922" stroke-width="3" marker-end="url(#a2)"/>
+  <text x="600" y="362" fill="#d29922" font-size="12" text-anchor="middle" font-weight="700">下发协议</text>
+  <path d="M640,430 L560,430" stroke="#d29922" stroke-width="3" marker-end="url(#a3)"/>
+  <text x="600" y="452" fill="#d29922" font-size="12" text-anchor="middle" font-weight="700">回传表征数据</text>
+
+  <!-- flagship strip -->
+  <rect x="60" y="580" width="1080" height="96" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="82" y="610" fill="#e6edf3" font-size="15" font-weight="700">代表性 SDL / 云实验室</text>
+  <g font-size="12" fill="#c9d1d9">
+    <text x="82" y="638">• Berkeley A-Lab：17 天尝试 58 目标、合成 41 种新化合物（成功率≈70.7%，Nature 2023）</text>
+    <text x="82" y="660">• 利物浦移动机器人：8 天 688 个实验、产氢量 ×6（Nature 2020）</text>
+    <text x="600" y="638">• Emerald Cloud Lab / Strateos：可编程云实验室（SLL 可被 LLM 直接编写）</text>
+    <text x="600" y="660">• Acceleration Consortium：约 2 亿加元，SDL 全球网络与标准化</text>
+  </g>
+  <text x="60" y="712" fill="#d29922" font-size="13">当前决速步骤：已从「模型速度」转为「高质量湿实验数据的产生速度」——通量 / 接口标准化 / 数据可移植是硬护城河</text>
+
+  <defs>
+    <marker id="b" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#58a6ff"/></marker>
+    <marker id="g" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#3fb950"/></marker>
+    <marker id="c" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#39c5cf"/></marker>
+    <marker id="a2" markerWidth="10" markerHeight="10" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#d29922"/></marker>
+    <marker id="a3" markerWidth="10" markerHeight="10" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#d29922"/></marker>
+  </defs>
+</svg>
+</body></html>
