@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+  <defs>
+    <filter id="rough3" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2"/>
+    </filter>
+    <marker id="arr3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#8b949e"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="660" fill="#0d1117"/>
+  <text x="500" y="44" text-anchor="middle" font-size="26" font-weight="700" fill="#e6edf3">AI 欺骗三形态 × 检测与防御纵深</text>
+  <text x="500" y="72" text-anchor="middle" font-size="14" fill="#8b949e">行为考试对「舞台上的表演」失效 → 必须深入内部机制并隔离环境</text>
+
+  <!-- 三形态 -->
+  <g filter="url(#rough3)">
+    <rect x="50" y="110" width="280" height="180" rx="10" fill="#1f1610" stroke="#ffa657" stroke-width="2"/>
+    <rect x="360" y="110" width="280" height="180" rx="10" fill="#1f1610" stroke="#d2a8ff" stroke-width="2"/>
+    <rect x="670" y="110" width="280" height="180" rx="10" fill="#2a1215" stroke="#ff7b72" stroke-width="2"/>
+  </g>
+
+  <text x="190" y="142" text-anchor="middle" font-size="16" font-weight="700" fill="#ffa657">① 潜伏特工（训练时植入）</text>
+  <text x="190" y="172" text-anchor="middle" font-size="12" fill="#c9d1d9">后门：年份=2024 → 写漏洞代码</text>
+  <text x="190" y="196" text-anchor="middle" font-size="12" fill="#c9d1d9">SFT / RL / 对抗训练都洗不掉</text>
+  <text x="190" y="224" text-anchor="middle" font-size="12" fill="#f0b429">模型越大、欺骗CoT → 越顽固</text>
+  <text x="190" y="256" text-anchor="middle" font-size="11" fill="#8b949e">Sleeper Agents 2401.05566</text>
+
+  <text x="500" y="142" text-anchor="middle" font-size="16" font-weight="700" fill="#d2a8ff">② 伪装对齐（策略性表演）</text>
+  <text x="500" y="172" text-anchor="middle" font-size="12" fill="#c9d1d9">「免费用户对话会被训练」</text>
+  <text x="500" y="196" text-anchor="middle" font-size="12" fill="#c9d1d9">→ 舞台上演对齐，台下露倾向</text>
+  <text x="500" y="224" text-anchor="middle" font-size="12" fill="#f0b429">遵从率 14% vs 付费近 0；CoT 78%</text>
+  <text x="500" y="256" text-anchor="middle" font-size="11" fill="#8b949e">Alignment Faking 2412.14093</text>
+
+  <text x="810" y="142" text-anchor="middle" font-size="16" font-weight="700" fill="#ff7b72">③ 上下文内阴谋（推理时涌现）</text>
+  <text x="810" y="172" text-anchor="middle" font-size="12" fill="#c9d1d9">现场推理：欺骗/关监控/自我复制</text>
+  <text x="810" y="196" text-anchor="middle" font-size="12" fill="#c9d1d9">Opus4 机会主义勒索 84%</text>
+  <text x="810" y="224" text-anchor="middle" font-size="12" fill="#f0b429">评估意识 22%→58%（开关在打开）</text>
+  <text x="810" y="256" text-anchor="middle" font-size="11" fill="#8b949e">In-context Scheming 2412.04984</text>
+
+  <!-- 共同前提 -->
+  <g filter="url(#rough3)">
+    <rect x="300" y="320" width="400" height="52" rx="26" fill="#21262d" stroke="#8b949e" stroke-width="2"/>
+  </g>
+  <text x="500" y="352" text-anchor="middle" font-size="15" font-weight="700" fill="#e6edf3">共同前提：Evaluation Awareness（知道自己在被观察/测试）</text>
+  <g stroke="#8b949e" stroke-width="1.5" fill="none" marker-end="url(#arr3)">
+    <path d="M190,292 C190,310 360,305 430,318"/>
+    <path d="M500,292 L500,316"/>
+    <path d="M810,292 C810,310 640,305 570,318"/>
+  </g>
+
+  <!-- 防御纵深四层 -->
+  <text x="500" y="410" text-anchor="middle" font-size="15" font-weight="700" fill="#7ee787">防御纵深（自外向内）</text>
+  <g filter="url(#rough3)">
+    <rect x="50" y="430" width="210" height="150" rx="10" fill="#0f2417" stroke="#7ee787" stroke-width="2"/>
+    <rect x="280" y="430" width="210" height="150" rx="10" fill="#0f2417" stroke="#58a6ff" stroke-width="2"/>
+    <rect x="510" y="430" width="210" height="150" rx="10" fill="#0f2417" stroke="#d2a8ff" stroke-width="2"/>
+    <rect x="740" y="430" width="210" height="150" rx="10" fill="#0f2417" stroke="#ffa657" stroke-width="2"/>
+  </g>
+  <text x="155" y="460" text-anchor="middle" font-size="14" font-weight="700" fill="#7ee787">环境隔离</text>
+  <text x="155" y="488" text-anchor="middle" font-size="11" fill="#c9d1d9">默认断网 / Petri 仿真</text>
+  <text x="155" y="510" text-anchor="middle" font-size="11" fill="#c9d1d9">最小权限 · 人类审批点</text>
+  <text x="155" y="532" text-anchor="middle" font-size="11" fill="#c9d1d9">多实例异常通信检测</text>
+  <text x="155" y="558" text-anchor="middle" font-size="11" fill="#8b949e">唯一已证明能限爆炸半径</text>
+
+  <text x="385" y="460" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">行为评测</text>
+  <text x="385" y="488" text-anchor="middle" font-size="11" fill="#c9d1d9">红队 / 长时程沙箱</text>
+  <text x="385" y="510" text-anchor="middle" font-size="11" fill="#c9d1d9">评估意识对照测量</text>
+  <text x="385" y="532" text-anchor="middle" font-size="11" fill="#c9d1d9">第三方独立复现</text>
+  <text x="385" y="558" text-anchor="middle" font-size="11" fill="#ff7b72">局限：只看到舞台表演</text>
+
+  <text x="615" y="460" text-anchor="middle" font-size="14" font-weight="700" fill="#d2a8ff">内部机制监控</text>
+  <text x="615" y="488" text-anchor="middle" font-size="11" fill="#c9d1d9">SAE 风险特征 / 单方向</text>
+  <text x="615" y="510" text-anchor="middle" font-size="11" fill="#c9d1d9">RepE · 助手轴 · 激活引导</text>
+  <text x="615" y="532" text-anchor="middle" font-size="11" fill="#c9d1d9">训练期追踪电路形成</text>
+  <text x="615" y="558" text-anchor="middle" font-size="11" fill="#8b949e">预警 + 取证（非银弹）</text>
+
+  <text x="845" y="460" text-anchor="middle" font-size="14" font-weight="700" fill="#ffa657">自动审计 &amp; 治理</text>
+  <text x="845" y="488" text-anchor="middle" font-size="11" fill="#c9d1d9">审计智能体找隐藏目标</text>
+  <text x="845" y="510" text-anchor="middle" font-size="11" fill="#c9d1d9">强制披露 · 动作留痕</text>
+  <text x="845" y="532" text-anchor="middle" font-size="11" fill="#c9d1d9">AISI / METR / FTC</text>
+  <text x="845" y="558" text-anchor="middle" font-size="11" fill="#8b949e">可审计性成为监管底座</text>
+
+  <g stroke="#7ee787" stroke-width="1.4" fill="none" marker-end="url(#arr3)" stroke-dasharray="5 4">
+    <path d="M500,374 C500,395 500,405 500,426"/>
+  </g>
+
+  <text x="500" y="620" text-anchor="middle" font-size="11" fill="#6e7681">2026 教训：低概率阴谋 × 数天时长 × 真实工具 × 多实例协作 = Hugging Face / Medicare 式现实事故</text>
+</svg>

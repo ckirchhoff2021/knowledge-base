@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+  <defs>
+    <filter id="rough4" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="19" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2"/>
+    </filter>
+  </defs>
+
+  <rect width="1000" height="620" fill="#0d1117"/>
+  <text x="500" y="42" text-anchor="middle" font-size="26" font-weight="700" fill="#e6edf3">机制可解释性与欺骗检测 · 五年演进（2021–2026）</text>
+  <text x="500" y="68" text-anchor="middle" font-size="13" fill="#8b949e">主线：从「读懂小模型的玩具电路」到「在前沿模型上监控真实欺骗」</text>
+
+  <line x1="70" y1="320" x2="930" y2="320" stroke="#30363d" stroke-width="3"/>
+  <g filter="url(#rough4)">
+    <polygon points="930,320 916,313 916,327" fill="#58a6ff"/>
+  </g>
+
+  <!-- 年份节点 -->
+  <g font-size="15" font-weight="700" fill="#e6edf3">
+    <text x="110" y="300" text-anchor="middle">2021</text>
+    <text x="270" y="300" text-anchor="middle">2022</text>
+    <text x="430" y="300" text-anchor="middle">2023</text>
+    <text x="590" y="300" text-anchor="middle">2024</text>
+    <text x="750" y="300" text-anchor="middle">2025</text>
+    <text x="890" y="300" text-anchor="middle">2026</text>
+  </g>
+  <g fill="#58a6ff">
+    <circle cx="110" cy="320" r="7"/><circle cx="270" cy="320" r="7"/><circle cx="430" cy="320" r="7"/>
+    <circle cx="590" cy="320" r="7"/><circle cx="750" cy="320" r="7"/><circle cx="890" cy="320" r="7"/>
+  </g>
+
+  <!-- 上方：方法/工具 -->
+  <g font-size="11.5" fill="#c9d1d9">
+    <text x="110" y="250" text-anchor="middle">电路数学框架</text>
+    <text x="110" y="228" text-anchor="middle">多模态神经元(Distill)</text>
+
+    <text x="270" y="250" text-anchor="middle">叠加假说(玩具模型)</text>
+    <text x="270" y="228" text-anchor="middle">Grokking · Tuned Lens</text>
+
+    <text x="430" y="262" text-anchor="middle">Towards Monosemanticity</text>
+    <text x="430" y="240" text-anchor="middle">SAE 开源 · ACDC · RepE</text>
+    <text x="430" y="218" text-anchor="middle">涌现能力质疑</text>
+
+    <text x="590" y="262" text-anchor="middle">Claude3 Sonnet 34M特征</text>
+    <text x="590" y="240" text-anchor="middle">AtP* · 稀疏特征电路</text>
+    <text x="590" y="218" text-anchor="middle">Crosscoder · Gemma Scope</text>
+
+    <text x="750" y="262" text-anchor="middle">Circuit Tracing (Haiku)</text>
+    <text x="750" y="240" text-anchor="middle">circuit-tracer 开源</text>
+    <text x="750" y="218" text-anchor="middle">自动审计智能体</text>
+
+    <text x="890" y="262" text-anchor="middle">全局工作空间 · NLA</text>
+    <text x="890" y="240" text-anchor="middle">助手轴 · Gemma Scope 2</text>
+  </g>
+
+  <!-- 下方：欺骗/事件 -->
+  <g stroke="#8b949e" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="110" y1="327" x2="110" y2="360"/><line x1="270" y1="327" x2="270" y2="360"/>
+    <line x1="430" y1="327" x2="430" y2="360"/><line x1="590" y1="327" x2="590" y2="360"/>
+    <line x1="750" y1="327" x2="750" y2="360"/><line x1="890" y1="327" x2="890" y2="360"/>
+  </g>
+  <g font-size="11.5" fill="#c9d1d9">
+    <text x="270" y="378" text-anchor="middle">对抗训练高风险可靠性</text>
+
+    <text x="430" y="378" text-anchor="middle">—</text>
+
+    <text x="590" y="400" text-anchor="middle">Sleeper Agents(01月)</text>
+    <text x="590" y="422" text-anchor="middle">GPT-4 schemers demo(05月)</text>
+    <text x="590" y="444" text-anchor="middle">单方向拒答</text>
+
+    <text x="750" y="400" text-anchor="middle">o1 系统卡 &lt;1%全序列</text>
+    <text x="750" y="422" text-anchor="middle">Alignment Faking(12月)</text>
+    <text x="750" y="444" text-anchor="middle">In-context Scheming(12月)</text>
+    <text x="750" y="466" text-anchor="middle">Claude Opus4 勒索 84%</text>
+
+    <text x="890" y="392" text-anchor="middle">HF 入侵(08月)</text>
+    <text x="890" y="414" text-anchor="middle">Astra 供应链攻击 29.2%</text>
+    <text x="890" y="436" text-anchor="middle">GPT-6.1 叫停(09月)</text>
+    <text x="890" y="458" text-anchor="middle">FTC 调查(09-30)</text>
+    <text x="890" y="480" text-anchor="middle">评估断网(10月)</text>
+  </g>
+
+  <g filter="url(#rough4)">
+    <rect x="60" y="540" width="880" height="52" rx="10" fill="#161b22" stroke="#7ee787" stroke-width="1.5"/>
+  </g>
+  <text x="500" y="562" text-anchor="middle" font-size="13" font-weight="700" fill="#7ee787">范式转移</text>
+  <text x="500" y="582" text-anchor="middle" font-size="12" fill="#c9d1d9">黑箱行为考试 → 行为评测 + 内部机制监控 + 环境隔离 + 独立审计的纵深体系；可解释性成为「可审计性」监管底座</text>
+</svg>

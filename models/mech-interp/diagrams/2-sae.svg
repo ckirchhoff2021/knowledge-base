@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+  <defs>
+    <filter id="rough2" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="11" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2"/>
+    </filter>
+    <marker id="arr2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#8b949e"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="620" fill="#0d1117"/>
+  <text x="500" y="44" text-anchor="middle" font-size="26" font-weight="700" fill="#e6edf3">稀疏自编码器：把「叠加」拆成单义特征</text>
+  <text x="500" y="72" text-anchor="middle" font-size="14" fill="#8b949e">模型用很少的神经元编码远超维度的特征 → SAE 用一个更大的稀疏字典把它们分开</text>
+
+  <!-- 左：多义神经元 -->
+  <g filter="url(#rough2)">
+    <rect x="50" y="140" width="220" height="300" rx="10" fill="#161b22" stroke="#ff7b72" stroke-width="2"/>
+  </g>
+  <text x="160" y="172" text-anchor="middle" font-size="16" font-weight="700" fill="#ff7b72">单个神经元（多义）</text>
+  <circle cx="160" cy="250" r="34" fill="#21262d" stroke="#ff7b72" stroke-width="2"/>
+  <text x="160" y="256" text-anchor="middle" font-size="13" fill="#c9d1d9">neuron</text>
+  <text x="160" y="320" text-anchor="middle" font-size="13" fill="#c9d1d9">同时对这些概念激活：</text>
+  <text x="160" y="350" text-anchor="middle" font-size="13" fill="#ffa657">学术引用</text>
+  <text x="160" y="378" text-anchor="middle" font-size="13" fill="#d2a8ff">法律条文</text>
+  <text x="160" y="406" text-anchor="middle" font-size="13" fill="#79c0ff">＋ 更多无关概念</text>
+
+  <!-- 中：SAE 结构 -->
+  <g filter="url(#rough2)">
+    <rect x="370" y="120" width="260" height="360" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+  </g>
+  <text x="500" y="152" text-anchor="middle" font-size="16" font-weight="700" fill="#58a6ff">SAE 稀疏瓶颈</text>
+
+  <!-- 输入 -->
+  <rect x="400" y="180" width="60" height="240" rx="6" fill="#21262d" stroke="#8b949e"/>
+  <text x="430" y="170" text-anchor="middle" font-size="12" fill="#8b949e">激活 x (d)</text>
+  <!-- 字典 -->
+  <g>
+    <rect x="520" y="185" width="90" height="18" rx="4" fill="#0f2417" stroke="#7ee787"/>
+    <rect x="520" y="213" width="90" height="18" rx="4" fill="#3d1d1d" stroke="#ff7b72"/>
+    <rect x="520" y="241" width="90" height="18" rx="4" fill="#0f2417" stroke="#7ee787"/>
+    <rect x="520" y="269" width="90" height="18" rx="4" fill="#21262d" stroke="#6e7681"/>
+    <rect x="520" y="297" width="90" height="18" rx="4" fill="#21262d" stroke="#6e7681"/>
+    <rect x="520" y="325" width="90" height="18" rx="4" fill="#0f2417" stroke="#7ee787"/>
+    <rect x="520" y="353" width="90" height="18" rx="4" fill="#21262d" stroke="#6e7681"/>
+    <rect x="520" y="381" width="90" height="18" rx="4" fill="#3d1d1d" stroke="#ff7b72"/>
+  </g>
+  <text x="565" y="198" text-anchor="middle" font-size="10" fill="#7ee787">金门大桥</text>
+  <text x="565" y="226" text-anchor="middle" font-size="10" fill="#ff7b72">欺骗</text>
+  <text x="565" y="254" text-anchor="middle" font-size="10" fill="#7ee787">DNA 序列</text>
+  <text x="565" y="310" text-anchor="middle" font-size="10" fill="#7ee787">法律术语</text>
+  <text x="565" y="394" text-anchor="middle" font-size="10" fill="#ff7b72">操纵</text>
+  <text x="565" y="430" text-anchor="middle" font-size="11" fill="#8b949e">字典 D (m ≫ d)</text>
+  <text x="565" y="452" text-anchor="middle" font-size="11" fill="#f0b429">每 token 仅 &lt;300 个激活</text>
+
+  <g stroke="#8b949e" stroke-width="1.4">
+    <line x1="462" y1="200" x2="518" y2="194"/>
+    <line x1="462" y1="200" x2="518" y2="222"/>
+    <line x1="462" y1="300" x2="518" y2="306"/>
+    <line x1="462" y1="400" x2="518" y2="390"/>
+  </g>
+
+  <!-- 右：重建与单义 -->
+  <g filter="url(#rough2)">
+    <rect x="730" y="140" width="220" height="300" rx="10" fill="#161b22" stroke="#7ee787" stroke-width="2"/>
+  </g>
+  <text x="840" y="172" text-anchor="middle" font-size="16" font-weight="700" fill="#7ee787">重建 x̂ ≈ x</text>
+  <text x="840" y="210" text-anchor="middle" font-size="13" fill="#c9d1d9">每个特征方向基本</text>
+  <text x="840" y="234" text-anchor="middle" font-size="13" fill="#7ee787">只代表一个概念（单义）</text>
+  <text x="840" y="284" text-anchor="middle" font-size="13" fill="#c9d1d9">Claude 3 Sonnet：</text>
+  <text x="840" y="312" text-anchor="middle" font-size="13" fill="#f0b429">34M 特征 · 解释 ≥65% 方差</text>
+  <text x="840" y="344" text-anchor="middle" font-size="12" fill="#8b949e">可定位、可消融、可监控</text>
+  <text x="840" y="392" text-anchor="middle" font-size="12" fill="#ff7b72">注意：重建有损 + 人工命名</text>
+
+  <g stroke="#8b949e" stroke-width="1.6" fill="none" marker-end="url(#arr2)">
+    <line x1="272" y1="290" x2="368" y2="290"/>
+    <line x1="632" y1="290" x2="728" y2="290"/>
+  </g>
+
+  <text x="500" y="540" text-anchor="middle" font-size="13" fill="#c9d1d9">损失 = ‖x − x̂‖² + λ·‖z‖₁（稀疏惩罚），让少数特征承担解释</text>
+  <text x="500" y="576" text-anchor="middle" font-size="12" fill="#8b949e">演进：vanilla SAE → TopK/k-sparse → Crosscoder/CLT（跨层）→ Transcoder（输出特征）→ NLA（自然语言瓶颈）</text>
+</svg>

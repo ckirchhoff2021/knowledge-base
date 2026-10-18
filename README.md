@@ -44,6 +44,7 @@
 | [**线性注意力与混合架构**](https://ckirchhoff2021.github.io/knowledge-base/models/linear-attention/report.html) | 当注意力不再「二次」：线性注意力=可并行训练的线性 RNN · Mamba/SSD 统一视角 · 五类状态更新规则（→KDA）· Kimi Linear/MiniMax-01/Jamba/RWKV-7 横评 · 跨架构蒸馏 HALO/PostNAS · KV 缓存省 75%、1M 上下文吞吐 ×6 |
 | [**智能体互联协议栈 MCP/A2A**](https://ckirchhoff2021.github.io/knowledge-base/models/agent-interop/report.html) | Agent 时代的「TCP/IP」：N×M→N+M · 三层协议栈（AGENTS.md/MCP/A2A）· MCP Host-Client-Server 与三原语 · A2A Agent Card 与 Task 七态 · 工具投毒/Rug Pull/致命三要素/CVE · MCP 捐赠 Linux 基金会 AAIF |
 | [**AI Scientist 自主科研智能体**](https://ckirchhoff2021.github.io/knowledge-base/models/ai-scientist/report.html) | 智源趋势第 4 位：从科研助手到自主科学发现 · 六层流水线与智能体树搜索 BFTS · Sakana/Co-Scientist/FutureHouse · 自驱动实验室干湿双闭环 · 科学基础模型版图 · 2026-09 声明证据审计（ART/费马/Navier-Stokes）· 生物安全 |
+| [**机制可解释性与 AI 欺骗检测**](https://ckirchhoff2021.github.io/knowledge-base/models/mech-interp/report.html) | 智源趋势第 10 位：从幻觉到系统性欺骗 · 电路/叠加假说/IOI · SAE 撬开叠加（Claude 3 Sonnet 3400 万特征）· Circuit Tracing · 欺骗三形态（Sleeper Agents/Alignment Faking/In-context Scheming，勒索 84%、o1 追问 85% 维持欺骗）· 2026 事件审计（Hugging Face/Medicare/AISI 29.2%/Astra 叫停/FTC）· 五层防御栈 |
 
 ### 🌱 生活方法论
 
