@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 六大方法族演进谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></seed:tool_call><function name="write_file"><parameter name="content" string="true"><!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 六大方法族演进谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 860" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="860" fill="#0d1117"/>
+  <text x="60" y="50" fill="#e6edf3" font-size="24" font-weight="700">图 3 · 合成数据六大方法族演进谱系（2022–2026）</text>
+  <text x="60" y="78" fill="#8b949e" font-size="13">主线：从「模仿教师」到「自我生成」，再到「搜索 + 过程验证 + 自演化」；真实锚点贯穿始终</text>
+
+  <!-- year axis -->
+  <line x1="230" y1="115" x2="1140" y2="115" stroke="#30363d" stroke-width="1.6"/>
+  <g font-size="12.5" fill="#8b949e">
+    <text x="250" y="106">2022</text><text x="430" y="106">2023</text><text x="650" y="106">2024</text><text x="880" y="106">2025</text><text x="1090" y="106">2026</text>
+  </g>
+  <g stroke="#30363d" stroke-width="1">
+    <line x1="270" y1="115" x2="270" y2="800"/><line x1="470" y1="115" x2="470" y2="800"/>
+    <line x1="700" y1="115" x2="700" y2="800"/><line x1="920" y1="115" x2="920" y2="800"/>
+  </g>
+
+  <!-- Row labels and bubbles -->
+  <!-- F1 自改进 -->
+  <rect x="40" y="140" width="180" height="90" rx="10" fill="#161b22" stroke="#58a6ff"/>
+  <text x="130" y="172" fill="#58a6ff" font-size="13.5" font-weight="700" text-anchor="middle">① 自改进族</text>
+  <text x="130" y="196" fill="#8b949e" font-size="10.5" text-anchor="middle">无标签问题+自产CoT</text>
+  <text x="130" y="214" fill="#8b949e" font-size="10.5" text-anchor="middle">自洽投票筛选</text>
+  <rect x="255" y="150" width="120" height="34" rx="7" fill="#10243e" stroke="#58a6ff"/><text x="315" y="172" fill="#9ecbff" font-size="11" text-anchor="middle">STaR</text>
+  <rect x="390" y="150" width="120" height="34" rx="7" fill="#10243e" stroke="#58a6ff"/><text x="450" y="172" fill="#9ecbff" font-size="11" text-anchor="middle">Self-Improve</text>
+  <rect x="525" y="150" width="150" height="34" rx="7" fill="#10243e" stroke="#58a6ff"/><text x="600" y="172" fill="#9ecbff" font-size="11" text-anchor="middle">RFT (数学)</text>
+
+  <!-- F2 自奖励/自博弈 -->
+  <rect x="40" y="250" width="180" height="90" rx="10" fill="#161b22" stroke="#bc8cff"/>
+  <text x="130" y="282" fill="#bc8cff" font-size="13.5" font-weight="700" text-anchor="middle">② 自奖励/自博弈</text>
+  <text x="130" y="306" fill="#8b949e" font-size="10.5" text-anchor="middle">连评委都是自己</text>
+  <text x="130" y="324" fill="#8b949e" font-size="10.5" text-anchor="middle">以人类分布为博弈目标</text>
+  <rect x="640" y="260" width="120" height="34" rx="7" fill="#1d1633" stroke="#bc8cff"/><text x="700" y="282" fill="#dcc8ff" font-size="11" text-anchor="middle">SPIN</text>
+  <rect x="770" y="260" width="140" height="34" rx="7" fill="#1d1633" stroke="#bc8cff"/><text x="840" y="282" fill="#dcc8ff" font-size="11" text-anchor="middle">Self-Rewarding</text>
+
+  <!-- F3 深度自演化 -->
+  <rect x="40" y="360" width="180" height="90" rx="10" fill="#161b22" stroke="#3fb950"/>
+  <text x="130" y="392" fill="#3fb950" font-size="13.5" font-weight="700" text-anchor="middle">③ 深度自演化</text>
+  <text x="130" y="416" fill="#8b949e" font-size="10.5" text-anchor="middle">MCTS + 过程奖励 PRM</text>
+  <text x="130" y="434" fill="#8b949e" font-size="10.5" text-anchor="middle">多轮自演化</text>
+  <rect x="880" y="370" width="150" height="34" rx="7" fill="#12261a" stroke="#3fb950"/><text x="955" y="392" fill="#7ee787" font-size="11" text-anchor="middle">rStar-Math</text>
+
+  <!-- F4 指令合成 -->
+  <rect x="40" y="470" width="180" height="90" rx="10" fill="#161b22" stroke="#d29922"/>
+  <text x="130" y="502" fill="#d29922" font-size="13.5" font-weight="700" text-anchor="middle">④ 指令合成</text>
+  <text x="130" y="526" fill="#8b949e" font-size="10.5" text-anchor="middle">无中生有造指令</text>
+  <text x="130" y="544" fill="#8b949e" font-size="10.5" text-anchor="middle">演化 / 空提示抽取</text>
+  <rect x="430" y="480" width="130" height="34" rx="7" fill="#3a2e12" stroke="#d29922"/><text x="495" y="502" fill="#e3b341" font-size="11" text-anchor="middle">Self-Instruct</text>
+  <rect x="570" y="480" width="130" height="34" rx="7" fill="#3a2e12" stroke="#d29922"/><text x="635" y="502" fill="#e3b341" font-size="11" text-anchor="middle">Evol-Instruct</text>
+  <rect x="780" y="480" width="120" height="34" rx="7" fill="#3a2e12" stroke="#d29922"/><text x="840" y="502" fill="#e3b341" font-size="11" text-anchor="middle">Magpie</text>
+
+  <!-- F5 合成教科书 -->
+  <rect x="40" y="580" width="180" height="90" rx="10" fill="#161b22" stroke="#f85149"/>
+  <text x="130" y="612" fill="#f85149" font-size="13.5" font-weight="700" text-anchor="middle">⑤ 合成教科书</text>
+  <text x="130" y="636" fill="#8b949e" font-size="10.5" text-anchor="middle">教科书质量 + 习题</text>
+  <text x="130" y="654" fill="#8b949e" font-size="10.5" text-anchor="middle">小模型大道</text>
+  <rect x="430" y="590" width="110" height="34" rx="7" fill="#3d1618" stroke="#f85149"/><text x="485" y="612" fill="#ffa198" font-size="11" text-anchor="middle">phi-1</text>
+  <rect x="550" y="590" width="120" height="34" rx="7" fill="#3d1618" stroke="#f85149"/><text x="610" y="612" fill="#ffa198" font-size="11" text-anchor="middle">phi-1.5</text>
+  <rect x="680" y="590" width="100" height="34" rx="7" fill="#3d1618" stroke="#f85149"/><text x="730" y="612" fill="#ffa198" font-size="11" text-anchor="middle">Phi-3</text>
+  <rect x="790" y="590" width="100" height="34" rx="7" fill="#3d1618" stroke="#f85149"/><text x="840" y="612" fill="#ffa198" font-size="11" text-anchor="middle">Phi-4</text>
+
+  <!-- F6 教师蒸馏 -->
+  <rect x="40" y="690" width="180" height="90" rx="10" fill="#161b22" stroke="#2ea043"/>
+  <text x="130" y="722" fill="#2ea043" font-size="13.5" font-weight="700" text-anchor="middle">⑥ 教师蒸馏</text>
+  <text x="130" y="746" fill="#8b949e" font-size="10.5" text-anchor="middle">强教师解释轨迹</text>
+  <text x="130" y="764" fill="#8b949e" font-size="10.5" text-anchor="middle">推理能力迁移</text>
+  <rect x="430" y="700" width="100" height="34" rx="7" fill="#0f2e1a" stroke="#2ea043"/><text x="480" y="722" fill="#7ee787" font-size="11" text-anchor="middle">Orca</text>
+  <rect x="540" y="700" width="110" height="34" rx="7" fill="#0f2e1a" stroke="#2ea043"/><text x="595" y="722" fill="#7ee787" font-size="11" text-anchor="middle">Orca 2</text>
+  <rect x="880" y="700" width="150" height="34" rx="7" fill="#0f2e1a" stroke="#2ea043"/><text x="955" y="722" fill="#7ee787" font-size="11" text-anchor="middle">R1 蒸馏 (800K)</text>
+
+  <!-- bottom cross-cutting note -->
+  <rect x="230" y="800" width="910" height="44" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="248" y="828" fill="#8b949e" font-size="12">横切支撑：可执行验证（CodeT / DCLM / GRPO）· 语义去重（SemDeDup）· 世界模型仿真（Genie / GameNGen / DriveDreamer / GenSim）· 防污染评测（LiveCodeBench / LiveBench）</text>
+</svg>
+</body></html>

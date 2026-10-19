@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 数据墙与三重约束</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 780" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="780" fill="#0d1117"/>
+  <text x="60" y="50" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 数据墙与三重约束：真实存量、重复训练、合成修正缩放</text>
+  <text x="60" y="78" fill="#8b949e" font-size="13">前沿训练 = 在三条曲线共同约束下寻找可行解；合成数据是接续缺口的主力，但本身存在收益拐点</text>
+
+  <!-- CHART FRAME -->
+  <rect x="60" y="110" width="640" height="430" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1.4"/>
+  <!-- axes -->
+  <line x1="120" y1="490" x2="660" y2="490" stroke="#8b949e" stroke-width="1.6"/>
+  <line x1="120" y1="150" x2="120" y2="490" stroke="#8b949e" stroke-width="1.6"/>
+  <text x="392" y="525" fill="#8b949e" font-size="13" text-anchor="middle">累计训练 token / 算力 →</text>
+  <text x="92" y="330" fill="#8b949e" font-size="13" text-anchor="middle" transform="rotate(-90 92 330)">模型能力 ↑（损失 ↓）</text>
+
+  <!-- real data curve: rises then hard wall -->
+  <path d="M120,470 C200,455 260,420 320,360 C370,310 405,275 430,255" fill="none" stroke="#58a6ff" stroke-width="3"/>
+  <line x1="432" y1="250" x2="432" y2="490" stroke="#58a6ff" stroke-width="2" stroke-dasharray="6 5"/>
+  <rect x="356" y="218" width="150" height="26" rx="6" fill="#0d2a4a" stroke="#58a6ff"/>
+  <text x="431" y="236" fill="#9ecbff" font-size="12" text-anchor="middle">真实数据墙 ≈300T</text>
+
+  <!-- repeat curve: rises then plateaus after ~4 epochs -->
+  <path d="M120,478 C210,470 280,448 350,420 C400,400 440,392 480,390 L640,388" fill="none" stroke="#d29922" stroke-width="3"/>
+  <circle cx="470" cy="391" r="5" fill="#d29922"/>
+  <text x="486" y="378" fill="#e3b341" font-size="12">≈4 epoch 后平台</text>
+
+  <!-- synthetic rectified curve: rises, peaks ~300B-1T, then saturates -->
+  <path d="M120,486 C230,470 330,420 430,330 C490,275 540,250 575,248 C600,247 620,253 640,262" fill="none" stroke="#3fb950" stroke-width="3"/>
+  <circle cx="575" cy="248" r="6" fill="none" stroke="#3fb950" stroke-width="2"/>
+  <text x="528" y="228" fill="#7ee787" font-size="12">收益拐点 300B→1T</text>
+  <text x="566" y="288" fill="#f85149" font-size="11.5">过量则边际收益↓</text>
+
+  <!-- legend -->
+  <g font-size="12.5">
+    <line x1="150" y1="150" x2="180" y2="150" stroke="#58a6ff" stroke-width="3"/><text x="188" y="154" fill="#9ecbff">唯一真实数据</text>
+    <line x1="320" y1="150" x2="350" y2="150" stroke="#d29922" stroke-width="3"/><text x="358" y="154" fill="#e3b341">重复训练</text>
+    <line x1="470" y1="150" x2="500" y2="150" stroke="#3fb950" stroke-width="3"/><text x="508" y="154" fill="#7ee787">合成数据（修正缩放）</text>
+  </g>
+
+  <!-- RIGHT constraint cards -->
+  <rect x="740" y="110" width="400" height="130" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="762" y="140" fill="#58a6ff" font-size="15" font-weight="700">约束① 真实存量天花板</text>
+  <text x="762" y="168" fill="#e6edf3" font-size="12.5">人类公开文本有效存量 ≈ 300T token</text>
+  <text x="762" y="192" fill="#8b949e" font-size="12">Epoch AI：2026–2032 耗尽（90%CI 100T–1000T）</text>
+  <text x="762" y="216" fill="#8b949e" font-size="12">叠加版权诉讼、平台封闭、Books3 下架</text>
+
+  <rect x="740" y="258" width="400" height="120" rx="12" fill="#161b22" stroke="#d29922" stroke-width="1.6"/>
+  <text x="762" y="288" fill="#d29922" font-size="15" font-weight="700">约束② 重复训练边界</text>
+  <text x="762" y="316" fill="#e6edf3" font-size="12.5">≤ 4 epoch 重复，损失可忽略</text>
+  <text x="762" y="340" fill="#8b949e" font-size="12">arXiv:2305.16264（900B token / 9B / 400 次训练）</text>
+  <text x="762" y="362" fill="#8b949e" font-size="12">超过 4 epoch，增加算力的价值最终归零</text>
+
+  <rect x="740" y="394" width="400" height="146" rx="12" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+  <text x="762" y="424" fill="#3fb950" font-size="15" font-weight="700">约束③ 合成修正缩放定律</text>
+  <text x="762" y="452" fill="#e6edf3" font-size="12.5">收益约 300B token 后明显递减</text>
+  <text x="762" y="476" fill="#8b949e" font-size="12">8B 模型 ≈1T 达峰；3B 模型需 ≈4T</text>
+  <text x="762" y="500" fill="#8b949e" font-size="12">arXiv:2503.19551（SynthLLM）</text>
+  <text x="762" y="522" fill="#8b949e" font-size="12">过滤配方须与算力联合优化（2404.07177）</text>
+
+  <!-- BOTTOM feasible solution -->
+  <rect x="60" y="570" width="1080" height="160" rx="12" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+  <rect x="60" y="570" width="1080" height="38" rx="12" fill="#bc8cff" opacity="0.13"/>
+  <text x="82" y="596" fill="#bc8cff" font-size="16" font-weight="700">可行解空间 = 用足真实锚点 ＋ 适度重复 ＋ 拐点内精算合成</text>
+  <g font-size="13">
+    <rect x="90" y="632" width="300" height="70" rx="9" fill="#1d1633" stroke="#bc8cff"/>
+    <text x="240" y="662" fill="#dcc8ff" text-anchor="middle" font-weight="700">保留 T0/T1 人类锚点</text>
+    <text x="240" y="686" fill="#8b949e" text-anchor="middle" font-size="11.5">只增不换，持续把分布拉回真值</text>
+    <rect x="450" y="632" width="300" height="70" rx="9" fill="#3a2e12" stroke="#d29922"/>
+    <text x="600" y="662" fill="#e3b341" text-anchor="middle" font-weight="700">重复 epoch ≤ 4</text>
+    <text x="600" y="686" fill="#8b949e" text-anchor="middle" font-size="11.5">数据受限时近似「免费」</text>
+    <rect x="810" y="632" width="300" height="70" rx="9" fill="#12261a" stroke="#3fb950"/>
+    <text x="960" y="662" fill="#7ee787" text-anchor="middle" font-weight="700">合成 token 控制在拐点内</text>
+    <text x="960" y="686" fill="#8b949e" text-anchor="middle" font-size="11.5">质量分级 + 溯源 + 多源生成</text>
+  </g>
+</svg>
+</body></html>
