@@ -46,6 +46,7 @@
 | [**AI Scientist 自主科研智能体**](https://ckirchhoff2021.github.io/knowledge-base/models/ai-scientist/report.html) | 智源趋势第 4 位：从科研助手到自主科学发现 · 六层流水线与智能体树搜索 BFTS · Sakana/Co-Scientist/FutureHouse · 自驱动实验室干湿双闭环 · 科学基础模型版图 · 2026-09 声明证据审计（ART/费马/Navier-Stokes）· 生物安全 |
 | [**机制可解释性与 AI 欺骗检测**](https://ckirchhoff2021.github.io/knowledge-base/models/mech-interp/report.html) | 智源趋势第 10 位：从幻觉到系统性欺骗 · 电路/叠加假说/IOI · SAE 撬开叠加（Claude 3 Sonnet 3400 万特征）· Circuit Tracing · 欺骗三形态（Sleeper Agents/Alignment Faking/In-context Scheming，勒索 84%、o1 追问 85% 维持欺骗）· 2026 事件审计（Hugging Face/Medicare/AISI 29.2%/Astra 叫停/FTC）· 五层防御栈 |
 | [**合成数据与修正缩放定律**](https://ckirchhoff2021.github.io/knowledge-base/models/synthetic-data/report.html) | 智源趋势第 7 位：破除「2026 数据枯竭魔咒」（Epoch AI：人类文本约 300T token、2026–2032 耗尽）· 模型崩溃 Nature 理论与抗崩溃边界（累积真实锚点/多源/可执行验证）· 修正缩放定律（SynthLLM：收益约 300B token 后递减、8B 约 1T 达峰）· 六大方法族（Self-Improve/STaR/RFT/Self-Rewarding/SPIN/rStar-Math/Self-Instruct/Magpie/phi/Orca/R1 蒸馏/CodeT/DCLM）· 世界模型仿真（Genie/GameNGen/DriveDreamer/GenSim/Cosmos）· Nemotron 对齐数据 98% 合成 · 版权判例与 EU AI Act 披露 · 防污染评测 |
+| [**大模型推理优化**](https://ckirchhoff2021.github.io/knowledge-base/models/inference-optimization/report.html) | 智源趋势第 8 位：推理成本两年降 280 倍 vs 推理约占数据中心收入 40% 的剪刀差 · Prefill/Decode 两阶段与内存墙 · 权重量化（SmoothQuant/GPTQ/AWQ/QServe）· KV Cache 治理（H₂O/StreamingLLM/KIVI/MLA 压缩 93.3%/ShadowKV）· FlashAttention 三代 · PagedAttention/连续批处理/Chunked Prefill · 投机解码家族（EAGLE 三代 6.5×/Medusa/Lookahead/MTP）· DistServe/Splitwise/Mooncake PD 分离 · 六大引擎横评 · FP8/FP4 与端侧推理 |
 
 ### 🌱 生活方法论
 

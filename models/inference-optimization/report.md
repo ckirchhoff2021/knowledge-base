@@ -1,0 +1,397 @@
+# 大模型推理优化前沿技术报告：当 Scaling 撞上内存墙——从 FP4 量化、投机解码到 Prefill/Decode 分离的全栈攻坚
+
+> **选题定位**：北京智源研究院《2026 十大 AI 技术趋势》第 8 位——「推理优化远未触顶，"技术泡沫"是假命题」。本报告系统梳理 2022–2026 年大模型推理（Inference）优化的原理、算法、系统与硬件演进，覆盖模型层（权重量化 / KV Cache 压缩 / MLA）、算子层（FlashAttention）、系统层（PagedAttention / 连续批处理 / 投机解码 / PD 分离 / Mooncake）与应用层（提示压缩 / 前缀缓存 / 模型路由）四大层面。
+>
+> **信源与核实**：全文引用 30 篇 arXiv/会议原始论文（编号经 arxiv.org 摘要页逐一核实，修正了 4 个流传甚广的错误编号）与 NVIDIA、DeepSeek、Apple、Anthropic、LangChain 官方一手材料交叉验证；GitHub star 等「当前值」于 2026-10-20 查询。厂商自报数据均标注「厂商口径」，第三方统计标注「第三方估算」，查无实据的流行说法（如「每个 Agent 任务需要 50–200 次 LLM 调用」）在正文做证据审计，不予采信为硬数据。
+
+---
+
+## 摘要
+
+2025 年初 DeepSeek-R1 引爆「推理模型」浪潮之后，整个行业的算力天平正从训练向推理倾斜：NVIDIA CFO 在 2024 年 5 月财报电话会上披露推理约占其数据中心收入的 40%【官方口径】；Gartner 预测 2026 年 55% 的 AI 优化 IaaS 支出将用于推理【第三方估算】。与此同时，斯坦福《AI Index 2025》测得达到 GPT-3.5 水平的系统，其每百万 token 推理成本在 2022 年 11 月至 2024 年 10 月间下降了逾 **280 倍**。「便宜」与「更贵」同时成立——单位 token 价格指数级下降，但 Agent 化、推理模型化带来的 token 消耗量级（一次复杂问答的思维链可输出数十倍 token）增长更快。
+
+推理优化之所以是一门独立的、远未触顶的学问，根源在于自回归解码的**内存墙（Memory Wall）**：模型每生成一个 token 都要把全部权重从 HBM 读入一次，单请求解码阶段算力利用率往往只有个位数百分比；而随上下文线性增长的 **KV Cache** 又成为第二块显存巨兽。过去四年，业界沿四条战线展开攻坚：
+
+- **模型层**：权重从 FP16 压到 INT8/INT4 乃至 2-bit（SmoothQuant、GPTQ、AWQ），KV Cache 从驱逐（H₂O、StreamingLLM）、量化（KIVI）到架构原生压缩（DeepSeek MLA，KV 缓存减少 93.3%）；
+- **算子层**：FlashAttention 以 IO 感知的分块算法把注意力显存从二次降为线性，三代演进在 H100 上逼近 75% 理论峰值；
+- **系统层**：PagedAttention 以操作系统式分页把 KV Cache 浪费从 60–80% 压到近零并带来 2–4× 吞吐；连续批处理、chunked prefill 成为引擎标配；投机解码（EAGLE-3 最高 6.5×）、Medusa、Lookahead 把串行生成变并行；DistServe/Splitwise/Mooncake 推动 Prefill-Decode 分离成为云端架构共识；
+- **硬件/应用层**：NVIDIA Blackwell 把精度战推进到 FP4（官方称推理成本/能耗最高降 25×），Apple 约 3B 参数端侧模型让隐私推理成为现实；提示压缩（LLMLingua 20×）、前缀缓存与模型路由则在调用侧继续挤出水分。
+
+本报告逐一讲透上述技术的数学原理与关键测量数据，横评 vLLM / SGLang / TensorRT-LLM / LMDeploy / llama.cpp / Mooncake 六大生态，给出工程落地 Checklist，并讨论 SLO 权衡、投机解码收益边界、长上下文与推理模型的新矛盾等开放问题。
+
+---
+
+## 目录
+
+1. 为什么是推理：成本曲线、收入结构与负载之变
+2. 推理的第一性原理：两阶段、内存墙与 KV Cache
+3. 模型层优化（一）：权重量化——从 SmoothQuant 到 4-bit
+4. 模型层优化（二）：KV Cache 治理——驱逐、量化与 MLA 架构革命
+5. 算子层：FlashAttention 与 IO 感知的注意力革命
+6. 系统层（一）：PagedAttention、连续批处理与 Chunked Prefill
+7. 系统层（二）：投机解码与并行解码家族
+8. 系统层（三）：Prefill/Decode 分离与 Mooncake
+9. 应用层：提示压缩、前缀缓存与模型路由
+10. 推理引擎生态横评与选型
+11. 硬件演进：FP8/FP4、国产芯片与端侧推理
+12. 开放问题与工程落地 Checklist
+13. 参考文献
+
+---
+
+
+## 1. 为什么是推理：成本曲线、收入结构与负载之变
+
+### 1.1 一条下降了 280 倍的成本曲线
+
+大模型 API 的价格在过去三年经历了消费电子史上罕见的下降速度。以 OpenAI 为例：2023 年 3 月 GPT-4（8K 上下文）发布时定价为输入 $30 / 输出 $60（每百万 token，下同）；2023 年 11 月 GPT-4 Turbo（128K）降至 $10 / $30，同期 gpt-3.5-turbo-1106 降至 $1 / $2【媒体报道，数字与 OpenAI DevDay 公告一致，经 Simon Willison 存档交叉确认】。中国厂商把曲线压得更陡：DeepSeek 2024 年 12 月 26 日公告，V3 模型自 2025 年 2 月 8 日起输入（缓存未命中）$0.27、缓存命中 $0.07、输出 $1.10【官方口径，api-docs.deepseek.com/news/news1226】；2025 年 9 月 29 日 V3.2-Exp 进一步把输出降至 $0.42【官方口径，api-docs.deepseek.com/news/news250929】。
+
+斯坦福以人为本人工智能研究院《AI Index 2025》给出了最常被引用的量化结论：**达到 GPT-3.5 水平的系统，其推理成本在 2022 年 11 月至 2024 年 10 月间下降了逾 280 倍**，同期硬件成本每年下降约 30%【第三方估算，hai.stanford.edu/ai-index/2025-ai-index-report】。第三方评测机构 Artificial Analysis 则持续跟踪 700+ 模型的智能—速度—价格指数（artificialanalysis.ai/models），其 2026-10-20 快照显示最快模型输出速度已达 1,485 tokens/s。
+
+### 1.2 算力天平向推理倾斜
+
+成本暴跌并没有让推理市场萎缩，反而因需求暴涨成为算力消费的主战场。最硬的一手证据来自 NVIDIA：CFO Colette Kress 在 2025 财年第一季度财报电话会上明确表示，「过去四个季度，我们估算**推理约贡献了数据中心收入的 40%**」，训练与推理都在显著增长；同场她还披露，得益于 CUDA 算法创新，H100 上 LLM 推理加速最高达 3×，H200 推理性能接近 H100 两倍【官方口径，2024-05-22，Motley Fool 财报电话会实录】。分析机构的预测更为激进：Gartner 2025 年 10 月预测，2026 年 55% 的 AI 优化 IaaS 支出将用于推理负载，2029 年超过 65%【第三方估算，二手转述 Gartner 新闻稿】；Deloitte 估算推理工作量占 AI 算力比例从 2023 年约 1/3、2025 年约 1/2 升至 2026 年约 2/3【第三方估算】。
+
+> **口径提示**：微软、Meta、Google 均未在财报中按训练/推理拆分数据中心支出；SemiAnalysis、a16z、Menlo Ventures 的相关具体数字本次未能取得可直连的一手原文。行业内流传的「推理占生产级 AI 系统全生命周期成本 80–90%」仅见聚合站二手汇编，证据等级低，不应作为硬数据引用。
+
+### 1.3 负载之变：推理模型与 Agent 的双重放大
+
+2025 年 1 月 DeepSeek-R1 开源后，「推理模型」（Reasoning Model）成为主流形态：模型在给出最终答案前先生成长篇思维链（Chain-of-Thought）。黄仁勋在 GTC 演示中称，R1 类模型回答复杂问题时输出约 20 倍 token、消耗约 150 倍算力【媒体报道，未见 NVIDIA 官方新闻稿直链，谨慎引用】。这意味着优化的重心从「缩短输入处理」进一步扩展到「海量输出 token 的解码效率」。
+
+另一重放大来自 Agent。LangChain/LangSmith《State of AI 2024》对生产环境 trace 的统计显示：平均每条 trace 的步骤数从 2023 年的 2.8 步增至 2024 年的 **7.7 步**，含工具调用的 trace 占比从 0.5% 跃升至 **21.9%**；但平均每条 trace 的 LLM 调用数仅从 1.1 增至 1.4【官方口径，langchain.com/blog/langchain-state-of-ai-2024，2024-12-19】。
+
+> **证据审计｜「每个 Agent 任务需要 50–200 次 LLM 调用」**：这一区间在中文互联网广为流传，但本次调研未找到 Anthropic、LangChain 官方的一手原文。官方可核实口径是「简单 trace 平均 1.4 次 LLM 调用、7.7 个步骤」；50–200 次的说法多见于长时运行 coding agent 的二手描述。本报告不予采信为硬数据，仅在此记录其证据状态。Anthropic《Building effective agents》（2024-12-19）给出的是定性定义：Agent 跨多轮调用工具、修改状态、依中间结果自适应——这一负载范式本身已足以解释推理需求的结构性增长。
+
+> ![图 1：推理需求与成本的剪刀差](diagrams/1-scissors.html)
+
+---
+
+## 2. 推理的第一性原理：两阶段、内存墙与 KV Cache
+
+### 2.1 Prefill 与 Decode：性质完全不同的两个阶段
+
+大模型一次完整推理由两个计算特征截然不同的阶段组成：
+
+- **Prefill（预填充 / Prompt 处理阶段）**：一次性处理全部输入 token。由于输入序列已知，各 token 可并行计算，GPU 算力利用率高，属于**计算密集（compute-bound）**。Prefill 决定了首 token 延迟 TTFT（Time To First Token）。
+- **Decode（解码阶段）**：自回归地逐 token 生成，每步依赖上一步输出，无法并行。每生成一个 token 都要做一次覆盖全部权重的前向传播，但每步实际用到的 batch 内 token 数很少，属于**访存密集（memory-bound）**。Decode 决定了每 token 生成延迟 TPOT（Time Per Output Token）与输出速度 TPS。
+
+这一区分是后续所有系统优化的理论基石：既然两阶段的瓶颈一个在算力、一个在显存带宽，把它们混合调度就会互相拖累——这正是第 8 章 Prefill/Decode 分离（Disaggregation）的出发点。
+
+### 2.2 内存墙：为什么单请求解码只有 1%–4% 的算力利用率
+
+Decode 阶段每生成一个 token，需要从 HBM 读取模型全部权重一次。以一个 70B 参数 FP16 模型为例：权重约 140 GB，在 H100（HBM3 带宽 3.35 TB/s）上光读权重就需要约 42 ms；而单 token 前向的实际计算量（约 2×70B = 140 GFLOP，batch=1）在 H100 BF16 算力 1,979 TFLOPS 下仅需约 0.07 ms。算术强度（arithmetic intensity）如此之低，以至于 Decode 完全被显存带宽卡住，单请求算力利用率通常只有 **1%–4%**。
+
+由此可以直接推出推理优化的三条主线：
+
+1. **减少要读的字节数** → 权重量化（FP16→INT8/INT4）、剪枝、蒸馏；
+2. **让一次读取摊到更多 token 上** → 增大 batch、连续批处理（同样的 140 GB 读取，一次为几十个请求各生成一个 token）；
+3. **让一次前向产出多个 token** → 投机解码、Medusa、Lookahead。
+
+### 2.3 KV Cache：第二块显存巨兽
+
+注意力机制中，每个 token 在每层都要计算 Key 向量与 Value 向量。生成第 t 个 token 时，需要用它的 Query 与此前全部 t−1 个 token 的 Key 做注意力。为避免每步重算历史 token 的 K/V，系统把它们缓存下来，即 **KV Cache**。其总字节数为：
+
+```
+KV Cache 字节数 ≈ 2（K和V）× 层数 L × 注意力头数 H × 头维度 d × 序列长度 T × batch B × 每元素字节数
+```
+
+以 Llama-2-70B（L=80、GQA 下 KV 头 8、d=128、FP16）为例，单个请求每 token 的 KV Cache 约 327 KB；当上下文达到 32K 时，单请求 KV Cache 即超过 **10 GB**。长上下文 + 大并发场景下，KV Cache 很快超过模型权重本身成为最大的显存消耗项——这就是 KV Cache 成为独立优化赛道（驱逐、量化、分页、架构压缩 MLA）的原因。值得注意的是，KV Cache 的存在还让 prefill 与 decode 之间产生了状态传递：decode 集群必须拿到 prefill 阶段算出的 KV Cache 才能继续，这为 PD 分离引入了 KV 迁移成本，催生了 Mooncake 这种「以 KVCache 为中心」的架构。
+
+---
+## 3. 模型层优化（一）：权重量化——从 SmoothQuant 到 4-bit
+
+量化（Quantization）把权重和/或激活从 FP16 映射到 INT8、INT4 甚至更低位宽，直接减少 Decode 阶段要从 HBM 读取的字节数，是投入产出比最高的优化手段。按量化对象可分为**仅权重量化（WxA16，如 GPTQ/AWQ）**与**权重激活全量化（WxAx，如 SmoothQuant 的 W8A8）**；按是否需要训练可分为量化感知训练（QAT）与训练后量化（PTQ）。推理部署中 PTQ 因无需重训而成为主流。
+
+### 3.1 离群值难题与 LLM.int8()
+
+LLM 量化的核心障碍是**激活离群值（activation outliers）**：Transformer 大部分激活值很小，但少数特征通道出现数量级更大的离群值，朴素的 per-tensor 8-bit 量化会因量程被离群值撑大而严重损失精度。Dettmers 等人提出的 **LLM.int8()**（arXiv:2208.07339，2022-08-15）用混合精度分解应对：超过 99.9% 的值以 8-bit 矩阵乘法计算，检测到的离群特征通道回退到 FP16。实测在 175B 规模模型上推理显存减半且无性能下降——首次证明大模型可以 8-bit 无损服务。
+
+### 3.2 SmoothQuant：把量化难度从激活「迁移」给权重
+
+仅权重量化在 Decode（访存密集）时有效，但 Prefill 阶段的大 GEMM 是激活与权重相乘，激活仍是 FP16 就拿不到完整加速。Xiao 等人的 **SmoothQuant**（arXiv:2211.10438，2022-11-18）观察到一个关键事实：**激活的离群值在通道维度上是固定的**（总那么几个通道大），而权重的分布相对平滑。于是插入一个 per-channel 缩放因子 s：激活除以 s、权重乘以 s，数学上等价，但把量化难度从难以处理的激活迁移到了容易处理的权重，从而实现 W8A8 全量化。论文报告最高 1.56× 加速、2× 显存缩减，精度损失可忽略，并首次让 530B 模型可以在单台 8-GPU 机器上服务。
+
+### 3.3 GPTQ 与 AWQ：4-bit 仅权重量化双雄
+
+- **GPTQ**（Frantar et al., arXiv:2210.17323，2022-10-31）：基于近似二阶（Hessian）信息的一次性逐层权重量化，量化一批权重后用剩余权重补偿误差。175B 模型约 4 个 GPU 小时即可量化到 3/4 bit；A100 上 3.25×、A6000 上 4.5× 加速，首次让 175B 模型跑在单 GPU 上。
+- **AWQ**（Lin et al., arXiv:2306.00978，2023-06-01）：基于「激活感知」发现——并非所有权重同等重要，保护仅 **1%** 的显著权重通道（以校准集上激活幅度衡量）即可大幅降低 4-bit 量化损失。AWQ 不做权重数值的重学习，而是对显著通道做缩放保护，配合 TinyChat 内核较 HuggingFace FP16 实现 >3× 加速，并能在移动端 GPU 上运行 Llama-2-70B。
+
+### 3.4 更低比特与云端服务：QServe W4A8KV4
+
+4-bit 权重在小 batch 端侧场景收益明显，但在大 batch 云端服务中，反量化（dequantization）的运行时开销可达 20%–90%，反而吃掉收益。Lin 等人的 **QServe**（arXiv:2405.04532，2024-05-07）提出 W4A8KV4（4-bit 权重 + 8-bit 激活 + 4-bit KV Cache）协同设计：渐进式量化降低 W4A8 GEMM 的反量化开销，SmoothAttention 缓解 4-bit KV 的精度退化，并做计算感知的权重重排。实测 Llama-3-8B 服务吞吐在 A100 上较 TensorRT-LLM 提升 1.2×、L40S 上 1.4×；Qwen1.5-72B 分别提升 2.4×/3.5×，L40S 上的 QServe 甚至超过 A100 上的 TensorRT-LLM，相当于把单位服务成本降至约 1/3。
+
+> **工程要点**：量化的实际收益强依赖内核支持。W4A16 在 decode 小 batch 上省显存、提吞吐；W8A8/W4A8 在 prefill 和大 batch 上更有价值；KV4 只有配合融合注意力内核才能兑现。选型时务必在自己的目标硬件（A100/H100/国产卡）与目标 batch/上下文上实测，论文数字均为特定配置下的厂商/学术口径。
+
+### 3.5 剪枝与蒸馏：结构性的「少读参数」
+
+- **剪枝（Pruning）**：结构化剪枝直接移除整个注意力头或 MLP 列，得到可实际加速的稠密小模型；非结构化剪枝产生稀疏权重，需稀疏内核支持。社区实践中剪枝后的 6B 模型可较稠密版快约 30%，MMLU 仍优于更小的稠密 4B【第三方实践口径】。
+- **知识蒸馏（Distillation）**：让小学生学习大教师的输出分布，得到永久更便宜的模型。压缩流水线的经验顺序是 **P-KD-Q：先剪枝、再蒸馏、最后量化**，三步收益相乘。
+
+## 4. 模型层优化（二）：KV Cache 治理——驱逐、量化与 MLA 架构革命
+
+### 4.1 驱逐派：H₂O 与 StreamingLLM 的「注意力汇聚点」
+
+长对话中并非所有历史 token 的 KV 都同等重要。**H₂O（Heavy-Hitter Oracle）**（Zhang et al., arXiv:2306.14048，2023-06-24）发现对未来 token 注意力贡献最大的「重击者」KV 可以通过累积注意力分数识别；用一个有界预算保留近期 token + 少量 heavy-hitter，驱逐其余。仅保留 20% 重击者时，吞吐较 DeepSpeed/Accelerate 最高提升 29×、较 FlexGen 提升 3×，延迟最高降低 1.9×。
+
+**StreamingLLM**（Xiao et al., arXiv:2309.17453，2023-09-29）则揭示了一个出人意料的现象：模型对序列**最开始几个 token**（尤其是起始符）存在系统性的高注意力——「注意力汇聚点（attention sink）」。只保留初始 token 的 KV + 一个滑动窗口，无需微调即可让模型流式处理超过 400 万 token 的输入。代价是它并不真正「记住」窗口外内容，适合流式无限生成而非需要检索全文的问答。
+
+类似思路的 **SnapKV**（arXiv:2404.14469，2024-04-22）发现生成前各注意力头在 prompt 末尾的「观察窗口」中已稳定暴露出它关注哪些位置，据此按头聚类选择重要 KV，无需微调；16K 输入下生成速度提升 3.6×、显存效率提升 8.2×，单张 A100-80GB 可处理 380K 上下文。
+
+### 4.2 量化派：KIVI 的 2-bit KV Cache
+
+**KIVI**（Liu et al., arXiv:2402.02750，2024-02-05）是免调优的非对称 2-bit KV 量化方案，关键洞察是 Key 与 Value 的离群结构不同：**Key 按通道（per-channel）量化、Value 按 token（per-token）量化**效果最好。峰值显存降低 2.6×，可服务 batch 扩大至 4×，吞吐提升 2.35–3.47×。KV 量化与权重量化正交，可叠加使用，QServe 的 KV4 即沿此路线做到系统协同。
+
+### 4.3 架构派：MLA——从根上把 KV Cache 压掉
+
+驱逐和量化都是「模型训练完之后」的补丁；DeepSeek 选择在架构层面根治。**多头潜在注意力（Multi-head Latent Attention, MLA）**首次用于 DeepSeek-V2（arXiv:2405.04434，2024-05-07）：标准 MHA 下每个头各有一份 KV，GQA/MQA 通过共享 KV 头压缩，但会影响模型质量；MLA 则把每个 token 的所有 KV 先**下投影到一个低维潜在向量 c_KV 缓存起来**，使用时再上投影还原各头的 K/V。推理时只需缓存这个低维潜在向量，论文报告 **KV Cache 减少 93.3%**，最大生成吞吐提升至 5.76 倍，同时训练成本较 DeepSeek 67B 降低 42.5%，且通过对 RoPE 的特殊解耦处理保持了多头的表达能力。
+
+MLA 在 **DeepSeek-V3**（arXiv:2412.19437，2024-12-27，671B 总参/37B 激活 MoE）中继续沿用，并与多 token 预测（MTP）配合——后者在第 7 章详述。DeepSeek-V2/V3 以极低的 API 价格提供服务，MLA 带来的 KV 压缩是其推理经济学的架构基石。2025 年后，MLA 式低秩 KV 压缩成为新模型设计的重要参考，与线性注意力（状态压缩）路线形成呼应（参见知识库《线性注意力与混合架构》报告）。
+
+### 4.4 下沉派：ShadowKV 与异构内存
+
+当单机 HBM 放不下超长上下文的 KV 时，**ShadowKV**（arXiv:2410.21465，2024-10-28，作者含字节团队）把稀疏化后的 KV Cache 下沉到 CPU DRAM，GPU 上只保留关键层的 KV，借助两层异构内存支撑长上下文高吞吐推理。这与第 8 章 Mooncake 把 KV 池放到 CPU DRAM/SSD 的思路同源——KV Cache 正在成为一种需要独立「内存层级」管理的一等资源。
+
+---
+## 5. 算子层：FlashAttention 与 IO 感知的注意力革命
+
+### 5.1 注意力的真正瓶颈不在算力，在 IO
+
+标准注意力的计算为 S = QKᵀ、P = softmax(S)、O = PV。朴素实现需要把 n×n 的注意力矩阵 S 和 P 物化到 HBM：长序列下显存占用 O(n²)，且这些中间结果写完又读回，产生大量 GPU HBM 读写。Dao 等人的 **FlashAttention**（arXiv:2205.14135，2022-05-27）指出：注意力的实际瓶颈是内存访问（IO）而非算力。其两大核心设计：
+
+1. **分块（tiling）**：把 Q/K/V 切成小块，在高速 SRAM 内逐块计算注意力，在线维护 running max（用于 softmax 数值稳定）与 running sum，永不把完整 n×n 矩阵写回 HBM，显存占用从 O(n²) 降为 O(n)；
+2. **重计算（recomputation）**：反向传播时不保存全部中间矩阵，而是利用前向保存的少量统计量重算注意力块——用廉价的算力换昂贵的 IO。
+
+FlashAttention 是**精确（exact）注意力**，输出与朴素实现数学一致，而非近似。实测 GPT-2 训练 3×、long-range arena 2.4× 加速，BERT-large 端到端提速 15%，并使 16K/64K 上下文的训练成为可行。
+
+### 5.2 三代演进：从更好的并行到 Hopper 异步
+
+- **FlashAttention-2**（arXiv:2307.08691，2023-07-17）：重新设计线程块间的工作划分与 warp 分工，减少非矩阵乘运算与通信，约为第一代的 2× 速度；A100 上达到理论峰值的 50%–73%，GPT 训练高达 225 TFLOPs/s（72% MFU）。
+- **FlashAttention-3**（Shah et al., arXiv:2407.08608，2024-07-11）：专为 Hopper（H100）设计，利用 TMA（张量内存加速器）做异步数据搬运、warp 专门化（warp specialization，生产/消费 warp 流水线重叠）与 FP8 低精度。H100 上较 FA-2 再快 1.5–2.0×，FP16 达 740 TFLOPs/s（约 75% 理论峰值），FP8 接近 1.2 PFLOPs/s，且 FP8 的数值误差比基线低 2.6×。
+
+FlashAttention 的意义超出单个算子：它确立了「**IO 感知 + 内核融合**」这一 GPU 算子设计范式，后续 PagedAttention、融合的 RMSNorm+量化、投机解码验证内核都遵循同一思想，也是 vLLM/SGLang 等引擎的性能底座。
+
+## 6. 系统层（一）：PagedAttention、连续批处理与 Chunked Prefill
+
+### 6.1 KV Cache 的内存浪费：从 60–80% 到近零
+
+传统推理系统为每个请求按最大上下文长度预分配一整段连续 KV Cache 显存。但请求实际长度差异极大且动态增长，预留空间大部分时间空置；内部碎片 + 预留碎片 + 外部碎片合计可浪费 60%–80% 显存。**PagedAttention**（Kwon et al., arXiv:2309.06180，SOSP'23）借鉴操作系统的虚拟内存与分页机制：
+
+- 把每个请求的 KV Cache 切成固定大小的 **block（页）**，逻辑块通过 block table 映射到物理块，物理块按需分配，内部碎片最多一个块；
+- 不同请求的 KV 在物理上不必连续，显存利用率接近 100%；
+- 分页还天然支持 **Copy-on-Write**：并行采样、beam search、共享前缀的多个请求可共享同一物理 KV 页，分叉时才复制。
+
+PagedAttention 是 vLLM 的核心，论文报告吞吐较当时的 FasterTransformer、Orca 提升 2–4×。分页管理 KV 如今已成为几乎所有新一代推理引擎（vLLM/SGLang）的通用设计。
+
+### 6.2 连续批处理：让 GPU 不再等最慢的请求
+
+朴素的静态批处理（static batching）要等一个 batch 内**所有**请求都生成完毕才能释放 batch、接入新请求；先完成的短请求被迫空等长请求，GPU 出现气泡。**连续批处理（continuous / iteration-level batching）**由 Orca（Yu et al., OSDI'22，无 arXiv 预印本，建议引用会议版）推广：调度粒度细化到**每个解码步**——某请求在任一步结束后立即离开 batch，等待中的新请求下一步即可插入。由于 decode 各请求在同一前向中各进一步，插入/离开对计算图毫无影响。这一技术通常带来数倍吞吐提升，是 vLLM/SGLang/TensorRT-LLM 的调度基础。
+
+### 6.3 Chunked Prefill：化解 Prefill 与 Decode 的同批冲突
+
+当一个长 prompt 的 prefill（计算密集）与若干 decode 请求（访存密集）被同时调度时，超长 prefill 会独占数步、卡住 decode 请求，造成 TPOT/TBT 尖峰。**Sarathi-Serve**（Agrawal et al., arXiv:2403.02310，2024-03-04）提出 **chunked-prefill**：把长 prefill 切成小块，与 decode 请求混合、逐步均匀调度（stall-free scheduling），从而削平延迟尖峰。论文报告 Mistral-7B 服务能力 2.6×、Yi-34B 3.7×、Falcon-180B 端到端 5.6×（对比旧版 vLLM）。Chunked prefill 现已被 vLLM、SGLang 等普遍采纳，并成为 PD 不分离时兼顾吞吐与 TBT 稳定性的关键手段。
+
+### 6.4 前缀复用：SGLang RadixAttention
+
+多轮对话、RAG、Agent、代码补全等负载存在大量**共享前缀**（系统提示、公共文档、历史对话）。SGLang（Zheng et al., arXiv:2312.07104，2023-12-12）提出 **RadixAttention**：用一棵基数树（radix tree）自动识别并跨请求复用共享前缀对应的 KV Cache，重复前缀无需重新 prefill；同时以压缩有限状态机加速 JSON/正则等结构化输出。论文报告最高 6.4× 吞吐。RadixAttention 使 SGLang 在前缀密集型负载（Agent、多轮、代码）上具备显著优势，也让 SGLang 成为 RL rollout 场景的常用引擎。
+
+> ![图 2：现代推理引擎调度全景](diagrams/2-scheduler.html)
+
+---
+## 7. 系统层（二）：投机解码与并行解码家族
+
+### 7.1 投机解码：用一次并行验证换多步串行生成
+
+投机解码（Speculative Decoding）针对 decode 的串行依赖：既然大模型（target）每步算力大量闲置，何不让一个小而快的**草稿模型（draft）**先预测出 k 个候选 token，再让大模型对这 k+1 个 token 做**一次并行前向**统一验证？Leviathan 等人的原始论文（arXiv:2211.17192，2022-11-30）与 DeepMind 的投机采样（Chen et al., arXiv:2302.01318，2023-02-02）独立提出该思想，核心是一套**接受/拒绝采样（rejection sampling）**机制：对草稿 token，若大模型赋予的概率不低于草稿，直接接受；否则按概率差做拒绝采样。数学上可证明，最终输出序列的分布与大模型单独生成**完全一致（无损）**。T5-XXL 上实测 2–3× 加速，Chinchilla 70B 分布式场景 2–2.5×。
+
+期望加速比近似为 (1+k·α) / (1+c)，其中 α 为草稿接受率、c 为草稿成本占比。这解释了两个工程要点：① 加速的关键不只是草稿「准」，更是草稿「快」——近期基准显示草稿延迟比草稿精度更能决定端到端吞吐；② 草稿模型必须与目标模型分布足够接近，否则接受率崩塌。
+
+### 7.2 EAGLE：在特征层起草，三代冲到 6.5×
+
+- **EAGLE**（Li et al., arXiv:2401.15077，2024-01-26）：草稿模型不在 token 空间、而在目标模型**第二顶层的特征层**做自回归起草（特征包含比单 token 更丰富的上下文），再经一个轻量解码头映射回 token。LLaMA2-Chat 70B 上延迟加速 2.7×–3.5×、吞吐翻倍，输出分布不变。
+- **EAGLE-2**（arXiv:2406.16858，2024-06-24）：改用**上下文感知的动态草稿树**——根据当前输入动态调整草稿的形状与置信度，把高把握分支展开成树并行验证。加速 3.05×–4.26×，比 EAGLE-1 快 20%–40%。
+- **EAGLE-3**（arXiv:2503.01840，2025-03-03）：进一步引入「训练时测试（training-time test）」，放弃特征预测改为直接 token 预测并融合多层特征，草稿头可在极低额外成本下获取深层上下文；加速比最高 **6.5×**，约为 EAGLE-2 的 1.4×；在 SGLang bs=64 下还带来 1.38× 吞吐增益。
+
+### 7.3 免草稿路线：Medusa 与 Lookahead
+
+- **Medusa**（Cai et al., arXiv:2401.10774，2024-01-19）：不引入外部草稿模型，而是在**冻结的主干上直接加多个解码头**，每个头分别预测未来第 i 个 token，再以树状注意力并行验证候选组合。Medusa-1（自训练）>2.2×，Medusa-2（接 EAGLE 式草稿）2.3–3.6×。优点是部署简单、无独立草稿模型运维。
+- **Lookahead Decoding**（Fu et al., arXiv:2402.02057，2024-02-03）：完全无需草稿模型、无需数据存储，基于**雅可比迭代（Jacobi iteration）**在一次前向中并行猜测多个未来 token，并把已确认的猜测缓存为「lookahead 分支」逐步推进。MT-bench 最高 1.8×，多卡代码补全场景强扩展达 4×。以零额外模型成本换取 modest 但「免费」的加速。
+
+### 7.4 架构原生的多 token 预测：DeepSeek MTP
+
+DeepSeek-V3（arXiv:2412.19437）把多 token 预测（Multi-Token Prediction, MTP）做进训练架构：除主解码头外，通过顺序的 MTP 模块（共享主干、嵌入与输出矩阵）让模型在每个位置额外预测后续多个 token。训练时 MTP 提供更密集的监督信号（本身即提升主模型质量），推理时 MTP 模块可直接充当投机解码的草稿器，一次验证多个 token，无需再训练/部署独立草稿模型。MTP 与 MLA 共同构成 V3 高吞吐、低价格的推理支柱，也代表了「投机能力内生化」的趋势。
+
+> ![图 3：投机解码与并行解码家族谱系](diagrams/3-speculative.html)
+
+> **收益边界**：投机解码在低延迟、中小 batch 的在线场景收益最大；高并发时 GPU 本已被大 batch 饱和（算力不再闲置），投机的额外草稿计算反而可能降低总吞吐。此外草稿接受率随任务分布漂移，领域专用场景需要领域草稿或自训练（Medusa/EAGLE 训练流程）。是否启用，应按 SLO（TPOT 优先还是总吞吐优先）实测决定。
+
+## 8. 系统层（三）：Prefill/Decode 分离与 Mooncake
+
+### 8.1 为什么必须分离：两类负载的「同栖困境」
+
+Prefill 计算密集、Decode 访存密集，混部在同一 GPU 上会互相伤害：长 prefill 抢占算力导致 decode 的 TBT 飙升；为 decode 配的大 batch 又拉长 prefill 的 TTFT；两者对并行策略、硬件代际的偏好也不同（prefill 偏好高算力卡，decode 可偏更大显存/带宽卡）。分离（disaggregation）把两阶段放到不同 GPU/节点，各自独立扩缩容与优化，中间通过网络传递 KV Cache。
+
+- **DistServe**（Zhong et al., arXiv:2401.09670，2024-01-18）：首次系统论证把 prefill 与 decode 部署到不同 GPU 池、并分别为两阶段协同优化并行策略（如 prefill 用更高张量并行），可在相同硬件下服务 **7.4×** 的请求量，或支持 **12.6×** 更严格的 SLO，且 >90% 请求满足延迟目标。
+- **Splitwise**（Patel et al., arXiv:2311.18677，2023-11-30，微软等）：把计算密集的 prompt 阶段与访存密集的生成阶段拆到不同机器，并利用空闲的推理容量。同一硬件设计下 1.4× 吞吐且成本低 20%，或在同等预算下 2.35× 吞吐。
+
+> **编号勘误**：Splitwise 的正确 arXiv 编号是 **2311.18677**。网上流传的 2411.17716 实为一篇通信领域论文，本报告已通过 arxiv.org 摘要页核实修正。
+
+### 8.2 Mooncake：以 KVCache 为中心的分离架构
+
+PD 分离的真正工程难点是 KV Cache 的跨节点传输与调度。月之暗面的 **Mooncake**（Qin et al., arXiv:2407.00079，2024-06-24，FAST'25 最佳论文）是 Kimi 的生产级推理平台，其核心思想是「**以 KVCache 为中心**」：
+
+- **全局 KV Cache 池**：Prefill 集群算出的 KV 不局限于单机，而是通过 GPUDirect RDMA 等高速传输，在跨整机柜的 GPU HBM、CPU DRAM、SSD 构成的分层存储中建立分布式 KV 池；Decode 节点按需拉取。
+- **Conductor 全局调度器**：按预期负载、KV 放置位置与传输代价做全局决策，并采用预测式早拒（early rejection）保障 SLO。
+- **Chunked Pipeline Parallelism**：长上下文 prefill 以分块流水并行切分，避免超长 prefill 的显存与延迟瓶颈。
+
+论文实测：相同 SLO 下 Mooncake 比 vLLM 基线多处理约 **75%** 的请求；长上下文仿真场景吞吐最高提升 **525%**；真实 Kimi 负载下 vLLM 的 TBT SLO 合规率仅约 57%。Mooncake 于 2024-06-25 开源（github.com/kvcache-ai/Mooncake，2026-10-20 约 6,835 stars），把「KV Cache 即分布式状态层」这一范式推向社区。
+
+### 8.3 分离成为云端共识
+
+2025–2026 年，PD 分离从论文走向全线产品：vLLM（V1 引擎，2025-01-27 alpha 后成为默认）、SGLang、LMDeploy、TensorRT-LLM 均原生支持 disaggregated serving；NVIDIA 推出 **Dynamo** 推理编排层（含 KV 路由与多节点调度），并与 Ray Serve、llm-d 等编排系统集成。云端大集群的典型形态已演化为「prefill 池 + decode 池 + 分布式 KV 存储 + 全局调度器」，与数据库系统几十年前「计算—存储分离、日志即状态」的演进如出一辙。
+
+> ![图 4：PD 分离与 KVCache 中心架构](diagrams/4-disaggregation.html)
+
+---
+## 9. 应用层：提示压缩、前缀缓存与模型路由
+
+对通过 API 消费模型的团队，模型层与系统层由服务商负责，应用层是唯一可控但 ROI 极高的优化面。
+
+### 9.1 提示压缩：LLMLingua 的 20×
+
+Agent 多轮累积的上下文里充满低信息 token：旧对话、样板系统提示、整文件引用。**LLMLingua**（Jiang et al., arXiv:2310.05736，2023-10-09）用一个小语言模型（如 LLaMA-7B）计算困惑度/条件困惑度作为 token 重要性信号，通过「预算控制器 + 粗到细的 token 级迭代压缩（问题对齐、迭代压缩、token 级分布）」在保留关键 token 的前提下实现最高 **20×** 提示压缩，下游任务性能损失很小。**LongLLMLingua**（arXiv:2310.06839，2023-10-10）面向 RAG 长上下文做针对性压缩，NaturalQuestions 上性能最高提升 21.4%、LooGLE 成本降低 94%。
+
+需要警惕**改写式摘要的保真度问题**：把历史上下文交给模型「总结」会丢失文件路径、错误码、具体决策，生产评测中摘要式压缩的准确性评分明显偏低；JetBrains 的 Agent 研究发现，摘要相比「逐字压缩（只删除低信息句、保留句原文）」会让 Agent 轨迹长 13%–15%，因为 Agent 要重新推导被释义掉的信息【第三方研究口径】。工程上更稳妥的做法是：删除而非改写、保留所有关键实体原文。
+
+### 9.2 前缀缓存（Prompt Caching）
+
+连续请求常共享前缀（系统提示、文档、历史对话）。前缀缓存把这部分 KV 张量缓存下来，命中时直接跳过对应 prefill。Anthropic、OpenAI、Google 均已提供：长上下文（>10K）的缓存部分可获得 80%–90% 延迟下降；DeepSeek 更进一步在定价上区分缓存命中（V3 时期 $0.07 vs 未命中 $0.27），把缓存做成显式经济激励。前缀缓存与 RadixAttention 的区别在于：前者是服务商的隐式 KV 复用，后者是引擎内自动的基数树级复用——二者都依赖「把公共前缀放在最前面且不被修改」这一提示工程纪律。
+
+### 9.3 语义缓存与模型路由
+
+- **语义缓存（Semantic Cache）**：对语义相似的请求直接返回历史应答，完全跳过模型调用，在重复型客服/查询负载上可带来数倍成本下降；风险是相似但不同的请求被错误命中，需设置相似度阈值与失效策略。
+- **模型路由（Model Routing）**：分类、抽取、简单改写走小模型（如 Haiku 档），复杂推理才走旗舰模型，通常带来 2–5× 综合成本下降而质量损失很小。路由本身可用一个轻量分类器/小模型实现，是「模型即异构算力池」思路的应用层体现。
+
+## 10. 推理引擎生态横评与选型
+
+### 10.1 六大引擎横评（star 与版本为 2026-10-20 查询值）
+
+| 引擎 | GitHub Stars | 背后团队 | 最新版本 | 核心特性 | 最适场景 |
+|---|---|---|---|---|---|
+| **llama.cpp** | 131,740 | 开源社区（ggml-org） | 滚动构建 | GGUF 多档量化、CPU/Metal/CUDA/Vulkan 全平台 | 端侧、单机、CPU、快速验证 |
+| **vLLM** | 94,161 | Sky Lab 发起，多厂商共治 | v0.32.0 | PagedAttention、连续批处理、V1 引擎、PD 分离、投机解码 | 云端通用、模型频繁切换、生态最全 |
+| **SGLang** | 37,449 | LMSYS | v0.5.22 | RadixAttention、结构化生成、RL rollout、PD 分离 | Agent/多轮/代码等前缀密集负载、大规模服务 |
+| **MLC-LLM** | 23,257 | Apache TVM 团队 | — | 编译式部署，CUDA/Vulkan/Metal/WebGPU | 手机、浏览器、WebGPU 端侧 |
+| **TensorRT-LLM** | 14,861 | NVIDIA | v1.4.0rc | FP8/FP4、inflight batching、MTP、Blackwell 深度优化 | 单模型长期生产、最高并发吞吐 |
+| **LMDeploy** | 8,108 | 上海 AI Lab | v0.18.0 | TurboMind 内核、W4A16、PD 分离、轻量高效 | 高吞吐轻量部署、InternLM 生态 |
+
+Mooncake（6,835 stars，v0.3.x）则定位为更底层的 **KVCache 中心分离式推理平台**，可与上述引擎协同而非简单替代。第三方在特定硬件上的引擎横评（如 Morph 引用的 H100 数据：SGLang/LMDeploy 约 16,200 tok/s、vLLM 约 12,500 tok/s）只代表特定版本与负载，引擎差距随版本快速收敛，选型应以自有负载实测为准。
+
+### 10.2 选型决策树
+
+1. **端侧 / CPU / 笔记本 / 手机** → llama.cpp（桌面）或 MLC-LLM（手机/WebGPU），配合 GGUF Q4 量化；
+2. **云端通用 API 服务、模型经常换** → vLLM，生态与硬件适配最广；
+3. **Agent、多轮对话、RAG、代码补全（共享前缀多）** → SGLang，RadixAttention 优势明显；
+4. **单一旗舰模型长期大规模生产、NVIDIA 全家桶** → TensorRT-LLM（接受编译成本）；
+5. **超大规模、多租户、需要独立 prefill/decode 扩缩容** → PD 分离架构（vLLM/SGLang disaggregation 或 Mooncake / NVIDIA Dynamo）；
+6. **低延迟在线单请求/小 batch** → 叠加投机解码（EAGLE-3/Medusa）；**高并发饱和场景** → 谨慎启用投机，优先批处理与量化。
+
+## 11. 硬件演进：FP8/FP4、国产芯片与端侧推理
+
+### 11.1 NVIDIA：Hopper 到 Blackwell 的精度下探
+
+| 规格 | H100 | H200 | B200 |
+|---|---|---|---|
+| HBM 容量 | 80GB HBM3 | 141GB HBM3e | 192GB HBM3e |
+| 显存带宽 | 3.35 TB/s | 4.8 TB/s | 最高 8 TB/s |
+| 峰值精度 | FP8 3,958 TFLOPS | FP8 3,958 TFLOPS | 原生 **FP4**（第二代 Transformer Engine） |
+
+Blackwell 平台（2024-03-18 发布）官方称：新 Tensor Core 配合 TensorRT-LLM 使 LLM 推理的运营成本与能耗最高降低 **25×**；GB200 NVL72（72 颗 B200 + 36 Grace，整柜 30TB HBM、1.4 EFLOPS）相比同数量 H100，LLM 推理性能最高 **30×**【官方口径，nvidianews.nvidia.com】。FP8 在 Hopper 上已被证明对推理质量影响很小（FA-3 测得 FP8 数值误差低 2.6×），FP4 则把权重量化与硬件原生精度合流——「量化算法」与「硬件格式」正在变成同一件事。
+
+### 11.2 AMD 与国产芯片
+
+- **AMD**：MI300X（192GB HBM3、5.3 TB/s）以大显存切长上下文推理；CDNA4 的 MI350X 进一步到 288GB HBM3E、8 TB/s【官方口径】。
+- **国产芯片**：DeepSeek-V3.2-Exp 发布当日（2025-09-30），华为昇腾即宣布基于 vLLM/SGLang 完成适配并开源推理代码与算子，寒武纪开源 vLLM-MLU，海光宣布 DCU 适配【媒体报道，转述各厂商官方公众号】。国产推理软件栈明显采取「拥抱 vLLM/SGLang 开源生态 + 自研算子补齐」的路线（对应智源趋势第 9 位「异构全栈底座」）；但具体 tokens/s、利用率等性能数字本次未取得可靠一手信源，引用需查厂商白皮书。
+
+### 11.3 端侧：约 3B 参数的隐私推理
+
+Apple 在 2024-06-10 的机器学习研究中披露，Apple Intelligence 包含一个约 **30 亿（~3B）参数**的端侧语言模型，在人类偏好评测上优于 Phi-3-mini、Mistral-7B、Gemma-7B、Llama-3-8B；更复杂的请求则经 Private Cloud Compute 交给服务器模型【官方口径，machinelearning.apple.com】。高通骁龙 8 Gen 3（2023-10-24 发布）主打端侧生成式 AI，官方称 NPU 可支撑约百亿参数级模型【官方口径/部分细节待回补】。端侧路线的共同模式是：小模型 + 4-bit 量化 + NPU/统一内存 + llama.cpp/MLC，使「数据不出设备」的推理在 2025–2026 成为主流体验。
+
+## 12. 开放问题与工程落地 Checklist
+
+### 12.1 开放问题
+
+1. **SLO 三角的持续张力**：TTFT、TBT/TPOT、吞吐（goodput）三者不可同时最优；chunked prefill、PD 分离、投机解码只是把权衡点移动，并未消除。多租户下如何按 SLO 动态分配仍是研究热点。
+2. **推理模型与推理优化的新矛盾**：推理模型输出极长思维链，使 decode 阶段占比和 KV 持续增长；但思维链草稿性强、确定性低，投机解码草稿对「发散的推理过程」接受率可能下降——针对 reasoning 负载的投机器（在思维链分布上训练）是 2026 的活跃方向。
+3. **KV 压缩的质量天花板**：驱逐/激进 KV 量化在精确召回（NIAH、RULER）类任务上仍有短板；MLA 式架构压缩更优但需从头训练。后训练 KV 压缩能否逼近架构原生，尚无定论。
+4. **PD 分离的 KV 传输税**：分离收益依赖高速互联（RDMA/NVLink）；网络代际不足时 KV 迁移成本可能吃掉收益。KV 编码压缩传输、prefill 结果就近放置是工程关键。
+5. **低比特的极限**：FP4 已硬件化，2-bit/1-bit 权重在多数通用任务上尚不稳定；混合精度（敏感层保高精度）与硬件自适应量化是务实方向。
+6. **评测可信度**：厂商自报加速倍数口径各异（硬件、batch、上下文、草稿模型不同），叠加 benchmark 污染；应在自有硬件与真实流量分布上以 tokens-per-task / cost-per-task 为终指标。
+
+### 12.2 工程落地 Checklist
+
+- [ ] **先测后优**：用真实流量建立基线——TTFT、TPOT/TBT、TPS、并发吞吐、每任务 token 数与成本；定位瓶颈是显存带宽、算力还是显存容量。
+- [ ] **量化先行**：先 W4/W8 权重量化（零训练成本），在目标任务集上验证质量；prefill/大 batch 场景评估 W8A8；KV 量化（KV4/KIVI）配合融合注意力内核。
+- [ ] **引擎与调度**：选 vLLM/SGLang 等现代引擎，开启连续批处理；长 prompt 启用 chunked prefill；前缀密集负载开启 RadixAttention/前缀缓存，并把公共前缀固定在提示最前。
+- [ ] **投机解码按场景**：在线小 batch 试 EAGLE-3/Medusa，以接受率与端到端延迟（而非草稿精度）决策；高并发饱和场景先做 A/B，避免负收益；领域漂移时自训练草稿头。
+- [ ] **规模上分集群**：大集群上规划 prefill/decode 独立池与 KV 传输网络，评估 Mooncake/Dynamo 类调度；按峰值与 SLO 做容量规划与预测式早拒。
+- [ ] **应用层挤水**：逐字式上下文压缩（不做改写式摘要）、语义缓存（带阈值与失效）、模型路由（小模型兜底简单任务）。
+- [ ] **端侧**：llama.cpp/MLC + Q4 + NPU，模型规模与设备内存/热设计匹配，隐私敏感推理优先端侧。
+- [ ] **持续回归**：固定质量评测集 + 真实 holdout，每次引擎/模型/量化变更做成本—质量双回归；厂商口径数据一律在本地复核。
+
+---
+
+## 13. 参考文献
+
+> 说明：以下 arXiv 编号均于 2026-10-20 经 arxiv.org 摘要页（citation_title / citation_author / citation_date 元标签）逐一核实；调研中修正了 Splitwise、Qwen2、Qwen2.5 等 4 个网上流传的错误编号。Orca 无 arXiv 预印本，标注会议出处。
+
+**论文（按主题排列）**
+
+1. Leviathan, Y., Kalman, M., Matias, Y. *Fast Inference from Transformers via Speculative Decoding*. arXiv:2211.17192, 2022-11-30. https://arxiv.org/abs/2211.17192
+2. Chen, C., Borgeaud, S., Irving, G., et al. *Accelerating Large Language Model Decoding with Speculative Sampling*. arXiv:2302.01318, 2023-02-02. https://arxiv.org/abs/2302.01318
+3. Kwon, W., Li, Z., Zhuang, S., et al. *Efficient Memory Management for Large Language Model Serving with PagedAttention*. arXiv:2309.06180, 2023-09-12（SOSP'23）. https://arxiv.org/abs/2309.06180
+4. Dao, T., Fu, D.Y., Ermon, S., et al. *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness*. arXiv:2205.14135, 2022-05-27. https://arxiv.org/abs/2205.14135
+5. Dao, T. *FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning*. arXiv:2307.08691, 2023-07-17. https://arxiv.org/abs/2307.08691
+6. Shah, J., Bikshandi, G., Zhang, Y., et al. *FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision*. arXiv:2407.08608, 2024-07-11. https://arxiv.org/abs/2407.08608
+7. Xiao, G., Lin, J., Seznec, M., et al. *SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models*. arXiv:2211.10438, 2022-11-18. https://arxiv.org/abs/2211.10438
+8. Frantar, E., Ashkboos, S., Hoefler, T., Alistarh, D. *GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers*. arXiv:2210.17323, 2022-10-31. https://arxiv.org/abs/2210.17323
+9. Lin, J., Tang, J., Tang, H., et al. *AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration*. arXiv:2306.00978, 2023-06-01. https://arxiv.org/abs/2306.00978
+10. Dettmers, T., Lewis, M., Belkada, Y., Zettlemoyer, L. *LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale*. arXiv:2208.07339, 2022-08-15. https://arxiv.org/abs/2208.07339
+11. Cai, T., Li, Y., Geng, Z., et al. *Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads*. arXiv:2401.10774, 2024-01-19. https://arxiv.org/abs/2401.10774
+12. Li, Y., Wei, F., Zhang, C., et al. *EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty*. arXiv:2401.15077, 2024-01-26. https://arxiv.org/abs/2401.15077
+13. Li, Y., Wei, F., Zhang, C., et al. *EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees*. arXiv:2406.16858, 2024-06-24. https://arxiv.org/abs/2406.16858
+14. Li, Y., Wei, F., Zhang, C., et al. *EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test*. arXiv:2503.01840, 2025-03-03. https://arxiv.org/abs/2503.01840
+15. Zhang, Z., Sheng, Y., Zhou, T., et al. *H₂O: Heavy-Hitter Oracle for Efficient Generative Inference of Large Language Models*. arXiv:2306.14048, 2023-06-24. https://arxiv.org/abs/2306.14048
+16. Xiao, G., Tian, Y., Chen, B., Han, S., Lewis, M. *Efficient Streaming Language Models with Attention Sinks*. arXiv:2309.17453, 2023-09-29. https://arxiv.org/abs/2309.17453
+17. Liu, Z., Yuan, J., Jin, H., et al. *KIVI: A Tuning-Free Asymmetric 2-bit Quantization for KV Cache*. arXiv:2402.02750, 2024-02-05. https://arxiv.org/abs/2402.02750
+18. Jiang, H., Wu, Q., Lin, C.-Y., et al. *LLMLingua: Compressing Prompts for Accelerated Inference of Large Language Models*. arXiv:2310.05736, 2023-10-09. https://arxiv.org/abs/2310.05736
+19. Jiang, H., Wu, Q., Luo, X., et al. *LongLLMLingua: Accelerating and Enhancing LLMs in Long Context Scenarios via Prompt Compression*. arXiv:2310.06839, 2023-10-10. https://arxiv.org/abs/2310.06839
+20. Fu, Y., Bailis, P., Stoica, I., Zhang, H. *Break the Sequential Dependency of LLM Inference Using Lookahead Decoding*. arXiv:2402.02057, 2024-02-03. https://arxiv.org/abs/2402.02057
+21. Zhong, Y., Liu, S., Chen, J., et al. *DistServe: Disaggregating Prefill and Decoding for Goodput-optimized LLM Serving*. arXiv:2401.09670, 2024-01-18（OSDI'24）. https://arxiv.org/abs/2401.09670
+22. Patel, P., Choukse, E., Zhang, C., et al. *Splitwise: Efficient Generative LLM Inference Using Phase Splitting*. arXiv:2311.18677, 2023-11-30（ISCA'24）. https://arxiv.org/abs/2311.18677
+23. DeepSeek-AI, Liu, A., Feng, B., et al. *DeepSeek-V3 Technical Report*. arXiv:2412.19437, 2024-12-27. https://arxiv.org/abs/2412.19437
+24. Zheng, L., Yin, L., Xie, Z., et al. *SGLang: Efficient Execution of Structured Language Model Programs*. arXiv:2312.07104, 2023-12-12（NeurIPS'24）. https://arxiv.org/abs/2312.07104
+25. Yu, G.-I., Jeong, J.S., Kim, G.-W., Kim, S., Chun, B.-G. *Orca: A Distributed Serving System for Transformer-Based Generative Models*. OSDI 2022（无 arXiv 预印本）. https://www.usenix.org/conference/osdi22/presentation/yu
+26. Agrawal, A., Kedia, N., Panwar, A., et al. *Taming Throughput-Latency Tradeoff in LLM Inference with Sarathi-Serve*. arXiv:2403.02310, 2024-03-04（OSDI'24）. https://arxiv.org/abs/2403.02310
+27. DeepSeek-AI, et al. *DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model*. arXiv:2405.04434, 2024-05-07. https://arxiv.org/abs/2405.04434
+28. Li, Y., Huang, Y., Yang, B., et al. *SnapKV: LLM Knows What You are Looking for Before Generation*. arXiv:2404.14469, 2024-04-22. https://arxiv.org/abs/2404.14469
+29. Lin, Y., Tang, H., Yang, S., et al. *QServe: W4A8KV4 Quantization and System Co-design for Efficient LLM Serving*. arXiv:2405.04532, 2024-05-07. https://arxiv.org/abs/2405.04532
+30. Qin, R., Li, Z., He, W., et al. *Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving*. arXiv:2407.00079, 2024-06-24（FAST'25 最佳论文）. https://arxiv.org/abs/2407.00079
+31. Zhang, K., et al. *ShadowKV: Efficient Long-Context LLM Inference with KV Cache Sharding Across GPU and CPU*. arXiv:2410.21465, 2024-10-28. https://arxiv.org/abs/2410.21465
+32. Yuan, J., Gao, H., Dai, D., et al. *Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention (NSA)*. arXiv:2502.11089, 2025-02-16. https://arxiv.org/abs/2502.11089
+33. Yang, A., Yang, B., Hui, B., et al. *Qwen2 Technical Report*. arXiv:2407.10671, 2024-07-15. https://arxiv.org/abs/2407.10671
+34. Qwen Team, Yang, A., Yang, B., et al. *Qwen2.5 Technical Report*. arXiv:2412.15115, 2024-12-19. https://arxiv.org/abs/2412.15115
+
+**官方与机构信源**
+
+- 北京智源人工智能研究院：《2026 十大 AI 技术趋势》（趋势 8：推理优化远未触顶），2026-01-08；中国科学报/科学网全文：https://news.sciencenet.cn/htmlnews/2026/1/558462.shtm
+- DeepSeek：V3 定价公告（2024-12-26）https://api-docs.deepseek.com/news/news1226 ；V3.2-Exp 公告（2025-09-29）https://api-docs.deepseek.com/news/news250929 ；当前定价 https://api-docs.deepseek.com/quick_start/pricing
+- NVIDIA：Blackwell 平台新闻稿（2024-03-18）https://nvidianews.nvidia.com/news/nvidia-blackwell-platform-arrives-to-power-a-new-era-of-computing ；H100/H200 产品页 https://www.nvidia.com/en-us/data-center/h100/ ；Q1 FY2025 财报电话会实录（推理约占数据中心收入 40%）https://www.fool.com/earnings/call-transcripts/2024/05/29/nvidia-nvda-q1-2025-earnings-call-transcript/
+- Apple Machine Learning Research：*Introducing Foundation Models as Apple Intelligence*（端侧约 3B 参数），2024-06-10，https://machinelearning.apple.com/research/introducing-apple-foundation-models
+- Anthropic：*Building Effective Agents*，2024-12-19，https://www.anthropic.com/engineering/building-effective-agents
+- LangChain：*LangChain State of AI 2024*，2024-12-19，https://www.langchain.com/blog/langchain-state-of-ai-2024
+- Stanford HAI：*AI Index Report 2025*，https://hai.stanford.edu/ai-index/2025-ai-index-report
+- Artificial Analysis：模型与趋势指数，https://artificialanalysis.ai/models
+- Gartner：*AI-optimized IaaS* 新闻稿（2026 年 55% 支出用于推理），2025-10-15，https://www.gartner.com/en/newsroom/press-releases/
+- Mooncake 开源仓库：https://github.com/kvcache-ai/Mooncake ；vLLM https://github.com/vllm-project/vllm ；SGLang https://github.com/sgl-project/sglang ；llama.cpp https://github.com/ggml-org/llama.cpp
+- 知乎社区视角（线索性，正文访问受限）：《大模型推理加速-投机解码》https://zhuanlan.zhihu.com/p/699670010 ；《大模型推理性能优化之 KV Cache 解读》https://zhuanlan.zhihu.com/p/630832593 ；《LLM 推理优化技术综述》https://zhuanlan.zhihu.com/p/655325832 ；《全网最全详解 12 个大模型推理框架》https://zhuanlan.zhihu.com/p/707176585
+
+> **证据状态声明**：本报告所有关键数字均可经上述链接复核。「Agent 每任务 50–200 次 LLM 调用」「推理占全生命周期成本 80–90%」「R1 消耗 150 倍算力」等流行说法因缺乏可直连一手出处，已在正文标注证据等级，未作为结论依据。

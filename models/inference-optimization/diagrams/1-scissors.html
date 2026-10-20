@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 推理需求与成本剪刀差</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker>
+    <linearGradient id="redfill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f85149" stop-opacity="0.22"/><stop offset="100%" stop-color="#f85149" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="greenfill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3fb950" stop-opacity="0.22"/><stop offset="100%" stop-color="#3fb950" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1200" height="700" fill="#0d1117"/>
+  <text x="60" y="50" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 推理需求与成本的「剪刀差」：价格 280× 下降，需求与算力占比反向飙升</text>
+  <text x="60" y="78" fill="#8b949e" font-size="13">价格按每百万 token 输入价（美元）；红=成本曲线，绿=推理需求/算力占比；数据点标注见下方事件</text>
+
+  <!-- axes -->
+  <line x1="90" y1="130" x2="90" y2="500" stroke="#8b949e" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="90" y1="500" x2="1130" y2="500" stroke="#8b949e" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="60" y="140" fill="#8b949e" font-size="12">$/M token ↑</text>
+  <text x="1080" y="528" fill="#8b949e" font-size="12">时间 →</text>
+
+  <!-- gridlines -->
+  <g stroke="#30363d" stroke-width="1" stroke-dasharray="4 5">
+    <line x1="90" y1="200" x2="1130" y2="200"/><line x1="90" y1="290" x2="1130" y2="290"/>
+    <line x1="90" y1="380" x2="1130" y2="380"/>
+  </g>
+
+  <!-- RED price curve: points (180,165 $30) (350,235 $10) (520,330 $1) (690,420 $0.27) (860,443) (1050,455) -->
+  <path d="M180,165 C250,180 300,215 350,235 C420,265 470,305 520,330 C590,365 640,405 690,420 C760,435 810,440 860,443 C930,448 990,452 1050,455 L1050,500 L180,500 Z" fill="url(#redfill)"/>
+  <path d="M180,165 C250,180 300,215 350,235 C420,265 470,305 520,330 C590,365 640,405 690,420 C760,435 810,440 860,443 C930,448 990,452 1050,455" fill="none" stroke="#f85149" stroke-width="3"/>
+  <g fill="#f85149">
+    <circle cx="180" cy="165" r="5.5"/><circle cx="350" cy="235" r="5.5"/><circle cx="520" cy="330" r="5.5"/>
+    <circle cx="690" cy="420" r="5.5"/><circle cx="860" cy="443" r="5.5"/><circle cx="1050" cy="455" r="5.5"/>
+  </g>
+  <g fill="#f85149" font-size="12.5" font-weight="700">
+    <text x="150" y="150">$30 GPT-4</text><text x="300" y="220">$10 GPT-4 Turbo</text>
+    <text x="455" y="315">~$1 GPT-3.5</text><text x="600" y="405">$0.27 V3</text>
+    <text x="800" y="430">$0.28 V3.2</text>
+  </g>
+
+  <!-- GREEN demand curve: (180,455) (350,430) (520,385) (690,315) (860,235) (1050,170) -->
+  <path d="M180,455 C250,448 300,442 350,430 C420,412 470,400 520,385 C590,362 640,340 690,315 C760,280 810,255 860,235 C930,208 990,185 1050,170 L1050,500 L180,500 Z" fill="url(#greenfill)"/>
+  <path d="M180,455 C250,448 300,442 350,430 C420,412 470,400 520,385 C590,362 640,340 690,315 C760,280 810,255 860,235 C930,208 990,185 1050,170" fill="none" stroke="#3fb950" stroke-width="3"/>
+  <g fill="#3fb950">
+    <circle cx="180" cy="455" r="5.5"/><circle cx="350" cy="430" r="5.5"/><circle cx="520" cy="385" r="5.5"/>
+    <circle cx="690" cy="315" r="5.5"/><circle cx="860" cy="235" r="5.5"/><circle cx="1050" cy="170" r="5.5"/>
+  </g>
+  <text x="900" y="160" fill="#3fb950" font-size="13" font-weight="700">推理需求 / 算力占比 ↑</text>
+
+  <!-- crossing annotation -->
+  <circle cx="610" cy="352" r="7" fill="none" stroke="#d29922" stroke-width="2"/>
+  <text x="430" y="372" fill="#d29922" font-size="12">交叉：降价被需求增长抵消，推理总支出持续扩大</text>
+
+  <!-- x labels -->
+  <g fill="#8b949e" font-size="11.5" text-anchor="middle">
+    <text x="180" y="522">2023-03</text><text x="350" y="522">2023-11</text><text x="520" y="522">2024-03</text>
+    <text x="690" y="522">2024-12</text><text x="860" y="522">2025-09</text><text x="1050" y="522">2026</text>
+  </g>
+
+  <!-- 280x callout -->
+  <rect x="700" y="110" width="330" height="44" rx="9" fill="#2a1417" stroke="#f85149" stroke-width="1.5"/>
+  <text x="718" y="138" fill="#ffa198" font-size="13" font-weight="700">GPT-3.5 级推理成本 2022-11→2024-10 ↓280×</text>
+  <text x="718" y="149" fill="#8b949e" font-size="10.5">Stanford AI Index 2025</text>
+
+  <!-- bottom fact cards -->
+  <g font-size="12.5">
+    <rect x="90" y="560" width="320" height="100" rx="11" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+    <text x="110" y="590" fill="#58a6ff" font-weight="700">~40%</text>
+    <text x="170" y="590" fill="#e6edf3">推理约占 NVIDIA 数据中心收入</text>
+    <text x="110" y="616" fill="#8b949e" font-size="11">官方口径 · CFO Q1 FY2025 电话会</text>
+    <text x="110" y="638" fill="#8b949e" font-size="11">2024-05-22 · H100 推理加速最高 3×</text>
+
+    <rect x="440" y="560" width="320" height="100" rx="11" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+    <text x="460" y="590" fill="#3fb950" font-weight="700">7.7 步</text>
+    <text x="530" y="590" fill="#e6edf3">Agent trace 平均步骤（2023: 2.8）</text>
+    <text x="460" y="616" fill="#8b949e" font-size="11">官方口径 · LangChain State of AI 2024</text>
+    <text x="460" y="638" fill="#8b949e" font-size="11">含工具调用 trace 0.5% → 21.9%</text>
+
+    <rect x="790" y="560" width="320" height="100" rx="11" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+    <text x="810" y="590" fill="#bc8cff" font-weight="700">1,485 tok/s</text>
+    <text x="930" y="590" fill="#e6edf3">最快模型输出速度</text>
+    <text x="810" y="616" fill="#8b949e" font-size="11">第三方估算 · Artificial Analysis</text>
+    <text x="810" y="638" fill="#8b949e" font-size="11">2026-10-20 快照 · 700+ 模型指数</text>
+  </g>
+</svg>
+</body></html>

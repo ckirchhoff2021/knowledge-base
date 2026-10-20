@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 投机解码家族谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 760" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker>
+    <marker id="arg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3fb950"/></marker>
+  </defs>
+  <rect x="0" y="0" width="1200" height="760" fill="#0d1117"/>
+  <text x="60" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 3 · 投机/并行解码家族 2022–2025：从外部草稿到架构原生 MTP，加速比冲到 6.5×</text>
+  <text x="60" y="76" fill="#8b949e" font-size="13">所有无损路线输出分布与目标模型一致；分支差异在「草稿从哪来」与「如何并行验证」</text>
+
+  <!-- root -->
+  <rect x="430" y="104" width="340" height="58" rx="11" fill="#161b22" stroke="#58a6ff" stroke-width="1.8"/>
+  <text x="600" y="130" fill="#58a6ff" font-size="14.5" font-weight="700" text-anchor="middle">核心思想：小模型起草 k 个 token</text>
+  <text x="600" y="151" fill="#8b949e" font-size="12" text-anchor="middle">大模型一次并行前向 + 接受/拒绝采样验证（无损）</text>
+
+  <!-- three branch headers -->
+  <line x1="600" y1="162" x2="600" y2="196" stroke="#8b949e" stroke-width="1.8"/>
+  <line x1="230" y1="196" x2="970" y2="196" stroke="#8b949e" stroke-width="1.8"/>
+  <line x1="230" y1="196" x2="230" y2="220" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar)"/>
+  <line x1="600" y1="196" x2="600" y2="220" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar)"/>
+  <line x1="970" y1="196" x2="970" y2="220" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar)"/>
+
+  <!-- Branch A: external draft -->
+  <rect x="70" y="222" width="320" height="44" rx="9" fill="#12231a" stroke="#3fb950"/>
+  <text x="230" y="250" fill="#7ee787" font-size="13.5" font-weight="700" text-anchor="middle">路线 A · 外部草稿模型</text>
+  <g font-size="11">
+    <rect x="70" y="280" width="320" height="60" rx="9" fill="#161b22" stroke="#30363d"/>
+    <text x="86" y="303" fill="#e6edf3" font-weight="700">Speculative Decoding</text>
+    <text x="86" y="323" fill="#8b949e">Leviathan 2211.17192 · T5-XXL 2–3×</text>
+    <text x="86" y="338" fill="#8b949e">DeepMind 2302.01318 · Chinchilla 2–2.5×</text>
+    <rect x="70" y="352" width="320" height="150" rx="9" fill="#12261a" stroke="#3fb950"/>
+    <text x="86" y="377" fill="#7ee787" font-weight="700">EAGLE：在第二顶层特征层起草</text>
+    <text x="86" y="400" fill="#d1d9e0">EAGLE-1 2401.15077 · 2.7–3.5×</text>
+    <text x="86" y="423" fill="#d1d9e0">EAGLE-2 2406.16858 · 动态草稿树</text>
+    <text x="86" y="443" fill="#8b949e">3.05–4.26×（快 20–40%）</text>
+    <text x="86" y="468" fill="#7ee787" font-weight="700">EAGLE-3 2503.01840 · 最高 6.5×</text>
+    <text x="86" y="488" fill="#8b949e">training-time test · SGLang +1.38×</text>
+  </g>
+
+  <!-- Branch B: draft-free -->
+  <rect x="440" y="222" width="320" height="44" rx="9" fill="#1d1633" stroke="#bc8cff"/>
+  <text x="600" y="250" fill="#dcc8ff" font-size="13.5" font-weight="700" text-anchor="middle">路线 B · 免草稿 / 自推测</text>
+  <g font-size="11">
+    <rect x="440" y="280" width="320" height="100" rx="9" fill="#161b22" stroke="#bc8cff"/>
+    <text x="456" y="305" fill="#dcc8ff" font-weight="700">Medusa 2401.10774</text>
+    <text x="456" y="327" fill="#8b949e">冻结主干 + 多个解码头</text>
+    <text x="456" y="347" fill="#8b949e">树状注意力并行验证候选</text>
+    <text x="456" y="369" fill="#d1d9e0">Medusa-1 &gt;2.2× · Medusa-2 2.3–3.6×</text>
+    <rect x="440" y="392" width="320" height="110" rx="9" fill="#161b22" stroke="#bc8cff"/>
+    <text x="456" y="417" fill="#dcc8ff" font-weight="700">Lookahead 2402.02057</text>
+    <text x="456" y="439" fill="#8b949e">雅可比迭代并行猜测，无草稿无存储</text>
+    <text x="456" y="461" fill="#8b949e">已确认猜测缓存为 lookahead 分支</text>
+    <text x="456" y="483" fill="#d1d9e0">MT-bench 1.8× · 代码补全 4×</text>
+  </g>
+
+  <!-- Branch C: architecture-native -->
+  <rect x="810" y="222" width="320" height="44" rx="9" fill="#2e2410" stroke="#d29922"/>
+  <text x="970" y="250" fill="#e3b341" font-size="13.5" font-weight="700" text-anchor="middle">路线 C · 架构原生 MTP</text>
+  <g font-size="11">
+    <rect x="810" y="280" width="320" height="150" rx="9" fill="#2e2a14" stroke="#d29922"/>
+    <text x="826" y="306" fill="#e3b341" font-weight="700">DeepSeek-V3 MTP</text>
+    <text x="826" y="328" fill="#8b949e">2412.19437 · 顺序 MTP 模块</text>
+    <text x="826" y="350" fill="#8b949e">共享主干 / 嵌入 / 输出矩阵</text>
+    <text x="826" y="372" fill="#d1d9e0">训练：密集监督提升主模型</text>
+    <text x="826" y="394" fill="#d1d9e0">推理：直接充当投机草稿器</text>
+    <text x="826" y="416" fill="#8b949e">无需独立草稿模型运维</text>
+    <rect x="810" y="442" width="320" height="60" rx="9" fill="#161b22" stroke="#30363d"/>
+    <text x="826" y="466" fill="#e6edf3" font-weight="700">趋势：投机能力内生化</text>
+    <text x="826" y="487" fill="#8b949e">草稿与目标同源 → 接受率更稳</text>
+  </g>
+
+  <!-- verification strip -->
+  <rect x="70" y="530" width="1060" height="90" rx="12" fill="#11161f" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="92" y="558" fill="#58a6ff" font-size="14" font-weight="700">统一验证机制（一次并行前向）</text>
+  <text x="92" y="584" fill="#d1d9e0" font-size="12">草稿 x₁..xₖ → 目标模型并行算 q(xᵢ|·)：q≥p 接受；否则按 (q−p) 拒绝采样修正</text>
+  <text x="92" y="606" fill="#8b949e" font-size="12">期望加速 ≈ (1 + k·α)/(1 + c)　α=接受率，c=草稿成本；近期实测：草稿「延迟」比草稿「精度」更决定吞吐</text>
+
+  <!-- boundary cards -->
+  <g font-size="12">
+    <rect x="70" y="640" width="510" height="90" rx="11" fill="#2a1417" stroke="#f85149"/>
+    <text x="90" y="667" fill="#ffa198" font-weight="700">收益边界</text>
+    <text x="90" y="690" fill="#8b949e">在线小/中 batch 收益最大；高并发 GPU 饱和时草稿反降总吞吐</text>
+    <text x="90" y="712" fill="#8b949e">领域漂移 → 接受率崩塌，需自训练草稿头（Medusa/EAGLE 流程）</text>
+    <rect x="620" y="640" width="510" height="90" rx="11" fill="#12261a" stroke="#3fb950"/>
+    <text x="640" y="667" fill="#7ee787" font-weight="700">2026 前沿：面向 reasoning 负载</text>
+    <text x="640" y="690" fill="#8b949e">推理模型思维链长且发散，通用草稿接受率下降</text>
+    <text x="640" y="712" fill="#8b949e">在思维链分布上训练专用草稿器是活跃方向</text>
+  </g>
+</svg>
+</body></html>

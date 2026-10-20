@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · PD分离与KVCache中心架构</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 780" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker>
+    <marker id="arp" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#bc8cff"/></marker>
+    <marker id="arg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3fb950"/></marker>
+  </defs>
+  <rect x="0" y="0" width="1200" height="780" fill="#0d1117"/>
+  <text x="60" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 4 · Prefill/Decode 分离与 KVCache 中心架构：计算—存储分离的云端推理新范式</text>
+  <text x="60" y="76" fill="#8b949e" font-size="13">Prefill 池与 Decode 池独立扩缩容；KV Cache 经全局分层池与 RDMA 在节点间流动</text>
+
+  <!-- clients -->
+  <rect x="470" y="100" width="260" height="46" rx="10" fill="#161b22" stroke="#58a6ff"/>
+  <text x="600" y="129" fill="#58a6ff" font-size="13.5" font-weight="700" text-anchor="middle">客户端请求（多租户 · SLO 约束）</text>
+
+  <!-- Conductor -->
+  <rect x="430" y="170" width="340" height="64" rx="11" fill="#2a1f10" stroke="#d29922" stroke-width="1.7"/>
+  <text x="600" y="196" fill="#e3b341" font-size="14" font-weight="700" text-anchor="middle">Conductor 全局调度器</text>
+  <text x="600" y="218" fill="#8b949e" font-size="11" text-anchor="middle">按负载/KV 位置/传输代价决策 · 预测式早拒保障 SLO</text>
+  <line x1="600" y1="146" x2="600" y2="168" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar)"/>
+
+  <!-- Prefill cluster -->
+  <rect x="50" y="270" width="300" height="250" rx="13" fill="#12231a" stroke="#3fb950" stroke-width="1.8"/>
+  <rect x="50" y="270" width="300" height="38" rx="13" fill="#3fb950" opacity="0.13"/>
+  <text x="200" y="295" fill="#7ee787" font-size="14.5" font-weight="700" text-anchor="middle">Prefill 集群 · 计算密集</text>
+  <g font-size="11.5">
+    <rect x="70" y="322" width="260" height="40" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="84" y="346" fill="#e6edf3">高算力 GPU（偏好 FP8/FP4 峰值）</text>
+    <rect x="70" y="370" width="260" height="40" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="84" y="394" fill="#e6edf3">Chunked Pipeline Parallelism</text>
+    <rect x="70" y="418" width="260" height="40" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="84" y="442" fill="#e6edf3">长 prompt 分块 → 产出 KV</text>
+    <text x="70" y="486" fill="#8b949e">独立 batch / 并行策略 · 独立扩缩容</text>
+    <text x="70" y="506" fill="#8b949e">优化目标：TTFT</text>
+  </g>
+
+  <!-- KVCache central pool -->
+  <rect x="400" y="270" width="400" height="250" rx="13" fill="#1d1633" stroke="#bc8cff" stroke-width="1.8"/>
+  <rect x="400" y="270" width="400" height="38" rx="13" fill="#bc8cff" opacity="0.13"/>
+  <text x="600" y="295" fill="#dcc8ff" font-size="14.5" font-weight="700" text-anchor="middle">全局 KVCache 池（分布式分层存储）</text>
+  <g font-size="12">
+    <rect x="424" y="326" width="352" height="46" rx="9" fill="#241a40" stroke="#bc8cff"/>
+    <text x="440" y="346" fill="#dcc8ff" font-weight="700">GPU HBM</text>
+    <text x="440" y="365" fill="#8b949e">热 KV · decode 即时读取</text>
+    <rect x="424" y="380" width="352" height="46" rx="9" fill="#241a40" stroke="#bc8cff"/>
+    <text x="440" y="400" fill="#dcc8ff" font-weight="700">CPU DRAM（跨整机柜）</text>
+    <text x="440" y="419" fill="#8b949e">温 KV · 全局共享，去重复用</text>
+    <rect x="424" y="434" width="352" height="46" rx="9" fill="#241a40" stroke="#bc8cff"/>
+    <text x="440" y="454" fill="#dcc8ff" font-weight="700">SSD</text>
+    <text x="440" y="473" fill="#8b949e">冷 KV · 前缀缓存/历史会话</text>
+    <text x="424" y="502" fill="#bc8cff" font-size="11">传输：GPUDirect RDMA / NVLink · KV 即分布式状态层</text>
+  </g>
+
+  <!-- Decode cluster -->
+  <rect x="850" y="270" width="300" height="250" rx="13" fill="#11242e" stroke="#39c5cf" stroke-width="1.8"/>
+  <rect x="850" y="270" width="300" height="38" rx="13" fill="#39c5cf" opacity="0.13"/>
+  <text x="1000" y="295" fill="#7fe3ea" font-size="14.5" font-weight="700" text-anchor="middle">Decode 集群 · 访存密集</text>
+  <g font-size="11.5">
+    <rect x="870" y="322" width="260" height="40" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="884" y="346" fill="#e6edf3">大显存/带宽 GPU（可异代际）</text>
+    <rect x="870" y="370" width="260" height="40" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="884" y="394" fill="#e6edf3">按需拉取 KV → 逐 token 生成</text>
+    <rect x="870" y="418" width="260" height="40" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="884" y="442" fill="#e6edf3">连续批处理 · 可叠投机解码</text>
+    <text x="870" y="486" fill="#8b949e">独立 batch / 并行策略 · 独立扩缩容</text>
+    <text x="870" y="506" fill="#8b949e">优化目标：TBT/TPOT</text>
+  </g>
+
+  <!-- KV flow arrows -->
+  <line x1="350" y1="395" x2="398" y2="395" stroke="#bc8cff" stroke-width="2.6" marker-end="url(#arp)"/>
+  <text x="352" y="384" fill="#bc8cff" font-size="10.5">写 KV</text>
+  <line x1="800" y1="395" x2="848" y2="395" stroke="#bc8cff" stroke-width="2.6" marker-end="url(#arp)"/>
+  <text x="802" y="384" fill="#bc8cff" font-size="10.5">读 KV</text>
+  <!-- conductor control arrows -->
+  <line x1="500" y1="234" x2="230" y2="268" stroke="#d29922" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <line x1="600" y1="234" x2="600" y2="268" stroke="#d29922" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <line x1="700" y1="234" x2="970" y2="268" stroke="#d29922" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+  <!-- response back -->
+  <path d="M1000,520 L1000,560 L600,560 L600,236" fill="none" stroke="#39c5cf" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#ar)"/>
+  <text x="700" y="552" fill="#39c5cf" font-size="11">生成结果经调度器返回客户端</text>
+
+  <!-- bottom: evidence cards -->
+  <g font-size="12">
+    <rect x="50" y="590" width="262" height="90" rx="11" fill="#161b22" stroke="#3fb950"/>
+    <text x="68" y="617" fill="#7ee787" font-weight="700">DistServe 2401.09670</text>
+    <text x="68" y="640" fill="#e6edf3">同硬件服务 7.4× 请求</text>
+    <text x="68" y="662" fill="#8b949e">或支持 12.6× 更严 SLO（OSDI'24）</text>
+
+    <rect x="330" y="590" width="262" height="90" rx="11" fill="#161b22" stroke="#d29922"/>
+    <text x="348" y="617" fill="#e3b341" font-weight="700">Splitwise 2311.18677</text>
+    <text x="348" y="640" fill="#e6edf3">同预算 2.35× 吞吐</text>
+    <text x="348" y="662" fill="#8b949e">或同设计 1.4× 吞吐、成本 −20%</text>
+
+    <rect x="610" y="590" width="262" height="90" rx="11" fill="#161b22" stroke="#bc8cff"/>
+    <text x="628" y="617" fill="#dcc8ff" font-weight="700">Mooncake 2407.00079</text>
+    <text x="628" y="640" fill="#e6edf3">比 vLLM 多处理 75% 请求</text>
+    <text x="628" y="662" fill="#8b949e">长上下文吞吐最高 +525%（FAST'25 最佳）</text>
+
+    <rect x="890" y="590" width="260" height="90" rx="11" fill="#161b22" stroke="#58a6ff"/>
+    <text x="908" y="617" fill="#58a6ff" font-weight="700">2025–2026 成为标配</text>
+    <text x="908" y="640" fill="#8b949e">vLLM V1 / SGLang / LMDeploy</text>
+    <text x="908" y="662" fill="#8b949e">TensorRT-LLM · NVIDIA Dynamo</text>
+  </g>
+
+  <!-- orchestration strip -->
+  <rect x="50" y="700" width="1100" height="50" rx="11" fill="#11161f" stroke="#30363d"/>
+  <text x="72" y="731" fill="#8b949e" font-size="12.5">编排层：NVIDIA Dynamo（KV 路由/多节点调度） · Ray Serve · llm-d ｜ 类比数据库系统：计算—存储分离、日志/状态中心化</text>
+</svg>
+</body></html>

@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 16 个话题。
+大模型与后训练方向的论文分析，共 17 个话题。
 
 ---
 
@@ -99,3 +99,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 智源《2026 十大 AI 技术趋势》第 7 位方向——当人类文本存量可见尽头，模型自己生成的数据究竟是「免费燃料」还是「自食毒果」。基于 36 篇专题 arXiv 论文与 11 篇厂商技术报告/官方博客（编号经 arxiv.org 逐一核实）：先以 Epoch AI 估算锚定硬约束（人类公开文本质量加权存量约 **300T token**、**2026–2032** 耗尽）；建立「谁生成 × 用在哪」两轴分类与「数据飞轮 vs 递归自消耗」判据；深讲 *Nature* 模型崩溃理论（分布尾部消失、误差单调累积、静默退化）及其**抗崩溃边界条件**——真实数据**累积而非替换**（误差获独立于迭代次数的有限上界）、锚点比例足够、多源生成、主动校正与可执行验证；讲透**修正缩放定律**（SynthLLM：收益约 **300B token** 后递减、**8B 约 1T token 达峰**、3B 需约 4T；数据过滤须与算力联合 scale；数据受限重复 ≤4 epoch）；梳理六大方法族（Self-Improve/STaR/RFT、Self-Rewarding/SPIN、rStar-Math 深度自演化、Self-Instruct/Evol-Instruct/Magpie、phi 合成教科书、Orca/R1 蒸馏）与 CodeT/DCLM/GRPO 可执行验证、SemDeDup 语义去重；横评 Nemotron（对齐数据 **98% 合成**）、Llama 3、Phi-3/4、DeepSeek、Qwen3、Kimi K2，并对网络流传「预训练 50–70% 合成」做证据审计（无具名官方背书，不予采信）；覆盖世界模型仿真（Genie/GameNGen/DriveDreamer/MagicDrive/GenSim/Cosmos）、版权判例线（Bartz/Getty/NYT）、EU AI Act 与加州 AB 2013 披露义务、LiveCodeBench/LiveBench 防污染评测、开放问题与工程落地 Checklist。厂商口径与第三方估算均显式标注。
 
 📅 2026-10-19 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](synthetic-data/report.md)
+
+### [大模型推理优化](inference-optimization/report.html)
+
+智源《2026 十大 AI 技术趋势》第 8 位方向——「推理优化远未触顶，技术泡沫是假命题」。基于 34 篇专题 arXiv 论文（编号经 arxiv.org 逐一核实）与 NVIDIA/DeepSeek/Apple/Anthropic 官方信源交叉验证：先描绘结构性「剪刀差」——GPT-3.5 级推理成本 2022-11→2024-10 下降逾 **280 倍**（Stanford AI Index 2025）而推理约占 NVIDIA 数据中心收入 **40%**（CFO 财报电话会，2024-05），Agentic 负载步骤数一年翻倍至 7.7、工具调用占比 0.5%→21.9%（LangChain 官方）；从第一性原理拆解 **Prefill（计算密集）/ Decode（访存密集）** 两阶段、内存墙与 KV Cache 显存公式；深讲权重量化（LLM.int8 离群混合精度、SmoothQuant 难度迁移 W8A8、GPTQ/AWQ 4-bit、QServe W4A8KV4）与 **KV Cache 四大治理路线**——驱逐（H₂O/StreamingLLM 注意力汇聚点/SnapKV）、量化（KIVI 2-bit）、架构（DeepSeek **MLA 压缩 93.3%**）、下沉（ShadowKV）；覆盖 FlashAttention 三代 IO 感知、PagedAttention 分页/连续批处理/Chunked Prefill；系统梳理投机解码家族（原始投机采样无损证明、**EAGLE 三代冲到 6.5×**、Medusa 多头、Lookahead 雅可比、DeepSeek MTP 架构原生）；讲透 Prefill/Decode 分离（DistServe 7.4×、Splitwise 2.35×，含编号勘误 **2311.18677**）与 Kimi **Mooncake**「以 KVCache 为中心」（多处理 75% 请求、长上下文 +525%，FAST'25 最佳论文）；并给出六大引擎横评（llama.cpp 131.7k/vLLM 94.2k/SGLang 37.4k stars）、FP8/FP4 硬件（Blackwell 推理成本/能耗最高降 25×）、国产芯片 0day 适配、端侧推理（Apple ~3B）、开放问题与工程落地 Checklist。厂商口径与「50–200 次调用/150× 算力」等流行说法均做证据审计。
+
+📅 2026-10-20 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](inference-optimization/report.md)
