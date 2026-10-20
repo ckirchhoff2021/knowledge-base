@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 开源 Jev 生态谱系与三大训练流派</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="900" fill="#0d1117"/>
+  <text x="60" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 开源 Jev 决策模型生态谱系：两条底座路线 × 三种训练范式</text>
+  <text x="60" y="76" fill="#8b949e" font-size="13">共同地基：Typed Decisions（1200 训练/400 测试案例，教师软概率标签，4 工作流 × 5 类型化决策）；数据截至 2026-10-19</text>
+
+  <!-- dataset base -->
+  <rect x="380" y="100" width="440" height="58" rx="12" fill="#161b22" stroke="#d29922" stroke-width="1.6"/>
+  <text x="600" y="125" fill="#d29922" font-size="16" font-weight="700" text-anchor="middle">LocalLLaMA/typed-decisions（Apache-2.0）</text>
+  <text x="600" y="146" fill="#8b949e" font-size="11.5" text-anchor="middle">noul(boolean) / choice / score 三原语 · 教师自一致天花板 0.735</text>
+
+  <!-- two backbone lanes -->
+  <rect x="40" y="196" width="540" height="132" rx="10" fill="none" stroke="#30363d" stroke-dasharray="5 4"/>
+  <text x="56" y="218" fill="#58a6ff" font-size="13" font-weight="700">底座路线 A · 因果解码器（去 LM 头，前缀可共享）</text>
+  <rect x="56" y="232" width="240" height="78" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.3"/>
+  <text x="176" y="256" fill="#e6edf3" font-size="13" font-weight="700" text-anchor="middle">Qwen3-0.6B</text>
+  <text x="176" y="277" fill="#8b949e" font-size="11" text-anchor="middle">598M（含候选头）· 2048 ctx</text>
+  <text x="176" y="296" fill="#3fb950" font-size="11" text-anchor="middle">AgentJev v1 / coding-gates</text>
+  <rect x="312" y="232" width="252" height="78" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.3"/>
+  <text x="438" y="256" fill="#e6edf3" font-size="13" font-weight="700" text-anchor="middle">Qwen3.5-4B / Qwen3-Next-80B-A3B</text>
+  <text x="438" y="277" fill="#8b949e" font-size="11" text-anchor="middle">LoRA 专家 · 117–440ms</text>
+  <text x="438" y="296" fill="#3fb950" font-size="11" text-anchor="middle">Decider-4B 0.8205 · Arbiter 0.817</text>
+
+  <rect x="620" y="196" width="540" height="132" rx="10" fill="none" stroke="#30363d" stroke-dasharray="5 4"/>
+  <text x="636" y="218" fill="#bc8cff" font-size="13" font-weight="700">底座路线 B · 双向编码器（整段双向，极致延迟）</text>
+  <rect x="636" y="232" width="250" height="78" rx="8" fill="#161b22" stroke="#bc8cff" stroke-width="1.3"/>
+  <text x="761" y="256" fill="#e6edf3" font-size="13" font-weight="700" text-anchor="middle">ModernBERT-large</text>
+  <text x="761" y="277" fill="#8b949e" font-size="11" text-anchor="middle">421M · 512/1024 ctx · 33–42ms</text>
+  <text x="761" y="296" fill="#3fb950" font-size="11" text-anchor="middle">Laya 系列（RLCD）</text>
+  <rect x="902" y="232" width="242" height="78" rx="8" fill="#161b22" stroke="#bc8cff" stroke-width="1.3"/>
+  <text x="1023" y="256" fill="#e6edf3" font-size="13" font-weight="700" text-anchor="middle">mmBERT / Gemma3 / 22–400M</text>
+  <text x="1023" y="277" fill="#8b949e" font-size="11" text-anchor="middle">17–80ms · CPU 可跑</text>
+  <text x="1023" y="296" fill="#3fb950" font-size="11" text-anchor="middle">OpenDecider-nano · Phocinae</text>
+
+  <g stroke="#30363d" stroke-width="1.3" fill="none">
+    <path d="M520,158 L300,196"/><path d="M680,158 L820,196"/>
+  </g>
+
+  <!-- three recipe columns -->
+  <text x="60" y="372" fill="#e6edf3" font-size="15" font-weight="700">三种已落地的训练范式：</text>
+
+  <!-- recipe 1 -->
+  <rect x="40" y="388" width="360" height="330" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+  <rect x="40" y="388" width="360" height="34" rx="10" fill="#3fb950" opacity="0.15"/>
+  <text x="220" y="411" fill="#3fb950" font-size="14" font-weight="700" text-anchor="middle">范式一 · 软标签监督微调</text>
+  <text x="58" y="446" fill="#9ecbff" font-size="11.5" font-weight="700">代表：AgentJev-0.6B v1（malevrigns）</text>
+  <text x="58" y="470" fill="#c9d1d9" font-size="11.5">· 标签：教师软概率分布</text>
+  <text x="58" y="492" fill="#c9d1d9" font-size="11.5">· Loss：soft CE + 0.1·Brier</text>
+  <text x="58" y="514" fill="#c9d1d9" font-size="11.5">· 全参 600 步，LLRD 1e-5/1e-4</text>
+  <text x="58" y="536" fill="#c9d1d9" font-size="11.5">· 案例级切分 960/120/120 + 400 test</text>
+  <text x="58" y="558" fill="#c9d1d9" font-size="11.5">· dev 选点 → 独立集拟合温度 → test</text>
+  <text x="58" y="580" fill="#c9d1d9" font-size="11.5">· 排列等变头（无位置编码）</text>
+  <line x1="58" y1="596" x2="382" y2="596" stroke="#30363d"/>
+  <text x="58" y="620" fill="#3fb950" font-size="12" font-weight="700">79.25% TD · 从零复现 78.05%</text>
+  <text x="58" y="644" fill="#8b949e" font-size="11">49 分钟 / 34GB（GB10）· 49min 可复现</text>
+  <text x="58" y="672" fill="#f85149" font-size="11">边界：教师标签 ≠ 真实成功率</text>
+  <text x="58" y="696" fill="#8b949e" font-size="10.5">参照：phase4 起点仅 38.70%</text>
+
+  <!-- recipe 2 -->
+  <rect x="420" y="388" width="360" height="330" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+  <rect x="420" y="388" width="360" height="34" rx="10" fill="#bc8cff" opacity="0.15"/>
+  <text x="600" y="411" fill="#bc8cff" font-size="14" font-weight="700" text-anchor="middle">范式二 · RLCD 强化校准</text>
+  <text x="438" y="446" fill="#9ecbff" font-size="11.5" font-weight="700">代表：Laya typed-decisions（Convai）</text>
+  <text x="438" y="470" fill="#c9d1d9" font-size="11.5">· 探索：logits 加零均值 Gaussian</text>
+  <text x="438" y="492" fill="#c9d1d9" font-size="11.5">· 奖励：log + spherical (+RPS)</text>
+  <text x="438" y="514" fill="#c9d1d9" font-size="11.5">· 严格适当评分 ⇒ 诚实概率最优</text>
+  <text x="438" y="536" fill="#c9d1d9" font-size="11.5">· REINFORCE + 组均值 baseline</text>
+  <text x="438" y="558" fill="#c9d1d9" font-size="11.5">· 并联教师分布 soft CE</text>
+  <text x="438" y="580" fill="#c9d1d9" font-size="11.5">· 1200 案例全量，ModernBERT-large</text>
+  <line x1="438" y1="596" x2="762" y2="596" stroke="#30363d"/>
+  <text x="438" y="620" fill="#3fb950" font-size="12" font-weight="700">76.6–77% TD · 33–42ms</text>
+  <text x="438" y="644" fill="#8b949e" font-size="11">2×T4 仅 4–5 小时（Kaggle 可复现）</text>
+  <text x="438" y="672" fill="#f85149" font-size="11">事故：温度在训练集拟合（#186）</text>
+  <text x="438" y="696" fill="#f85149" font-size="10.5">ECE 0.213 仍过自信 · 零样本仅 0.362</text>
+
+  <!-- recipe 3 -->
+  <rect x="800" y="388" width="360" height="330" rx="10" fill="#161b22" stroke="#d29922" stroke-width="1.6"/>
+  <rect x="800" y="388" width="360" height="34" rx="10" fill="#d29922" opacity="0.15"/>
+  <text x="980" y="411" fill="#d29922" font-size="14" font-weight="700" text-anchor="middle">范式三 · 真实结果领域续训</text>
+  <text x="818" y="446" fill="#9ecbff" font-size="11.5" font-weight="700">代表：AgentJev coding-gates</text>
+  <text x="818" y="470" fill="#c9d1d9" font-size="11.5">· 标签：退出码核对的真实运行结果</text>
+  <text x="818" y="492" fill="#c9d1d9" font-size="11.5">· 2100 真实运行 + 1800 一行摘要</text>
+  <text x="818" y="514" fill="#c9d1d9" font-size="11.5">· 6 种运行器，2 种整组留作 OOD</text>
+  <text x="818" y="536" fill="#c9d1d9" font-size="11.5">· 中英/倒置问法增强，多问法 dev</text>
+  <text x="818" y="558" fill="#c9d1d9" font-size="11.5">· 约束选点：原能力不得退化 &gt;0.01</text>
+  <text x="818" y="580" fill="#c9d1d9" font-size="11.5">· v1 之上续训，权重差 2 个文件</text>
+  <line x1="818" y1="596" x2="1142" y2="596" stroke="#30363d"/>
+  <text x="818" y="620" fill="#3fb950" font-size="12" font-weight="700">门禁测试 100% · TD 80.85%</text>
+  <text x="818" y="644" fill="#8b949e" font-size="11">失败放行 123→0（测试集）</text>
+  <text x="818" y="672" fill="#f85149" font-size="11">边界：极简问法 83%，领域窄</text>
+  <text x="818" y="696" fill="#8b949e" font-size="10.5">OOD 运行器门禁 95.0%</text>
+
+  <!-- info cards -->
+  <g>
+    <rect x="40" y="744" width="360" height="120" rx="10" fill="#0a0e14" stroke="#30363d"/>
+    <text x="58" y="770" fill="#58a6ff" font-size="12.5" font-weight="700">通用零样本派（不训练）</text>
+    <text x="58" y="794" fill="#c9d1d9" font-size="11">d3-27B 0.749 · clef-27B 0.728 · Amos 27B 0.761</text>
+    <text x="58" y="816" fill="#c9d1d9" font-size="11">闭源 meraGPT 0.768 居零样本榜首</text>
+    <text x="58" y="840" fill="#8b949e" font-size="10.5">叫 Jev ≠ 强：多个同名模型仅 0.49–0.69</text>
+  </g>
+  <g>
+    <rect x="420" y="744" width="360" height="120" rx="10" fill="#0a0e14" stroke="#30363d"/>
+    <text x="438" y="770" fill="#58a6ff" font-size="12.5" font-weight="700">零权重适配</text>
+    <text x="438" y="794" fill="#c9d1d9" font-size="11">Amos large 逐题 log-prior 偏置：</text>
+    <text x="438" y="816" fill="#c9d1d9" font-size="11">不改任何权重，0.761 → 0.8025</text>
+    <text x="438" y="840" fill="#8b949e" font-size="10.5">问题集合稳定时性价比最高的基线</text>
+  </g>
+  <g>
+    <rect x="800" y="744" width="360" height="120" rx="10" fill="#0a0e14" stroke="#30363d"/>
+    <text x="818" y="770" fill="#f85149" font-size="12.5" font-weight="700">纪律红线（真实事故）</text>
+    <text x="818" y="794" fill="#c9d1d9" font-size="11">#25 污染：0.906 → 清除后 0.791</text>
+    <text x="818" y="816" fill="#c9d1d9" font-size="11">test 预测派生数据严禁进训练</text>
+    <text x="818" y="840" fill="#8b949e" font-size="10.5">显著 &gt;0.735 可能在学教师怪癖</text>
+  </g>
+</svg>
+</body></html>

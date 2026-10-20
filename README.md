@@ -48,6 +48,8 @@
 | [**合成数据与修正缩放定律**](https://ckirchhoff2021.github.io/knowledge-base/models/synthetic-data/report.html) | 智源趋势第 7 位：破除「2026 数据枯竭魔咒」（Epoch AI：人类文本约 300T token、2026–2032 耗尽）· 模型崩溃 Nature 理论与抗崩溃边界（累积真实锚点/多源/可执行验证）· 修正缩放定律（SynthLLM：收益约 300B token 后递减、8B 约 1T 达峰）· 六大方法族（Self-Improve/STaR/RFT/Self-Rewarding/SPIN/rStar-Math/Self-Instruct/Magpie/phi/Orca/R1 蒸馏/CodeT/DCLM）· 世界模型仿真（Genie/GameNGen/DriveDreamer/GenSim/Cosmos）· Nemotron 对齐数据 98% 合成 · 版权判例与 EU AI Act 披露 · 防污染评测 |
 | [**大模型推理优化**](https://ckirchhoff2021.github.io/knowledge-base/models/inference-optimization/report.html) | 智源趋势第 8 位：推理成本两年降 280 倍 vs 推理约占数据中心收入 40% 的剪刀差 · Prefill/Decode 两阶段与内存墙 · 权重量化（SmoothQuant/GPTQ/AWQ/QServe）· KV Cache 治理（H₂O/StreamingLLM/KIVI/MLA 压缩 93.3%/ShadowKV）· FlashAttention 三代 · PagedAttention/连续批处理/Chunked Prefill · 投机解码家族（EAGLE 三代 6.5×/Medusa/Lookahead/MTP）· DistServe/Splitwise/Mooncake PD 分离 · 六大引擎横评 · FP8/FP4 与端侧推理 |
 
+| [**开源 Jev 模型训练方法全景**](https://ckirchhoff2021.github.io/knowledge-base/models/open-source-jev-training/report.html) | 已发布权重的开源 Jev-like 决策模型怎么训：统一判别架构（置换等变候选头，noul/choice/score 共用一头）· 三大范式——软标签 SFT（AgentJev-0.6B：soft CE+Brier/全参 bf16/独立校准，79.25%）、RLCD 校准强化学习（Laya 421M：Gaussian 探索+proper scoring rule+REINFORCE，76.6–77%）、真实测试结果领域续训（coding-gates：2100 次真实运行+受约束选点，门禁 100%）· 零样本派/LoRA 专家/log-prior · 10 月 TreeEncoder 共享前缀树（P50 278→44ms）· 污染事故与教师天花板 0.735 的纪律 · 选型 Checklist |
+
 ### 🌱 生活方法论
 
 | 报告 | 说明 |

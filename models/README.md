@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 17 个话题。
+大模型与后训练方向的论文分析，共 18 个话题。
 
 ---
 
@@ -105,3 +105,9 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 智源《2026 十大 AI 技术趋势》第 8 位方向——「推理优化远未触顶，技术泡沫是假命题」。基于 34 篇专题 arXiv 论文（编号经 arxiv.org 逐一核实）与 NVIDIA/DeepSeek/Apple/Anthropic 官方信源交叉验证：先描绘结构性「剪刀差」——GPT-3.5 级推理成本 2022-11→2024-10 下降逾 **280 倍**（Stanford AI Index 2025）而推理约占 NVIDIA 数据中心收入 **40%**（CFO 财报电话会，2024-05），Agentic 负载步骤数一年翻倍至 7.7、工具调用占比 0.5%→21.9%（LangChain 官方）；从第一性原理拆解 **Prefill（计算密集）/ Decode（访存密集）** 两阶段、内存墙与 KV Cache 显存公式；深讲权重量化（LLM.int8 离群混合精度、SmoothQuant 难度迁移 W8A8、GPTQ/AWQ 4-bit、QServe W4A8KV4）与 **KV Cache 四大治理路线**——驱逐（H₂O/StreamingLLM 注意力汇聚点/SnapKV）、量化（KIVI 2-bit）、架构（DeepSeek **MLA 压缩 93.3%**）、下沉（ShadowKV）；覆盖 FlashAttention 三代 IO 感知、PagedAttention 分页/连续批处理/Chunked Prefill；系统梳理投机解码家族（原始投机采样无损证明、**EAGLE 三代冲到 6.5×**、Medusa 多头、Lookahead 雅可比、DeepSeek MTP 架构原生）；讲透 Prefill/Decode 分离（DistServe 7.4×、Splitwise 2.35×，含编号勘误 **2311.18677**）与 Kimi **Mooncake**「以 KVCache 为中心」（多处理 75% 请求、长上下文 +525%，FAST'25 最佳论文）；并给出六大引擎横评（llama.cpp 131.7k/vLLM 94.2k/SGLang 37.4k stars）、FP8/FP4 硬件（Blackwell 推理成本/能耗最高降 25×）、国产芯片 0day 适配、端侧推理（Apple ~3B）、开放问题与工程落地 Checklist。厂商口径与「50–200 次调用/150× 算力」等流行说法均做证据审计。
 
 📅 2026-10-20 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](inference-optimization/report.md)
+
+### [开源 Jev 决策模型训练方法全景](open-source-jev-training/report.html)
+
+对**已经开源、已发布权重、可复现训练流程**的 Jev-like System One 决策模型做训练方法横评，并补全 2026-10 月最新进展。先建立所有开源实现共享的统一契约：因果/双向骨干 + **置换等变候选头**（无位置编码的集合 Transformer + 残差 + RMSNorm/SiLU 标量打分），noul / choice / score 三原语**共用一个头**，差异仅在候选数、指标与校准温度；地基同为 Typed Decisions 数据集（含教师自一致天花板 0.735 与污染事故的社区纪律）。核心是三大已验证训练范式：①**软标签 SFT**（AgentJev-0.6B，Qwen3-0.6B 去 LM 头）——soft 交叉熵 + 0.1·Brier、案例级哈希切分 960/120/120 + test 400、600 步全参 bf16、LLRD（骨干 1e-5/头 1e-4）、独立校准集顺序锁死拟合温度，phase4 续训 **79.25%**、本地从零底座直训 78.05%（GB10 49 分钟/34GB）；②**RLCD 面向校准的强化学习**（Laya，ModernBERT-large 421M）——logits 加零均值 Gaussian 探索，奖励取 log + spherical（score 题加 RPS）等严格适当评分规则，REINFORCE + 组均值 baseline 并联 soft CE，76.6–77%、33–42ms、2×T4 4–5h，并坦承 ECE 0.213、发布权重温度在训练集拟合两大缺陷；③**真实结果标签的领域续训**（coding-gates 分支）——2100 次真实测试运行按退出码核对 + 1800 行摘要、中英/倒置问法增强、vitest/node 整组 OOD、以「TD dev CE ≤ step0+0.01」约束选点，门禁测试 100%、TD 80.85%。另覆盖通用零样本派（d3/clef/Amos）、LoRA 专家（Decider-4B 0.8205）、零权重 log-prior（0.761→0.8025）等路线；10 月前沿 **TreeEncoder 共享前缀树编码器**（服务 P50 278→44ms 即 6.3×、训练 3.69×）、Claude Code PreToolUse hook 等落地集成，并给出三范式全景对比与工程选型 Checklist。信源为上游仓库协议文件/报告、Hugging Face 模型卡与数据集卡、本地 jev-trainer 实测记录一手交叉验证，2 篇关键论文编号（SalesRLAgent arXiv:2503.23303、Confidence-Aware Routing arXiv:2510.01237）经 arXiv 官方 API 核实。
+
+📅 2026-10-20 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](open-source-jev-training/report.md)

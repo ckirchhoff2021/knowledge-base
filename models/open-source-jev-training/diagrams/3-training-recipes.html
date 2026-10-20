@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 三种训练范式的数据流与目标对比</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 920" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="920" fill="#0d1117"/>
+  <text x="60" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 3 · 三种训练范式：标签来源、学习信号与纪律约束</text>
+  <text x="60" y="76" fill="#8b949e" font-size="13">从左到右为数据→学习信号→产出；三者的关键分水岭是「监督信号从哪来」与「校准如何保证」</text>
+
+  <!-- Column headers -->
+  <rect x="40" y="104" width="360" height="40" rx="8" fill="#3fb950" opacity="0.14"/>
+  <text x="220" y="130" fill="#3fb950" font-size="15" font-weight="700" text-anchor="middle">范式一 · 软标签 SFT</text>
+  <rect x="420" y="104" width="360" height="40" rx="8" fill="#bc8cff" opacity="0.14"/>
+  <text x="600" y="130" fill="#bc8cff" font-size="15" font-weight="700" text-anchor="middle">范式二 · RLCD</text>
+  <rect x="800" y="104" width="360" height="40" rx="8" fill="#d29922" opacity="0.14"/>
+  <text x="980" y="130" fill="#d29922" font-size="15" font-weight="700" text-anchor="middle">范式三 · 领域续训</text>
+
+  <!-- Row labels -->
+  <text x="48" y="180" fill="#58a6ff" font-size="11" font-weight="700">标签</text>
+  <text x="48" y="330" fill="#58a6ff" font-size="11" font-weight="700">学习信号</text>
+  <text x="48" y="510" fill="#58a6ff" font-size="11" font-weight="700">校准</text>
+  <text x="48" y="640" fill="#58a6ff" font-size="11" font-weight="700">纪律</text>
+
+  <!-- Col 1 -->
+  <g>
+    <rect x="90" y="156" width="310" height="120" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="104" y="180" fill="#c9d1d9" font-size="11.5">Typed Decisions 教师分布 y</text>
+    <text x="104" y="202" fill="#8b949e" font-size="10.5">1200 案例，4 工作流 × 5 题</text>
+    <text x="104" y="224" fill="#c9d1d9" font-size="11.5">案例级哈希切分</text>
+    <text x="104" y="246" fill="#9ecbff" font-size="11" font-family="monospace">960/120/120 + test 400</text>
+    <text x="104" y="266" fill="#8b949e" font-size="10.5">id/state 跨分割零碰撞</text>
+
+    <rect x="90" y="292" width="310" height="180" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.2"/>
+    <text x="104" y="316" fill="#9ecbff" font-size="11.5" font-family="monospace">L = softCE(p,y)</text>
+    <text x="104" y="336" fill="#9ecbff" font-size="11.5" font-family="monospace">      + 0.1·Σ(p−y)²</text>
+    <text x="104" y="362" fill="#c9d1d9" font-size="11">全参 600 步 · bf16</text>
+    <text x="104" y="384" fill="#c9d1d9" font-size="11">LLRD：骨干 1e-5 / 头 1e-4</text>
+    <text x="104" y="406" fill="#c9d1d9" font-size="11">AdamW cosine · 累积 4×4</text>
+    <text x="104" y="428" fill="#c9d1d9" font-size="11">非有限梯度即中止</text>
+    <text x="104" y="456" fill="#3fb950" font-size="11">直接监督，最易复现</text>
+
+    <rect x="90" y="488" width="310" height="92" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="104" y="512" fill="#c9d1d9" font-size="11.5">训后温度（每原语 1 个）</text>
+    <text x="104" y="534" fill="#c9d1d9" font-size="11">独立 120 校准案例拟合</text>
+    <text x="104" y="556" fill="#3fb950" font-size="11">ECE 0.169 · Brier 0.045</text>
+    <text x="104" y="574" fill="#8b949e" font-size="10.5">选完点才读校准/测试</text>
+
+    <rect x="90" y="616" width="310" height="120" rx="8" fill="#0a0e14" stroke="#30363d"/>
+    <text x="104" y="640" fill="#c9d1d9" font-size="11">每 100 步按 dev soft CE 选</text>
+    <text x="104" y="662" fill="#c9d1d9" font-size="11">test 最后读一次</text>
+    <text x="104" y="684" fill="#c9d1d9" font-size="11">selection.json 防覆盖</text>
+    <text x="104" y="710" fill="#3fb950" font-size="11.5" font-weight="700">79.25%（phase4 续训）</text>
+    <text x="104" y="728" fill="#8b949e" font-size="10.5">从零底座直训 78.05%</text>
+  </g>
+
+  <!-- Col 2 -->
+  <g>
+    <rect x="470" y="156" width="310" height="120" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="484" y="180" fill="#c9d1d9" font-size="11.5">教师分布 y（全量 1200 案例）</text>
+    <text x="484" y="202" fill="#8b949e" font-size="10.5">6000 决策，不留校准切片</text>
+    <text x="484" y="224" fill="#c9d1d9" font-size="11.5">训练中自己生成带噪样本</text>
+    <text x="484" y="246" fill="#9ecbff" font-size="11" font-family="monospace">z̃ = z + ε（零均值高斯）</text>
+    <text x="484" y="266" fill="#8b949e" font-size="10.5">组内中心化 → softmax 采样</text>
+
+    <rect x="470" y="292" width="310" height="180" rx="8" fill="#161b22" stroke="#bc8cff" stroke-width="1.2"/>
+    <text x="484" y="316" fill="#9ecbff" font-size="11.5" font-family="monospace">R = log + spherical (+RPS)</text>
+    <text x="484" y="340" fill="#c9d1d9" font-size="11">严格适当评分规则</text>
+    <text x="484" y="362" fill="#c9d1d9" font-size="11">⇒ 诚实分布时期望奖励最大</text>
+    <text x="484" y="384" fill="#c9d1d9" font-size="11">A = R_g − 组均值</text>
+    <text x="484" y="406" fill="#c9d1d9" font-size="11">REINFORCE 更新策略</text>
+    <text x="484" y="428" fill="#c9d1d9" font-size="11">并联 soft CE 稳定训练</text>
+    <text x="484" y="456" fill="#bc8cff" font-size="11">校准被奖励内生化</text>
+
+    <rect x="470" y="488" width="310" height="92" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="484" y="512" fill="#c9d1d9" font-size="11.5">按类型温度（继承+重拟）</text>
+    <text x="484" y="534" fill="#f85149" font-size="11">发布权重温度在训练集拟合</text>
+    <text x="484" y="556" fill="#f85149" font-size="11">ECE 0.213，仍过自信</text>
+    <text x="484" y="574" fill="#8b949e" font-size="10.5">issue #186 后 notebook 修正</text>
+
+    <rect x="470" y="616" width="310" height="120" rx="8" fill="#0a0e14" stroke="#30363d"/>
+    <text x="484" y="640" fill="#c9d1d9" font-size="11">RL 探索—奖励闭环</text>
+    <text x="484" y="662" fill="#c9d1d9" font-size="11">Kaggle 2×T4 4–5h 可复现</text>
+    <text x="484" y="684" fill="#c9d1d9" font-size="11">RPS 仅用于有序 score 题</text>
+    <text x="484" y="710" fill="#3fb950" font-size="11.5" font-weight="700">76.6–77% · 33–42ms</text>
+    <text x="484" y="728" fill="#8b949e" font-size="10.5">soft accuracy 0.471 落后 Jev</text>
+  </g>
+
+  <!-- Col 3 -->
+  <g>
+    <rect x="850" y="156" width="310" height="120" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="864" y="180" fill="#c9d1d9" font-size="11.5">真实执行结果（非教师）</text>
+    <text x="864" y="202" fill="#9ecbff" font-size="11" font-family="monospace">2100 真实运行 + 1800 摘要</text>
+    <text x="864" y="224" fill="#c9d1d9" font-size="11.5">构建时种植 + 退出码核对</text>
+    <text x="864" y="246" fill="#c9d1d9" font-size="11.5">6 运行器，2 种整组 OOD</text>
+    <text x="864" y="266" fill="#8b949e" font-size="10.5">pytest/jest/mocha/vitest/node…</text>
+
+    <rect x="850" y="292" width="310" height="180" rx="8" fill="#161b22" stroke="#d29922" stroke-width="1.2"/>
+    <text x="864" y="316" fill="#9ecbff" font-size="11.5" font-family="monospace">同 v1：softCE + 0.1·Brier</text>
+    <text x="864" y="340" fill="#c9d1d9" font-size="11">在 v1 权重上续训</text>
+    <text x="864" y="362" fill="#c9d1d9" font-size="11">问法增强 wordings.py</text>
+    <text x="864" y="384" fill="#c9d1d9" font-size="11">中英 / 倒置 / 删 criteria</text>
+    <text x="864" y="406" fill="#c9d1d9" font-size="11">多问法 dev 选 checkpoint</text>
+    <text x="864" y="428" fill="#f85149" font-size="11">首跑只背问法 → dev 否决</text>
+    <text x="864" y="456" fill="#d29922" font-size="11">真值标签补上教师盲区</text>
+
+    <rect x="850" y="488" width="310" height="92" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="864" y="512" fill="#c9d1d9" font-size="11.5">沿用 TD calibration 温度</text>
+    <text x="864" y="534" fill="#c9d1d9" font-size="11">不在门禁数据上另拟温度</text>
+    <text x="864" y="556" fill="#8b949e" font-size="10.5">保证两条任务概率口径一致</text>
+
+    <rect x="850" y="616" width="310" height="120" rx="8" fill="#0a0e14" stroke="#30363d"/>
+    <text x="864" y="640" fill="#c9d1d9" font-size="11">约束选点：TD dev CE</text>
+    <text x="864" y="662" fill="#c9d1d9" font-size="11">≤ step0 + 0.01 才可选</text>
+    <text x="864" y="684" fill="#c9d1d9" font-size="11">留出集全部最后读一次</text>
+    <text x="864" y="710" fill="#3fb950" font-size="11.5" font-weight="700">门禁 100% · TD 80.85%</text>
+    <text x="864" y="728" fill="#8b949e" font-size="10.5">OOD 运行器 95% · 问法 95.6%</text>
+  </g>
+
+  <!-- bottom info cards -->
+  <g>
+    <rect x="90" y="770" width="1070" height="110" rx="10" fill="#0a0e14" stroke="#30363d"/>
+    <text x="110" y="798" fill="#58a6ff" font-size="13" font-weight="700">选型一句话</text>
+    <text x="110" y="826" fill="#c9d1d9" font-size="12">① 要可控复现 / 长上下文 / 因果骨干 → 范式一（消费级 GPU 数十分钟）；② 预算最小 / 多语言 / 愿端到端学校准 → 范式二（2×T4 数小时）；</text>
+    <text x="110" y="850" fill="#c9d1d9" font-size="12">③ 已有权重且要补具体高价值门禁 → 范式三（真值数据 + 问法增强 + 不退化约束）。共同前提：独立校准集、案例级切分、test 最后读。</text>
+  </g>
+</svg>
+</body></html>
