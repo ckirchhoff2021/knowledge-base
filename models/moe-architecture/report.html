@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>稀疏混合专家（MoE）架构前沿技术报告</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:980px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:28px; }
+  h1 { font-size:28px; line-height:1.4; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin:0 8px 8px 0; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  figure { margin:28px 0; }
+  figure iframe { width:100%; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; word-break:break-all; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); word-break:normal; }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+
+</style>
+</head><body><div class="container">
+<header>
+  <h1>稀疏混合专家（MoE）架构前沿技术报告：当容量与计算解耦——从稀疏门控、细粒度分割到无辅助损失负载均衡、DeepEP 专家并行与极稀疏 MoE</h1>
+  <div><span class="badge">MoE</span><span class="badge">稀疏激活</span><span class="badge">条件计算</span><span class="badge">路由</span><span class="badge">细粒度分割</span><span class="badge">共享专家</span><span class="badge">负载均衡</span><span class="badge">无辅助损失</span><span class="badge">专家并行</span><span class="badge">DeepEP</span><span class="badge">all-to-all</span><span class="badge">EPLB</span><span class="badge">Upcycling</span><span class="badge">专家卸载</span><span class="badge">缩放定律</span></div>
+  <div class="meta" style="margin-top:10px">
+    <span>信源：35 篇专题 arXiv 论文（编号经 arxiv.org 逐一核实）+ DeepEP/EPLB 官方仓库 + Epoch AI 数据库交叉验证</span>
+    &nbsp;·&nbsp;<span>报告日期：2026-10-22</span>
+  </div>
+</header>
+<nav class="toc"><h2>目录</h2><ol><li><a href="#sec1">1. 为什么是 MoE：一个改变缩放方式的想法</a></li><li><a href="#sec2">2. 第一性原理：MoE 的形式化与核心矛盾</a></li><li><a href="#sec3">3. 九年演进时间线（2017–2026）</a></li><li><a href="#sec4">4. 路由机制全谱：谁来选择专家</a></li><li><a href="#sec5">5. 专家组织：细粒度分割、共享专家与专家数竞赛</a></li><li><a href="#sec6">6. 负载均衡：辅助损失、无辅助损失与控制论统一</a></li><li><a href="#sec7">7. MoE 训练系统：专家并行与 all-to-all 通信</a></li><li><a href="#sec8">8. MoE 推理：被专家撑大的显存与三条优化路线</a></li><li><a href="#sec9">9. MoE 缩放定律与「无限参数」猜想</a></li><li><a href="#sec10">10. 旗舰系统横评（2024–2026）</a></li><li><a href="#sec11">11. MoE 生态与采用时间线</a></li><li><a href="#sec12">12. 开放问题与工程落地 Checklist</a></li><li><a href="#sec13">13. 结语</a></li><li><a href="#sec14">参考文献</a></li></ol></nav>
+<blockquote><strong>报告日期</strong>：2026-10-22　<strong>主题分类</strong>：大模型架构创新 <strong>核心事实</strong>：全部经一手信源核实；arXiv 编号经 arxiv.org 摘要页逐一核实；厂商自报数据在正文显式标注「厂商口径」；工程库数据来自其官方 GitHub README。 <strong>去重说明</strong>：本知识库 models 分类下 21 篇报告均无 MoE 专文（MoE 仅在其他报告中作背景提及），本报告为该方向首篇深度报告。</blockquote>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec1">1. 为什么是 MoE：一个改变缩放方式的想法</h2>
+
+<p>2024 年 12 月 27 日，DeepSeek 发布技术报告，宣告一个 <strong>6710 亿参数</strong>的模型用仅 <strong>370 亿激活参数</strong>完成每个 token 的计算，训练投入仅约 <strong>278.8 万 H800 GPU 小时、14.8 万亿 token</strong>（厂商口径，<a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">2412.19437</a>）。2025 年 7 月，月之暗面的 Kimi K2 把总参数推到 <strong>1.04 万亿</strong>而每 token 仅激活 <strong>326 亿</strong>（<a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">2507.20534</a>）。2026 年 9 月的工作已经在 <strong>768 个专家、top-3</strong> 的极稀疏设定下稳定训练（<a href="https://arxiv.org/abs/2609.39137" target="_blank" rel="noopener">2609.39137</a>）。</p>
+
+<p>这些数字背后是同一个简单而深刻的想法：<strong>把 Transformer 的前馈网络（FFN）替换成 N 个并行的子网络（专家），每个 token 只经过其中少数几个</strong>。于是，模型&quot;知道&quot;的东西（总容量）与每个 token 实际&quot;调用&quot;的计算量（激活计算）第一次被干净地解耦——你可以在不按比例增加训练算力的前提下，把模型的知识容量扩大一个数量级。</p>
+
+<p>This idea is Mixture of Experts (MoE)。它不是 2024 年的发明：2017 年 Noam Shazeer 等人的稀疏门控 MoE 层已做到每层多达数千专家、容量提升超过 1000 倍、137B 参数的语言模型（<a href="https://arxiv.org/abs/1701.06538" target="_blank" rel="noopener">1701.06538</a>）；2021 年的 Switch Transformer 用最简单的 top-1 路由把模型推到 1.6 万亿参数（<a href="https://arxiv.org/abs/2101.03961" target="_blank" rel="noopener">2101.03961</a>）。但 MoE 从&quot;能跑通&quot;到&quot;成为几乎所有旗舰模型的骨干&quot;，靠的是 2024–2026 年在<strong>专家组织、负载均衡、专家并行通信和推理系统</strong>四个方向上的密集工程突破——而这些突破绝大多数来自中国团队（DeepSeek、阿里 Qwen、Moonshot、MiniMax、智谱）。</p>
+
+<figure>
+  <iframe src="diagrams/1-principle.html" height="800" loading="lazy"></iframe>
+  <figcaption>图 1 · 第一性原理：MoE 把「知识容量」与「每 token 计算量」解耦（Dense vs 稀疏 MoE）</figcaption>
+</figure>
+
+<h2 id="sec2">2. 第一性原理：MoE 的形式化与核心矛盾</h2>
+
+<h3>2.1 数学定义</h3>
+
+<p>标准 dense Transformer 每个位置的 FFN 子层输出为：</p>
+
+<pre><code>y = FFN(x) = W2 · silu(W1 · x)          # SwiGLU 风格，W1: H→I, W2: I→H</code></pre>
+
+<p>MoE 把它替换为 N 个同构专家 {E₁…Eₙ} 加一个路由器（router/gate）。对 token 表示 x：</p>
+
+<pre><code># 1) 路由打分：一个可学习的线性层 + softmax
+logits = x · W_g                  # W_g: H→N
+scores = Softmax(logits)          # N 个专家的亲和度
+
+# 2) 选专家：top-k（典型 k=1…10）
+TopK = argtopk(scores, k)
+
+# 3) 稀疏加权组合
+y = Σ_{i∈TopK} scores_i · E_i(x)</code></pre>
+
+<p>每个 token 的激活参数量约为：</p>
+
+<pre><code>激活参数 ≈ Attention(H) + k × Expert(H,I)
+总参数   ≈ Attention(H) + N × Expert(H,I)</code></pre>
+
+<p>以 DeepSeek-V3 为例：N=256 路由专家 + 1 共享专家，k=8，61 层。总参数 671B，每 token 激活仅 37B——<strong>容量/计算比约 18:1</strong>（<a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">2412.19437</a>）。Kimi K2 为 384 专家、k=8，比值约 32:1（<a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">2507.20534</a>）。</p>
+
+<h3>2.2 为什么是 FFN 被替换，而不是注意力</h3>
+
+<p>现有 MoE 几乎只对 FFN 做条件化，原因有三：</p>
+
+<ol>
+<li><strong>FFN 是模型的&quot;知识存储层&quot;。</strong> 机制研究普遍把 FFN 看作 key-value 记忆（每个中间维 i 对应一条&quot;若输入匹配关键模式则注入知识&quot;的条目）。知识本身天然可分领域/分主题，适合分给不同专家；而注意力负责跨位置信息混合，条件化会破坏序列内的一致性。</li>
+<li><strong>计算占比高。</strong> FFN 通常占每层约 2/3 的 FLOPs，替换它对总计算的调节杠杆最大。</li>
+<li><strong>无跨-token 依赖。</strong> FFN 逐位置独立计算，做稀疏选择不影响其他位置，容易并行；注意力的每个 head 处理整个序列，条件化代价高。</li>
+</ol>
+
+<h3>2.3 MoE 的三对核心矛盾</h3>
+
+<table>
+<thead><tr>
+<th>矛盾</th>
+<th>内容</th>
+<th>典型表现</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>专门化 vs 均衡</strong></td>
+<td>我们希望专家各专一块（专门化），但路由器会自然涌向少数&quot;万能&quot;专家，造成热专家过载、冷专家永不更新（专家坍塌）</td>
+<td>几个专家收走大部分 token，其余退化；训练不稳</td>
+</tr>
+<tr>
+<td><strong>容量 vs 通信</strong></td>
+<td>专家越多、分割越细，知识容量越大；但专家分布在不同设备上，每个 MoE 层都要做两次全对全（all-to-all）通信把 token 送到对应专家再收回</td>
+<td>通信常成为多机训练瓶颈，占比可超计算</td>
+</tr>
+<tr>
+<td><strong>训练友好 vs 推理友好</strong></td>
+<td>MoE 训练时每批 token 多，每个专家都有活干、利用率高；推理（尤其生成阶段）每批 token 很少，却必须把全部专家权重常驻显存</td>
+<td>MoE 模型&quot;训练省钱、推理费显存&quot;，单请求低延迟场景吃亏</td>
+</tr>
+</tbody></table>
+
+<h3>2.4 关键术语速查</h3>
+
+<table>
+<thead><tr>
+<th>令牌</th>
+<th>含义</th>
+</tr></thead><tbody>
+<tr>
+<td>N / k</td>
+<td>专家总数 / 每 token 选中的专家数（top-k）</td>
+</tr>
+<tr>
+<td>routed / shared expert</td>
+<td>路由专家（被选择）/ 共享专家（每个 token 都过，承载通用知识）</td>
+</tr>
+<tr>
+<td>capacity factor</td>
+<td>容量因子：每个专家最多接收 token 数相对均值的倍数，超出则 drop（丢弃）或在系统层处理</td>
+</tr>
+<tr>
+<td>token dropping</td>
+<td>专家桶满后，溢出 token 在该层走捷径（仅残差）或被 padding 处理</td>
+</tr>
+<tr>
+<td>EP（Expert Parallelism）</td>
+<td>专家并行：不同专家放不同 GPU，靠 all-to-all 交换数据</td>
+</tr>
+<tr>
+<td>aux-loss / ALF-LB</td>
+<td>辅助负载均衡损失 / 无辅助损失负载均衡（DeepSeek-V3 的 bias 法）</td>
+</tr>
+<tr>
+<td>upcycling</td>
+<td>从已训练好的 dense 检查点初始化并训练成 MoE，省预训练成本</td>
+</tr>
+<tr>
+<td>redundant experts</td>
+<td>冗余专家：把高负载专家复制多份放到不同 GPU，用于推理负载分担</td>
+</tr>
+</tbody></table>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec3">3. 九年演进时间线（2017–2026）</h2>
+
+<table>
+<thead><tr>
+<th>时间</th>
+<th>工作</th>
+<th>机构</th>
+<th>关键动作</th>
+<th>规模/数据</th>
+</tr></thead><tbody>
+<tr>
+<td>2017-01</td>
+<td><a href="https://arxiv.org/abs/1701.06538" target="_blank" rel="noopener">Sparsely-Gated MoE</a></td>
+<td>Google</td>
+<td>带噪声 top-k 门控 + 容量因子，首次 GPU 集群条件计算</td>
+<td>每层数千专家、容量 ×1000、137B LM</td>
+</tr>
+<tr>
+<td>2020-06</td>
+<td><a href="https://arxiv.org/abs/2006.16668" target="_blank" rel="noopener">GShard</a></td>
+<td>Google</td>
+<td>注解 API + XLA 自动分片，top-2</td>
+<td>&gt;600B、2048 TPU</td>
+</tr>
+<tr>
+<td>2021-01</td>
+<td><a href="https://arxiv.org/abs/2101.03961" target="_blank" rel="noopener">Switch Transformer</a></td>
+<td>Google</td>
+<td>最简 top-1 + 选择性精度，bfloat16 训练稀疏模型</td>
+<td>1.6T 参数，预训练最快 ×7</td>
+</tr>
+<tr>
+<td>2021-03</td>
+<td><a href="https://arxiv.org/abs/2103.16716" target="_blank" rel="noopener">BASE Layers</a></td>
+<td>Meta</td>
+<td>token→专家建模为线性分配（最优均衡），无 aux-loss</td>
+<td>零负载偏差</td>
+</tr>
+<tr>
+<td>2021-06</td>
+<td><a href="https://arxiv.org/abs/2106.04426" target="_blank" rel="noopener">Hash Layers</a></td>
+<td>Meta</td>
+<td>token 哈希确定性选专家，零路由参数</td>
+<td>天然均衡</td>
+</tr>
+<tr>
+<td>2021-12</td>
+<td><a href="https://arxiv.org/abs/2112.06905" target="_blank" rel="noopener">GLaM</a></td>
+<td>Google</td>
+<td>64 专家 top-2 的稀疏通用 LM，相对 GPT-3 大幅省算力</td>
+<td>1.2T 总参/激活约三分之一</td>
+</tr>
+<tr>
+<td>2022-02</td>
+<td><a href="https://arxiv.org/abs/2202.08906" target="_blank" rel="noopener">ST-MoE</a></td>
+<td>Google</td>
+<td>系统研究训练不稳定与微调，稳定可迁移设计</td>
+<td>269B 总参≈32B dense 算力</td>
+</tr>
+<tr>
+<td>2022-02</td>
+<td><a href="https://arxiv.org/abs/2202.09368" target="_blank" rel="noopener">Expert Choice Routing</a></td>
+<td>Google</td>
+<td>反转路由：专家选 token，桶固定</td>
+<td>同算力预训练约 ×2</td>
+</tr>
+<tr>
+<td>2022-06</td>
+<td><a href="https://arxiv.org/abs/2206.03382" target="_blank" rel="noopener">Tutel</a></td>
+<td>Microsoft</td>
+<td>自适应 MoE 运行时，动态并行/流水线</td>
+<td>8×A100 大幅加速</td>
+</tr>
+<tr>
+<td>2022-08</td>
+<td><a href="https://arxiv.org/abs/2208.03306" target="_blank" rel="noopener">Branch-Train-Merge</a></td>
+<td>Meta</td>
+<td>无通信并行训领域专家，再平均合并</td>
+<td>免多节点同步</td>
+</tr>
+<tr>
+<td>2022-11</td>
+<td><a href="https://arxiv.org/abs/2211.15841" target="_blank" rel="noopener">MegaBlocks</a></td>
+<td>Databricks/Stanford</td>
+<td>块稀疏 MoE kernel，不丢 token、不浪费 padding</td>
+<td>比 Tutel 快至 40%</td>
+</tr>
+<tr>
+<td>2022-12</td>
+<td><a href="https://arxiv.org/abs/2212.05055" target="_blank" rel="noopener">Sparse Upcycling</a></td>
+<td>Google</td>
+<td>从 dense 检查点初始化训练 MoE</td>
+<td>显著省预训练成本</td>
+</tr>
+<tr>
+<td>2023-08</td>
+<td><a href="https://arxiv.org/abs/2308.00951" target="_blank" rel="noopener">Soft MoE</a></td>
+<td>Google</td>
+<td>全可微软分配，解决离散路由不稳</td>
+<td>视觉大幅超 ViT</td>
+</tr>
+<tr>
+<td>2024-01</td>
+<td><a href="https://arxiv.org/abs/2401.04088" target="_blank" rel="noopener">Mixtral 8x7B</a></td>
+<td>Mistral</td>
+<td>8 专家 top-2，开源引爆 MoE 普及</td>
+<td>46.7B 总/12.9B 激活</td>
+</tr>
+<tr>
+<td>2024-01</td>
+<td><a href="https://arxiv.org/abs/2401.06066" target="_blank" rel="noopener">DeepSeekMoE</a></td>
+<td>DeepSeek</td>
+<td>细粒度分割 + 共享专家隔离</td>
+<td>16B 匹敌 LLaMA2-70B</td>
+</tr>
+<tr>
+<td>2024-03</td>
+<td><a href="https://www.databricks.com/blog/introducing-dbrx" target="_blank" rel="noopener">DBRX</a></td>
+<td>Databricks</td>
+<td>16 专家 top-4 开源 MoE</td>
+<td>132B 总/36B 激活</td>
+</tr>
+<tr>
+<td>2024-04</td>
+<td><a href="https://arxiv.org/abs/2404.02258" target="_blank" rel="noopener">Mixture-of-Depths</a></td>
+<td>DeepMind</td>
+<td>每层只处理 top-k 个 token，沿深度动态分配算力</td>
+<td>80% 算力预算匹配 dense</td>
+</tr>
+<tr>
+<td>2024-04</td>
+<td>Snowflake Arctic</td>
+<td>Snowflake</td>
+<td>128 专家 + dense 主干，企业开源 MoE</td>
+<td>480B 总/17B 激活</td>
+</tr>
+<tr>
+<td>2024-05</td>
+<td>DeepSeek-V2</td>
+<td>DeepSeek</td>
+<td>MLA + DeepSeekMoE，组限制路由</td>
+<td>236B 总/21B 激活</td>
+</tr>
+<tr>
+<td>2024-09</td>
+<td><a href="https://arxiv.org/abs/2409.02060" target="_blank" rel="noopener">OLMoE</a></td>
+<td>Ai2</td>
+<td>全开源（权重/数据/代码/日志）MoE</td>
+<td>7B 总/1.3B 激活</td>
+</tr>
+<tr>
+<td>2024-12</td>
+<td><a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">DeepSeek-V3</a></td>
+<td>DeepSeek</td>
+<td>无辅助损失负载均衡 + MTP，定义新一代范式</td>
+<td>671B/37B，14.8T token</td>
+</tr>
+<tr>
+<td>2025-01</td>
+<td><a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-R1</a></td>
+<td>DeepSeek</td>
+<td>V3-Base 上 RLVR，推理能力涌现</td>
+<td>同 V3 架构</td>
+</tr>
+<tr>
+<td>2025-01</td>
+<td><a href="https://arxiv.org/abs/2501.08313" target="_blank" rel="noopener">MiniMax-01</a></td>
+<td>MiniMax</td>
+<td>线性（Lightning）注意力 + MoE</td>
+<td>456B/45.9B，训练 1M</td>
+</tr>
+<tr>
+<td>2025-04</td>
+<td><a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">Qwen3 系列</a></td>
+<td>阿里</td>
+<td>全尺寸 dense+MoE，128–512 专家</td>
+<td>235B/22B 等</td>
+</tr>
+<tr>
+<td>2025-07</td>
+<td><a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">Kimi K2</a></td>
+<td>Moonshot</td>
+<td>MuonClip 稳定化，1T 总参强 agentic</td>
+<td>1.04T/32.6B，SWE-Bench 65.8</td>
+</tr>
+<tr>
+<td>2025-07</td>
+<td>GLM-4.5</td>
+<td>智谱</td>
+<td>160 专家 + 1 共享，混合 dense/MoE 层</td>
+<td>355B/32B</td>
+</tr>
+<tr>
+<td>2026-09</td>
+<td><a href="https://arxiv.org/abs/2609.00791" target="_blank" rel="noopener">Instella-MoE</a></td>
+<td>Instella</td>
+<td>开源 MoE 技术报告</td>
+<td>厂商口径见报告</td>
+</tr>
+<tr>
+<td>2026-09</td>
+<td><a href="https://arxiv.org/abs/2609.39137" target="_blank" rel="noopener">ID Balancing</a></td>
+<td>—</td>
+<td>PID 控制论统一负载均衡，768 专家</td>
+<td>top-3 MaxVio 降 &gt;50%</td>
+</tr>
+<tr>
+<td>2026-10</td>
+<td><a href="https://arxiv.org/abs/2610.22353" target="_blank" rel="noopener">MirrorMoE</a></td>
+<td>—</td>
+<td>重新审视路由探索，token 自适应抑制冗余</td>
+<td>跨规模一致提升</td>
+</tr>
+</tbody></table>
+
+<blockquote>注：Snowflake Arctic 官方论文为《Arctic Embed / Arctic》系列技术博客（snowflake.com，本机网络不可达），参数数据经其开源 config 与第三方数据库交叉核实。</blockquote>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec4">4. 路由机制全谱：谁来选择专家</h2>
+
+<p>路由是 MoE 的&quot;心脏&quot;，也是大部分不稳定性的来源。九年下来，路由机制沿三条轴线分化。</p>
+
+<h3>4.1 轴一：选择方向——token 选专家 vs 专家选 token</h3>
+
+<p><strong>（a）Token-choice（主流）</strong>：token 根据 router softmax 选 top-k 专家。优点是语义直观、每个 token 都有确定的 k 个专家服务；缺点是热门专家会被挤爆，必须外加容量限制或均衡机制。Switch（top-1）、Mixtral/DeepSeek（top-2/6/8）均属此类。</p>
+
+<p><strong>（b）Expert-choice</strong>：<a href="https://arxiv.org/abs/2202.09368" target="_blank" rel="noopener">Zhou et al. 2022</a> 把路由反转——每个专家固定容量桶，主动&quot;认领&quot;它最想处理的 top-k token。负载因此<strong>天然完全均衡</strong>，论文报告同等算力下预训练约 <strong>2× 加速</strong>。代价是：一个 token 可能被 0 个或多个专家选中（服务数量不确定），且该机制依赖一个 batch 内全局可见，<strong>因果自回归生成时难以直接使用</strong>（需批处理），故主要用于训练/视觉。</p>
+
+<p><strong>（c）软分配 Soft MoE</strong>：<a href="https://arxiv.org/abs/2308.00951" target="_blank" rel="noopener">Puigcerver et al. 2023</a> 更进一步，放弃离散选择：把一个 batch 的全部 token 按亲和度加权&quot;溶解&quot;成固定数量的 slot，专家处理 slot 后再加权还原。整个过程<strong>完全可微、无 token 丢弃、无负载问题</strong>，在视觉任务上大幅超越 ViT 与 token/expert-choice。它代表了&quot;用可微软组合换取稳定性&quot;的路线，但 slot 数随专家数增长、语义可解释性弱。</p>
+
+<h3>4.2 轴二：是否可学习——学习路由 vs 确定性路由</h3>
+
+<p><strong>（a）学习路由</strong>：router 是可训练线性层 <code>Softmax(x·W_g)</code>，能自适应地形成专门化，但带来路由坍塌、训练不稳等全部问题。</p>
+
+<p><strong>（b）哈希路由</strong>：<a href="https://arxiv.org/abs/2106.04426" target="_blank" rel="noopener">Hash Layers</a> 用 token 内容的哈希值确定性地映射到专家子集，<strong>零路由参数、零均衡损失、零分配算法</strong>，天然均衡，性能与 Switch/BASE 竞争甚至更优。它牺牲了&quot;按需选专家&quot;的灵活性，换取极简与稳定。</p>
+
+<p><strong>（c）免训练语义路由（2026 新发现）</strong>：<a href="https://arxiv.org/abs/2605.30992" target="_blank" rel="noopener">Do et al., SSMoE</a> 发现一个漂亮事实——<strong>专家权重矩阵的特征向量本身编码了语义</strong>：用 token 表示与专家权重奇异向量的相似度做路由（一次 SVD），无需任何训练/微调即可得到不坍塌的路由器，在语言与视觉、干净与损坏数据上都展现出更好的泛化与鲁棒性。这暗示&quot;路由知识其实已存在于专家权重中&quot;，显式 router 可能只是历史包袱。</p>
+
+<h3>4.3 轴三：选择粒度——token 路由 vs 深度路由</h3>
+
+<p><strong>（a）Token 路由（MoE 本义）</strong>：在每个 MoE 层为每个 token 选专家，调节的是&quot;每个 token 用哪些 FFN&quot;。</p>
+
+<p><strong>（b）深度路由 Mixture-of-Depths（MoD）</strong>：<a href="https://arxiv.org/abs/2404.02258" target="_blank" rel="noopener">Raposo et al. 2024</a> 换了一个维度：不是选专家，而是<strong>在每层只让 top-k 个 token 参与该层计算</strong>（其余 token 走残差直通）。这样 FLOPs 沿&quot;深度 × token&quot;两个维度动态分配，简单 token 提前&quot;抄近道&quot;，复杂 token 逐层被深加工。论文报告在 <strong>80% 算力预算</strong>下即可匹配或超越 dense，前向最高约 <strong>5×</strong> 节省。MoD 与 MoE 正交，可叠加（MoE 选专家 + MoD 选 token）。</p>
+
+<h3>4.4 路由的训练动力学：三阶段与拥塞博弈</h3>
+
+<p>路由不是一成不变的。<a href="https://arxiv.org/abs/2604.04230" target="_blank" rel="noopener">Mouzouni 2026</a> 用&quot;拥塞博弈&quot;视角分析 OLMoE（20 个检查点）与 OpenMoE-8B 的训练全过程，发现一个单一&quot;拥塞系数 γ_eff&quot;即可刻画均衡—质量权衡，且训练呈现<strong>三阶段</strong>：</p>
+
+<pre><code>早期 γ_eff ≈ 14（专家间争抢弱、较均衡）
+   → 中期 γ_eff 峰值 36–39（专门化加剧、涌向热专家）
+   → 后期 γ_eff ≈ 9（重新趋于均衡，专家分工收敛）</code></pre>
+
+<p>这解释了为什么&quot;训练中期最容易出 loss spike&quot;，也说明负载均衡约束的强度理应随训练阶段调整——固定系数的 aux-loss 在中期可能过弱、后期可能过强。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<figure>
+  <iframe src="diagrams/2-routing-spectrum.html" height="820" loading="lazy"></iframe>
+  <figcaption>图 2 · 路由机制全谱：「谁来选择专家」的六种范式（token-choice/确定性/expert-choice/Soft/MoD/免训练控制论）</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec5">5. 专家组织：细粒度分割、共享专家与专家数竞赛</h2>
+
+<p>确定了&quot;怎么选&quot;，下一个问题是&quot;专家怎么切&quot;。2024 年 DeepSeekMoE 给出的两个设计——<strong>细粒度专家分割</strong>与<strong>共享专家隔离</strong>——已成为此后几乎所有 MoE 的标准配方。</p>
+
+<h3>5.1 细粒度专家分割（Fine-Grained Segmentation）</h3>
+
+<p>直觉：在固定总参数预算下，把每个专家做&quot;小&quot;、专家数做&quot;多&quot;，组合空间更大、专门化更细。形式化地，把 N 个专家各分割为 m 份，得到 mN 个小专家，同时每个 token 从激活 k 个改为激活 mk 个——<strong>总参数与每 token 激活计算都不变，但可选组合数从 C(N,k) 暴增到 C(mN,mk)</strong>。</p>
+
+<p><a href="https://arxiv.org/abs/2401.06066" target="_blank" rel="noopener">DeepSeekMoE</a> 的实测极具说服力：2B 规模的细粒度模型匹敌 GShard 2.9B；<strong>16B 的 DeepSeekMoE（64 路由专家、top-6）匹敌 LLaMA2-70B</strong>。此后专家数一路攀升：Mixtral 的 8 → DeepSeek-V3 的 256 → Kimi K2 的 384 → Qwen3-Next 的 512 → 2026 年前沿研究的 768。</p>
+
+<h3>5.2 共享专家隔离（Shared Expert Isolation）</h3>
+
+<p>纯路由有个问题：大量<strong>通用、公共的知识</strong>（常见语法、通用事实）被每个 token 重复路由，浪费路由槽位、还造成专家争抢。DeepSeekMoE 的解法是隔离出 K_s 个<strong>共享专家</strong>，每个 token 无条件经过它们，把&quot;公共知识&quot;与&quot;专门知识&quot;分开：</p>
+
+<pre><code>y = Σ_{s∈Shared(K_s)} E_s(x)              # 公共知识：每个 token 都过
+  + Σ_{i∈TopK routed} scores_i · E_i(x)   # 专门知识：按需路由</code></pre>
+
+<p>DeepSeekMoE-16B 用 2 个共享专家；DeepSeek-V3/Kimi K2/GLM-4.5 用 1 个。共享专家让路由专家可以更专注于细分领域，也显著降低路由负载。值得注意的是 Qwen3 全系列<strong>不使用共享专家</strong>，而是靠 128–512 的多专家数与 top-8 覆盖——两条路线都能跑通，说明共享专家并非必需，但在控制专家总数时很有效。</p>
+
+<h3>5.3 组限制路由（Group-Constrained Routing）</h3>
+
+<p>当专家数达数百，若 token 可任意路由到任何专家，通信会在全部节点间全互联，带宽压力大。DeepSeek-V2/V3 引入<strong>组限制</strong>：把专家分成若干组（V3：256 专家分 8 组），先选出亲和度最高的几个组，再只在组内选专家。V3 由此保证每个 token <strong>最多被发往 4 个节点</strong>，把 all-to-all 通信限制在局部（<a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">2412.19437</a>）。这一约束还被 EPLB 利用——同组专家尽量放同一节点，进一步减少跨节点流量。</p>
+
+<h3>5.4 专家数竞赛与&quot;探索困境&quot;</h3>
+
+<p>专家是不是越多越好？<a href="https://arxiv.org/abs/2610.22353" target="_blank" rel="noopener">Li et al. 2026, MirrorMoE</a> 指出一个内在张力——<strong>路由探索困境</strong>：细粒度分割要求路由器保持足够探索（多试不同小专家才能形成专门化），而共享专家会降低探索需求（公共知识被兜底后，路由更容易集中）。二者组合若处理不当，会出现大量&quot;冗余激活&quot;：token 选中的多个小专家其实在做重复的事。MirrorMoE 让 token 自适应地抑制冗余专家，在不同模型规模上取得一致提升。这标志着研究焦点从&quot;把专家做多&quot;转向&quot;让每次激活都不浪费&quot;。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<figure>
+  <iframe src="diagrams/3-load-balancing.html" height="860" loading="lazy"></iframe>
+  <figcaption>图 3 · 负载均衡的演进与控制论统一：辅助损失 → ALF-LB → PID 三阶段框架</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec6">6. 负载均衡：辅助损失、无辅助损失与控制论统一</h2>
+
+<p>MoE 最经典的工程难题：不加干预时，路由器会形成正反馈——专家被选得越多、训练得越好，就越容易被选，最终<strong>少数专家通吃、多数专家坍塌</strong>。九年里出现了三代解法。</p>
+
+<h3>6.1 辅助负载均衡损失</h3>
+
+<p>最直接的办法：在主语言模型损失之外，加一个鼓励&quot;每个专家分到的 token 数尽量均匀&quot;的辅助项。对一层，设 f_i 为被路由到专家 i 的 token 占比，P_i 为 router 给专家 i 的平均概率，则 Switch 风格的辅助损失为：</p>
+
+<pre><code>L_bal = α · N · Σ_i f_i · P_i          # 均匀分布时最小
+L_total = L_LM + L_bal</code></pre>
+
+<p>α 是均衡系数（Mixtral 开源 config 中 <code>router_aux_loss_coef=0.02</code>）。它简单有效，Switch/Mixtral 都靠它。但有两个固有代价：① 它是一个<strong>与真实目标无关的代理目标</strong>，强行拉平会牺牲专门化——2026 年的研究甚至证明&quot;均衡过头&quot;会损害性能（见 6.5）；② α 需要调，且如第 4.4 节所述，最优强度随训练阶段变化。</p>
+
+<p>配套机制还有<strong>容量因子与 token dropping</strong>：给每个专家设容量上限（均值的 capacity factor 倍），桶满后溢出 token 在该层只走残差。这防止热专家无限膨胀，但丢弃 token 会损失信息，大容量因子又浪费算力，是个两难。</p>
+
+<h3>6.2 无辅助损失负载均衡（ALF-LB）</h3>
+
+<p><a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">DeepSeek-V3</a> 提出影响深远的替代方案：<strong>完全去掉辅助损失</strong>，改为在路由打分时给每个专家加一个可动态调整的偏置 b_i：</p>
+
+<pre><code># 每个专家维护一个 bias，按其负载动态调整
+若专家 i 过载 → b_i 减小（被选中概率下降）
+若专家 i 欠载 → b_i 增大（被选中概率上升）
+
+路由：TopK( Softmax(x·W_g + b) )</code></pre>
+
+<p>偏置只影响&quot;选哪个专家&quot;，不进入反向传播、不污染主损失梯度，因而模型可以全力优化语言建模目标、同时保持均衡。DeepSeek-V3 凭此在 14.8T token 训练中保持稳定。这一&quot;用动态偏置而非损失项&quot;的思想在 2025–2026 被广泛采纳。</p>
+
+<h3>6.3 理论解释：原始-对偶与遗憾界</h3>
+
+<p><a href="https://arxiv.org/abs/2512.03915" target="_blank" rel="noopener">Han &amp; Zhong 2025</a> 为 ALF-LB 给出了第一个理论框架：把负载均衡看作一个<strong>分配问题</strong>，DeepSeek 的偏置更新恰好是该问题原始-对偶方法的<strong>单步常数时间近似</strong>，并证明在在线强凸条件下可达到 <strong>O(log T) 的对数遗憾界</strong>——即随训练进行，实际分配与最优均衡分配的累计差距增长得非常慢。这为&quot;拍脑袋的 bias 规则&quot;提供了坚实的优化理论支撑。</p>
+
+<h3>6.4 最优均衡的另一条路：线性分配</h3>
+
+<p>更早的 <a href="https://arxiv.org/abs/2103.16716" target="_blank" rel="noopener">BASE Layers</a> 走得更彻底：不用可微路由，直接把一个 batch 内&quot;token→专家&quot;的分配建模为<strong>线性分配（最优传输）问题</strong>并求最优解，使每个专家收到<strong>完全等量</strong>的 token（零负载偏差），无需辅助损失、无新超参。其代价是每步要解一次分配问题（计算开销）且路由不可微（用匈牙利类算法），工程上不如 bias 法轻便，故未成为主流，但思想被后续 Soft MoE/ALF 理论吸收。</p>
+
+<h3>6.5 反方证据：均衡也会过头</h3>
+
+<p>负载均衡不是越强越好。<a href="https://arxiv.org/abs/2609.04453" target="_blank" rel="noopener">Kapusuzoglu et al. 2026</a> 揭示了<strong>过度分散（over-dispersion）</strong>现象：激进的均衡把路由压成近均匀分布，专家间的重要性差异被抹平，困惑度甚至不再能预测下游性能。他们在 gpt-oss-20B 上发现：困惑度最低的配置，数学推理反而最差；按激活感知评分，GPQA 相差达 <strong>18 分</strong>。他们提出领域感知的 <strong>MESA</strong> 剪枝策略，在剪枝 25% 时于 7+ 个领域最小化最差退化。这是对&quot;均匀即正义&quot;直觉的重要纠正——<strong>均衡的目标是支撑专门化，而非消灭差异</strong>。</p>
+
+<h3>6.6 负载均衡的控制论统一（2026 新框架）</h3>
+
+<p><a href="https://arxiv.org/abs/2609.39137" target="_blank" rel="noopener">Jin et al., ID Balancing</a> 提供了一个统一视角：把各种均衡机制看作<strong>反馈控制器</strong>——</p>
+
+<pre><code>DeepSeek bias 法     ≈ 积分控制器（I）：对累计偏差累加修正
+Kimi K3 分位均衡法   ≈ 比例控制器（P）：对当前偏差即时修正</code></pre>
+
+<p>两者都是&quot;不完整的 PID&quot;。作者补上微分（D）项，提出 <strong>ID（积分-微分）控制器</strong>，用偏差的变化率做提前响应，显著改善极稀疏 MoE 的稳定性。在 <strong>768 专家、top-10/5/3</strong> 的设定下：top-3 时最大违规 MaxVio 降低 <strong>&gt;50%</strong>、最小违规 MinVio 降低 12%；模型从 18.9B 扩到 69.9B 时，MaxVio 比 aux-loss 基线低约 <strong>89.6%</strong>。控制论框架的优雅之处在于：它把&quot;调均衡&quot;从炼丹变成了有成熟理论（稳定性、超调、滞后）可循的工程问题。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<figure>
+  <iframe src="diagrams/4-train-infer.html" height="840" loading="lazy"></iframe>
+  <figcaption>图 4 · MoE 训练与推理系统全景：专家并行、all-to-all 通信与专家驻留/卸载</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec7">7. MoE 训练系统：专家并行与 all-to-all 通信</h2>
+
+<h3>7.1 专家并行（Expert Parallelism）</h3>
+
+<p>MoE 训练的核心并行维度是 EP：把不同专家放到不同 GPU 上。一个 MoE 层的前向需要两次 all-to-all 通信：</p>
+
+<pre><code>① Dispatch（分发）：每个 GPU 把本地 token 按其选中的专家，发送到持有该专家的 GPU
+② Compute：各 GPU 只计算自己持有的专家收到的 token
+③ Combine（合并）：把专家输出按来源发回，各 token 在原 GPU 上加权聚合</code></pre>
+
+<p>这与 dense 模型的 all-reduce 截然不同：all-to-all 的通信量与路由分布强相关、模式不规则，且要跨节点（NVLink 域内 + RDMA 域间）。实际训练通常组合使用 EP × TP（张量并行）× PP（流水）× DP（数据并行），并通过容量因子、组限制路由控制通信范围。</p>
+
+<h3>7.2 DeepEP：为 MoE 重写的 all-to-all 内核</h3>
+
+<p>普通 NCCL all-to-all 并非为 MoE 的不规则、非对称通信优化。DeepSeek 于 2025 年 2 月开源 <strong>DeepEP（DeepEveryParallel）</strong>——一个高吞吐、低延迟的 EP all-to-all GPU 内核库，专用于 MoE 的 dispatch/combine（据其<a href="https://github.com/deepseek-ai/DeepEP" target="_blank" rel="noopener">官方 GitHub README</a>）：</p>
+
+<ul>
+<li>原生支持 <strong>FP8 dispatch</strong>（低精度分发，省带宽）；</li>
+<li>通过 NVLink 做<strong>冗余专家的权重与梯度交换</strong>；</li>
+<li>通信内核运行时经 <strong>DeepJIT</strong> 编译，按当前设备即时生成；</li>
+<li>还提供 PP/CP/DP 及远程内存访问（Engram）的实验性原语；</li>
+<li>要求 Hopper 及更新 GPU、CUDA 13.1+、NCCL 2.32.3+，节点内走 NVLink、节点间走 RDMA。</li>
+</ul>
+
+<blockquote><strong>关于 DeepEP 的编号核实</strong>：DeepEP <strong>没有 arXiv 论文</strong>，仅以 GitHub 仓库及官网 deepep.org 发布。网传编号 2506.06236 经核实实为一篇化学/高焓气体物理论文（《Modified Marrone-Treanor dissociation model…》），与 MoE 无关，<strong>不应引用</strong>。</blockquote>
+
+<p>2026 年的新版本（V2.5）把缓冲区细分为 EPBuffer/EngramBuffer/PPBuffer/BucketBuffer，新增批量 all-gather/reduce-scatter/all-reduce，并支持动态冗余专家的权重预取（<code>lb_prefetch_weights</code>）与梯度归约。DeepEP 还发布了<strong>昇腾 Ascend 950 NPU 版本</strong>（API 一致、性能对齐），是国产算力软件栈适配的重要一环。</p>
+
+<h3>7.3 EPLB：专家并行负载均衡器</h3>
+
+<p>训练时负载可由 aux-loss/bias 保证，但<strong>推理/部署时专家负载不均</strong>会直接导致部分 GPU 过载。DeepSeek 开源的 <a href="https://github.com/deepseek-ai/EPLB" target="_blank" rel="noopener">EPLB</a> 用<strong>冗余专家</strong>策略解决：复制高负载专家，再启发式地把副本打包到各 GPU。它提供两种策略：</p>
+
+<ul>
+<li><strong>分层均衡（Hierarchical）</strong>：当节点数整除专家组数时，先把专家组均匀打包到节点（利用组限制路由，同组尽量同节点以减少跨节点流量），再在节点内复制并打包到各 GPU。适合 <strong>prefill 阶段</strong>（EP 规模较小）。</li>
+<li><strong>全局均衡（Global）</strong>：无视专家组、全局复制并打包到 GPU。适合 <strong>decode 阶段</strong>（EP 规模较大）。</li>
+</ul>
+
+<p>EPLB 的核心接口 <code>eplb.rebalance_experts(weight, num_replicas, num_groups, num_nodes, num_gpus)</code> 依据估计的专家负载（仓库外问题，常用历史统计滑动平均）计算复制与放置方案。</p>
+
+<blockquote><strong>编号核实</strong>：EPLB 同样<strong>无 arXiv 论文</strong>，仅 GitHub 发布。网传 2504.13081 实为 CMS 高能物理论文（Higgs 玻色子产生截面），与 MoE 无关，<strong>不应引用</strong>。</blockquote>
+
+<h3>7.4 块稀疏与高效 MoE 内核</h3>
+
+<p>MoE 训练还有一类&quot;系统级&quot;优化：把 MoE 计算表达为<strong>块稀疏矩阵乘</strong>，避免为不规则 token 数做 padding 或丢 token。<a href="https://arxiv.org/abs/2211.15841" target="_blank" rel="noopener">MegaBlocks</a> 据此自研 GPU kernel，做到不丢 token、不浪费 padding，比 Tutel 端到端快至 <strong>40%</strong>、比 Megatron-LM dense 快 <strong>2.4×</strong>。<a href="https://arxiv.org/abs/2206.03382" target="_blank" rel="noopener">Tutel</a> 则提供自适应并行与流水线的运行时。这类工作与 DeepEP 互补：一个优化&quot;算&quot;，一个优化&quot;通信&quot;。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec8">8. MoE 推理：被专家撑大的显存与三条优化路线</h2>
+
+<h3>8.1 推理第一性问题：decode 阶段的「1 个 token 也得装下整个模型」</h3>
+
+<p>MoE 训练时每 batch 有成千上万 token，所有专家都被充分利用，算力花在刀刃上。但<strong>自回归生成（decode）阶段，每步只有批内少量 token</strong>，而无论这一步路由到几个专家，<strong>全部 N 个专家的权重都必须常驻显存</strong>——因为下一步可能用到任何一个。于是：</p>
+
+<pre><code>dense 模型：显存 ≈ 全模型权重（= 全部知识）
+MoE 模型： 显存 ≈ 全模型权重（= 全部知识，同样巨大！），但每步计算只用其中 k/N</code></pre>
+
+<p>这就是 MoE &quot;训练省、推理费显存&quot;的根源：671B 的 DeepSeek-V3 即使每 token 只激活 37B，部署时仍需装下全部 671B 权重，还带来专家间负载不均、低 batch 下专家利用率低、kernel launch 多等问题。MoE 推理优化因此围绕三条路线展开：<strong>少装（卸载/换入换出）、复制分担（冗余专家）、缩小（量化）</strong>，外加从源头省成本的 upcycling。</p>
+
+<h3>8.2 Upcycling：从 dense 检查点直接长出 MoE</h3>
+
+<p>Upcycling 严格说是&quot;训练侧省钱&quot;，但深刻影响推理模型的获得成本。<a href="https://arxiv.org/abs/2212.05055" target="_blank" rel="noopener">Sparse Upcycling（Google, 2022）</a> 发现：不必从零预训练 MoE——取一个已训好的 dense 模型，把它的 FFN <strong>复制 N 份</strong>作为 N 个专家的初始化，加入 router，再继续训练，即可用远低于从零训练的成本得到性能更好的 MoE。Qwen1.5-MoE 即由 Qwen-1.8B upcycle 而来，官方称只用约 <strong>25% 的训练资源</strong>，推理速度为 Qwen1.5-7B 的 <strong>1.74×</strong>（厂商口径，模型卡）。</p>
+
+<p>2026 年 upcycling 仍是热点，且更精细：</p>
+
+<ul>
+<li><strong>DivMoE</strong>（<a href="https://arxiv.org/abs/2610.11317" target="_blank" rel="noopener">2610.11317</a>）：跨域专家组合的细粒度 upcycling；</li>
+<li><strong>MASKerade</strong>（<a href="https://arxiv.org/abs/2610.07809" target="_blank" rel="noopener">2610.07809</a>）：用 token 路由的 mask 专家做 dense→MoE；</li>
+<li><strong>SPRI</strong>（<a href="https://arxiv.org/abs/2606.16456" target="_blank" rel="noopener">2606.16456</a>）：SVD 分割的残差初始化，面向数据受限场景；</li>
+<li><strong>Dense2MoE</strong>（<a href="https://arxiv.org/abs/2605.26496" target="_blank" rel="noopener">2605.26496</a>）：统一剪枝与 upcycling，推进端侧 LLM 的帕累托前沿；</li>
+<li><strong>Cluster-Aware Upcycling</strong>（<a href="https://arxiv.org/abs/2604.13508" target="_blank" rel="noopener">2604.13508</a>）：聚类感知初始化以增强专家专门化。</li>
+</ul>
+
+<h3>8.3 专家卸载与预测式驻留</h3>
+
+<p>既然不必每步用全部专家，最直接的推理省显存法是<strong>专家换入换出（expert offloading）</strong>：把冷门专家放 CPU/更慢的内存，按路由预测提前换入。2026 年这条路线进展密集：</p>
+
+<ul>
+<li><strong>MoE-CORE</strong>（<a href="https://arxiv.org/abs/2610.01950" target="_blank" rel="noopener">2610.01950</a>）：显存受限下协同的专家卸载与驻留；</li>
+<li><strong>RapidMoE</strong>（<a href="https://arxiv.org/abs/2610.01265" target="_blank" rel="noopener">2610.01265</a>）：利用跨层非对称性的自适应残差卸载；</li>
+<li><strong>Mira</strong>（<a href="https://arxiv.org/abs/2609.38090" target="_blank" rel="noopener">2609.38090</a>）：自适应缓存 + 预测式专家暂存；</li>
+<li><strong>CPU-GPU 协同</strong>（<a href="https://arxiv.org/abs/2610.23006" target="_blank" rel="noopener">2610.23006</a>）：自适应专家分配；</li>
+<li><strong>HiNa-MoE</strong>（<a href="https://arxiv.org/abs/2610.05123" target="_blank" rel="noopener">2610.05123</a>）：在带矩阵引擎的 CPU 上高性能、非侵入式跑 MoE。</li>
+</ul>
+
+<p>核心技术矛盾是<strong>换入延迟 vs 命中率</strong>：预测得准可以把换入隐藏在计算之下，预测不准则 GPU 干等。这要求路由器输出可预测、跨层路由有规律——也反过来影响架构设计。</p>
+
+<h3>8.4 专家复制与动态冗余</h3>
+
+<p>高负载专家在多 GPU 部署时会成为瓶颈。EPLB 的<strong>冗余专家</strong>把热专家复制多份、分散到不同 GPU，请求按负载任选一份，等价于在推理侧做&quot;专家级负载均衡&quot;。DeepEP V2.5 进一步支持<strong>动态冗余专家</strong>：在 NVLink 上预取专家权重与量化尺度（<code>lb_prefetch_weights</code>）、归约梯度（<code>lb_reduce_grads</code>），让冗余副本可以按需动态建立而非静态放置。</p>
+
+<h3>8.5 专家量化与总体成本账</h3>
+
+<p>专家权重同样可量化（W4/W8、FP8/FP4），且 DeepEP 原生支持 FP8 dispatch，把通信也低精度化。MoE 的量化有个额外好处：专家独立，量化误差更难在全网络累积，且热专家可高精度、冷专家可低精度做混合精度。需要强调的是总体拥有成本：MoE 虽降低训练算力与单 token 计算，但<strong>显存占用、节点间通信、调度复杂度</strong>上升，在&quot;单用户、低延迟、小并发&quot;场景（如端侧）未必划算；它真正发光的是<strong>高并发、大 batch 的云端服务</strong>——此时专家被充分复用，容量优势兑现为单位 token 成本。</p>
+
+<h3>8.6 2026 前沿：循环 MoE、软 MoE、专家剪枝</h3>
+
+<ul>
+<li><strong>循环 / Looped MoE</strong>：<a href="https://arxiv.org/abs/2609.40316" target="_blank" rel="noopener">Scaling Laws for Looped MoE</a> 与 <a href="https://arxiv.org/abs/2609.01343" target="_blank" rel="noopener">SMELT</a> 让同一组专家被循环调用多次（权重共享、深度可变），用少量专家模拟更深/更大的计算，缩放定律显示其在算力匹配下很高效。</li>
+<li><strong>token 自适应软计算</strong>：<a href="https://arxiv.org/abs/2608.10392" target="_blank" rel="noopener">Share First, Route What Remains</a> 统一&quot;先共享、再路由剩余&quot;的框架，与共享专家思想一脉相承。</li>
+<li><strong>专家剪枝</strong>：除 MESA 外，<a href="https://arxiv.org/abs/2610.27123" target="_blank" rel="noopener">Reconstruction-Optimized Expert Pruning</a> 与 <a href="https://arxiv.org/abs/2409.06211" target="_blank" rel="noopener">STUN</a> 用结构化+非结构化剪枝裁掉冗余专家，直接缩小部署体积。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec9">9. MoE 缩放定律与「无限参数」猜想</h2>
+
+<p>MoE 把容量与计算解耦后，一个自然的问题是：<strong>参数（专家）还能怎么 scale？</strong> 2026 年出现了一批专门刻画 MoE 缩放规律的工作：</p>
+
+<ul>
+<li><strong>超参数缩放定律</strong>：<a href="https://arxiv.org/abs/2609.08690" target="_blank" rel="noopener">Hyperparameter Scaling Laws Across MoE Sparsity</a> 系统研究学习率等超参如何随稀疏度（N 与 k）变化，给出跨稀疏度的迁移规律，避免每换一个 MoE 配置就重新调参。</li>
+<li><strong>多语言 MoE 缩放</strong>：<a href="https://arxiv.org/abs/2610.20247" target="_blank" rel="noopener">Scaling Multilingual MoE</a> 研究语言覆盖度如何改变容量与算力的分配——语言越多，专家容量的&quot;有效利用率&quot;越低，需要在专家数与语言数之间重新平衡。</li>
+<li><strong>循环 MoE 缩放定律</strong>：<a href="https://arxiv.org/abs/2609.40316" target="_blank" rel="noopener">Looped MoE</a> 与 <a href="https://arxiv.org/abs/2609.01343" target="_blank" rel="noopener">SMELT</a> 给出&quot;同一组专家循环 T 次&quot;的算力—性能曲线，显示权重共享的循环调用在算力匹配下可逼近更大的非循环模型。</li>
+</ul>
+
+<p>更大胆的是 <a href="https://arxiv.org/abs/2609.18842" target="_blank" rel="noopener">Infinite-Parameter LLMs</a>（2026-09）：它探讨让模型从<strong>实时数据流中即时生成并适配权重</strong>，把&quot;专家/参数&quot;视为可按需生成、用完即可弃的临时资源，而非固定的模型文件。若这条路线成立，MoE 的&quot;固定 N 个专家&quot;将演化为&quot;按需生成的专家&quot;，容量/计算解耦被推向极致——模型参数量在概念上不再有上限。这仍是早期猜想，但代表了 MoE 思想的逻辑终点。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec10">10. 旗舰系统横评（2024–2026）</h2>
+
+<h3>10.1 参数与架构对比</h3>
+
+<p>下表数据来自各厂商论文/官方 config（〔厂商〕），部分精确值经 Epoch AI 数据库交叉核实（〔第三方转述〕）。</p>
+
+<table>
+<thead><tr>
+<th>模型</th>
+<th>年份</th>
+<th>总参数</th>
+<th>激活参数</th>
+<th>专家(路由+共享)</th>
+<th>top-k</th>
+<th>层数</th>
+<th>上下文</th>
+</tr></thead><tbody>
+<tr>
+<td>Mixtral 8x7B</td>
+<td>2024</td>
+<td>46.7B</td>
+<td>12.9B</td>
+<td>8 + 0</td>
+<td>2</td>
+<td>32</td>
+<td>32K</td>
+</tr>
+<tr>
+<td>Mixtral 8x22B</td>
+<td>2024</td>
+<td>≈140.6B</td>
+<td>≈39.1B</td>
+<td>8 + 0</td>
+<td>2</td>
+<td>56</td>
+<td>64K</td>
+</tr>
+<tr>
+<td>DeepSeekMoE-16B</td>
+<td>2024</td>
+<td>16.4B</td>
+<td>2.8B</td>
+<td>64 + 2</td>
+<td>6</td>
+<td>28</td>
+<td>4K</td>
+</tr>
+<tr>
+<td>DeepSeek-V2</td>
+<td>2024</td>
+<td>236B</td>
+<td>21B</td>
+<td>160 + 2</td>
+<td>6</td>
+<td>60</td>
+<td>128K</td>
+</tr>
+<tr>
+<td>DeepSeek-V3 / R1</td>
+<td>2024–25</td>
+<td>671B</td>
+<td>37B</td>
+<td>256 + 1</td>
+<td>8</td>
+<td>61</td>
+<td>128K</td>
+</tr>
+<tr>
+<td>Qwen1.5-MoE</td>
+<td>2024</td>
+<td>14.3B</td>
+<td>2.7B</td>
+<td>60 + 0</td>
+<td>4</td>
+<td>24</td>
+<td>8K</td>
+</tr>
+<tr>
+<td>Qwen2-57B-A14B</td>
+<td>2024</td>
+<td>57B</td>
+<td>14B</td>
+<td>64 + 0</td>
+<td>8</td>
+<td>28</td>
+<td>128K</td>
+</tr>
+<tr>
+<td>Qwen3-235B-A22B</td>
+<td>2025</td>
+<td>235B</td>
+<td>22B</td>
+<td>128 + 0</td>
+<td>8</td>
+<td>94</td>
+<td>40K(可扩128K)</td>
+</tr>
+<tr>
+<td>Qwen3-30B-A3B</td>
+<td>2025</td>
+<td>30B</td>
+<td>3B</td>
+<td>128 + 0</td>
+<td>8</td>
+<td>48</td>
+<td>40K</td>
+</tr>
+<tr>
+<td>Qwen3-Coder-480B</td>
+<td>2025</td>
+<td>480B</td>
+<td>35B</td>
+<td>160 + 0</td>
+<td>8</td>
+<td>62</td>
+<td>256K</td>
+</tr>
+<tr>
+<td>Qwen3-Next-80B</td>
+<td>2025</td>
+<td>80B</td>
+<td>3B</td>
+<td>512 + 0</td>
+<td>10</td>
+<td>48</td>
+<td>256K</td>
+</tr>
+<tr>
+<td>Kimi K2</td>
+<td>2025</td>
+<td>1.04T</td>
+<td>32.6B</td>
+<td>384 + 1</td>
+<td>8</td>
+<td>61</td>
+<td>128K</td>
+</tr>
+<tr>
+<td>MiniMax-Text-01</td>
+<td>2025</td>
+<td>456B</td>
+<td>45.9B</td>
+<td>32 + 0</td>
+<td>2</td>
+<td>80</td>
+<td>1M(外推4M)</td>
+</tr>
+<tr>
+<td>Snowflake Arctic</td>
+<td>2024</td>
+<td>480B</td>
+<td>17B</td>
+<td>128(+dense主干)</td>
+<td>2</td>
+<td>35</td>
+<td>4K</td>
+</tr>
+<tr>
+<td>GLM-4.5</td>
+<td>2025</td>
+<td>355B</td>
+<td>32B</td>
+<td>160 + 1</td>
+<td>8</td>
+<td>92</td>
+<td>128K</td>
+</tr>
+<tr>
+<td>GLM-4.5-Air</td>
+<td>2025</td>
+<td>106B</td>
+<td>12B</td>
+<td>128 + 1</td>
+<td>8</td>
+<td>46</td>
+<td>128K</td>
+</tr>
+<tr>
+<td>OLMoE-1B-7B</td>
+<td>2024</td>
+<td>6.9B</td>
+<td>1.3B</td>
+<td>64 + 0</td>
+<td>8</td>
+<td>16</td>
+<td>4K</td>
+</tr>
+<tr>
+<td>DBRX</td>
+<td>2024</td>
+<td>132B</td>
+<td>36B</td>
+<td>16 + 0</td>
+<td>4</td>
+<td>40</td>
+<td>32K</td>
+</tr>
+<tr>
+<td>Grok-1</td>
+<td>2024</td>
+<td>314B</td>
+<td>未公布</td>
+<td>8 + 0</td>
+<td>2</td>
+<td>64</td>
+<td>8K</td>
+</tr>
+</tbody></table>
+
+<h3>10.2 能力侧亮点（均为厂商口径）</h3>
+
+<ul>
+<li><strong>DeepSeek-R1</strong>（<a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">2501.12948</a>）：在 V3-Base 上纯 RLVR 训练，AIME 2024 pass@1 平均 <strong>79.8%</strong>、MATH-500 <strong>97.3%</strong>，开放权重推动推理模型普及。</li>
+<li><strong>Kimi K2</strong>（<a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">2507.20534</a>）：以 agentic 能力为核心卖点，SWE-Bench Verified <strong>65.8</strong>、Tau2-Bench <strong>66.1</strong>、ACEBench(En) <strong>76.5</strong>；用 <strong>MuonClip（对 QK 做 clip）</strong>解决 Muon 优化器在大规模下的不稳定，15.5T token 训练零 loss spike。</li>
+<li><strong>Qwen3</strong>（<a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">2505.09388</a>）：提供从 0.6B 到 235B 的 dense/MoE 全尺寸矩阵，思考/非思考模式可切换，MoE 型号以极高激活比性价比著称（30B 总参仅 3B 激活）。</li>
+<li><strong>Instella-MoE</strong>（<a href="https://arxiv.org/abs/2609.00791" target="_blank" rel="noopener">2609.00791</a>，2026-09）与 <strong>Qwen3.8-Next</strong>（<a href="https://arxiv.org/abs/2608.30320" target="_blank" rel="noopener">2608.30320</a>，2026-08）：代表 2026 年开源 MoE 在训练稳定性与效率评估上的最新工程化总结。</li>
+</ul>
+
+<h3>10.3 设计哲学的两条路线</h3>
+
+<pre><code>DeepSeek/Kimi/GLM 路线：中多专家(160–384) + 1 共享专家 + top-8，组限制路由
+Qwen 路线：          多专家(128–512)、无共享专家 + top-8/10，靠专家数覆盖</code></pre>
+
+<p>前者用共享专家兜底通用知识、路由更聚焦；后者用更细更多的专家 + 更宽激活保证覆盖。两者在 2025–2026 都达到了旗舰水平，说明 MoE 设计尚未收敛到唯一最优，仍有充分探索空间。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec11">11. MoE 生态与采用时间线</h2>
+
+<ul>
+<li><strong>2017–2021（Google 时代）</strong>：MoE 主要在 Google 内部（Shazeer/Switch/GShard/GLaM/ST-MoE）与 TPU 生态，外界难复现，工程门槛极高。</li>
+<li><strong>2022（开源基础设施萌芽）</strong>：MegaBlocks、Tutel、Sparse Upcycling、Branch-Train-Merge 等让 GPU 上的 MoE 训练变得可行、低成本。</li>
+<li><strong>2024（开源引爆）</strong>：Mixtral 8x7B（2024-01）以开放权重证明 MoE 可在平民算力上微调和部署；同年 DeepSeekMoE、DeepSeek-V2/V3、DBRX、Arctic、OLMoE、Qwen MoE 密集发布，<strong>MoE 成为开源旗舰的默认选择</strong>。</li>
+<li><strong>2025（中国团队主导 + agentic 转向）</strong>：DeepSeek-R1、Qwen3、Kimi K2、MiniMax-01、GLM-4.5 等把 MoE 与推理/智能体能力结合，前沿 MoE 的架构创新与系统软件（DeepEP/EPLB）主要由中国团队贡献。</li>
+<li><strong>2026（极稀疏与系统化）</strong>：768 专家、控制论负载均衡、专家卸载/循环 MoE、专家剪枝等把&quot;极稀疏 MoE&quot;的训练与推理做成系统化工程；DeepEP 上线昇腾 NPU，与国产算力栈协同。</li>
+</ul>
+
+<blockquote><strong>采用率口径说明</strong>：本环境无法直连 HuggingFace 与部分厂商官网，故未给出&quot;MoE 占旗舰模型百分比&quot;的精确第三方统计数字，以免编造；但从 Epoch AI notable models 数据库与上述时间线可见，2024 年后开放权重的旗舰语言模型中 MoE 已占多数。该定性判断有 Epoch AI 数据库（epoch.ai/data，2026-10-22 访问）支撑。</blockquote>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec12">12. 开放问题与工程落地 Checklist</h2>
+
+<h3>12.1 开放问题</h3>
+
+<ol>
+<li><strong>专家到底学到了什么？</strong> 专家专门化可观测（不同专家被不同领域 token 激活），但&quot;一个专家=一个可命名的技能/领域&quot;仍不严格成立，专家角色会漂移、冗余。</li>
+<li><strong>均衡与专门化的最优边界在哪？</strong> &quot;均衡过头&quot;已被证明有害，但如何按训练阶段/领域动态确定最优不均衡程度，仍缺统一答案（控制论框架是好的开始）。</li>
+<li><strong>推理显存墙能否根本破解？</strong> 专家卸载受限于换入延迟与预测命中率；只有当路由高度可预测时才能完全隐藏换入，这与&quot;保持探索&quot;存在张力。</li>
+<li><strong>极稀疏的极限？</strong> 768 专家 top-3 已可行，但专家数继续增大时，路由学习、通信调度、kernel launch 开销会不会反噬收益？</li>
+<li><strong>MoE 与新架构/新模态的组合</strong>：MoE + 线性注意力（MiniMax-01）、MoE + 多模态、MoE + 世界模型/VLA 都在早期，统一的架构原则尚未形成。</li>
+<li><strong>稳定性的理论保证</strong>：loss spike、路由突变在实践中被各种 trick（clip、bias、MuonClip）压住，但缺乏端到端的收敛/稳定理论。</li>
+</ol>
+
+<h3>12.2 工程落地 Checklist</h3>
+
+<p><strong>训练侧</strong></p>
+
+<ul>
+<li>[ ] 优先从 dense 检查点 upcycling，而非从零预训练（省大量成本）</li>
+<li>[ ] 采用细粒度分割 + 1 个共享专家（或 Qwen 式多专家无共享），top-8 起步</li>
+<li>[ ] 用 ALF-LB（动态 bias）替代/弱化 aux-loss，避免污染主目标；bias 更新强度随训练阶段调整</li>
+<li>[ ] 组限制路由把每 token 节点数控制在小范围（如 ≤4），降低跨节点通信</li>
+<li>[ ] all-to-all 用专用内核（DeepEP 类），开启 FP8 dispatch；Hopper+NVLink+RDMA 为推荐底座</li>
+<li>[ ] 监控每专家 token 分布、拥塞系数与 router 熵，中期（专门化最剧烈时）重点防 spike</li>
+</ul>
+
+<p><strong>推理侧</strong></p>
+
+<ul>
+<li>[ ] 认清 MoE 适合高并发云端、不适合低并发/端侧（除非配合卸载/剪枝）</li>
+<li>[ ] 用 EPLB 冗余专家 + prefill/decode 分阶段策略均衡 GPU</li>
+<li>[ ] 显存受限时启用预测式专家卸载，确保换入被计算隐藏</li>
+<li>[ ] 专家量化（热专家高精度、冷专家低精度）+ FP8 通信</li>
+<li>[ ] 配合连续批处理提高每批 token、提升专家利用率</li>
+<li>[ ] 部署前用真实流量统计专家热度，动态调整副本与驻留集合</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec13">13. 结语</h2>
+
+<p>MoE 的本质贡献不是&quot;更多参数&quot;，而是<strong>把模型的知识容量与每个 token 的计算量干净地解耦</strong>，从而在 dense 缩放日益昂贵时，开辟出一条&quot;容量近乎自由、计算保持精瘦&quot;的新缩放路径。九年里，它从 Google 内部的 TPU 奢侈品，变成由开源社区与中国团队主导、人人可用的旗舰骨干；2024–2026 年在专家组织、负载均衡、专家并行通信与推理系统上的突破，把它从&quot;能跑通&quot;推向&quot;跑得稳、跑得省&quot;。</p>
+
+<p>下一阶段的胜负手在于：能否在<strong>极稀疏</strong>设定下同时守住路由稳定、把推理显存墙真正推倒，并理解专家所承载的知识结构。控制论负载均衡、预测式专家驻留、循环 MoE 乃至&quot;按需生成专家&quot;的无限参数猜想，已经勾勒出这条路径的轮廓。可以确定的是——<strong>让模型调用海量知识、却只为用到的那一小部分付费</strong>，这一思想会长期主导大模型架构的演进。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec14">参考文献</h2>
+
+<blockquote>下列 arXiv 编号均经 arxiv.org 摘要页/搜索页核实（标题、作者、首次提交日期）；〔G〕标注为厂商技术报告/官方仓库（无 arXiv 编号）。全部链接于 2026-10-22 核实可达。</blockquote>
+
+<p><strong>奠基与路由</strong></p>
+
+<ol>
+<li>Shazeer et al., *Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer*, 2017. <a href="https://arxiv.org/abs/1701.06538" target="_blank" rel="noopener">arXiv:1701.06538</a></li>
+<li>Lepikhin et al., *GShard: Scaling Giant Models with Conditional Computation and Automatic Sharding*, 2020. <a href="https://arxiv.org/abs/2006.16668" target="_blank" rel="noopener">arXiv:2006.16668</a></li>
+<li>Fedus et al., *Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity*, 2021. <a href="https://arxiv.org/abs/2101.03961" target="_blank" rel="noopener">arXiv:2101.03961</a></li>
+<li>Lewis et al., *BASE Layers: Simplifying Training of Large, Sparse Models*, 2021. <a href="https://arxiv.org/abs/2103.16716" target="_blank" rel="noopener">arXiv:2103.16716</a></li>
+<li>Roller et al., *Hash Layers For Large Sparse Models*, 2021. <a href="https://arxiv.org/abs/2106.04426" target="_blank" rel="noopener">arXiv:2106.04426</a></li>
+<li>Du et al., *GLaM: Efficient Scaling of Language Models with Mixture-of-Experts*, 2021. <a href="https://arxiv.org/abs/2112.06905" target="_blank" rel="noopener">arXiv:2112.06905</a></li>
+<li>Zoph et al., *ST-MoE: Designing Stable and Transferable Sparse Expert Models*, 2022. <a href="https://arxiv.org/abs/2202.08906" target="_blank" rel="noopener">arXiv:2202.08906</a></li>
+<li>Zhou et al., *Mixture-of-Experts with Expert Choice Routing*, 2022. <a href="https://arxiv.org/abs/2202.09368" target="_blank" rel="noopener">arXiv:2202.09368</a></li>
+<li>Puigcerver et al., *From Sparse to Soft Mixtures of Experts*, 2023. <a href="https://arxiv.org/abs/2308.00951" target="_blank" rel="noopener">arXiv:2308.00951</a></li>
+<li>Li et al., *Branch-Train-Merge: Embarrassingly Parallel Training of Expert Language Models*, 2022. <a href="https://arxiv.org/abs/2208.03306" target="_blank" rel="noopener">arXiv:2208.03306</a></li>
+<li>Raposo et al., *Mixture-of-Depths: Dynamically Allocating Compute in Transformer-Based Language Models*, 2024. <a href="https://arxiv.org/abs/2404.02258" target="_blank" rel="noopener">arXiv:2404.02258</a></li>
+<li>Komatsuzaki et al., *Sparse Upcycling: Training Mixture-of-Experts from Dense Checkpoints*, 2022. <a href="https://arxiv.org/abs/2212.05055" target="_blank" rel="noopener">arXiv:2212.05055</a></li>
+</ol>
+
+<p><strong>系统与基础设施</strong></p>
+
+<ol>
+<li>Hwang et al., *Tutel: Adaptive Mixture-of-Experts at Scale*, 2022. <a href="https://arxiv.org/abs/2206.03382" target="_blank" rel="noopener">arXiv:2206.03382</a></li>
+<li>Gale et al., *MegaBlocks: Efficient Sparse Training with Mixture-of-Experts*, 2022. <a href="https://arxiv.org/abs/2211.15841" target="_blank" rel="noopener">arXiv:2211.15841</a></li>
+<li>DeepSeek-AI, *DeepEP: Expert-Parallel All-to-All Communication Library*, 2025. 〔G〕 <a href="https://github.com/deepseek-ai/DeepEP" target="_blank" rel="noopener">github.com/deepseek-ai/DeepEP</a></li>
+<li>DeepSeek-AI, *EPLB: Expert Parallelism Load Balancer*, 2025. 〔G〕 <a href="https://github.com/deepseek-ai/EPLB" target="_blank" rel="noopener">github.com/deepseek-ai/EPLB</a></li>
+</ol>
+
+<p><strong>旗舰模型技术报告</strong></p>
+
+<ol>
+<li>Jiang et al., *Mixtral of Experts*, 2024. <a href="https://arxiv.org/abs/2401.04088" target="_blank" rel="noopener">arXiv:2401.04088</a></li>
+<li>Dai et al., *DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts Language Models*, 2024. <a href="https://arxiv.org/abs/2401.06066" target="_blank" rel="noopener">arXiv:2401.06066</a></li>
+<li>DeepSeek-AI, *DeepSeek-V3 Technical Report*, 2024. <a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">arXiv:2412.19437</a></li>
+<li>DeepSeek-AI, *DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning*, 2025. <a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">arXiv:2501.12948</a></li>
+<li>Muennighoff et al., *OLMoE: Open Mixture-of-Experts Language Models*, 2024. <a href="https://arxiv.org/abs/2409.02060" target="_blank" rel="noopener">arXiv:2409.02060</a></li>
+<li>MiniMax, *MiniMax-01: Scaling Foundation Models with Lightning Attention*, 2025. <a href="https://arxiv.org/abs/2501.08313" target="_blank" rel="noopener">arXiv:2501.08313</a></li>
+<li>Qwen Team, *Qwen3 Technical Report*, 2025. <a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">arXiv:2505.09388</a></li>
+<li>Kimi Team, *Kimi K2: Open Agentic Intelligence*, 2025. <a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">arXiv:2507.20534</a></li>
+<li>Instella, *Instella-MoE Technical Report*, 2026. <a href="https://arxiv.org/abs/2609.00791" target="_blank" rel="noopener">arXiv:2609.00791</a></li>
+<li>*On the Design of Qwen3.8-Next Architecture: Evaluation, Efficiency, and Training Stability*, 2026. <a href="https://arxiv.org/abs/2608.30320" target="_blank" rel="noopener">arXiv:2608.30320</a></li>
+</ol>
+
+<p><strong>2025–2026 前沿：均衡、稳定性、稀疏化与推理</strong></p>
+
+<ol>
+<li>Han &amp; Zhong, *A Theoretical Framework for Auxiliary-Loss-Free Load Balancing of Sparse MoE in Large-Scale AI Models*, 2025. <a href="https://arxiv.org/abs/2512.03915" target="_blank" rel="noopener">arXiv:2512.03915</a></li>
+<li>Do et al., *Eigenvectors of Experts are Training-free Non-collapsing Routers (SSMoE)*, 2026. <a href="https://arxiv.org/abs/2605.30992" target="_blank" rel="noopener">arXiv:2605.30992</a></li>
+<li>Kapusuzoglu et al., *When Load-Balancing Goes Too Far: Expert Pruning in Over-Dispersed MoE (MESA)*, 2026. <a href="https://arxiv.org/abs/2609.04453" target="_blank" rel="noopener">arXiv:2609.04453</a></li>
+<li>Mouzouni, *Three Phases of Expert Routing: How Load Balance Evolves During MoE Training*, 2026. <a href="https://arxiv.org/abs/2604.04230" target="_blank" rel="noopener">arXiv:2604.04230</a></li>
+<li>Li et al., *Rethinking Routing Exploration in Modern Mixture-of-Experts (MirrorMoE)*, 2026. <a href="https://arxiv.org/abs/2610.22353" target="_blank" rel="noopener">arXiv:2610.22353</a></li>
+<li>Jin et al., *ID Balancing: Stable Training of Extremely Sparse MoE via PID-Based Load Control*, 2026. <a href="https://arxiv.org/abs/2609.39137" target="_blank" rel="noopener">arXiv:2609.39137</a></li>
+<li>*Hyperparameter Scaling Laws Across MoE Sparsity*, 2026. <a href="https://arxiv.org/abs/2609.08690" target="_blank" rel="noopener">arXiv:2609.08690</a></li>
+<li>*Scaling Multilingual Mixture-of-Experts: How Language Coverage Changes Capacity and Compute Allocation*, 2026. <a href="https://arxiv.org/abs/2610.20247" target="_blank" rel="noopener">arXiv:2610.20247</a></li>
+<li>*Scaling Laws for Looped Mixture-of-Experts*, 2026. <a href="https://arxiv.org/abs/2609.40316" target="_blank" rel="noopener">arXiv:2609.40316</a></li>
+<li>*SMELT: Scaling Laws for Compute-Matched MoE Looped Transformers*, 2026. <a href="https://arxiv.org/abs/2609.01343" target="_blank" rel="noopener">arXiv:2609.01343</a></li>
+<li>*Infinite-Parameter LLMs: Generating and Adapting Weights from Live Data*, 2026. <a href="https://arxiv.org/abs/2609.18842" target="_blank" rel="noopener">arXiv:2609.18842</a></li>
+<li>*MoE-CORE: Coordinated Expert Offloading and Residency for Memory-Constrained MoE Inference*, 2026. <a href="https://arxiv.org/abs/2610.01950" target="_blank" rel="noopener">arXiv:2610.01950</a></li>
+<li>*RapidMoE: Exploiting Cross-Asymmetry via Adaptive Residual Offloading for Large-Scale MoE Inference*, 2026. <a href="https://arxiv.org/abs/2610.01265" target="_blank" rel="noopener">arXiv:2610.01265</a></li>
+<li>*Mira: Memory-Efficient MoE Inference Using Adaptive Caching and Predictive Expert Staging*, 2026. <a href="https://arxiv.org/abs/2609.38090" target="_blank" rel="noopener">arXiv:2609.38090</a></li>
+<li>*Efficient CPU-GPU Collaborative MoE Inference via Adaptive Expert Assignment*, 2026. <a href="https://arxiv.org/abs/2610.23006" target="_blank" rel="noopener">arXiv:2610.23006</a></li>
+<li>*HiNa-MoE: High-Performance, Non-Intrusive MoE Inference on CPUs with Matrix Engines*, 2026. <a href="https://arxiv.org/abs/2610.05123" target="_blank" rel="noopener">arXiv:2610.05123</a></li>
+<li>*DivMoE: Fine-Grained MoE Upcycling via Cross-Domain Expert Composition*, 2026. <a href="https://arxiv.org/abs/2610.11317" target="_blank" rel="noopener">arXiv:2610.11317</a></li>
+<li>*MASKerade: Token-Routed Mask Experts for Dense-to-MoE Upcycling*, 2026. <a href="https://arxiv.org/abs/2610.07809" target="_blank" rel="noopener">arXiv:2610.07809</a></li>
+<li>*SPRI: SVD-Partitioned Residual Initialization for Data-Constrained MoE Upcycling*, 2026. <a href="https://arxiv.org/abs/2606.16456" target="_blank" rel="noopener">arXiv:2606.16456</a></li>
+<li>*Dense2MoE: Pushing the Pareto Frontier of On-Device LLMs via Unified Pruning and Upcycling*, 2026. <a href="https://arxiv.org/abs/2605.26496" target="_blank" rel="noopener">arXiv:2605.26496</a></li>
+<li>*Enhancing Mixture-of-Experts Specialization via Cluster-Aware Upcycling*, 2026. <a href="https://arxiv.org/abs/2604.13508" target="_blank" rel="noopener">arXiv:2604.13508</a></li>
+<li>*Share First, Route What Remains: A Unified Framework for Token-Adaptive MoE Computation*, 2026. <a href="https://arxiv.org/abs/2608.10392" target="_blank" rel="noopener">arXiv:2608.10392</a></li>
+<li>*STUN: Structured-Then-Unstructured Pruning for Scalable MoE Pruning*, 2024. <a href="https://arxiv.org/abs/2409.06211" target="_blank" rel="noopener">arXiv:2409.06211</a></li>
+<li>*Reconstruction-Optimized Expert Pruning for Mixture-of-Experts Language Models*, 2026. <a href="https://arxiv.org/abs/2610.27123" target="_blank" rel="noopener">arXiv:2610.27123</a></li>
+</ol>
+
+<p><strong>综述</strong></p>
+
+<ol>
+<li>*A Comprehensive Survey of Mixture-of-Experts: Algorithms, Theory, and Applications*, 2025. <a href="https://arxiv.org/abs/2503.07137" target="_blank" rel="noopener">arXiv:2503.07137</a></li>
+</ol>
+
+<p><strong>数据来源（参数交叉核实）</strong></p>
+
+<ul>
+<li>Epoch AI, *Notable AI Models* 数据库（Mixtral 等精确参数）：<a href="https://epoch.ai/data/notable_ai_models.csv" target="_blank" rel="noopener">epoch.ai/data/notable_ai_models.csv</a>（2026-10-22 访问，第三方转述厂商口径）</li>
+<li>各模型官方 config（经 hf-mirror.com 镜像抓取，引用给官方 huggingface.co URL）：Mixtral、DeepSeekMoE-16B、DeepSeek-V2、Qwen 系列模型卡。</li>
+</ul>
+<div class="footer">稀疏混合专家（MoE）架构前沿技术报告 · 2026-10-22 · 所有 arXiv 编号已经 arxiv.org 逐一核实 · 图表为手工暗色 SVG · 厂商自报数据均标注「厂商口径」，媒体估算标注「第三方」</div>
+</div></body></html>

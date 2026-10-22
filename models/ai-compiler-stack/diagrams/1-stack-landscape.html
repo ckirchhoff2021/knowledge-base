@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 异构 AI 全栈技术栈全景</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 820" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="820" fill="#0d1117"/>
+  <text x="50" y="42" fill="#e6edf3" font-size="23" font-weight="700">图 1 · 异构 AI 全栈技术栈全景：从模型到芯片的七层结构，与三套「纵向一体化」软件栈</text>
+  <text x="50" y="68" fill="#8b949e" font-size="12.5">蓝色块＝开源/多厂商路线；紫色＝NVIDIA 封闭生态；绿色＝中国生态；黄色＝AMD/Intel；数据截至 2026-10</text>
+
+  <!-- Layer bands -->
+  <!-- L7 apps -->
+  <rect x="210" y="92" width="700" height="52" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="228" y="114" fill="#58a6ff" font-size="13" font-weight="700">L7 模型与应用</text>
+  <text x="228" y="134" fill="#e6edf3" font-size="12.5">LLaMA · DeepSeek-V3/R1 · Qwen · GLM · Agent 应用 · 科学计算</text>
+
+  <!-- L6 frameworks -->
+  <rect x="210" y="156" width="700" height="52" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="228" y="178" fill="#58a6ff" font-size="13" font-weight="700">L6 训练 / 推理框架</text>
+  <text x="228" y="198" fill="#e6edf3" font-size="12.5">PyTorch 2.x · JAX · PaddlePaddle · MindSpore ｜ vLLM · SGLang · Megatron-LM · MLC-LLM</text>
+
+  <!-- L5 graph compilers -->
+  <rect x="210" y="220" width="700" height="56" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="228" y="242" fill="#58a6ff" font-size="13" font-weight="700">L5 图编译器 / 运行时（图级优化：融合 · 布局 · 自动并行）</text>
+  <text x="228" y="263" fill="#e6edf3" font-size="12.5">torch.compile (Dynamo+Inductor) · OpenXLA · TVM/Relax · BladeDISC · Alpa · GSPMD</text>
+
+  <!-- L4 unified IR -->
+  <rect x="210" y="288" width="700" height="52" rx="9" fill="#1c1430" stroke="#bc8cff" stroke-width="1.8"/>
+  <text x="228" y="310" fill="#bc8cff" font-size="13" font-weight="700">L4 统一中间表示</text>
+  <text x="228" y="330" fill="#e6edf3" font-size="12.5">MLIR 多层方言体系（Triton/Tensor/LLVM/NVVM/ROCDL dialect…）· TTGIR · FLIR · TIR</text>
+
+  <!-- L3 kernel languages -->
+  <rect x="210" y="352" width="700" height="60" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="228" y="374" fill="#58a6ff" font-size="13" font-weight="700">L3 算子语言 / Kernel 编程模型（块级 · 片上存储 · Tensor Core）</text>
+  <text x="228" y="395" fill="#e6edf3" font-size="12.5">Triton · ThunderKittens · TileLang · Exo ｜ CUDA C++/CUTLASS·CuTe ｜ Ascend C · Bang C · MUSA · MACA</text>
+
+  <!-- L2 driver/runtime comm -->
+  <rect x="210" y="424" width="700" height="52" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="228" y="446" fill="#58a6ff" font-size="13" font-weight="700">L2 运行时 / 驱动 / 通信库</text>
+  <text x="228" y="466" fill="#e6edf3" font-size="12.5">CUDA Runtime · HIP/ROCt · Level Zero ｜ NCCL · RCCL · FlagCX ｜ UALink · Ultra Ethernet</text>
+
+  <!-- L1 chips -->
+  <rect x="210" y="488" width="700" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="228" y="510" fill="#58a6ff" font-size="13" font-weight="700">L1 AI 芯片 / 加速器</text>
+  <text x="228" y="531" fill="#e6edf3" font-size="12">NVIDIA H/B/Rubin · AMD MI300/350 · Intel Gaudi/Xe · 昇腾 910/950 · 寒武纪 · 海光 DCU</text>
+  <text x="228" y="548" fill="#e6edf3" font-size="12">摩尔线程 · 沐曦 · 燧原 · 昆仑芯 · 天数智芯 · 平头哥 · 进迭时空 …（FlagTree 已汇聚 15+ 厂商）</text>
+
+  <!-- left vertical stack: NVIDIA CUDA -->
+  <rect x="40" y="92" width="150" height="458" rx="12" fill="#241a33" stroke="#bc8cff" stroke-width="1.8"/>
+  <text x="115" y="120" fill="#bc8cff" font-size="14" font-weight="700" text-anchor="middle">NVIDIA</text>
+  <text x="115" y="140" fill="#bc8cff" font-size="14" font-weight="700" text-anchor="middle">CUDA 全栈</text>
+  <text x="115" y="172" fill="#d9c2ff" font-size="11.5" text-anchor="middle">cuDNN</text>
+  <text x="115" y="194" fill="#d9c2ff" font-size="11.5" text-anchor="middle">TensorRT</text>
+  <text x="115" y="216" fill="#d9c2ff" font-size="11.5" text-anchor="middle">cuBLAS/CUTLASS</text>
+  <text x="115" y="238" fill="#d9c2ff" font-size="11.5" text-anchor="middle">NCCL · NVLink</text>
+  <text x="115" y="260" fill="#d9c2ff" font-size="11.5" text-anchor="middle">PTX/SASS</text>
+  <text x="115" y="302" fill="#e6edf3" font-size="11" text-anchor="middle">750 万开发者</text>
+  <text x="115" y="320" fill="#e6edf3" font-size="11" text-anchor="middle">900+ CUDA-X 库</text>
+  <text x="115" y="338" fill="#8b949e" font-size="10.5" text-anchor="middle">FY2026 10-K 口径</text>
+  <text x="115" y="378" fill="#8b949e" font-size="10.5" text-anchor="middle">20 年软件资产</text>
+  <text x="115" y="396" fill="#8b949e" font-size="10.5" text-anchor="middle">软硬协同发布</text>
+  <text x="115" y="414" fill="#8b949e" font-size="10.5" text-anchor="middle">事实标准</text>
+
+  <!-- right vertical stack: FlagOS -->
+  <rect x="940" y="92" width="220" height="458" rx="12" fill="#12281a" stroke="#3fb950" stroke-width="1.8"/>
+  <text x="1050" y="120" fill="#3fb950" font-size="14" font-weight="700" text-anchor="middle">FlagOS 2.2（智源）</text>
+  <text x="1050" y="140" fill="#3fb950" font-size="11.5" text-anchor="middle">开源异构全栈 · 一次开发多芯运行</text>
+  <text x="1050" y="172" fill="#a7e8b0" font-size="11.5" text-anchor="middle">FlagGems 通用算子</text>
+  <text x="1050" y="194" fill="#a7e8b0" font-size="11.5" text-anchor="middle">FlagTree 统一编译器</text>
+  <text x="1050" y="216" fill="#a7e8b0" font-size="11.5" text-anchor="middle">FlagCX 统一通信</text>
+  <text x="1050" y="238" fill="#a7e8b0" font-size="11.5" text-anchor="middle">Torch-FL (PrivateUse1)</text>
+  <text x="1050" y="260" fill="#a7e8b0" font-size="11.5" text-anchor="middle">FlagScale 训练/推理</text>
+  <text x="1050" y="282" fill="#a7e8b0" font-size="11.5" text-anchor="middle">KernelGen（NL→算子）</text>
+  <text x="1050" y="304" fill="#a7e8b0" font-size="11.5" text-anchor="middle">FlagPerf 评测</text>
+  <text x="1050" y="340" fill="#e6edf3" font-size="11" text-anchor="middle">2026-03：32 款芯片</text>
+  <text x="1050" y="358" fill="#e6edf3" font-size="11" text-anchor="middle">497 个算子（快照口径）</text>
+  <text x="1050" y="390" fill="#8b949e" font-size="10.5" text-anchor="middle">GitHub flagos-ai：30 仓库</text>
+  <text x="1050" y="408" fill="#8b949e" font-size="10.5" text-anchor="middle">15+ 芯片厂商后端</text>
+
+  <!-- middle challenger note: ROCm/oneAPI -->
+  <rect x="210" y="572" width="700" height="56" rx="9" fill="#2c2507" stroke="#d29922" stroke-width="1.6"/>
+  <text x="228" y="594" fill="#d29922" font-size="13" font-weight="700">挑战者纵向栈：AMD ROCm 10.1（HIP/HIPIFY · MIOpen · RCCL · TheRock 开放构建）</text>
+  <text x="228" y="615" fill="#e6edf3" font-size="12">Intel oneAPI（Level Zero · oneDNN，已转入 UXL Foundation 治理）· Gaudi 软件栈（商业收缩）</text>
+
+  <!-- bottom insight -->
+  <rect x="40" y="652" width="1120" height="138" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="62" y="682" fill="#58a6ff" font-size="14" font-weight="700">核心观察</text>
+  <text x="62" y="710" fill="#e6edf3" font-size="12.5">① 竞争焦点从「框架」下沉到「编译器 + 算子语言」：谁掌握 L3–L5，谁就掌握芯片的可用性与性能上限；</text>
+  <text x="62" y="734" fill="#e6edf3" font-size="12.5">② MLIR 成为多方共用的「编译器的编译器」，Triton 成为多厂商算子事实标准——抽象层正在绕开 CUDA 直接对接硬件；</text>
+  <text x="62" y="758" fill="#e6edf3" font-size="12.5">③ 三条路线并行：CUDA 纵向加固（Tile IR）、ROCm/UXL 开放替代、FlagOS 式「N 家芯片一套栈」的生态聚合；</text>
+  <text x="62" y="782" fill="#8b949e" font-size="11.5">来源：NVIDIA/Intel SEC 10-K、ROCm 官方文档、FlagOS 官方文档（docs.flagos.io）、triton-lang.org、MLIR 官网，2026-10-21 核实</text>
+</svg>
+</body></html>

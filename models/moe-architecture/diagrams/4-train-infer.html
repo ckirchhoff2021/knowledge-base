@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · MoE 训练推理系统全景</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 840" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="840" fill="#0d1117"/>
+<defs>
+<marker id="b" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#58a6ff"/></marker>
+<marker id="g" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3fb950"/></marker>
+</defs>
+<text x="50" y="42" fill="#e6edf3" font-size="23" font-weight="700">图 4 · MoE 训练 / 推理系统全景：专家并行、all-to-all 通信与显存墙</text>
+<text x="50" y="68" fill="#8b949e" font-size="12.5">上：训练时专家分散到多 GPU，靠 dispatch/combine 两次 all-to-all；下：推理时全部专家都要进显存，催生冗余均衡与专家卸载</text>
+
+<!-- TRAIN PANEL -->
+<rect x="50" y="90" width="1100" height="320" rx="10" fill="#10141a" stroke="#30363d"/>
+<text x="70" y="118" fill="#58a6ff" font-size="15" font-weight="700">训练：专家并行（Expert Parallelism）</text>
+
+<rect x="72" y="138" width="150" height="250" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.4"/>
+<text x="147" y="164" fill="#58a6ff" font-size="12.5" font-weight="700" text-anchor="middle">本批 token</text>
+<text x="147" y="192" fill="#e6edf3" font-size="11" text-anchor="middle">门控打分</text>
+<text x="147" y="214" fill="#e6edf3" font-size="11" text-anchor="middle">每 token → top-k</text>
+<text x="147" y="236" fill="#e6edf3" font-size="11" text-anchor="middle">组限制路由</text>
+<text x="147" y="262" fill="#d29922" font-size="11" text-anchor="middle">每 token 至多 4 节点</text>
+<text x="147" y="292" fill="#8b949e" font-size="10.5" text-anchor="middle">+ 负载偏置修正</text>
+<text x="147" y="314" fill="#8b949e" font-size="10.5" text-anchor="middle">ALF-LB / ID 控制</text>
+<text x="147" y="350" fill="#8b949e" font-size="10.5" text-anchor="middle">FP8 dispatch 降带宽</text>
+
+<rect x="262" y="170" width="140" height="64" rx="9" fill="#0e1d12" stroke="#3fb950" stroke-width="1.6"/>
+<text x="332" y="196" fill="#3fb950" font-size="12.5" font-weight="700" text-anchor="middle">① Dispatch</text>
+<text x="332" y="218" fill="#e6edf3" font-size="10.5" text-anchor="middle">all-to-all 发 token</text>
+<rect x="262" y="292" width="140" height="64" rx="9" fill="#0e1d12" stroke="#3fb950" stroke-width="1.6"/>
+<text x="332" y="318" fill="#3fb950" font-size="12.5" font-weight="700" text-anchor="middle">② Combine</text>
+<text x="332" y="340" fill="#e6edf3" font-size="10.5" text-anchor="middle">all-to-all 收回结果</text>
+<line x1="222" y1="202" x2="260" y2="202" stroke="#58a6ff" stroke-width="1.7" marker-end="url(#b)"/>
+<line x1="402" y1="250" x2="402" y2="290" stroke="#3fb950" stroke-width="1.7" marker-end="url(#g)"/>
+
+<!-- GPU grid -->
+<rect x="430" y="138" width="700" height="250" rx="9" fill="#0d1117" stroke="#bc8cff" stroke-width="1.3"/>
+<text x="448" y="162" fill="#bc8cff" font-size="12" font-weight="700">节点 × GPU：专家切片分布（不同颜色＝该 GPU 此刻被路由命中的热专家）</text>
+<g font-size="10.5" text-anchor="middle">
+<rect x="448" y="178" width="158" height="60" rx="8" fill="#161b22" stroke="#30363d"/><text x="527" y="205" fill="#e6edf3">GPU · 专家分片</text><text x="527" y="225" fill="#8b949e">节点 A</text>
+<rect x="614" y="178" width="158" height="60" rx="8" fill="#0e1d12" stroke="#3fb950"/><text x="693" y="205" fill="#3fb950">GPU · 热专家</text><text x="693" y="225" fill="#8b949e">节点 A</text>
+<rect x="780" y="178" width="158" height="60" rx="8" fill="#161b22" stroke="#30363d"/><text x="859" y="205" fill="#e6edf3">GPU · 专家分片</text><text x="859" y="225" fill="#8b949e">节点 B</text>
+<rect x="946" y="178" width="168" height="60" rx="8" fill="#161b22" stroke="#30363d"/><text x="1030" y="205" fill="#e6edf3">GPU · 专家分片</text><text x="1030" y="225" fill="#8b949e">节点 B</text>
+<rect x="448" y="252" width="158" height="60" rx="8" fill="#161b22" stroke="#30363d"/><text x="527" y="279" fill="#e6edf3">GPU · 专家分片</text><text x="527" y="299" fill="#8b949e">节点 C</text>
+<rect x="614" y="252" width="158" height="60" rx="8" fill="#0e1d12" stroke="#3fb950"/><text x="693" y="279" fill="#3fb950">GPU · 热专家</text><text x="693" y="299" fill="#8b949e">节点 C</text>
+<rect x="780" y="252" width="158" height="60" rx="8" fill="#161b22" stroke="#30363d"/><text x="859" y="279" fill="#e6edf3">GPU · 专家分片</text><text x="859" y="299" fill="#8b949e">节点 D</text>
+<rect x="946" y="252" width="168" height="60" rx="8" fill="#161b22" stroke="#30363d"/><text x="1030" y="279" fill="#e6edf3">GPU · 专家分片</text><text x="1030" y="299" fill="#8b949e">节点 D</text>
+</g>
+<text x="780" y="338" fill="#8b949e" font-size="11" text-anchor="middle">节点内 NVLink（高带宽）｜ 节点间 RDMA/IB；DeepEP 优化 NVLink↔RDMA 异构域传输，运行时 DeepJIT 编译内核</text>
+<text x="780" y="366" fill="#8b949e" font-size="11" text-anchor="middle">DeepEP 已推出昇腾 Ascend 950 NPU 版本（DeepEP-Ascend），同 API、同性能</text>
+<line x1="402" y1="202" x2="446" y2="202" stroke="#3fb950" stroke-width="1.7" marker-end="url(#g)"/>
+
+<!-- INFER PANEL -->
+<rect x="50" y="430" width="1100" height="380" rx="10" fill="#10141a" stroke="#30363d"/>
+<text x="70" y="458" fill="#d29922" font-size="15" font-weight="700">推理：全部专家权重都要可访问 → 显存墙</text>
+
+<rect x="72" y="478" width="330" height="150" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+<text x="90" y="504" fill="#3fb950" font-size="13" font-weight="700">路线 A · 冗余专家 + 均衡放置（EPLB）</text>
+<text x="90" y="530" fill="#e6edf3" font-size="11">· 复制热专家，按负载打包到各 GPU</text>
+<text x="90" y="552" fill="#e6edf3" font-size="11">· 分层（prefill，小 EP）/ 全局（decode，大 EP）</text>
+<text x="90" y="574" fill="#e6edf3" font-size="11">· 同组专家尽量同节点，减少跨节点流量</text>
+<text x="90" y="600" fill="#8b949e" font-size="10.5">github.com/deepseek-ai/EPLB</text>
+
+<rect x="430" y="478" width="330" height="150" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+<text x="448" y="504" fill="#58a6ff" font-size="13" font-weight="700">路线 B · 专家卸载 / 换入（offload）</text>
+<text x="448" y="530" fill="#e6edf3" font-size="11">· 冷专家放 CPU/SSD，预测命中后提前换入</text>
+<text x="448" y="552" fill="#e6edf3" font-size="11">· MoE-CORE 协同卸载与驻留；RapidMoE 残差卸载</text>
+<text x="448" y="574" fill="#e6edf3" font-size="11">· Mira 自适应缓存 + 预测式专家暂存</text>
+<text x="448" y="600" fill="#f85149" font-size="10.5">关键：换入延迟必须被计算完全隐藏</text>
+
+<rect x="788" y="478" width="342" height="150" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+<text x="806" y="504" fill="#bc8cff" font-size="13" font-weight="700">路线 C · 压缩 / 稀疏化</text>
+<text x="806" y="530" fill="#e6edf3" font-size="11">· 专家量化：热专家高精度、冷专家低精度</text>
+<text x="806" y="552" fill="#e6edf3" font-size="11">· 专家剪枝：STUN / 重建优化剪枝 / MESA</text>
+<text x="806" y="574" fill="#e6edf3" font-size="11">· 连续批处理提高每批 token、提升专家利用率</text>
+<text x="806" y="600" fill="#8b949e" font-size="10.5">配合 FP8 通信与共享专家降冗余</text>
+
+<rect x="72" y="650" width="1058" height="140" rx="9" fill="#1a1010" stroke="#f85149" stroke-width="1.3"/>
+<text x="90" y="678" fill="#f85149" font-size="13" font-weight="700">为什么 MoE 推理比训练更难？</text>
+<text x="90" y="704" fill="#e6edf3" font-size="11.5">· 训练只激活 top-k、算力稀疏；推理却必须让 N 个专家权重「随时可取」——显存按总参数（如 671B）而非激活参数（37B）增长。</text>
+<text x="90" y="728" fill="#e6edf3" font-size="11.5">· 单请求只命中少数专家 → GPU 利用率低、专家间负载不均；decode 阶段批小、专家分散，all-to-all 更不划算。</text>
+<text x="90" y="752" fill="#d29922" font-size="11.5">· 结论：MoE 天然适合高并发云端（批大、专家热度可摊薄），低并发/端侧需靠卸载、剪枝或 Dense2MoE 式改造。</text>
+<text x="90" y="776" fill="#8b949e" font-size="11">CPU-GPU 协同（自适应专家分配）、HiNa-MoE（CPU 矩阵引擎）是把 MoE 推向非典型硬件的 2026 新尝试。</text>
+</svg>
+</body></html>

@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 18 个话题。
+大模型与后训练方向的论文分析，共 20 个话题。
 
 ---
 
@@ -111,3 +111,15 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 对**已经开源、已发布权重、可复现训练流程**的 Jev-like System One 决策模型做训练方法横评，并补全 2026-10 月最新进展。先建立所有开源实现共享的统一契约：因果/双向骨干 + **置换等变候选头**（无位置编码的集合 Transformer + 残差 + RMSNorm/SiLU 标量打分），noul / choice / score 三原语**共用一个头**，差异仅在候选数、指标与校准温度；地基同为 Typed Decisions 数据集（含教师自一致天花板 0.735 与污染事故的社区纪律）。核心是三大已验证训练范式：①**软标签 SFT**（AgentJev-0.6B，Qwen3-0.6B 去 LM 头）——soft 交叉熵 + 0.1·Brier、案例级哈希切分 960/120/120 + test 400、600 步全参 bf16、LLRD（骨干 1e-5/头 1e-4）、独立校准集顺序锁死拟合温度，phase4 续训 **79.25%**、本地从零底座直训 78.05%（GB10 49 分钟/34GB）；②**RLCD 面向校准的强化学习**（Laya，ModernBERT-large 421M）——logits 加零均值 Gaussian 探索，奖励取 log + spherical（score 题加 RPS）等严格适当评分规则，REINFORCE + 组均值 baseline 并联 soft CE，76.6–77%、33–42ms、2×T4 4–5h，并坦承 ECE 0.213、发布权重温度在训练集拟合两大缺陷；③**真实结果标签的领域续训**（coding-gates 分支）——2100 次真实测试运行按退出码核对 + 1800 行摘要、中英/倒置问法增强、vitest/node 整组 OOD、以「TD dev CE ≤ step0+0.01」约束选点，门禁测试 100%、TD 80.85%。另覆盖通用零样本派（d3/clef/Amos）、LoRA 专家（Decider-4B 0.8205）、零权重 log-prior（0.761→0.8025）等路线；10 月前沿 **TreeEncoder 共享前缀树编码器**（服务 P50 278→44ms 即 6.3×、训练 3.69×）、Claude Code PreToolUse hook 等落地集成，并给出三范式全景对比与工程选型 Checklist。信源为上游仓库协议文件/报告、Hugging Face 模型卡与数据集卡、本地 jev-trainer 实测记录一手交叉验证，2 篇关键论文编号（SalesRLAgent arXiv:2503.23303、Confidence-Aware Routing arXiv:2510.01237）经 arXiv 官方 API 核实。
 
 📅 2026-10-20 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](open-source-jev-training/report.md)
+
+### [AI 编译器与异构全栈底座](ai-compiler-stack/report.html)
+
+智源《2026 十大 AI 技术趋势》第 9 位方向——「开源编译器生态汇聚众智，异构全栈底座引领算力普惠」。基于 23 篇专题 arXiv 论文（编号经 arxiv.org 逐一核实）与 NVIDIA/Intel SEC 10-K/10-Q/8-K、联邦公报、AMD ROCm/FlagOS/PyTorch 官方文档交叉验证：先解剖 CUDA 二十年护城河（FY2025→FY2026 CUDA 开发者由 **590 万增至 750 万**、900+ CUDA-X 库、CUDA 13.4 新 Tile IR）；讲透 AI 编译器前端—IR—后端与**多层 IR 为何是异构关键**（MLIR 方言体系，Triton TTIR→TTGIR→LLVM IR→PTX/ROCDL/SPIR-V，TVM/Relax 与 XLA/Alpa/GSPMD 两条流水线）；系统建立**算子语言光谱**（裸 CUDA/CuTe 0 抽象 → ThunderKittens 3 个 tile 抽象对齐 FA-3、TileLang tile 级甜点层、Exo exocompilation 调度外置、Triton 成为跨厂商事实标准，含各语言关键性能数字：注意力反向快 10–40%、Liger 训练吞吐 +20%/显存 −60%、FlashInfer 延迟 −29–69%）；覆盖自动调优（AutoTVM/Ansor 3.8×/Roller/PET）与自动并行（GSPMD 2048 TPU 核利用率 50–62%、Alpa）；用整章深拆 **2025–2026 新范式「LLM/Agent 自动写 Kernel」**——KernelBench 揭示最强模型开箱仅 <20% 用例追平 PyTorch 基线，CuTeGen 均速 1.71×、CUDA Agent 大规模 Agentic RL 后 L1/L2 更快率 100%/L3 92%（比 Claude Opus 4.5/Gemini 3 Pro 高约 40%）、AKG kernel Agent 跨 GPU+NPU 1.46×、AI as a Compiler 直接 Triton→PTX 0.83–3.34×；盘点全球战局（ROCm 10.1/TheRock、Intel oneAPI 已转 UXL 治理、Gaudi 官方承认竞争失利与 Falcon Shores 取消）与六家国产栈（昇腾 CANN/Ascend C/MindSpore、寒武纪 BangC、摩尔线程 MUSA、沐曦 MACA、燧原驭算、海光 DTK）；重点深拆 **FlagOS 2.2**（FlagTree 统一编译器 main 分支 15+ 后端、TLE/FLIR/HINTS 扩展、FlagCX 跨芯通信、Torch-FL PrivateUse1、KernelGen 自然语言生成 Triton、2.0 口径 32 芯片/497 算子标注快照、Day0 多芯适配 8–9 款）；覆盖 UALink 200G 1.0/UEC 1.1 开放互联、ZLUDA 兼容层「可以试不该押」、H20 出口管制完整时间线（预警 55 亿/实提 45 亿美元、2025-08 有条件恢复、FY26 确认约 6000 万）与分角色选型 Checklist、六大开放问题。厂商口径、媒体估算与快照级信源均显式标注。
+
+📅 2026-10-21 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](ai-compiler-stack/report.md)
+
+### [稀疏混合专家（MoE）架构](moe-architecture/report.html)
+
+MoE 的本质不是「更多参数」，而是把**知识容量与每 token 计算量干净地解耦**：总参数 ∝ N（专家数）、激活参数 ∝ k（top-k），N 可以上千而 k 保持个位数。报告系统覆盖：① MoE 第一性原理与三对核心矛盾（容量vs计算、专门化vs均衡、探索vs稳定）；② 九年时间线（2017 Shazeer 137B/容量 ×1000 → 2020 GShard 600B → 2021 Switch 1.6T/GLaM/BASE/Hash → 2022 ST-MoE/Soft MoE/Branch-Train-Merge/MegaBlocks/Sparse Upcycling → 2024 Mixtral/DeepSeekMoE/V2/V3/DBRX/Arctic/OLMoE/Qwen MoE → 2025 R1/Qwen3/Kimi K2/MiniMax-01/GLM-4.5 → 2026 极稀疏 768 专家）；③ 路由六范式（token-choice 硬路由、BASE 线性分配、Hash 无参数、expert-choice 专家选 token、Soft MoE 软分配、Mixture-of-Depths 深度稀疏 + 2026 免训练 SSMoE 特征向量路由/MirrorMoE）；④ 细粒度分割（DeepSeekMoE N→mN）+ 共享专家兜底 + 专家数竞赛（Qwen3-Next 512、ID Balancing 768）；⑤ 负载均衡从辅助损失 L_aux（污染主目标、导致过度分散 MESA）→ DeepSeek-V3 无辅助损失动态 bias（ALF-LB）→ 2026 控制论统一框架（拥塞系数 γ_eff、三阶段、理论 O(log T) 遗憾界、ID Balancing PID 768 专家 top-3 MaxVio 降 >50%）；⑥ DeepEP 高吞吐低延迟 all-to-all（FP8 dispatch、NVLink↔RDMA 跨域、V2.5 redundant experts、Ascend 版）与 EPLB 冗余专家放置（分层 prefill/全局 decode）、专家并行度；⑦ Upcycling dense→MoE（Sparse Upcycling 2212.05055）及 2026 初始化/分割/剪枝新工作；⑧ 推理显存墙（671B 完整加载约 1.3TB）与三条路线（专家并行扩显存池、预测式专家卸载 MoE-CORE/RapidMoE/Mira/CPU-GPU、专家量化+通信压缩）；⑨ MoE 超参/多语言/循环 MoE 缩放定律与「无限参数」猜想（2609.18842）；⑩ 19 款旗舰参数与能力横评（DeepSeek-V3 671B/37B、Kimi K2 1.04T/32.6B；R1 AIME 79.8%/MATH-500 97.3%、K2 SWE-Bench 65.8/Tau2 66.1/MuonClip）及 DeepSeek/Kimi vs Qwen 两条设计哲学；⑪ 采用时间线（2024 后开放旗舰多数为 MoE）、六大开放问题与训练/推理双侧 Checklist。35 篇 arXiv 编号经 arxiv.org 逐一核实（含 DeepEP/EPLB 无论文只有仓库、2506.06236/2504.13081 撞号排查），厂商数据标注「厂商口径」。
+
+📅 2026-10-22 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](moe-architecture/report.md)

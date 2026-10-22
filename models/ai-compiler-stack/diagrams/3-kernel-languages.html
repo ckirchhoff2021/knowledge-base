@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 算子语言光谱</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 780" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="780" fill="#0d1117"/>
+  <text x="50" y="42" fill="#e6edf3" font-size="23" font-weight="700">图 3 · 算子语言光谱：抽象层级决定「写多快」与「跑多快」的权衡</text>
+  <text x="50" y="68" fill="#8b949e" font-size="12.5">越靠左越接近硬件（性能上限高、编程负担重）；越靠右越声明式（生产力高、依赖编译器）；虚线＝多厂商可移植</text>
+
+  <!-- axes -->
+  <line x1="100" y1="120" x2="100" y2="560" stroke="#8b949e" stroke-width="1.6"/>
+  <line x1="100" y1="560" x2="1140" y2="560" stroke="#8b949e" stroke-width="1.6"/>
+  <text x="60" y="130" fill="#8b949e" font-size="12">性能上限 ↑</text>
+  <text x="1060" y="588" fill="#8b949e" font-size="12">抽象 / 生产力 →</text>
+
+  <!-- gridlines -->
+  <g stroke="#30363d" stroke-width="1" stroke-dasharray="4 5">
+    <line x1="100" y1="240" x2="1140" y2="240"/><line x1="100" y1="360" x2="1140" y2="360"/>
+    <line x1="100" y1="480" x2="1140" y2="480"/>
+    <line x1="310" y1="120" x2="310" y2="560"/><line x1="520" y1="120" x2="520" y2="560"/>
+    <line x1="730" y1="120" x2="730" y2="560"/><line x1="940" y1="120" x2="940" y2="560"/>
+  </g>
+
+  <!-- bubbles: x = abstraction, y = performance, size = ecosystem momentum -->
+  <!-- CUDA C++ / CUTLASS CuTe -->
+  <circle cx="200" cy="180" r="46" fill="#241a33" stroke="#bc8cff" stroke-width="2"/>
+  <text x="200" y="176" fill="#d9c2ff" font-size="12.5" font-weight="700" text-anchor="middle">CUDA C++</text>
+  <text x="200" y="194" fill="#d9c2ff" font-size="11" text-anchor="middle">CUTLASS/CuTe</text>
+
+  <!-- Ascend C / Bang C -->
+  <circle cx="330" cy="210" r="40" fill="#12281a" stroke="#3fb950" stroke-width="2"/>
+  <text x="330" y="206" fill="#a7e8b0" font-size="12" font-weight="700" text-anchor="middle">Ascend C</text>
+  <text x="330" y="224" fill="#a7e8b0" font-size="11" text-anchor="middle">Bang C</text>
+
+  <!-- ThunderKittens -->
+  <circle cx="450" cy="250" r="42" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+  <text x="450" y="246" fill="#58a6ff" font-size="12" font-weight="700" text-anchor="middle">Thunder</text>
+  <text x="450" y="264" fill="#58a6ff" font-size="12" font-weight="700" text-anchor="middle">Kittens</text>
+
+  <!-- Exo -->
+  <circle cx="560" cy="300" r="34" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+  <text x="560" y="297" fill="#58a6ff" font-size="12" font-weight="700" text-anchor="middle">Exo 2</text>
+  <text x="560" y="313" fill="#8b949e" font-size="9.5" text-anchor="middle">外部调度</text>
+
+  <!-- TileLang -->
+  <circle cx="640" cy="330" r="38" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+  <text x="640" y="326" fill="#58a6ff" font-size="12" font-weight="700" text-anchor="middle">TileLang</text>
+  <text x="640" y="344" fill="#8b949e" font-size="9.5" text-anchor="middle">多厂商</text>
+
+  <!-- Triton (biggest momentum) -->
+  <circle cx="760" cy="270" r="58" fill="#0e2333" stroke="#58a6ff" stroke-width="2.4"/>
+  <text x="760" y="262" fill="#58a6ff" font-size="15" font-weight="700" text-anchor="middle">Triton</text>
+  <text x="760" y="284" fill="#e6edf3" font-size="10.5" text-anchor="middle">事实标准 · 15+ 后端</text>
+  <text x="760" y="300" fill="#8b949e" font-size="9.5" text-anchor="middle">FlagTree 分叉扩展</text>
+
+  <!-- Liger -->
+  <circle cx="900" cy="380" r="30" fill="#161b22" stroke="#3fb950" stroke-width="2"/>
+  <text x="900" y="377" fill="#a7e8b0" font-size="11" font-weight="700" text-anchor="middle">Liger</text>
+  <text x="900" y="392" fill="#8b949e" font-size="9" text-anchor="middle">Triton 库</text>
+
+  <!-- torch.compile -->
+  <circle cx="1010" cy="430" r="42" fill="#161b22" stroke="#d29922" stroke-width="2"/>
+  <text x="1010" y="426" fill="#e9c96a" font-size="11.5" font-weight="700" text-anchor="middle">torch.compile</text>
+  <text x="1010" y="444" fill="#8b949e" font-size="9.5" text-anchor="middle">Inductor 生成</text>
+
+  <!-- NL / KernelGen -->
+  <circle cx="1090" cy="500" r="30" fill="#12281a" stroke="#3fb950" stroke-width="2"/>
+  <text x="1090" y="497" fill="#a7e8b0" font-size="10.5" font-weight="700" text-anchor="middle">KernelGen</text>
+  <text x="1090" y="512" fill="#8b949e" font-size="9" text-anchor="middle">自然语言</text>
+
+  <!-- annotation arrows with facts -->
+  <g font-size="11">
+    <line x1="200" y1="134" x2="200" y2="100" stroke="#bc8cff" stroke-dasharray="3 3"/>
+    <text x="210" y="96" fill="#d9c2ff">性能天花板：手写 kernel 仍是基准</text>
+
+    <line x1="760" y1="212" x2="760" y2="150" stroke="#58a6ff" stroke-dasharray="3 3"/>
+    <text x="640" y="142" fill="#58a6ff">生态动量最大：Python 块级模型 + autotune</text>
+
+    <line x1="450" y1="208" x2="430" y2="110" stroke="#8b949e" stroke-dasharray="3 3"/>
+    <text x="300" y="104" fill="#8b949e">ThunderKittens：注意力反向快 10–40%，SSM 8×，线性注意力 14×</text>
+  </g>
+
+  <!-- bottom fact table -->
+  <rect x="60" y="610" width="1080" height="140" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="82" y="640" fill="#58a6ff" font-size="13.5" font-weight="700">代表性实测数据（论文口径）</text>
+  <g font-size="11.5" fill="#e6edf3">
+    <text x="82" y="668">· ThunderKittens：GEMM/推理对齐 cuBLAS 与 FlashAttention-3（arXiv:2410.20399，Stanford）</text>
+    <text x="82" y="692">· TileLang：多厂商设备关键 kernel 达 SOTA，调度空间与数据流解耦（arXiv:2504.17577）</text>
+    <text x="82" y="716">· Liger Kernel：训练吞吐平均 +20%、显存占用 −60%（对比 HuggingFace，arXiv:2410.10989）</text>
+    <text x="600" y="668">· Exo 2：80+ 高性能 kernel，调度代码量降一个数量级（arXiv:2411.07211，MIT）</text>
+    <text x="600" y="692">· Hidet：比 TVM 系最高快 1.48×，调优时间省 11–20×（arXiv:2210.09603）</text>
+    <text x="600" y="716">· FlashInfer：token 间延迟降 29–69%，已入 SGLang/vLLM（arXiv:2501.01005）</text>
+    <text x="82" y="740" fill="#8b949e" font-size="10.5">来源：各 arXiv 论文（编号经 arxiv.org 逐一核实），2026-10-21</text>
+  </g>
+</svg>
+</body></html>

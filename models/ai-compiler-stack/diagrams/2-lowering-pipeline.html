@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · AI 编译器多层 lowering 流水线</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ar2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker>
+  </defs>
+  <rect x="0" y="0" width="1200" height="800" fill="#0d1117"/>
+  <text x="50" y="42" fill="#e6edf3" font-size="23" font-weight="700">图 2 · AI 编译器内部工作原理：从 PyTorch 程序到机器码的多层 IR lowering（以 Triton / MLIR 为主线）</text>
+  <text x="50" y="68" fill="#8b949e" font-size="12.5">同一份高层程序沿「图级 → 张量级 → 指令级」逐级下降；每层 IR 承载一类优化决策，后端可替换为不同芯片</text>
+
+  <!-- Stage 0: source -->
+  <rect x="60" y="100" width="200" height="86" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="160" y="128" fill="#58a6ff" font-size="13.5" font-weight="700" text-anchor="middle">① 高层模型程序</text>
+  <text x="160" y="150" fill="#e6edf3" font-size="11.5" text-anchor="middle">PyTorch / JAX 算子调用</text>
+  <text x="160" y="170" fill="#8b949e" font-size="10.5" text-anchor="middle">@triton.jit 块级 kernel</text>
+
+  <!-- Stage 1: graph capture -->
+  <rect x="330" y="100" width="200" height="86" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="430" y="128" fill="#58a6ff" font-size="13.5" font-weight="700" text-anchor="middle">② 图捕获</text>
+  <text x="430" y="150" fill="#e6edf3" font-size="11.5" text-anchor="middle">TorchDynamo (FX Graph)</text>
+  <text x="430" y="170" fill="#8b949e" font-size="10.5" text-anchor="middle">JAX tracepr · Relax</text>
+
+  <!-- Stage 2: graph IR -->
+  <rect x="600" y="100" width="200" height="86" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="700" y="128" fill="#58a6ff" font-size="13.5" font-weight="700" text-anchor="middle">③ 图级 IR 与优化</text>
+  <text x="700" y="150" fill="#e6edf3" font-size="11.5" text-anchor="middle">算子融合 · 常量折叠 · 布局</text>
+  <text x="700" y="170" fill="#8b949e" font-size="10.5" text-anchor="middle">HLO · TIR/Relax · FX</text>
+
+  <!-- Stage 3: TTIR -->
+  <rect x="870" y="100" width="270" height="86" rx="10" fill="#1c1430" stroke="#bc8cff" stroke-width="1.8"/>
+  <text x="1005" y="128" fill="#bc8cff" font-size="13.5" font-weight="700" text-anchor="middle">④ Triton IR（TTIR）</text>
+  <text x="1005" y="150" fill="#e6edf3" font-size="11.5" text-anchor="middle">硬件无关的块级张量操作</text>
+  <text x="1005" y="170" fill="#8b949e" font-size="10.5" text-anchor="middle">MLIR Triton dialect</text>
+
+  <!-- arrows row 1 -->
+  <line x1="260" y1="143" x2="326" y2="143" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar2)"/>
+  <line x1="530" y1="143" x2="596" y2="143" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar2)"/>
+  <line x1="800" y1="143" x2="866" y2="143" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar2)"/>
+
+  <!-- down arrow -->
+  <line x1="1005" y1="186" x2="1005" y2="246" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar2)"/>
+  <text x="1020" y="222" fill="#d29922" font-size="11">TritonGPU 转换</text>
+
+  <!-- Stage 4: TTGIR -->
+  <rect x="870" y="250" width="270" height="92" rx="10" fill="#1c1430" stroke="#bc8cff" stroke-width="1.8"/>
+  <text x="1005" y="278" fill="#bc8cff" font-size="13.5" font-weight="700" text-anchor="middle">⑤ TritonGPU IR（TTGIR）</text>
+  <text x="1005" y="300" fill="#e6edf3" font-size="11" text-anchor="middle">分块 · 数据布局（swizzle）</text>
+  <text x="1005" y="318" fill="#e6edf3" font-size="11" text-anchor="middle">流水线 · 显存层级映射</text>
+  <text x="1005" y="336" fill="#8b949e" font-size="10.5" text-anchor="middle">autotune 多配置搜索</text>
+
+  <!-- left big panel: optimization families -->
+  <rect x="60" y="250" width="740" height="92" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="278" fill="#58a6ff" font-size="13" font-weight="700">张量级优化（编译期最耗时的决策）</text>
+  <text x="80" y="302" fill="#e6edf3" font-size="11.5">调度空间：tile 大小 · 线程绑定 · 张量核指令 · 多级存储流水线 · 算子融合边界</text>
+  <text x="80" y="324" fill="#e6edf3" font-size="11.5">求解方式：AutoTVM 学习型代价模型 ｜ Ansor 分层采样+进化搜索 ｜ Roller 以 rTile 构造 ｜ 手工/外部调度（Exo/ThunderKittens）</text>
+
+  <!-- arrow down from TTGIR -->
+  <line x1="1005" y1="342" x2="1005" y2="402" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar2)"/>
+  <text x="1020" y="378" fill="#d29922" font-size="11">后端 lowering</text>
+
+  <!-- Stage 6: backend dialects -->
+  <rect x="60" y="406" width="1080" height="96" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="80" y="434" fill="#58a6ff" font-size="13" font-weight="700">⑥ 硬件相关后端 dialect（同一份 TTGIR 在此分叉到不同芯片——异构支持的关键所在）</text>
+  <g font-size="11.5">
+    <rect x="80" y="450" width="180" height="38" rx="7" fill="#241a33" stroke="#bc8cff"/>
+    <text x="170" y="474" fill="#d9c2ff" text-anchor="middle">NVVM → PTX (NVIDIA)</text>
+    <rect x="280" y="450" width="180" height="38" rx="7" fill="#2c2507" stroke="#d29922"/>
+    <text x="370" y="474" fill="#e9c96a" text-anchor="middle">ROCDL (AMD/海光)</text>
+    <rect x="480" y="450" width="180" height="38" rx="7" fill="#12281a" stroke="#3fb950"/>
+    <text x="570" y="474" fill="#a7e8b0" text-anchor="middle">昇腾/寒武纪等 NPU</text>
+    <rect x="680" y="450" width="200" height="38" rx="7" fill="#161b22" stroke="#30363d"/>
+    <text x="780" y="474" fill="#e6edf3" text-anchor="middle">LLVM IR → CPU / 其他</text>
+    <rect x="900" y="450" width="220" height="38" rx="7" fill="#161b22" stroke="#30363d"/>
+    <text x="1000" y="474" fill="#8b949e" text-anchor="middle">SPIR-V / WebGPU（端侧）</text>
+  </g>
+
+  <!-- Stage 7: machine code -->
+  <line x1="600" y1="502" x2="600" y2="542" stroke="#8b949e" stroke-width="1.8" marker-end="url(#ar2)"/>
+  <rect x="380" y="546" width="440" height="56" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="600" y="572" fill="#58a6ff" font-size="13.5" font-weight="700" text-anchor="middle">⑦ 机器码 / 镜像</text>
+  <text x="600" y="592" fill="#e6edf3" font-size="11.5" text-anchor="middle">SASS · AMD machine code · NPU 指令 ｜ JIT 缓存，运行时按 shape 命中</text>
+
+  <!-- bottom: LLM-as-compiler new route -->
+  <rect x="60" y="636" width="1080" height="130" rx="12" fill="#12281a" stroke="#3fb950" stroke-width="1.6"/>
+  <text x="82" y="666" fill="#3fb950" font-size="14" font-weight="700">2025–2026 新路线：LLM/Agent 直接参与编译，压缩甚至绕开传统流水线</text>
+  <text x="82" y="694" fill="#e6edf3" font-size="12">· KernelBench：最强前沿模型开箱也仅在 &lt;20% 用例追平 PyTorch 基线——自动写 kernel 仍是开放难题（arXiv:2502.10517）</text>
+  <text x="82" y="718" fill="#e6edf3" font-size="12">· AI as a Compiler：LLM agent 直接把 Triton「AI lowering」成 PTX，22 个 kernel 达 autotuned Triton 的 0.83–3.34×（arXiv:2609.36800）</text>
+  <text x="82" y="742" fill="#e6edf3" font-size="12">· CUDA Agent（Agentic RL）：KernelBench L1/L2「更快率」100%；AKG kernel Agent 跨 GPU+NPU 平台，平均 1.46×（arXiv:2602.24286 / 2512.23424）</text>
+  <text x="82" y="762" fill="#8b949e" font-size="10.5">来源：triton-lang.org 官方文档、MLIR 官网、各 arXiv 论文（编号经 arxiv.org 核实），2026-10-21</text>
+</svg>
+</body></html>
