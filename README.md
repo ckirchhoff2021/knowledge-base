@@ -25,6 +25,7 @@
 | [**拟人化 Agent 产品设计**](https://ckirchhoff2021.github.io/knowledge-base/agents/anthropomorphic-agent/product-design.html) | 工具 → 伙伴：拟人化心理学基础与五维设计框架（2 篇） |
 | [**OPD / OPSD 在线策略蒸馏**](https://ckirchhoff2021.github.io/knowledge-base/agents/online-policy-distillation/report.html) | 后训练第三条路：on-policy 蒸馏（调研 + 完全指南 2 篇） |
 | [**Hermes Agent API 指南**](agents/hermes/API.md) | 本地调用远端 Hermes 完整 Agent 能力的四种方式 |
+| [**大模型制作短剧完全指南**](https://ckirchhoff2021.github.io/knowledge-base/agents/ai-short-drama/report.html) | 一句话创意到成片七层流水线：剧本结构化 JSON/黄金三秒 · 角色一致性四代方案（参考图/首尾帧/LoRA）· I2V 模型横评（可灵/Seedance/Veo/Wan）· 先配音后定画面/音画一体 · 多 Agent 电影系统（MovieDreamer/MovieAgent/MAViS）· 成本 1300–3000 元 vs 真人 50 万 · 爆款率 0.48% 现实 · 选型 Checklist |
 
 ### 🧠 大模型技术
 

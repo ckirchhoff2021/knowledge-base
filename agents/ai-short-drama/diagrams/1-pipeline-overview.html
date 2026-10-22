@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · AI短剧七层生产流水线</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 780" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="780" fill="#0d1117"/>
+  <text x="60" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 大模型制作短剧：从一句话创意到成片的七层流水线</text>
+  <text x="60" y="76" fill="#8b949e" font-size="13">专业分层组装与平台端到端自动化共享同一骨架；版本锚点 2026-10（Kling 3.x / Seedance 2.x / Veo 3.x / Wan 2.x）</text>
+
+  <!-- step blocks -->
+  <g font-size="14" font-weight="700" text-anchor="middle">
+    <rect x="40"  y="110" width="148" height="74" rx="10" fill="rgba(6,78,59,0.35)" stroke="#34d399" stroke-width="1.6"/>
+    <text x="114" y="140" fill="#34d399">① 剧本</text>
+    <text x="114" y="164" fill="#c9d1d9" font-size="11.5" font-weight="400">结构化 JSON</text>
+    <rect x="202" y="110" width="148" height="74" rx="10" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.6"/>
+    <text x="276" y="140" fill="#fbbf24">② 角色/场景资产</text>
+    <text x="276" y="164" fill="#c9d1d9" font-size="11.5" font-weight="400">定妆三视图</text>
+    <rect x="364" y="110" width="148" height="74" rx="10" fill="rgba(6,78,59,0.35)" stroke="#34d399" stroke-width="1.6"/>
+    <text x="438" y="140" fill="#34d399">③ 分镜/故事板</text>
+    <text x="438" y="164" fill="#c9d1d9" font-size="11.5" font-weight="400">景别·运镜·首尾帧</text>
+    <rect x="526" y="110" width="148" height="74" rx="10" fill="rgba(6,78,59,0.35)" stroke="#34d399" stroke-width="1.6"/>
+    <text x="600" y="140" fill="#34d399">④ 视频片段</text>
+    <text x="600" y="164" fill="#c9d1d9" font-size="11.5" font-weight="400">I2V 为主</text>
+    <rect x="688" y="110" width="148" height="74" rx="10" fill="rgba(76,29,149,0.35)" stroke="#a78bfa" stroke-width="1.6"/>
+    <text x="762" y="140" fill="#a78bfa">⑤ 配音/音效</text>
+    <text x="762" y="164" fill="#c9d1d9" font-size="11.5" font-weight="400">先配音定时长</text>
+    <rect x="850" y="110" width="148" height="74" rx="10" fill="rgba(6,78,59,0.35)" stroke="#34d399" stroke-width="1.6"/>
+    <text x="924" y="140" fill="#34d399">⑥ 剪辑合成</text>
+    <text x="924" y="164" fill="#c9d1d9" font-size="11.5" font-weight="400">音画对齐</text>
+    <rect x="1012" y="110" width="148" height="74" rx="10" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.6"/>
+    <text x="1086" y="140" fill="#94a3b8">⑦ 发行变现</text>
+    <text x="1086" y="164" fill="#c9d1d9" font-size="11.5" font-weight="400">分账/投流</text>
+  </g>
+  <g stroke="#30363d" stroke-width="2" fill="none">
+    <path d="M188,147 L202,147"/><path d="M350,147 L364,147"/>
+    <path d="M512,147 L526,147"/><path d="M674,147 L688,147"/>
+    <path d="M836,147 L850,147"/><path d="M998,147 L1012,147"/>
+  </g>
+
+  <!-- tool / output rows -->
+  <g font-size="11" fill="#8b949e" text-anchor="middle">
+    <text x="114" y="208">豆包/ChatGPT/专用剧本模型</text>
+    <text x="276" y="208">即梦/Midjourney/Flux</text>
+    <text x="438" y="208">LLM+人工审核</text>
+    <text x="600" y="208">可灵/即梦/海螺/Veo/Wan</text>
+    <text x="762" y="208">CosyVoice/ElevenLabs/Suno</text>
+    <text x="924" y="208">剪映/FFmpeg</text>
+    <text x="1086" y="208">抖音/红果/TikTok</text>
+  </g>
+
+  <!-- feedback loop -->
+  <path d="M114,184 C114,250 900,250 924,184" fill="none" stroke="#fb923c" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="520" y="278" fill="#fb923c" font-size="12" text-anchor="middle">↺ 关键镜头/单片段不合格 → 仅回退重做该层（断点续跑、单镜重生成）</text>
+
+  <!-- two paradigms lanes -->
+  <text x="60" y="330" fill="#e6edf3" font-size="15" font-weight="700">两种落地范式：</text>
+  <rect x="40" y="348" width="548" height="120" rx="10" fill="rgba(6,78,59,0.25)" stroke="#34d399" stroke-width="1.4"/>
+  <text x="60" y="376" fill="#34d399" font-size="13.5" font-weight="700">分层组装（当前主流，质量上限高）</text>
+  <text x="60" y="402" fill="#c9d1d9" font-size="11.5">每层专门工具，人在剧本/分镜/抽卡处审核；单点重做成本低</text>
+  <text x="60" y="426" fill="#8b949e" font-size="11.5">耗时：专业约 2–3 个工作日 / 3 分钟成片</text>
+  <text x="60" y="450" fill="#8b949e" font-size="11.5">适合：认真做账号、小团队、追求差异化</text>
+
+  <rect x="612" y="348" width="548" height="120" rx="10" fill="rgba(76,29,149,0.25)" stroke="#a78bfa" stroke-width="1.4"/>
+  <text x="632" y="376" fill="#a78bfa" font-size="13.5" font-weight="700">端到端一体生成（快速崛起，零门槛）</text>
+  <text x="632" y="402" fill="#c9d1d9" font-size="11.5">一句话/剧本直出，平台或多 Agent 自动跑完全链路</text>
+  <text x="632" y="426" fill="#8b949e" font-size="11.5">耗时：30 分钟–1 小时出粗片；崩坏难定位</text>
+  <text x="632" y="450" fill="#8b949e" font-size="11.5">适合：个人试水、快速试错；代表：即梦/SkyProduction/Seko</text>
+
+  <!-- bottom takeaways -->
+  <g>
+    <rect x="40" y="510" width="360" height="230" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="60" y="542" fill="#34d399" font-size="14" font-weight="700">时序纪律</text>
+    <text x="60" y="572" fill="#c9d1d9" font-size="11.5">先锁角色，再生成镜头；</text>
+    <text x="60" y="596" fill="#c9d1d9" font-size="11.5">先配音定时长，再定画面；</text>
+    <text x="60" y="620" fill="#c9d1d9" font-size="11.5">单镜单动作、≤10 秒；</text>
+    <text x="60" y="644" fill="#c9d1d9" font-size="11.5">480p 抽卡 → 高清定稿。</text>
+    <text x="60" y="690" fill="#8b949e" font-size="10.5">人的判断是耗时大头与质量分水岭</text>
+
+    <rect x="420" y="510" width="360" height="230" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="440" y="542" fill="#fbbf24" font-size="14" font-weight="700">成本结构</text>
+    <text x="440" y="572" fill="#c9d1d9" font-size="11.5">AI 单集约 1300–3000 元</text>
+    <text x="440" y="596" fill="#c9d1d9" font-size="11.5">真人同规格 5 万–50 万元起</text>
+    <text x="440" y="620" fill="#c9d1d9" font-size="11.5">视频片段占成本 60–80%</text>
+    <text x="440" y="644" fill="#c9d1d9" font-size="11.5">本地开源边际成本≈电费</text>
+    <text x="440" y="690" fill="#8b949e" font-size="10.5">约两个数量级的成本剪刀差</text>
+
+    <rect x="800" y="510" width="360" height="230" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="820" y="542" fill="#fb7185" font-size="14" font-weight="700">现实约束</text>
+    <text x="820" y="572" fill="#c9d1d9" font-size="11.5">日均上新 1200+ 部</text>
+    <text x="820" y="596" fill="#c9d1d9" font-size="11.5">爆款率约 0.48%</text>
+    <text x="820" y="620" fill="#c9d1d9" font-size="11.5">约 98.7% 未回本</text>
+    <text x="820" y="644" fill="#c9d1d9" font-size="11.5">AI 解决"能不能做"</text>
+    <text x="820" y="690" fill="#8b949e" font-size="10.5">"能不能被看到"仍是内容老门槛</text>
+  </g>
+</svg>
+</body></html>

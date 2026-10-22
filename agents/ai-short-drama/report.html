@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>大模型制作短剧完全指南</title><style>
+:root {
+  --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+  --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+  --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+}
+* { box-sizing:border-box; }
+body { background:var(--bg); color:var(--text);
+  font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif; line-height:1.85; margin:0; }
+.container { max-width:960px; margin:0 auto; padding:40px 24px 80px; }
+h1 { font-size:30px; margin:0 0 8px; letter-spacing:-0.02em; }
+h2 { font-size:22px; margin:56px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+h3 { font-size:17px; margin:32px 0 12px; color:var(--accent); }
+h4 { font-size:15px; margin:20px 0 8px; color:var(--cyan); }
+p { margin:12px 0; font-size:15px; }
+code { background:#1f2937; padding:2px 6px; border-radius:4px;
+  font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px;
+  padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+pre code { background:none; padding:0; color:#d1d9e0; }
+table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+th { background:var(--panel); color:var(--accent); white-space:nowrap; }
+tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0;
+  background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+figure { margin:28px 0; }
+figure iframe { width:100%; height:860px; border:1px solid var(--border);
+  border-radius:12px; background:#020617; }
+figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+.toc { background:var(--panel); border:1px solid var(--border); border-radius:10px;
+  padding:20px 28px; margin:24px 0 40px; }
+.toc h2 { border:none; margin:0 0 12px; font-size:16px; color:var(--accent); padding:0; }
+.toc ol { padding-left:20px; margin:0; }
+.toc li { margin:4px 0; font-size:14px; }
+.toc a { color:var(--text); text-decoration:none; }
+.toc a:hover { color:var(--accent); text-decoration:underline; }
+ul, ol { padding-left:24px; }
+li { margin:6px 0; font-size:15px; }
+strong { color:#fff; }
+hr { border:none; border-top:1px solid var(--border); margin:40px 0; }
+a { color:var(--accent); }
+.footer { text-align:center; color:var(--muted); font-size:12px; margin-top:60px;
+  padding-top:20px; border-top:1px solid var(--border); }
+</style></head>
+<body><div class="container"><h1>大模型制作短剧完全指南：从一句话创意到成片的全流程技术调研报告</h1>
+<blockquote>
+<p><strong>调研范围</strong>：如何用大语言模型 + 多模态生成模型制作短剧（真人风短剧、AI 漫剧、AI 微电影），覆盖剧本、角色资产、分镜、视频生成、配音口型、音效音乐、剪辑合成的完整技术链路，主流商业工具与开源方案横评，多 Agent 自动化电影系统的学术前沿，以及成本、质量、商业模式与风险。</p>
+<p><strong>诚实性声明</strong>：官方一手资料（产品官网/文档、arXiv 论文原文）与社区实操经验（知乎高赞教程、DataEye 等行业数据）分层引用。本文 8 篇核心 arXiv 论文编号均于 <strong>2026-10-22</strong> 在 arxiv.org 逐一打开核实标题；行业规模、分账金额、模型排名等数据变化极快，凡引用均标注来源与口径，不作为长期有效事实。视频模型的"谁更强"社区结论互相矛盾，本文只给能力维度对比、不写死排名。</p>
+</blockquote><nav class="toc"><h2>目录</h2><ol style="list-style:none;padding-left:0"><li><a href="#1-背景-短剧产业与生成式-AI-的历史性交汇">1. 背景：短剧产业与生成式 AI 的历史性交汇</a></li><li><a href="#2-全流程总览-一条七层流水线与两种技术范式">2. 全流程总览：一条七层流水线与两种技术范式</a></li><li><a href="#3-第一步-剧本-用-LLM-生产-能被镜头执行-的结构化故事">3. 第一步 · 剧本：用 LLM 生产"能被镜头执行"的结构化故事</a></li><li><a href="#4-第二步-角色与场景资产-攻克头号难题-角色一致性">4. 第二步 · 角色与场景资产：攻克头号难题——角色一致性</a></li><li><a href="#5-第三步-分镜与故事板-把剧本翻译成镜头语言">5. 第三步 · 分镜与故事板：把剧本翻译成镜头语言</a></li><li><a href="#6-第四步-视频片段生成-模型选型与-I2V-T2V-实战">6. 第四步 · 视频片段生成：模型选型与 I2V/T2V 实战</a></li><li><a href="#7-第五步-配音-口型-音效与音乐">7. 第五步 · 配音、口型、音效与音乐</a></li><li><a href="#8-第六步-剪辑合成-音画对齐-转场与字幕">8. 第六步 · 剪辑合成：音画对齐、转场与字幕</a></li><li><a href="#9-自动化前沿-多-Agent-电影系统与一站式平台">9. 自动化前沿：多 Agent 电影系统与一站式平台</a></li><li><a href="#10-成本-耗时与质量现状-一张真实的账">10. 成本、耗时与质量现状：一张真实的账</a></li><li><a href="#11-落地路线图与选型-Checklist">11. 落地路线图与选型 Checklist</a></li><li><a href="#12-风险-常见误解与注意事项">12. 风险、常见误解与注意事项</a></li><li><a href="#13-参考资料">13. 参考资料</a></li></ol></nav>
+<p>📅 <strong>2026-10-22</strong> ｜ <strong>时间锚点</strong>：主流视频模型截至 2026 年 10 月的公开版本（Kling 3.x、Seedance 2.x、Sora 2、Veo 3.x、Hailuo 02、Wan 2.x） ｜ <strong>分类</strong>：agents / multimodal</p>
+<hr>
+<hr>
+<h2 id="1-背景-短剧产业与生成式-AI-的历史性交汇">1. 背景：短剧产业与生成式 AI 的历史性交汇</h2>
+<h3>1.1 短剧：一个千亿级、且天然适配 AI 的内容形态</h3>
+<p>微短剧（单集 1–5 分钟、强冲突、快反转、竖屏为主）是过去三年增长最快的内容品类。社区引用的行业数据（口径不一，仅供量级参考）：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据（社区口径）</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025 年中国短剧市场规模</td>
+<td>突破 1000 亿元，其中免费微短剧（IAA 广告模式）约 533 亿</td>
+<td>TouchAI 行业拆解（知乎）</td>
+</tr>
+<tr>
+<td>2026 年国内 AI 短剧/漫剧市场规模预测</td>
+<td>约 220–240 亿元，同比增速 100%+</td>
+<td>TouchAI / 万物不可聊（知乎，引艾媒）</td>
+</tr>
+<tr>
+<td>2026 上半年抖音新增 AI 剧/漫剧</td>
+<td>22.19 万部，日均 1200+ 部，累计播放 5157 亿次</td>
+<td>李沅潮（知乎，引平台数据）</td>
+</tr>
+<tr>
+<td>AI 短剧用户规模</td>
+<td>从约 1.2 亿涨至约 6 亿</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>AI 短剧出海</td>
+<td>TikTok 2026 年 5 月短剧分成 2100 万美元，其中 AI 短剧约 650 万；海外微短剧 APP 双端月内购约 2.29 亿美元</td>
+<td>短剧新势力（知乎，引 DataEye）</td>
+</tr>
+</tbody>
+</table>
+<p>为什么短剧特别适合 AI？四个结构性原因：</p>
+<ol>
+<li><strong>时长短</strong>。单个镜头 3–10 秒恰好是当前视频模型最成熟、质量最高的区间；一部 1–3 分钟的成片只需要 5–20 个镜头，工程上可拼接。</li>
+<li><strong>场景与角色数量少</strong>。短剧方法论要求角色 ≤3、场景高度集中，恰好规避了视频模型"多角色交互、复杂场景调度"的最弱项。</li>
+<li><strong>类型化、套路化</strong>。重生、复仇、逆袭、甜宠等成熟题材有固定叙事模板，LLM 填空式生产即可达到及格线，观众对"表演细腻度"的容忍度也相对高。</li>
+<li><strong>成本剪刀差极大</strong>。社区普遍引用的对比：同规格真人短剧单集成本 5 万–50 万元起，而 AI 短剧单集算力成本可压到 1300–3000 元——<strong>约两个数量级的成本差</strong>，足以重塑供给侧。</li>
+</ol>
+<h3>1.2 能力拐点：2024–2026 发生了什么</h3>
+<ul>
+<li><strong>2024 年</strong>：文生视频模型首次公开可用。快手可灵（Kling 1.0，2024-06）支持 1080p、最长约 2 分钟；Runway、Pika、Luma 快速迭代；开源侧 AnimateDiff、CogVideoX、HunyuanVideo 相继发布。痛点是角色跨镜头必"变脸"、动作物理崩坏。</li>
+<li><strong>2025 年</strong>：图生视频（I2V）成熟，"定妆参考图 + 首尾帧"成为一致性主流工艺；LLM Agent 被引入剧本→分镜→资产→视频的自动编排（MovieAgent、MAViS 等学术系统，以及昆仑万维 SkyReels/SkyProduction、字节即梦等商业平台）；音频侧 CosyVoice、ElevenLabs、Suno 达到生产级。</li>
+<li><strong>2026 年</strong>：竞争焦点从"单镜头画质"转向 <strong>原生音画一体</strong>（Veo 3.x、Seedance 2.x 可直接输出对白、口型与音效）、<strong>角色/音色一致性的平台级内置</strong>、以及<strong>多 Agent 流水线的工业化</strong>。"一人剧组"从概念变为可复用工作流：有教程称 30 分钟可出一集粗片，专业创作者稳定在 2–3 个工作日出一集 3 分钟成片。</li>
+</ul>
+<p>需要强调：<strong>"能自动生成" ≠ "能生成好作品"</strong>。同期残酷数据是——2026 上半年行业爆款率仅约 0.48%，约 98.7% 的 AI 短剧未摸到盈亏线，99.9% 的创作者单月分账不足 10 元（李沅潮，知乎）。AI 解决的是"能不能做"，"做了能不能被看到"仍是内容生意的老门槛。</p>
+<hr>
+<h2 id="2-全流程总览-一条七层流水线与两种技术范式">2. 全流程总览：一条七层流水线与两种技术范式</h2>
+<h3>2.1 七层流水线</h3>
+<p>一部 AI 短剧的标准生产链路（专业团队与平台自动化均遵循同一骨架）：</p>
+<pre><code>[1] 创意/剧本   LLM 生成结构化剧本：题材、人物小传、分集、完整对白
+      ↓
+[2] 角色/场景资产  文生图生成定妆照(三视图/表情包)、场景图、道具图——一致性的锚点
+      ↓
+[3] 分镜/故事板  剧本拆成镜头清单：景别、运镜、动作、台词、时长、首尾帧
+      ↓
+[4] 视频片段    I2V/T2V 逐镜头生成 3–10 秒片段（可带对白音频驱动口型）
+      ↓
+[5] 配音/音效    TTS 多角色配音（先配音可定时长、驱动口型）+ 音效 + BGM
+      ↓
+[6] 剪辑合成    转场拼接、音画对齐、字幕、调色、片头片尾
+      ↓
+[7] 发行变现    抖音/快手/红果/TikTok/海外短剧 APP，分账或投流
+</code></pre>
+<h3>2.2 两种技术范式</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>分层组装范式（当前主流）</th>
+<th>端到端一体生成范式（快速崛起）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>做法</td>
+<td>每一层用专门工具/模型，人在关键节点审核修改</td>
+<td>一句话/一个剧本输入，平台或多 Agent 系统自动跑完全链路</td>
+</tr>
+<tr>
+<td>代表</td>
+<td>豆包/ChatGPT 写剧本 + Midjourney/即梦生图 + 可灵/即梦 I2V + ElevenLabs/剪映</td>
+<td>即梦"音画一体"、SkyProduction Agent 工作流、商汤 Seko、有戏 AI；学术侧 MovieAgent/MAViS</td>
+</tr>
+<tr>
+<td>优势</td>
+<td>每环节可控、单点重做成本低、质量上限高</td>
+<td>快（教程实测 30 分钟–1 小时出粗片）、零门槛</td>
+</tr>
+<tr>
+<td>劣势</td>
+<td>工序割裂、需要学习多种工具、耗人</td>
+<td>黑盒、崩坏难定位、风格/叙事同质化、质量上限受平台锁定</td>
+</tr>
+</tbody>
+</table>
+<p>工程现实是两者混合：<strong>用一体化平台快速出 70 分的初稿，再到分层工具里精修关键镜头</strong>。本文第 3–8 章按七层逐段展开，第 9 章讲自动化。</p>
+<figure>
+<iframe src="diagrams/1-pipeline-overview.html" height="800" loading="lazy"></iframe>
+</figure>
+
+<blockquote>
+<p>🖼️ <strong>配图 1（HTML 版可交互查看）</strong>：AI 短剧七层生产流水线与两种范式 —— <code>diagrams/1-pipeline-overview.html</code></p>
+</blockquote>
+<hr>
+<h2 id="3-第一步-剧本-用-LLM-生产-能被镜头执行-的结构化故事">3. 第一步 · 剧本：用 LLM 生产"能被镜头执行"的结构化故事</h2>
+<h3>3.1 剧本是全链路的唯一事实源</h3>
+<p>下游的角色资产、分镜、视频 prompt、配音全部从剧本程序化派生，因此剧本不是散文，而要输出<strong>结构化、机器可读</strong>的格式。专业做法强制 LLM 返回 JSON（梦令令等多位创作者的共识）：</p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;标题&quot;,
+  &quot;genre&quot;: &quot;年代/重生/种田&quot;,
+  &quot;style&quot;: &quot;真人写实 | 国风漫剧 | 现代都市&quot;,
+  &quot;logline&quot;: &quot;一句话梗概&quot;,
+  &quot;characters&quot;: [
+    {&quot;id&quot;: &quot;hero&quot;, &quot;name&quot;: &quot;陆昭&quot;, &quot;role&quot;: &quot;主角&quot;,
+     &quot;appearance&quot;: &quot;28岁东亚男性，剑眉，短碎黑发，左眉骨有浅疤，灰色粗布短打，身形精瘦，气质隐忍&quot;,
+     &quot;voice&quot;: &quot;低沉克制男声&quot;, &quot;tags&quot;: [&quot;隐忍&quot;, &quot;高智商&quot;]}
+  ],
+  &quot;scenes&quot;: [{&quot;id&quot;: &quot;s1&quot;, &quot;place&quot;: &quot;破旧农家院&quot;, &quot;props&quot;: [&quot;粗陶碗&quot;, &quot;柴刀&quot;]}],
+  &quot;shots&quot;: [
+    {&quot;id&quot;: 1, &quot;scene&quot;: &quot;s1&quot;, &quot;characters&quot;: [&quot;hero&quot;],
+     &quot;type&quot;: &quot;近景&quot;, &quot;camera&quot;: &quot;缓推&quot;, &quot;duration&quot;: 4,
+     &quot;action&quot;: &quot;攥紧柴刀，抬眼看向院门外&quot;,
+     &quot;dialogue&quot;: {&quot;speaker&quot;: &quot;hero&quot;, &quot;text&quot;: &quot;这一世，账要一笔笔算。&quot;}}
+  ],
+  &quot;hook_end&quot;: &quot;院门外传来马蹄声（集尾悬念）&quot;
+}
+</code></pre>
+<h3>3.2 提示词：不要只说"帮我写个剧本"</h3>
+<p>新手最常见的错误是给一句"帮我写个短剧剧本"，产出必然泛泛而谈。高赞实操（AI也不要香菜，知乎 88 赞）的做法是把约束逐层填满：</p>
+<pre><code>角色：你是有 10 年经验的竖屏短剧总编剧，熟悉抖音/快手付费短剧节奏。
+题材：年代重生种田复仇（强冲突、快反转）
+形式：真人写实短剧，单集 3 分钟，共 X 集
+结构要求：
+  - 黄金三秒：第一镜必须是钩子，禁止铺垫
+  - 爆点五段式：触发 → 放大 → 扭转 → 兑现 → 余波
+  - 角色 ≤3，每人有记忆点标签；主角要有明确欲望与阻碍
+  - 每集结尾留悬念钩；对白口语化、有潜台词，不要旁白说教
+  - 单镜头 ≤10 秒、单镜只写一个主要动作
+输出：严格按给定 JSON schema，外观描写要具体到可直接作为生图提示词
+</code></pre>
+<p>短剧叙事方法论（drama-video-creator 技能内置，也是行业通行经验）：</p>
+<ul>
+<li><strong>黄金三秒</strong>：第一镜出冲突或悬念，观众 3 秒内决定是否划走。</li>
+<li><strong>三类钩子</strong>：悬念钩（抛出清晰问题）、情感钩（制造共情）、信息钩（利用信息差，如重生者知道未来）。</li>
+<li><strong>爆点五段式</strong>：触发事件 → 冲突放大 → 反转 → 兑现（爽点）→ 余波（钩下一集）。</li>
+<li><strong>对白驱动</strong>：用对话展现主题与人物，不用旁白讲道理；台词要能被 TTS 自然念出（短句、避免长定语）。</li>
+</ul>
+<h3>3.3 剧本质量的常见坑</h3>
+<ul>
+<li><strong>"AI 念说明书"</strong>：通用模型写复仇戏只会堆"我一定会让你付出代价"式金句，人物扁平。2026 年出现了专门的剧本模型/剧本 Agent（如"有戏 AI"首发剧本模型，主打一句话创意→剧本→评估→投稿链路），比通用模型更懂集尾钩子和节奏。</li>
+<li><strong>不考虑可生成性</strong>：剧本写"千军万马、群舞、激烈打斗"，视频模型必然翻车。要反向约束：角色少、动作单一、大场面用氛围/特写暗示而非直拍。</li>
+<li><strong>中后段崩盘</strong>：长剧本 LLM 容易遗忘伏笔。多集项目应先让模型产出整季"大纲 + 人物关系 + 每集一句话"，再逐集展开，并在每集 prompt 中回贴大纲。</li>
+<li><strong>人定叙事、AI 补格式</strong>：两年经验创作者（灵境AI社群站长）的忠告——先由人把剧情拆成"一句话一个镜头"的清单，再让 AI 批量补技术标注，顺序反了全部返工。</li>
+</ul>
+<hr>
+<h2 id="4-第二步-角色与场景资产-攻克头号难题-角色一致性">4. 第二步 · 角色与场景资产：攻克头号难题——角色一致性</h2>
+<h3>4.1 为什么"变脸"几乎必然发生</h3>
+<p>角色一致性是所有 AI 短剧创作者公认的第一难题，机理有三层（知道7943到199，知乎）：</p>
+<ol>
+<li><strong>无状态生成</strong>：每次生图/生视频都是独立运算，模型不记得上一镜的角色；即使 prompt 一字不差，结果也不同。</li>
+<li><strong>潜空间采样的随机性</strong>：扩散模型每次从随机噪声出发，五官比例等高维特征随采样轨迹抖动；单镜看是"细微差异"，跨镜连起来就是"换人"。镜头间也没有共享的时序注意力传递角色状态。</li>
+<li><strong>文字描述 ≠ 具体身份</strong>："短发、鹅蛋脸"是语义标签，指向一类人而非某个人。</li>
+</ol>
+<p>结论：<strong>一致性不是靠提示词写出来的，是靠流程和资产锁出来的</strong>（芋泥卷，知乎）。</p>
+<h3>4.2 四代解决方案</h3>
+<table>
+<thead>
+<tr>
+<th>代际</th>
+<th>方案</th>
+<th>做法</th>
+<th>一致性水平</th>
+<th>成本/门槛</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第一代</td>
+<td>文字锁定</td>
+<td>固定一段完整外观描述（年龄/脸型/五官/发型/服装/配饰/气质），逐字复制进每个镜头 prompt，分"身份固定区 + 镜头可变区"</td>
+<td>低，约 50–70%</td>
+<td>零成本，是所有方案的底座</td>
+</tr>
+<tr>
+<td>第二代</td>
+<td>参考图锚定</td>
+<td>先生成定妆照（正面/3/4 侧/纯侧/全身/表情包"三视图"），每镜以同一参考图做 I2V 首帧或 cref/IP-Adapter 注入</td>
+<td>中高，约 80–90%</td>
+<td>需要生图与 I2V 能力</td>
+</tr>
+<tr>
+<td>第三代</td>
+<td>首尾帧链</td>
+<td>上一镜的尾帧（或从成片截帧）作为下一镜首帧，配合帧间插值/过渡生成，把镜头"焊"起来</td>
+<td>高，相邻镜头近乎连续</td>
+<td>工艺繁琐，适合关键转场</td>
+</tr>
+<tr>
+<td>第四代</td>
+<td>角色专属训练 / 模型内置</td>
+<td>给主角训练 LoRA（15–30 张多角度图、1500–3000 步、lr 1e-4~5e-5、角色名做触发词）；或使用平台内置"角色"功能（即梦/可灵角色、视频模型多参考图角色输入）</td>
+<td>最高，社区称 LoRA 可达 95%+</td>
+<td>LoRA 需训练；平台功能按次计费</td>
+</tr>
+</tbody>
+</table>
+<p>关键技术组件：</p>
+<ul>
+<li><strong>三视图/定妆图</strong>：提示词模板"写实风格，摄影棚写真，三视图（正视/侧视/后视），白底无阴影 + 角色完整外观"，一次做扎实，中途改设定则前功尽弃。</li>
+<li><strong>cref（角色参考）</strong>：如 Midjourney 风格化参数建议压低（s≤250）；cref 锁整体特征而非像素复制，极端特写角度仍会偏，"cref 锁脸 + LoRA 锁细节"是组合技。</li>
+<li><strong>IP-Adapter / InstantID / PuLID</strong>：免训练，用图像编码器把参考图转特征向量注入生成过程；InstantID、PuLID 专做人脸一致性，ComfyUI 有成熟节点。</li>
+<li><strong>LoRA</strong>：终极方案，训练后角色成为模型"固有认知"，写名字即出脸，适合长期量产同一 IP。注意 LoRA 与底层视频/图像模型版本要匹配。</li>
+</ul>
+<h3>4.3 2026 新进展与工程纪律</h3>
+<ul>
+<li><strong>Custom Forcing（arXiv:2610.02914，2026-10）</strong>：免训练的自回归视频角色定制——把 5 张角色照 + 场景照塞进视频模型的长期记忆，生成全程对照参考、越跑偏拉得越紧；社区转述称两分钟视频不换脸、推理仅慢约 11%。</li>
+<li><strong>平台内置角色资产库</strong>：一体化平台（SkyProduction 等）自动从剧本分析人物/场景/道具，一键批量生成几十张资产图，后续每个镜头自动绑定对应资产，无需手工传图。</li>
+<li><strong>纪律要点</strong>（多位创作者交叉验证）：① 先锁角色再生成镜头；② 全程只用同一张（组）定妆图，不反复换参考；③ 分镜 prompt 不重复手写外貌，避免描述漂移；④ 场景同理，同一场景共享首帧；⑤ 单镜只放一个主要动作。</li>
+</ul>
+<h3>4.4 救不了的边界</h3>
+<p>资产锁定的是角色"长什么样"，锁不住"怎么动"。精细手部操作、快速打斗、多人拥抱/接吻等毫米级动作连续性仍是当前所有方案的短板；这类镜头要么用景别/氛围规避，要么进入人工队列。此外变装、极端仰俯角、转场与回忆段是漂移高发区，需要连续看剧情而非只抽查静帧。</p>
+<figure>
+<iframe src="diagrams/2-character-consistency.html" height="820" loading="lazy"></iframe>
+</figure>
+
+<blockquote>
+<p>🖼️ <strong>配图 2（HTML 版可交互查看）</strong>：角色一致性四代方案演进与组合工艺 —— <code>diagrams/2-character-consistency.html</code></p>
+</blockquote>
+<hr>
+<h2 id="5-第三步-分镜与故事板-把剧本翻译成镜头语言">5. 第三步 · 分镜与故事板：把剧本翻译成镜头语言</h2>
+<h3>5.1 分镜表：每秒都要有技术标注</h3>
+<p>分镜不是剧情概要。专业分镜表每个镜头必须标明：<strong>景别、运镜、画面内容、人物动作与表情、台词、时长、关联角色/场景资产、首帧与尾帧来源</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>示例与要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>景别</td>
+<td>远景（交代环境）/ 全景 / 中景（对话）/ 近景（情绪）/ 特写（关键动作、道具）</td>
+</tr>
+<tr>
+<td>运镜</td>
+<td>固定、缓推/拉、平移、环绕、手持跟随、升降；短剧多用缓推增强情绪、跟随增强代入</td>
+</tr>
+<tr>
+<td>时长</td>
+<td>单镜 3–10 秒（受视频模型上限约束，如 Seedance 类单镜上限约 10 秒）</td>
+</tr>
+<tr>
+<td>动作</td>
+<td>一个镜头只写一个主要动作；写具体的身体/表情变化，不写抽象情绪词</td>
+</tr>
+<tr>
+<td>衔接</td>
+<td>标注与上一镜的关系：切、淡入淡出、动作接、视线接；首尾帧如何承接</td>
+</tr>
+</tbody>
+</table>
+<h3>5.2 视频 prompt 的构建公式</h3>
+<p>每个镜头的视频生成提示词按固定结构拼接（drama-video-creator 技能与多位创作者一致）：</p>
+<pre><code>[风格锚点]  电影感写实/国风工笔/赛博朋克，统一色调与画质
+[角色外观锁定段]  从角色卡逐字复制，不改写
+[场景]  时间、地点、光线、天气
+[表演]  具体动作 + 表情 +（如有台词）对应的口型与情绪
+[运镜]  景别 + 机位运动 + 镜头速度
+[画面约束]  画面中只有指定角色，无多余人物
+</code></pre>
+<h3>5.3 连贯性的三道保险</h3>
+<ol>
+<li><strong>分镜自动生成 + 人工审核</strong>：工具/Agent 自动拆分镜并生成画面描述与视频提示词，人只做检查修改（近景/特写调整、运镜方向纠错）——人的判断仍是耗时大头。</li>
+<li><strong>首尾帧控制</strong>：相邻镜头共用帧或用尾帧→首帧过渡，是"控脸"和控场景连贯的进阶工艺；多镜头转场的学术方案见 CineTrans（第 9 章）。</li>
+<li><strong>分镜逻辑检查</strong>：前后镜头的光线方向、天气、服装、道具、人物站位、视线关系必须一致，这是"分镜连贯性"（区别于角色一致性）的独立难题（SimonAKing，知乎）。</li>
+</ol>
+<hr>
+<h2 id="6-第四步-视频片段生成-模型选型与-I2V-T2V-实战">6. 第四步 · 视频片段生成：模型选型与 I2V/T2V 实战</h2>
+<h3>6.1 T2V 与 I2V：短剧几乎总是选 I2V</h3>
+<ul>
+<li><strong>文生视频（T2V）</strong>：门槛最低，适合快速验证镜头构思；但角色一致性差、复杂动作与物理逻辑易出错。</li>
+<li><strong>图生视频（I2V）</strong>：先把角色/场景关键帧图像做扎实，再让视频模型赋予运动。画面与风格可控、一致性显著更好，是短剧生产的主力路径。配合首尾帧输入可做镜头衔接。</li>
+</ul>
+<p>进阶输入能力（选型时重点看）：多图/角色参考输入、首帧+尾帧、运镜强度、对口型音频输入、分辨率与帧率、异步 API（便于批量队列与失败重试）。</p>
+<h3>6.2 主流模型横评（2026 年 10 月，能力维度）</h3>
+<p>⚠️ 社区排名互相矛盾且随版本月度变化，下表只列能力维度与社区价格量级，不作排名。</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>团队</th>
+<th>开源/闭源</th>
+<th>社区提及的关键能力</th>
+<th>单条价格量级（社区实测口径）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kling 可灵 3.x</td>
+<td>快手</td>
+<td>闭源</td>
+<td>动作/运镜强、大幅转头稳定、出片快；1080p，角色参考与多参考图</td>
+<td>约 $0.4 / 5 秒（fal 等聚合平台）</td>
+</tr>
+<tr>
+<td>Seedance 2.x（即梦/火山）</td>
+<td>字节跳动</td>
+<td>闭源</td>
+<td>语义理解与多动作稳定，主打音画一体（对白/口型/音效）、Fast 模式省积分 30–50%</td>
+<td>约 $0.4 / 5 秒；480p 约 45.6 算力、720p 约 96 算力（平台内口径）</td>
+</tr>
+<tr>
+<td>Hailuo 海螺 02</td>
+<td>MiniMax</td>
+<td>闭源</td>
+<td>性价比高、画质稳定、表情细腻</td>
+<td>约 $0.27 / 6 秒</td>
+</tr>
+<tr>
+<td>Vidu</td>
+<td>生数科技</td>
+<td>闭源</td>
+<td>物理模拟、参考图主体一致性</td>
+<td>订阅/积分制</td>
+</tr>
+<tr>
+<td>Sora 2</td>
+<td>OpenAI</td>
+<td>闭源</td>
+<td>社区称画质上限高、长镜头；国内访问受限</td>
+<td>订阅制</td>
+</tr>
+<tr>
+<td>Veo 3.x</td>
+<td>Google</td>
+<td>闭源</td>
+<td>原生立体声/音效、高画质、长时长；社区横评中价格最高</td>
+<td>约 $3.2 / 8 秒</td>
+</tr>
+<tr>
+<td>Runway Gen-4</td>
+<td>Runway</td>
+<td>闭源</td>
+<td>成熟的创作工具链、多图参考、运动控制</td>
+<td>订阅制（$12 起）</td>
+</tr>
+<tr>
+<td>Wan 2.x（如 14B / 5B）</td>
+<td>阿里</td>
+<td><strong>开源</strong></td>
+<td>可本地私有化、可叠加角色 LoRA；480p 下轻微漂脸；5B/14B 双规模</td>
+<td>电费/租卡约 $0.07</td>
+</tr>
+<tr>
+<td>HunyuanVideo</td>
+<td>腾讯</td>
+<td><strong>开源</strong></td>
+<td>大规模开源 DiT，可本地微调与接入 ComfyUI</td>
+<td>电费/租卡</td>
+</tr>
+<tr>
+<td>CogVideoX / 清影</td>
+<td>智谱</td>
+<td>开源+闭源</td>
+<td>生成快、工具集成广</td>
+<td>积分/电费</td>
+</tr>
+</tbody>
+</table>
+<p>闭源 vs 开源的实测结论（原罪，知乎 2026-06 控制变量横评，同一张参考图 I2V）：
+- 角色"贴脸"忠实度：闭源整体优于单卡开源（Wan 14B 在 480p 下轻微漂脸，可用角色 LoRA 弥补）。
+- 运镜：可灵出片最快、大幅镜头运动强；画质 + 唯一原生音效：Veo；性价比：海螺/即梦已是生产级。
+- 一次完整对比测试全程闭源花费约 $8.58（聚合平台额度内）。</p>
+<h3>6.3 生成纪律：省算力、少返工</h3>
+<ol>
+<li><strong>先低清试错、再高清定稿</strong>：480p 抽卡确认动作与构图，满意后再出 720p/1080p；或 480p 成片导入剪辑软件输出高清版本。</li>
+<li><strong>单镜单动作、单镜 ≤10 秒</strong>：一个镜头塞多个动作，模型只顾一处、其余失控。</li>
+<li><strong>失败只重做单镜头</strong>：平台普遍支持单片段重生成，不整部重来。</li>
+<li><strong>批量队列化</strong>：优先选异步 API、支持断点/重试的模型通道，避免同步阻塞和排队不可控。</li>
+<li><strong>多镜成片需全部片段就绪</strong>再导出，防止时间线错位。</li>
+</ol>
+<hr>
+<h2 id="7-第五步-配音-口型-音效与音乐">7. 第五步 · 配音、口型、音效与音乐</h2>
+<h3>7.1 核心时序原则：先配音，后定画面</h3>
+<p>专业流水线（drama-video-creator 技能即如此设计）通常<strong>先生成对白音频、拿到精确时长，再据此规划视频镜头时长与表演</strong>，而不是先剪画面再硬配音：</p>
+<pre><code>台词 → TTS 生成对白（每段返回精确时长 d_i）
+     → 镜头时长按 d_i + 2~3 秒铺垫规划
+     → 视频 prompt 写入与台词对应的动作、表情、口型提示
+     → 合成时对白放在画面铺垫之后，音画对齐
+</code></pre>
+<h3>7.2 TTS 多角色配音</h3>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ElevenLabs</td>
+<td>多语言、情感自然、支持音色克隆，海外短剧主力</td>
+</tr>
+<tr>
+<td>CosyVoice（阿里开源）</td>
+<td>可私有化、多音色、中文表现力好</td>
+</tr>
+<tr>
+<td>火山引擎/豆包 TTS</td>
+<td>国内直连、音色库丰富、与即梦/Seedance 生态打通</td>
+</tr>
+<tr>
+<td>剪映/CapCut 朗读</td>
+<td>零门槛、直接在时间线对齐，适合粗剪</td>
+</tr>
+</tbody>
+</table>
+<p>要点：每个角色绑定唯一音色并全剧复用（声音也是角色资产）；台词按情绪分句生成、避免一段长念白；短句和口语化文本 TTS 更自然。</p>
+<h3>7.3 口型同步的三条路线</h3>
+<ol>
+<li><strong>音频驱动视频生成</strong>：把对白音频作为视频模型输入，直接生成口型匹配的表演（即梦/Seedance、可灵等的"对口型/音频驱动"能力），是 2026 年的主流方向。</li>
+<li><strong>原生音画一体</strong>：Veo 3.x、Seedance 2.x 等可在一次生成里同时产出对白语音、口型与环境声，改画面无需二次对音频。</li>
+<li><strong>后期对口型工具</strong>：HeyGen、Sync.so 等对已有人物画面做唇形替换，适合数字人和局部修复。</li>
+</ol>
+<h3>7.4 音效与 BGM</h3>
+<ul>
+<li><strong>音效/拟音（Foley）</strong>：MMAudio（arXiv:2412.15322）等视频到音频生成模型可直接为画面合成同步音效；学术上还有 Kling-Foley、UniForm（arXiv:2502.03897，音视频统一生成 DiT）等工作。简单做法直接使用剪映音效库。</li>
+<li><strong>背景音乐</strong>：Suno 等生成或曲库授权；关键工艺是 <strong>ducking</strong>——对白出现时 BGM 自动压低（如降 8–12 dB），结束后恢复，保证人声清晰。</li>
+<li><strong>风格统一</strong>：BGM 按题材选定（古风/现代/悬疑/欢快/史诗），节奏与爆点五段式对齐。</li>
+</ul>
+<hr>
+<h2 id="8-第六步-剪辑合成-音画对齐-转场与字幕">8. 第六步 · 剪辑合成：音画对齐、转场与字幕</h2>
+<h3>8.1 主流剪辑方案</h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>适用</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>剪映 / CapCut</td>
+<td>绝大多数创作者</td>
+<td>免费、字幕自动识别、音效/转场/调色齐全，与抖音/TikTok 发行无缝</td>
+</tr>
+<tr>
+<td>一体化平台内置成片</td>
+<td>端到端路线</td>
+<td>自动按分镜时间线拼片、字幕、片头片尾</td>
+</tr>
+<tr>
+<td>FFmpeg（脚本化）</td>
+<td>自动化流水线</td>
+<td>xfade 交叉淡入淡出、音轨精确放置，可批量化、断点续跑</td>
+</tr>
+<tr>
+<td>Remotion 等 Video-as-Code</td>
+<td>数据驱动/模板化</td>
+<td>用 React 组件定义帧、确定性渲染，适合批量个性化视频与信息可视化（GitHub 52k+ stars，社区数据）</td>
+</tr>
+</tbody>
+</table>
+<h3>8.2 合成要点</h3>
+<ul>
+<li><strong>转场</strong>：短剧以硬切为主保证节奏，情绪/时间跳跃用交叉淡入淡出（xfade）；避免花哨转场。</li>
+<li><strong>音画对齐</strong>：对白与口型/动作毫秒级对齐；给每句对白前留 2–3 秒画面铺垫；BGM ducking。</li>
+<li><strong>字幕</strong>：竖屏短剧字幕居中下、单行短句；自动识别后必须人工校对错别字与说话人。</li>
+<li><strong>片头片尾</strong>：标题卡片 + 集尾悬念卡片 + 下集引导；保持账号统一视觉模板。</li>
+<li><strong>质检顺序</strong>：连续完整看一遍（角色漂移、穿帮在转场/回忆/高潮更易暴露），再抽帧检查；别只看第一镜。</li>
+</ul>
+<h3>8.3 自动化流水线的工程要素</h3>
+<p>drama-video-creator 技能体现了一套可复用的工程设计，自建系统可参照：
+- <strong>单一事实源</strong>：一个 project.json 持久化全部状态（剧本/分镜/资产/配音/视频路径），脚本与分镜另存人类可读版本。
+- <strong>断点续跑</strong>：每步原子落盘，中断重跑自动跳过已完成步骤（视频生成成本高，这是刚需）。
+- <strong>单片段重生成</strong>：按镜头号重做，不影响其余镜头。
+- <strong>审核规避</strong>：不用真人照片做参考（用 CG 风格图），打斗等敏感内容改为切磋/张力描写。</p>
+<hr>
+<h2 id="9-自动化前沿-多-Agent-电影系统与一站式平台">9. 自动化前沿：多 Agent 电影系统与一站式平台</h2>
+<h3>9.1 为什么是"多 Agent"</h3>
+<p>电影制作天然分工（编剧、导演、摄影、美术、配音、剪辑），多 Agent 系统把每个角色建模为独立 Agent，由一个"导演/制片" Agent 用思维链规划任务、调用对应工具模型。这把"人去点七个工具"变成"Agent 编排一条 DAG"。</p>
+<h3>9.2 代表性学术系统（编号均已核实）</h3>
+<table>
+<thead>
+<tr>
+<th>系统</th>
+<th>机构</th>
+<th>arXiv</th>
+<th>核心思路</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MovieDreamer</td>
+<td>浙大 + 阿里</td>
+<td><strong>2407.16655</strong></td>
+<td>分层生成：自回归模型预测一系列"视觉令牌"保证全局叙事/角色/道具/风格连贯，再用扩散渲染成高质量帧；类似把故事分解为可管理的场景，主打长视觉序列</td>
+</tr>
+<tr>
+<td>MovieAgent</td>
+<td>NUS Show Lab</td>
+<td><strong>2503.07314</strong></td>
+<td>多智能体 CoT 规划的自动电影生成：从故事线拆分、场景设计、镜头语言到角色交互自动规划；提出 MoviePrompts 测试集（知名电影脚本 + 虚构提示）</td>
+</tr>
+<tr>
+<td>MAViS</td>
+<td>—</td>
+<td><strong>2508.08487</strong></td>
+<td>面向长序列视频叙事的多 Agent 框架，简短 prompt 即可产出高质量、有表现力的长序列故事视频</td>
+</tr>
+<tr>
+<td>CineTrans</td>
+<td>—</td>
+<td><strong>2508.11484</strong></td>
+<td>用掩码扩散模型学习电影级镜头转场，专攻多镜头视频生成中转场粗糙不稳的问题</td>
+</tr>
+<tr>
+<td>Custom Forcing</td>
+<td>庆熙大学 + UT Austin</td>
+<td><strong>2610.02914</strong></td>
+<td>免训练的自回归视频主体定制，参考图进入长期记忆，长视频角色不换脸</td>
+</tr>
+<tr>
+<td>AutoStory</td>
+<td>—</td>
+<td><strong>2311.11243</strong></td>
+<td>以最小人工生成多样化、连贯的故事插图</td>
+</tr>
+<tr>
+<td>StoryDiffusion</td>
+<td>—</td>
+<td><strong>2405.01434</strong></td>
+<td>一致性自注意力支持长距离多图与视频生成，批量产出角色一致的故事画面</td>
+</tr>
+<tr>
+<td>MMAudio</td>
+<td>—</td>
+<td><strong>2412.15322</strong></td>
+<td>多模态联合训练的高质量视频→音频（音效）合成</td>
+</tr>
+</tbody>
+</table>
+<h3>9.3 商业一体化平台</h3>
+<ul>
+<li><strong>SkyReels / SkyProduction 天工工作台（昆仑万维）</strong>：定位导演级 AI Agent，打通"剧本解析→分镜规划→视频生成→成片打磨→发行变现"。支持剧本直出（智能画布 / Agent 工作流，含快速模式、站位与分镜关注模式、国内短剧海外改编模式）、自动分析人物/场景/道具并一键生成资产、多生成通道（Seedance、MiniMax 等）。</li>
+<li><strong>即梦 Dreamina（字节）</strong>：从角色/生图到 Seedance 视频、音画一体与 Fast 模式，官方提供完整 AI 短片工作流指南；与抖音发行和变现闭环。</li>
+<li><strong>商汤 Seko、海艺 AI、有戏 AI</strong>：分别主打 1 小时全自动漫剧、高分辨率生产、专用剧本模型与投稿链路。</li>
+<li><strong>海外</strong>：Dreamina/CapCut 国际版、Runway 工具链、HeyGen（数字人与 HyperFrames 开源）等。</li>
+</ul>
+<h3>9.4 开源工程生态</h3>
+<p>社区盘点（CSDN/知乎，2026 年中）显示两个方向：
+- <strong>端到端像素生成 + Agent/MCP 调度</strong>：把视频模型作为可调用工具，Agent 负责分镜与重试编排，如社区热门的可组合视频生产流水线类项目（VideoChain 等，星标数为社区快照、引用前需复核）。
+- <strong>Video-as-Code 程序化合成</strong>：Remotion（52k+ stars）等确定性渲染字幕与数据画面，素材由图像/视频模型供给，弥补端到端模型"字幕崩、时序漂移、批量成本高"的短板。</p>
+<figure>
+<iframe src="diagrams/3-multiagent-system.html" height="840" loading="lazy"></iframe>
+</figure>
+
+<blockquote>
+<p>🖼️ <strong>配图 3（HTML 版可交互查看）</strong>：多 Agent 自动化电影系统架构 —— <code>diagrams/3-multiagent-system.html</code></p>
+</blockquote>
+<hr>
+<h2 id="10-成本-耗时与质量现状-一张真实的账">10. 成本、耗时与质量现状：一张真实的账</h2>
+<h3>10.1 成本：单集 1300–3000 元是怎么构成的</h3>
+<p>综合阿毛AI、TouchAI、AI也不要香菜等实测（社区口径，随平台价格变动）：</p>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>主要花费</th>
+<th>量级</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>剧本</td>
+<td>LLM 会员/API</td>
+<td>几十元内，常含在订阅中</td>
+</tr>
+<tr>
+<td>角色/场景图</td>
+<td>生图积分（低价模型每张约 0.5 算力）</td>
+<td>几十张图，几十–几百元</td>
+</tr>
+<tr>
+<td>视频片段</td>
+<td>最大头：按镜头数 × 单条价格；480p 便宜、720p 约翻倍</td>
+<td>约占总成本 60–80%</td>
+</tr>
+<tr>
+<td>配音</td>
+<td>TTS 订阅或按字符</td>
+<td>几十–几百元</td>
+</tr>
+<tr>
+<td>剪辑</td>
+<td>剪映等可零成本</td>
+<td>0–会员费</td>
+</tr>
+<tr>
+<td><strong>单集合计</strong></td>
+<td>社区实测区间</td>
+<td><strong>约 1300–3000 元</strong>（真人同规格约 5 万–50 万元）</td>
+</tr>
+</tbody>
+</table>
+<p>省钱要点：低价模型/480p 抽卡、单镜头失败只重做、用 Fast/异步通道、订阅包月摊薄；本地开源（Wan/Hunyuan + CosyVoice）把边际成本压到电费，但前置需要 5 位数级显卡与技术能力。</p>
+<h3>10.2 耗时：机器很快，人很慢</h3>
+<ul>
+<li><strong>纯自动粗片</strong>：教程实测 30 分钟–1 小时出一集（含自动剧本、资产、分镜、视频与成片）。</li>
+<li><strong>专业成片</strong>：经验创作者稳定在 <strong>2–3 个工作日 / 3 分钟成片</strong>；其中 AI 生成画面不到一半时间，大头是剧本判断、分镜审核、抽卡筛选与精修。</li>
+<li><strong>量产案例</strong>：5 人团队 8 天完成 60 集（有戏 AI 案例，社区口径）；互动影游/长视频因分支与一致性，单分钟成本被估在 1000–2500 元。</li>
+</ul>
+<h3>10.3 质量现状：能过"及格线"，难过"优秀线"</h3>
+<ul>
+<li><strong>已解决</strong>：单镜头画质、常规人物动作、景别运镜、多角色配音、字幕与基础转场；720p/1080p 生产级。</li>
+<li><strong>明显短板</strong>：复杂/快速动作与手部、多人亲密交互、物理与长时序逻辑、跨数十镜的角色稳定、表演的细腻情感；作品普遍套路化、"AI 味"重。</li>
+<li><strong>分水岭在人</strong>：同样的工具，产出差异主要来自题材选择、叙事节奏与逐镜审核——"现在花最多时间的地方，是判断 AI 给出的东西对不对"。</li>
+</ul>
+<hr>
+<h2 id="11-落地路线图与选型-Checklist">11. 落地路线图与选型 Checklist</h2>
+<h3>11.1 三条路线</h3>
+<table>
+<thead>
+<tr>
+<th>路线</th>
+<th>适合人群</th>
+<th>组合</th>
+<th>产出目标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A · 一体化快速出片</td>
+<td>零基础/个人试水</td>
+<td>有戏/即梦/SkyProduction 剧本直出 + 平台成片 + 剪映微调</td>
+<td>1 小时出粗片，低成本快速试错</td>
+</tr>
+<tr>
+<td>B · 分层精修（推荐主力）</td>
+<td>认真做账号/小团队</td>
+<td>专用剧本模型/LLM + 角色定妆三视图 + 可灵/即梦 I2V + CosyVoice/ElevenLabs + 剪映</td>
+<td>2–3 天出高质量单集</td>
+</tr>
+<tr>
+<td>C · 本地私有化/自研流水线</td>
+<td>技术团队/量产矩阵</td>
+<td>Wan/Hunyuan + 角色 LoRA + CosyVoice + FFmpeg/Remotion + 多 Agent 编排</td>
+<td>边际成本最低、可批量、数据私有</td>
+</tr>
+</tbody>
+</table>
+<h3>11.2 分镜级 Checklist</h3>
+<pre><code>前期
+□ 题材是否强冲突快反转？（慢热文艺 AI 再强也难转化）
+□ 是否先有整季大纲/人物关系，再逐集展开？
+□ 剧本是否为结构化 JSON，外观描述具体可生图？
+
+资产
+□ 是否先锁角色（定妆三视图 + 表情包）再生成镜头？
+□ 全程是否只用同一组参考图、prompt 身份区逐字复制？
+□ 同场景是否共享首帧？道具是否固定？
+
+生成
+□ 是否以 I2V 为主、单镜单动作、≤10 秒？
+□ 是否先 480p 抽卡、满意再高清？
+□ 是否用异步/重试通道，失败只重做单镜头？
+
+音频
+□ 是否先配音定时长再定画面？角色音色是否全剧唯一？
+□ 口型走音频驱动/音画一体；BGM 是否对对白 ducking？
+
+成片
+□ 是否连续完整看一遍查漂移穿帮？字幕是否人工校对？
+□ 集尾是否有悬念钩与下集引导？
+
+发行
+□ 是否标注 AI 生成、符合平台规则？
+□ 是否用多集小样测数据，再决定是否加投/续作？
+</code></pre>
+<h3>11.3 建议的启动节奏</h3>
+<ol>
+<li>第 1 周：用一体化平台做 1 集，跑通全流程、建立直觉。</li>
+<li>第 2–3 周：转分层精修，磨 1 个题材、1 组角色，做 3–5 集连播小样。</li>
+<li>用真实播放/完播/转化数据决定去留——<strong>以小博大、快速试错</strong>，而不是一上来量产几十集。</li>
+</ol>
+<hr>
+<h2 id="12-风险-常见误解与注意事项">12. 风险、常见误解与注意事项</h2>
+<h3>12.1 商业风险：红利与陷阱并存</h3>
+<ul>
+<li><strong>供给爆炸、爆款率极低</strong>：日均上新 1200+ 部、爆款率约 0.48%、约 98.7% 不回本、99.9% 月分账 &lt;10 元；平台万次播放收益持续走低。把 AI 短剧当"躺赚"是最大误解。</li>
+<li><strong>投流依赖</strong>：免费流量有限，付费投流(IAP/投流买量)可能吃掉分账；要算清单集 ROI 再放量。</li>
+<li><strong>政策与平台分成可变</strong>：分账比例、考核规则处于调整期（如出海平台分成与版权要求），上线前以官方当期规则为准。</li>
+</ul>
+<h3>12.2 版权、合规与伦理</h3>
+<ul>
+<li><strong>训练/参考素材授权</strong>：不用真人照片/明星脸做参考，避免肖像权与深度伪造风险；二创需有授权或走平台二创工具与规则。</li>
+<li><strong>AI 标识义务</strong>：多地法规要求对 AI 生成内容显著标识；平台也会审核未标注内容。</li>
+<li><strong>内容审核</strong>：暴力、色情、未成年人、医疗金融等敏感题材受限；行业通行做法是前置规避（打斗写切磋、规避真实事件人物）。</li>
+<li><strong>音乐/音效版权</strong>：Suno 等生成内容的商用授权要看条款，曲库需确认可商用。</li>
+</ul>
+<h3>12.3 技术与创作误区</h3>
+<ul>
+<li>❌ "一键生成就能用"：粗片必须人工审，崩坏常在转场/回忆/高潮。</li>
+<li>❌ 追"最强模型"：模型月度洗牌，应按能力维度（一致性、运镜、音频、成本、API 稳定性）组合选型，而非赌排名。</li>
+<li>❌ 剧本写超出可生成边界的场面；❌ 中途改角色设定；❌ 先画面后配音导致口型/时长错位。</li>
+<li>⚠️ 同质化：AI 极易产出相似脸、相似套路；差异化仍靠人设、题材与叙事——AI 是放大器，不替代创意。</li>
+</ul>
+<hr>
+<h2 id="13-参考资料">13. 参考资料</h2>
+<h3>13.1 学术论文（arXiv 编号于 2026-10-22 在 arxiv.org 逐一核实）</h3>
+<ol>
+<li>MovieDreamer: Hierarchical Generation for Coherent Long Visual Sequences — arXiv:2407.16655 — https://arxiv.org/abs/2407.16655</li>
+<li>Automated Movie Generation via Multi-Agent CoT Planning（MovieAgent, NUS Show Lab）— arXiv:2503.07314 — https://arxiv.org/abs/2503.07314</li>
+<li>MAViS: A Multi-Agent Framework for Long-Sequence Video Storytelling — arXiv:2508.08487 — https://arxiv.org/abs/2508.08487</li>
+<li>CineTrans: Learning to Generate Videos with Cinematic Transitions via Masked Diffusion Models — arXiv:2508.11484 — https://arxiv.org/abs/2508.11484</li>
+<li>Custom Forcing: Training-Free Subject Customization for Autoregressive Video Generation — arXiv:2610.02914 — https://arxiv.org/abs/2610.02914</li>
+<li>AutoStory: Generating Diverse Storytelling Images with Minimal Human Effort — arXiv:2311.11243 — https://arxiv.org/abs/2311.11243</li>
+<li>StoryDiffusion: Consistent Self-Attention for Long-Range Image and Video Generation — arXiv:2405.01434 — https://arxiv.org/abs/2405.01434</li>
+<li>MMAudio: Taming Multimodal Joint Training for High-Quality Video-to-Audio Synthesis — arXiv:2412.15322 — https://arxiv.org/abs/2412.15322</li>
+<li>UniForm: A Unified Diffusion Transformer for Audio-Video Generation — arXiv:2502.03897 — https://arxiv.org/abs/2502.03897</li>
+</ol>
+<h3>13.2 官方/产品资料</h3>
+<ul>
+<li>Dreamina（即梦）官方工作流指南：How to Make an AI Short Film: The Complete 2026 Workflow — https://dreamina.capcut.com/resource/how-to-make-ai-short-film</li>
+<li>快手可灵 AI、字节即梦/Seedance、MiniMax 海螺、昆仑万维 SkyReels/SkyProduction、商汤 Seko、海艺 AI、有戏 AI 等产品官网与公开说明（能力与价格以官网当期为准）。</li>
+<li>人民网研究院《中国智能互联网发展报告（2026）》关于 AIGC 短剧模块化流水线的论述（经社区文章转引）。</li>
+</ul>
+<h3>13.3 社区实操与行业数据（知乎/DataEye 等，含作者与链接；数据为社区口径、变化快，引用前需复核）</h3>
+<ol>
+<li>AI也不要香菜《30分钟做一集AI短剧，全流程制作步骤+详细教程！》（88 赞）— https://zhuanlan.zhihu.com/p/2066098242585212599</li>
+<li>AI也不要香菜《无需提示词！AI短剧全自动生成！半小时制作一集，0基础教程！》（25 赞）— https://zhuanlan.zhihu.com/p/2072982055764477458</li>
+<li>灵境AI社群站长《AI短剧制作全流程实录：剧本、分镜、生成、配音，每个环节的真实耗时》— https://zhuanlan.zhihu.com/p/2096590907428561122</li>
+<li>Ace讲ai《【保姆级教程】从零做一部AI短剧！剧本拆分镜、首尾帧控脸到出片全流程》— https://zhuanlan.zhihu.com/p/2090419398737773754</li>
+<li>吴言不语零一二三《这也许是全网最容易上手的AI短剧制作教程了》（SkyProduction 实操）— https://zhuanlan.zhihu.com/p/2082038431153125000</li>
+<li>观江田《AI漫剧为什么总是变脸？我用四层方案锁死了它》— https://zhuanlan.zhihu.com/p/2092360699918006266</li>
+<li>醍醐灌顶的小卡拉《做了200多条AI动画之后，我终于把人物一致性这事儿搞明白了》（14 赞）— https://zhuan.zhihu.com/p/2030242279332558475</li>
+<li>芋泥卷《AI漫剧最大痛点：主角每集一张脸？3步锁死角色》— https://zhuanlan.zhihu.com/p/2091552281221248556</li>
+<li>梦令令《可以分享你做AI漫剧的方法吗？》— https://www.zhihu.com/question/1995125610469668819</li>
+<li>原罪《同一张脸，5个顶尖视频模型：开源 vs 闭源差距实测（2026.6）》（7 赞）— https://zhuanlan.zhihu.com/p/2053126586497606707</li>
+<li>SimonAKing《AI 互动影游全球深度报告》— https://zhuanlan.zhihu.com/p/2045223940491064487</li>
+<li>TouchAI《2026年AI短剧，到底是机会还是陷阱？行业全景数据拆解》— https://zhuanlan.zhihu.com/p/2075225189877662686</li>
+<li>李沅潮《98.7%的AI短剧在赔钱，一半公司已经倒闭》— https://zhuanlan.zhihu.com/p/2078557113316537612</li>
+<li>阿毛AI《AI短剧变现全攻略：实测从0到上线，成本不到1300元》— https://zhuanlan.zhihu.com/p/2068106744178405760</li>
+<li>短剧新势力《AI短剧出海正在经历一场"捞金行动"》（引 DataEye）— https://zhuanlan.zhihu.com/p/2051008164791850219</li>
+<li>出海流量玄学研究《180亿美元估值的可灵AI：快手分拆的AI视频独角兽》— https://zhuanlan.zhihu.com/p/（知乎检索条目，链接以站内为准）</li>
+<li>万物不可聊《Seedance 2.0 深度拆解》、niyanqi10《如何评价即梦 Seedance 2.0》、释怀鸟《Custom Forcing 论文解读》、元景光年《角色一致性三种方法》、一览ai知天下《角色总变？工程化方法》、知道7943到199《角色跨镜头漂移实测》、AI研究《实测有戏AI短剧Agent》、黄浴《AI剧场的奥斯卡：语言模型角色扮演综述》— 均为知乎检索条目。</li>
+<li>CSDN：《2026 AI 视频工业化：主流开源框架与库盘点》《2026年9月主流AI视频生成模型横评》《2026年开源AI视频工具全景》等（2026 年中，技术盘点类，星标/价格为快照值）。</li>
+</ol>
+<p class="footer">大模型制作短剧完全指南 · 2026-10-22 · Research Report</p>
+</div></body></html>

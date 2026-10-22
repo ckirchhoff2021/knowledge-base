@@ -51,3 +51,9 @@ Anthropic「AI 同事」三份配套调研（官方公告已核实）：[技术�
 本地代码/IDE 如何调用远端 Hermes 完整 Agent 能力：一张表厘清 `proxy` / `serve` / `dashboard` / `api_server` 四种方式，给代码用的是 OpenAI 兼容的 API Server。来源为 Hermes 源码 + 官方文档 + 实践验证。
 
 📅 2026-08-24 ｜ 📄 [Markdown](hermes/API.md)
+
+### [大模型制作短剧完全指南](ai-short-drama/report.html)
+
+如何用 LLM + 多模态生成模型制作真人风短剧 / AI 漫剧 / AI 微电影的全流程技术调研。建立「剧本→角色/场景资产→分镜→视频片段→配音/音效→剪辑→发行」**七层流水线**与分层组装 / 端到端一体生成两种范式；剧本层给出可直接复用的**结构化 JSON schema**与黄金三秒、爆点五段式、三类钩子方法论；用整章攻克头号难题**角色一致性**——拆解无状态生成/潜空间随机/文字≠身份三层机理，梳理文字锁定→参考图锚定（三视图/cref/IP-Adapter/InstantID/PuLID）→首尾帧链→角色 LoRA/平台内置四代方案与组合工艺，含 2026-10 最新免训练 Custom Forcing（arXiv:2610.02914）；视频层横评可灵 3.x、Seedance 2.x、海螺 02、Vidu、Sora 2、Veo 3.x、Runway 与开源 Wan/Hunyuan/CogVideoX（只比能力维度不写死排名，价格为社区实测口径），给出 I2V 为主、480p 抽卡、单镜单动作 ≤10 秒等生产纪律；音频层讲"先配音定时长再定画面"时序原则、多角色 TTS（ElevenLabs/CosyVoice/火山）、口型三路线与 MMAudio 拟音、BGM ducking；自动化前沿覆盖 MovieDreamer（2407.16655）、MovieAgent 多 Agent CoT（2503.07314）、MAViS（2508.08487）、CineTrans（2508.11484）等已核实编号论文与 SkyReels/SkyProduction、即梦、Seko、有戏等商业平台；并给出真实成本账（AI 单集 1300–3000 元 vs 真人 5 万–50 万元，视频占 60–80%）、耗时（粗片 30 分钟 / 专业成片 2–3 天）、三条落地路线、分镜级 Checklist，以及爆款率仅 0.48%、约 98.7% 不回本的商业现实与版权/AI 标识/审核风险。9 篇 arXiv 编号于 2026-10-22 在 arxiv.org 逐一核实。
+
+📅 2026-10-22 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](ai-short-drama/report.md)
