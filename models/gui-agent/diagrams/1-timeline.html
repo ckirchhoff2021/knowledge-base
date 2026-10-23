@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · GUI Agent 技术谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><function name="write_file"><parameter name="content" string="true"><!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · GUI Agent 技术谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2005/2000/svg">
+<rect width="1200" height="720" fill="#0d1117"/>
+<defs>
+<marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#58a6ff"/></marker>
+</defs>
+<text x="50" y="44" fill="#e6edf3" font-size="23" font-weight="700">图 1 · 技术谱系：四年四代，从「读 HTML / DOM」到「原生一体智能体」与「多轮 RL + test-time scaling」</text>
+<text x="50" y="72" fill="#8b949e" font-size="13">时间轴自左向右；每代标注范式、代表工作与 OSWorld 代表性成绩（注意 2025-07 后为 OSWorld-Verified 口径，新旧不可横比）</text>
+
+<!-- main timeline -->
+<line x1="70" y1="380" x2="1150" y2="380" stroke="#30363d" stroke-width="3"/>
+<line x1="70" y1="380" x2="1150" y2="380" stroke="#58a6ff" stroke-width="2" stroke-dasharray="2,9" marker-end="url(#ar)"/>
+
+<!-- Gen 0 -->
+<rect x="70" y="150" width="220" height="200" rx="12" fill="#161b22" stroke="#8b949e" stroke-width="1.5"/>
+<text x="180" y="182" fill="#8b949e" font-size="15" font-weight="700" text-anchor="middle">史前 · 2023</text>
+<text x="180" y="210" fill="#e6edf3" font-size="12.5" text-anchor="middle">读 HTML / DOM 文本</text>
+<text x="180" y="236" fill="#e6edf3" font-size="12.5" text-anchor="middle">函数调用式网页代理</text>
+<text x="180" y="270" fill="#58a6ff" font-size="12" text-anchor="middle">AITW (2307.10088)</text>
+<text x="180" y="292" fill="#8b949e" font-size="11" text-anchor="middle">715k episodes 安卓数据集</text>
+<text x="180" y="318" fill="#58a6ff" font-size="12" text-anchor="middle">WebArena (2307.13854)</text>
+<text x="180" y="338" fill="#8b949e" font-size="11" text-anchor="middle">真实网页可执行环境</text>
+<line x1="180" y1="350" x2="180" y2="378" stroke="#8b949e" stroke-width="1.5"/>
+<circle cx="180" cy="380" r="6" fill="#8b949e"/>
+
+<!-- Gen 1 -->
+<rect x="315" y="150" width="220" height="200" rx="12" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+<text x="425" y="182" fill="#d29922" font-size="15" font-weight="700" text-anchor="middle">第一代 · 2023.12–2024.08</text>
+<text x="425" y="210" fill="#e6edf3" font-size="12.5" text-anchor="middle">GUI 专用模型 · 接地觉醒</text>
+<text x="425" y="236" fill="#e6edf3" font-size="12.5" text-anchor="middle">GPT-4V + 高分辨率视觉</text>
+<text x="425" y="268" fill="#58a6ff" font-size="11.5" text-anchor="middle">CogAgent 18B (2312.08914)</text>
+<text x="425" y="290" fill="#58a6ff" font-size="11.5" text-anchor="middle">SeeClick / ScreenSpot</text>
+<text x="425" y="312" fill="#58a6ff" font-size="11.5" text-anchor="middle">SeeAct (2401.01614)</text>
+<text x="425" y="334" fill="#58a6ff" font-size="11.5" text-anchor="middle">UFO · OmniParser</text>
+<line x1="425" y1="350" x2="425" y2="378" stroke="#d29922" stroke-width="1.5"/>
+<circle cx="425" cy="380" r="6" fill="#d29922"/>
+
+<!-- Gen 2 -->
+<rect x="560" y="150" width="220" height="200" rx="12" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+<text x="670" y="182" fill="#3fb950" font-size="15" font-weight="700" text-anchor="middle">第二代 · 2024.10–2025.03</text>
+<text x="670" y="210" fill="#e6edf3" font-size="12.5" text-anchor="middle">厂商入场 · 原生模型</text>
+<text x="670" y="236" fill="#e6edf3" font-size="12.5" text-anchor="middle">SFT / DPO，截图→键鼠</text>
+<text x="670" y="266" fill="#3fb950" font-size="11.5" text-anchor="middle">Claude 3.5 Computer Use 公测</text>
+<text x="670" y="286" fill="#8b949e" font-size="11" text-anchor="middle">OSWorld 14.9% / 22.0%</text>
+<text x="670" y="310" fill="#58a6ff" font-size="11.5" text-anchor="middle">UI-TARS · Agent S · Aguvis</text>
+<text x="670" y="330" fill="#58a6ff" font-size="11.5" text-anchor="middle">Operator/CUA · Mariner</text>
+<line x1="670" y1="350" x2="670" y2="378" stroke="#3fb950" stroke-width="1.5"/>
+<circle cx="670" cy="380" r="6" fill="#3fb950"/>
+
+<!-- Gen 3 -->
+<rect x="805" y="150" width="320" height="200" rx="12" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+<text x="965" y="182" fill="#bc8cff" font-size="15" font-weight="700" text-anchor="middle">第三代 · 2025.04–2026.10</text>
+<text x="965" y="210" fill="#e6edf3" font-size="12.5" text-anchor="middle">多轮 RL · test-time scaling</text>
+<text x="965" y="236" fill="#e6edf3" font-size="12.5" text-anchor="middle">开放全栈 · 可学习验证奖励</text>
+<text x="965" y="264" fill="#58a6ff" font-size="11.5" text-anchor="middle">UI-TARS-1.5/2 · Agent S2/S3</text>
+<text x="965" y="286" fill="#bc8cff" font-size="11.5" text-anchor="middle">BJudge 多 rollout：OSWorld 72.6%</text>
+<text x="965" y="306" fill="#8b949e" font-size="11" text-anchor="middle">首超人类 72.36%（2025-10）</text>
+<text x="965" y="330" fill="#58a6ff" font-size="11.5" text-anchor="middle">OS-Helix · OpenGCUA · S4</text>
+<line x1="965" y1="350" x2="965" y2="378" stroke="#bc8cff" stroke-width="1.5"/>
+<circle cx="965" cy="380" r="6" fill="#bc8cff"/>
+
+<!-- lower band: capability curve -->
+<text x="50" y="470" fill="#e6edf3" font-size="15" font-weight="700">OSWorld 端到端成功率演进（标注口径）</text>
+<path d="M120,620 C260,610 330,560 420,545 C520,528 590,470 680,455 C760,442 830,360 920,330 C1000,305 1060,250 1120,230" fill="none" stroke="#3fb950" stroke-width="2.5"/>
+<circle cx="420" cy="545" r="4.5" fill="#d29922"/>
+<text x="430" y="540" fill="#d29922" font-size="11.5">Claude 3.5 公测 14.9%（旧版）</text>
+<circle cx="600" cy="468" r="4.5" fill="#3fb950"/>
+<text x="470" y="455" fill="#3fb950" font-size="11.5">Operator CUA 38.1%（旧版）</text>
+<circle cx="830" cy="360" r="4.5" fill="#bc8cff"/>
+<text x="700" y="350" fill="#bc8cff" font-size="11.5">Sonnet 4.5 61.4% / BJudge 72.6%（Verified）</text>
+<circle cx="1080" cy="252" r="4.5" fill="#f85149"/>
+<text x="880" y="240" fill="#f85149" font-size="11.5">Claude Opus 5 83.4%（Verified，独立实测）</text>
+<text x="120" y="650" fill="#8b949e" font-size="11.5">注：曲线仅为示意趋势；2025-07-28 基准升级为 OSWorld-Verified（修题 + 统一环境 + 重测），跨越升级点的分数不具严格可比性。</text>
+</svg>
+</body></html>

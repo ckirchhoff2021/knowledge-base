@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · 记忆与经验复用</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 780" xmlns="http://www.w3.org/2005/2000/svg">
+<rect width="1200" height="780" fill="#0d1117"/>
+<defs>
+<marker id="b" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#58a6ff"/></marker>
+<marker id="g" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3fb950"/></marker>
+</defs>
+<text x="50" y="44" fill="#e6edf3" font-size="23" font-weight="700">图 4 · 记忆与经验复用：三个抽象层级 + 世界模型级的环境生成</text>
+<text x="50" y="72" fill="#8b949e" font-size="13">存储单元从「单步动作」→「子目标经验块」→「应用世界模型」逐级抽象，复用性与可组合性递增</text>
+
+<!-- L1 -->
+<rect x="50" y="110" width="340" height="150" rx="13" fill="#161b22" stroke="#f85149" stroke-width="1.7"/>
+<text x="70" y="142" fill="#f85149" font-size="16" font-weight="700">L1 动作级记忆</text>
+<text x="70" y="170" fill="#e6edf3" font-size="12.5">单元：单步 (状态, 动作)</text>
+<text x="70" y="195" fill="#8b949e" font-size="11.5">朴素轨迹回放 / RAG 检索相似步</text>
+<text x="70" y="222" fill="#f85149" font-size="11.5">太细：脱离子目标上下文，易误匹配</text>
+<text x="70" y="245" fill="#8b949e" font-size="11">不可组合，跨任务复用弱</text>
+
+<!-- arrow up -->
+<line x1="415" y1="185" x2="455" y2="185" stroke="#58a6ff" stroke-width="2" marker-end="url(#b)"/>
+<text x="435" y="175" fill="#58a6ff" font-size="11" text-anchor="middle">抽象</text>
+
+<!-- L2 -->
+<rect x="460" y="110" width="340" height="150" rx="13" fill="#0e1d12" stroke="#3fb950" stroke-width="1.7"/>
+<text x="480" y="142" fill="#3fb950" font-size="16" font-weight="700">L2 子目标级记忆</text>
+<text x="480" y="170" fill="#e6edf3" font-size="12.5">单元：「完成某子目标」的经验块</text>
+<text x="480" y="195" fill="#39c5cf" font-size="11.5">Subgoal-aware Memory Graph [2610.31307]</text>
+<text x="480" y="222" fill="#8b949e" font-size="11.5">节点可合并 / 扩展 / 按子目标检索</text>
+<text x="480" y="245" fill="#3fb950" font-size="11.5">SPA-Bench 成功率 +11.11%</text>
+
+<line x1="825" y1="185" x2="865" y2="185" stroke="#58a6ff" stroke-width="2" marker-end="url(#b)"/>
+<text x="845" y="175" fill="#58a6ff" font-size="11" text-anchor="middle">抽象</text>
+
+<!-- L3 -->
+<rect x="870" y="110" width="280" height="150" rx="13" fill="#181226" stroke="#bc8cff" stroke-width="1.7"/>
+<text x="890" y="142" fill="#bc8cff" font-size="16" font-weight="700">L3 世界模型级</text>
+<text x="890" y="170" fill="#e6edf3" font-size="12.5">单元：App 页面-跳转结构</text>
+<text x="890" y="195" fill="#39c5cf" font-size="11">Trace2World / TAG-Nav</text>
+<text x="890" y="222" fill="#bc8cff" font-size="11.5">任务无关 · 可生成新训练环境</text>
+<text x="890" y="245" fill="#8b949e" font-size="11">复现真实 App 行为 91.1%</text>
+
+<!-- bottom: latent memory branch -->
+<text x="50" y="320" fill="#d29922" font-size="16" font-weight="700">另一条路线：不往上下文塞文本，而是给冻结模型配「潜在记忆」</text>
+<rect x="50" y="340" width="520" height="150" rx="13" fill="#1a1408" stroke="#d29922" stroke-width="1.7"/>
+<text x="70" y="372" fill="#d29922" font-size="15" font-weight="700">ScopeMem [2610.26503]</text>
+<text x="70" y="400" fill="#e6edf3" font-size="12.5">传统逐帧 CE 微调会破坏 8–13% 原本正确的决策</text>
+<text x="70" y="426" fill="#3fb950" font-size="12.5">学会判断「在哪里需要修正」→ 破坏率降至 5.6%</text>
+<text x="70" y="452" fill="#8b949e" font-size="11.5">冻结 Qwen3-VL-8B ≥ GUI 专用 Agent / Qwen3-VL-32B</text>
+<text x="70" y="476" fill="#8b949e" font-size="11">基准：AndroidControl / GUI-Odyssey / 零样本 AITW</text>
+
+<!-- Trace2World pipeline -->
+<text x="620" y="320" fill="#bc8cff" font-size="16" font-weight="700">Trace2World：记忆 → 环境生成器 → RL 训练</text>
+<rect x="620" y="340" width="130" height="56" rx="9" fill="#161b22" stroke="#30363d"/>
+<text x="685" y="364" fill="#e6edf3" font-size="12" text-anchor="middle">1,570 条</text>
+<text x="685" y="383" fill="#8b949e" font-size="11" text-anchor="middle">真实轨迹</text>
+<line x1="750" y1="368" x2="780" y2="368" stroke="#bc8cff" stroke-width="1.8" marker-end="url(#b)"/>
+<rect x="782" y="340" width="130" height="56" rx="9" fill="#181226" stroke="#bc8cff"/>
+<text x="847" y="364" fill="#e6edf3" font-size="12" text-anchor="middle">应用模型</text>
+<text x="847" y="383" fill="#bc8cff" font-size="11" text-anchor="middle">来源证据链接</text>
+<line x1="912" y1="368" x2="942" y2="368" stroke="#bc8cff" stroke-width="1.8" marker-end="url(#b)"/>
+<rect x="944" y="340" width="120" height="56" rx="9" fill="#161b22" stroke="#30363d"/>
+<text x="1004" y="364" fill="#e6edf3" font-size="12" text-anchor="middle">50 个可执行</text>
+<text x="1004" y="383" fill="#8b949e" font-size="11" text-anchor="middle">环境</text>
+
+<rect x="620" y="418" width="444" height="72" rx="10" fill="#0e1d12" stroke="#3fb950" stroke-width="1.5"/>
+<text x="640" y="445" fill="#3fb950" font-size="12.5">RL 训练收益：外部基准 +5.4–16.2 分 · 100 真机任务 +16.3 分</text>
+<text x="640" y="471" fill="#8b949e" font-size="11.5">源接地验证保留 94.0% 收益（无来源约束的自验证仅 54.7%）</text>
+
+<!-- bottom takeaway -->
+<rect x="50" y="540" width="1100" height="190" rx="14" fill="#10141a" stroke="#30363d"/>
+<text x="70" y="575" fill="#e6edf3" font-size="15" font-weight="700">方法论要点</text>
+<circle cx="82" cy="608" r="4" fill="#3fb950"/>
+<text x="96" y="612" fill="#e6edf3" font-size="13">粒度决定复用：动作级易误匹配，子目标级可组合，世界模型级可生成环境——抽象越高，复用越广。</text>
+<circle cx="82" cy="642" r="4" fill="#d29922"/>
+<text x="96" y="646" fill="#e6edf3" font-size="13">适配有代价：无差别微调会破坏已正确的决策；让记忆「按需介入」比「全量修改」更可靠。</text>
+<circle cx="82" cy="676" r="4" fill="#bc8cff"/>
+<text x="96" y="680" fill="#e6edf3" font-size="13">模拟须接地：由轨迹合成的环境必须保留来源证据，否则模拟训练的收益无法迁移到真机。</text>
+<circle cx="82" cy="710" r="4" fill="#f85149"/>
+<text x="96" y="714" fill="#e6edf3" font-size="13">「并非所有图都是地图」：记忆的构建质量比容量更重要，含噪轨迹不能被当作确定的导航结构。</text>
+</svg>
+</body></html>

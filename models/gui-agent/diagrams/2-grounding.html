@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · GUI Grounding</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 780" xmlns="http://www.w3.org/2005/2000/svg">
+<rect width="1200" height="780" fill="#0d1117"/>
+<defs>
+<marker id="b" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#58a6ff"/></marker>
+<marker id="g" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3fb950"/></marker>
+<marker id="p" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#bc8cff"/></marker>
+</defs>
+<text x="50" y="42" fill="#e6edf3" font-size="23" font-weight="700">图 2 · 感知与接地（GUI Grounding）：智能体的第一能力——从截图到「点对位置」</text>
+<text x="50" y="68" fill="#8b949e" font-size="12.5">三条路线：纯视觉端到端（主流） · 可访问性树结构化 · Set-of-Mark 融合；接地本质是指代表达定位（描述 → 边界框/坐标）</text>
+
+<!-- screen -->
+<rect x="60" y="320" width="170" height="120" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.8"/>
+<text x="145" y="355" fill="#58a6ff" font-size="14" font-weight="700" text-anchor="middle">屏幕截图</text>
+<text x="145" y="382" fill="#e6edf3" font-size="12" text-anchor="middle">1920×1080 像素</text>
+<text x="145" y="406" fill="#8b949e" font-size="11" text-anchor="middle">小字 / 密集小图标</text>
+
+<!-- Path A: pure vision top -->
+<rect x="330" y="120" width="300" height="180" rx="12" fill="#0e1d12" stroke="#3fb950" stroke-width="1.8"/>
+<text x="480" y="152" fill="#3fb950" font-size="15" font-weight="700" text-anchor="middle">路线 A · 纯视觉端到端（2025 后主流）</text>
+<text x="480" y="182" fill="#e6edf3" font-size="12.5" text-anchor="middle">高分辨率视觉编码</text>
+<text x="480" y="206" fill="#8b949e" font-size="11.5" text-anchor="middle">CogAgent 双分辨率 · ShowUI token 选择</text>
+<text x="480" y="232" fill="#e6edf3" font-size="12.5" text-anchor="middle">VLM 直接回归坐标 (x, y)</text>
+<text x="480" y="256" fill="#8b949e" font-size="11.5" text-anchor="middle">UI-TARS · Aguvis · Qwen-VL</text>
+<text x="480" y="284" fill="#3fb950" font-size="11.5" font-weight="700" text-anchor="middle">无外部解析器 · 无管线误差</text>
+<line x1="230" y1="340" x2="330" y2="230" stroke="#3fb950" stroke-width="1.7" marker-end="url(#g)"/>
+
+<!-- Path B: a11y tree middle -->
+<rect x="330" y="330" width="300" height="110" rx="12" fill="#161b22" stroke="#8b949e" stroke-width="1.6"/>
+<text x="480" y="360" fill="#8b949e" font-size="15" font-weight="700" text-anchor="middle">路线 B · 可访问性树（结构化）</text>
+<text x="480" y="386" fill="#e6edf3" font-size="12" text-anchor="middle">控件类型 / 文本 / 层级 / bounds</text>
+<text x="480" y="410" fill="#8b949e" font-size="11" text-anchor="middle">边界精确、token 省；但长尾软件常缺失</text>
+<text x="480" y="430" fill="#8b949e" font-size="10.5" text-anchor="middle">安全场景可用于划分信任边界（SA-CUA）</text>
+<line x1="230" y1="380" x2="330" y2="385" stroke="#8b949e" stroke-width="1.7" marker-end="url(#b)"/>
+
+<!-- Path C: SoM bottom -->
+<rect x="330" y="500" width="300" height="200" rx="12" fill="#181226" stroke="#bc8cff" stroke-width="1.8"/>
+<text x="480" y="530" fill="#bc8cff" font-size="15" font-weight="700" text-anchor="middle">路线 C · Set-of-Mark 融合</text>
+<text x="480" y="558" fill="#e6edf3" font-size="12" text-anchor="middle">① 解析器检测交互区域 + 编号</text>
+<text x="480" y="580" fill="#8b949e" font-size="11" text-anchor="middle">OmniParser：区域检测 + 图标功能描述</text>
+<text x="480" y="606" fill="#e6edf3" font-size="12" text-anchor="middle">② 带编号截图交 VLM</text>
+<text x="480" y="630" fill="#e6edf3" font-size="12" text-anchor="middle">③ 输出「点击 #7」而非裸坐标</text>
+<text x="480" y="656" fill="#bc8cff" font-size="11.5" text-anchor="middle">坐标回归 → 简单编号选择</text>
+<text x="480" y="682" fill="#8b949e" font-size="11" text-anchor="middle">Agent S2 Mixture-of-Grounding</text>
+<line x1="230" y1="420" x2="330" y2="560" stroke="#bc8cff" stroke-width="1.7" marker-end="url(#p)"/>
+
+<!-- data/training column -->
+<rect x="760" y="120" width="380" height="250" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+<text x="950" y="152" fill="#e6edf3" font-size="15" font-weight="700" text-anchor="middle">接地能力的数据与训练升级</text>
+<text x="782" y="186" fill="#58a6ff" font-size="12.5">· OS-Atlas：1300 万+ GUI 元素跨平台语料</text>
+<text x="782" y="216" fill="#58a6ff" font-size="12.5">· ScreenSpot / V2 / Pro 接地标尺</text>
+<text x="782" y="250" fill="#3fb950" font-size="12.5">· GroundGUI ScreenRef（586K 截图 / 633K 指代）</text>
+<text x="782" y="276" fill="#3fb950" font-size="12.5">  D2RL：蒸馏 → 强化</text>
+<text x="782" y="304" fill="#8b949e" font-size="11.5">  8B：ScreenSpot-V2 95.2% · Pro 63.9%</text>
+<text x="782" y="336" fill="#bc8cff" font-size="12.5">· 插件决策头：隐状态直出动作</text>
+<text x="782" y="358" fill="#8b949e" font-size="11.5">  WebArena 12.5%→13.8%，token 减半</text>
+
+<!-- output -->
+<rect x="760" y="470" width="380" height="120" rx="12" fill="#0a1420" stroke="#58a6ff" stroke-width="1.8"/>
+<text x="950" y="502" fill="#58a6ff" font-size="15" font-weight="700" text-anchor="middle">基础动作空间</text>
+<text x="782" y="534" fill="#e6edf3" font-size="12.5">click / dblclick (x, y) · type 文本 · hotkey</text>
+<text x="782" y="562" fill="#e6edf3" font-size="12.5">scroll · drag (x₁,y₁)→(x₂,y₂) · wait</text>
+<text x="782" y="582" fill="#8b949e" font-size="10.5">JSON 标准化动作（Qwen2.5-VL 风格）</text>
+<line x1="630" y1="210" x2="760" y2="470" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#g)"/>
+<line x1="630" y1="600" x2="760" y2="560" stroke="#bc8cff" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#p)"/>
+
+<text x="60" y="745" fill="#8b949e" font-size="11.5">核心结论：接地是智能体错误的主要来源；纯视觉端到端成为旗舰主流，而专用接地模型（GroundGUI）与插件头把「低成本、高精度」推向新水平。</text>
+</svg>
+</body></html>

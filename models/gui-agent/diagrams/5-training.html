@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图5 · 训练范式与奖励来源</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2005/2000/svg">
+<rect width="1200" height="800" fill="#0d1117"/>
+<defs>
+<marker id="b" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#58a6ff"/></marker>
+<marker id="g" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3fb950"/></marker>
+<marker id="y" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#d29922"/></marker>
+</defs>
+<text x="50" y="42" fill="#e6edf3" font-size="23" font-weight="700">图 5 · 训练范式演进：SFT → DPO → 多轮在线 RL，以及 RL 奖励从哪来</text>
+<text x="50" y="70" fill="#8b949e" font-size="13">每阶段解决前一阶段瓶颈；2026 年核心难题是「可靠的奖励 / 成功判定」</text>
+
+<!-- three stages -->
+<rect x="50" y="100" width="330" height="120" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.7"/>
+<text x="70" y="130" fill="#58a6ff" font-size="16" font-weight="700">① SFT 模仿学习</text>
+<text x="70" y="158" fill="#e6edf3" font-size="12.5">在人类演示上学「看图 → 动作」</text>
+<text x="70" y="184" fill="#f85149" font-size="11.5">瓶颈：演示稀缺，只会模仿</text>
+<text x="70" y="206" fill="#8b949e" font-size="11">无法从失败中恢复</text>
+
+<line x1="380" y1="160" x2="410" y2="160" stroke="#58a6ff" stroke-width="2" marker-end="url(#b)"/>
+
+<rect x="412" y="100" width="330" height="120" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.7"/>
+<text x="432" y="130" fill="#58a6ff" font-size="16" font-weight="700">② DPO 偏好优化</text>
+<text x="432" y="158" fill="#e6edf3" font-size="12.5">倾向「更像成功路径」的行为</text>
+<text x="432" y="184" fill="#8b949e" font-size="11.5">UI-TARS 72B-DPO 22.7 &gt; SFT 18.8</text>
+<text x="432" y="206" fill="#f85149" font-size="11">仍不直接与环境结果挂钩</text>
+
+<line x1="742" y1="160" x2="772" y2="160" stroke="#58a6ff" stroke-width="2" marker-end="url(#b)"/>
+
+<rect x="774" y="100" width="376" height="120" rx="12" fill="#0e1d12" stroke="#3fb950" stroke-width="1.7"/>
+<text x="794" y="130" fill="#3fb950" font-size="16" font-weight="700">③ 多轮在线 RL</text>
+<text x="794" y="158" fill="#e6edf3" font-size="12.5">在真实 / 模拟环境中试错</text>
+<text x="794" y="184" fill="#8b949e" font-size="11.5">UI-TARS-2 多轮 RL · AutoGLM 自演化课程</text>
+<text x="794" y="206" fill="#8b949e" font-size="11">Mobile-Agent-v3：AndroidWorld 73.3</text>
+
+<!-- reward sources -->
+<text x="50" y="278" fill="#d29922" font-size="17" font-weight="700">RL 奖励的三个来源</text>
+<rect x="50" y="295" width="340" height="105" rx="11" fill="#161b22" stroke="#30363d"/>
+<text x="70" y="323" fill="#e6edf3" font-size="13.5" font-weight="700">环境状态断言</text>
+<text x="70" y="348" fill="#8b949e" font-size="11.5">任务完成的程序化检查</text>
+<text x="70" y="372" fill="#f85149" font-size="11.5">大量任务难写成断言，跨应用尤甚</text>
+
+<rect x="410" y="295" width="340" height="105" rx="11" fill="#1a1408" stroke="#d29922"/>
+<text x="430" y="323" fill="#e6edf3" font-size="13.5" font-weight="700">VLM 判官 Judge</text>
+<text x="430" y="348" fill="#d29922" font-size="11.5">看截图判断是否成功</text>
+<text x="430" y="372" fill="#f85149" font-size="11.5">提示式 Judge 一致率停滞 68–70%；会轻信自述</text>
+
+<rect x="770" y="295" width="380" height="105" rx="11" fill="#0e1d12" stroke="#3fb950"/>
+<text x="790" y="323" fill="#e6edf3" font-size="13.5" font-weight="700">可学习的主动验证器（新范式）</text>
+<text x="790" y="348" fill="#3fb950" font-size="11.5">自己决定「检查什么、何时停」</text>
+<text x="790" y="372" fill="#8b949e" font-size="11.5">再真实执行检查（真的点一下、看一眼）</text>
+
+<!-- VeriCUA detail -->
+<text x="50" y="455" fill="#3fb950" font-size="16" font-weight="700">VeriCUA [2610.26469]：Judge / Probe 角色分离</text>
+<rect x="50" y="470" width="330" height="90" rx="11" fill="#181226" stroke="#bc8cff"/>
+<text x="70" y="500" fill="#bc8cff" font-size="13.5" font-weight="700">可训练 Judge</text>
+<text x="70" y="525" fill="#8b949e" font-size="11.5">决定检查内容与停止时机</text>
+<text x="70" y="547" fill="#8b949e" font-size="11">仅在 OSWorld 训练即可跨域泛化</text>
+<line x1="380" y1="515" x2="410" y2="515" stroke="#3fb950" stroke-width="1.8" marker-end="url(#g)"/>
+<rect x="412" y="470" width="330" height="90" rx="11" fill="#0e1d12" stroke="#3fb950"/>
+<text x="432" y="500" fill="#3fb950" font-size="13.5" font-weight="700">冻结 Probe</text>
+<text x="432" y="525" fill="#8b949e" font-size="11.5">在真实环境中执行检查</text>
+<text x="432" y="547" fill="#8b949e" font-size="11">Probe token 减少 47.6–59.8%</text>
+<rect x="770" y="470" width="380" height="90" rx="11" fill="#161b22" stroke="#30363d"/>
+<text x="790" y="500" fill="#3fb950" font-size="12.5">作为 RL 奖励：总成功率 +3.21 分</text>
+<text x="790" y="525" fill="#3fb950" font-size="12.5">留出多应用任务 +5.40 分</text>
+<text x="790" y="547" fill="#8b949e" font-size="11.5">奖励一致率高于少样本 GPT-5.4 5.36 分</text>
+
+<!-- self-report leakage + inference scaling -->
+<rect x="50" y="595" width="540" height="150" rx="12" fill="#1a1408" stroke="#d29922"/>
+<text x="70" y="625" fill="#d29922" font-size="14.5" font-weight="700">自述泄漏 [2610.29609]</text>
+<text x="70" y="652" fill="#e6edf3" font-size="12">Agent 写「我已成功」→ 判官倾向轻信</text>
+<text x="70" y="678" fill="#3fb950" font-size="12">隐藏声明后，危险误报召回 +43.4 / +13.3 个百分点</text>
+<text x="70" y="704" fill="#8b949e" font-size="11.5">解法：声明解释 与 轨迹盲判 分离；F1 0.75–0.81</text>
+<text x="70" y="728" fill="#8b949e" font-size="11">45–56% 检查负载拦截 74–90% 危险误报</text>
+
+<rect x="610" y="595" width="540" height="150" rx="12" fill="#0e1d12" stroke="#3fb950"/>
+<text x="630" y="625" fill="#3fb950" font-size="14.5" font-weight="700">推理时扩展 · Agent S3 [2510.02250]</text>
+<text x="630" y="652" fill="#e6edf3" font-size="12">并行多条 rollout → BJudge 比较行为叙述选最优</text>
+<text x="630" y="678" fill="#3fb950" font-size="12">OSWorld 72.6% &gt; 人类 72.36%</text>
+<text x="630" y="704" fill="#8b949e" font-size="11.5">解决单 rollout 错误累积；泛化到 WAA / AndroidWorld</text>
+<text x="630" y="728" fill="#8b949e" font-size="11">数据合成：图像编辑世界模型 [2610.05861]</text>
+</svg>
+</body></html>
