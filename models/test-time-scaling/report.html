@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test-Time Scaling 前沿技术报告：从 o1、R1 到自适应计算与潜空间推理</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:980px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:28px; }
+  h1 { font-size:27px; line-height:1.45; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin:0 8px 8px 0; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  figure { margin:28px 0; }
+  figure iframe { width:100%; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; word-break:break-all; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); word-break:normal; }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+
+</style>
+</head><body><div class="container">
+<header>
+  <h1>Test-Time Scaling 前沿技术报告：当思考本身成为新的扩展轴——从 o1、DeepSeek-R1 到自适应计算、潜空间推理与测试时学习</h1>
+  <div><span class="badge">Test-Time Scaling</span><span class="badge">推理模型</span><span class="badge">o1/R1</span><span class="badge">budget forcing</span><span class="badge">并行采样</span><span class="badge">MCTS</span><span class="badge">过程奖励 PRM</span><span class="badge">验证器</span><span class="badge">过度思考</span><span class="badge">自适应计算</span><span class="badge">早停</span><span class="badge">潜空间推理</span><span class="badge">Coconut</span><span class="badge">测试时学习</span><span class="badge">推理经济</span></div>
+  <div class="meta" style="margin-top:10px">
+    <span>信源：65 篇专题 arXiv 论文（编号经 arxiv.org 摘要页逐一核实）+ Anthropic/Google/Qwen 官方博客 + ARC Prize 一手测试报告 + Artificial Analysis 第三方聚合</span>
+    &nbsp;·&nbsp;<span>报告日期：2026-10-25</span>
+  </div>
+</header>
+<nav class="toc"><h2>目录</h2><ol><li><a href="#sec1">摘要</a></li><li><a href="#sec2">1. 引言：第三条扩展轴</a></li><li><a href="#sec3">2. 思想源流（2022–2024）：TTS 不是一夜之间出现的</a></li><li><a href="#sec4">3. 奠基论文与第一性原理：Snell et al. 2024</a></li><li><a href="#sec5">4. o1 时刻与 budget forcing：推理模型的产品化</a></li><li><a href="#sec6">5. R1 冲击波：纯强化学习与开源推理生态</a></li><li><a href="#sec7">6. 验证器：并行 TTS 的「裁判」问题</a></li><li><a href="#sec8">7. 搜索：从 Best-of-N 到 MCTS，再到可证明的缩放</a></li><li><a href="#sec9">8. 自适应计算与过度思考治理：当前最核心的工程矛盾</a></li><li><a href="#sec10">9. 潜空间推理：当思考不再用自然语言</a></li><li><a href="#sec11">10. 测试时学习与自进化：权重在推理中改变</a></li><li><a href="#sec12">11. 产业落地与推理经济：TTS 如何改变成本结构与产品形态</a></li><li><a href="#sec13">12. 开放问题与展望</a></li><li><a href="#sec14">参考文献（arXiv 论文，编号经 arxiv.org 摘要页逐一核实）</a></li></ol></nav>
+<blockquote><strong>测试时计算扩展（Test-Time Scaling, TTS）</strong>：在模型权重冻结之后，通过在推理阶段投入更多计算——更长的思维链、并行采样、树/图搜索、自我验证、测试时学习——来换取更高的任务表现。它是继预训练缩放（scaling model size）、后训练对齐之后，被工业界广泛采用的<strong>第三条能力扩展轴</strong>。 关键词：Test-Time Compute · Reasoning Model · Chain-of-Thought · Best-of-N · Process Reward Model · MCTS · Budget Forcing · Overthinking · Adaptive Compute · Latent Reasoning · Test-Time RL</blockquote>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec1">摘要</h2>
+
+<p>2024 年 9 月 OpenAI 发布 o1-preview，把一个学术界已讨论两年的想法——「让模型在回答前想久一点」——变成了产品级的能力跃迁：在 ARC-AGI、竞赛数学、代码等高难任务上，推理模型以数量级的测试时算力换来了普通「快思考」模型无法企及的准确率。2024 年 8 月 Snell 等人的奠基性实证表明，<strong>在总 FLOPs 固定时，把计算从「扩大模型」转移到「测试时搜索」，可以击败 14 倍大的模型</strong>，且最优分配应随题目难度自适应 [2408.03314]。2025 年 1 月 DeepSeek-R1 用纯强化学习（无人工推理标注）复现并开源了这一能力，引爆了整个开源生态 [2501.12948]。</p>
+
+<p>一年半之后（2026 年 10 月），TTS 已经从「一项技巧」长成一个完整的技术子领域：它有自己的缩放定律（覆盖率随采样数呈幂律增长 [2407.21787]）、自己的核心矛盾（<strong>过度思考 overthinking</strong>——简单题也长篇大论，造成延迟与成本浪费 [2412.21187]）、自己的控制接口（reasoning effort、thinking budget），并正在向<strong>自适应计算分配</strong>、<strong>潜空间推理</strong>、<strong>测试时强化学习</strong>、<strong>多模态/语音/具身</strong>等方向纵深发展。截至 2026-10，arXiv 标题中含 &quot;test-time scaling&quot; 的论文已近千篇，仅 2026 年 10 月单月就有数十篇，是当前大模型方向中论文密度最高、产业关联最紧的领域之一。</p>
+
+<p>本报告基于 <strong>48 篇逐一核实的 arXiv 论文</strong>（编号、标题、日期均经 arxiv.org 摘要页 meta 标签核对，含多处撞号勘误）与 OpenAI / Anthropic / Google DeepMind / Qwen / ARC Prize 等一手信源，系统梳理 TTS 的思想源流、两大计算模式（顺序修订 vs 并行采样）、验证器与搜索、自适应计算、潜空间推理、测试时学习、产业落地与推理经济，并给出开放问题与工程选型清单。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec2">1. 引言：第三条扩展轴</h2>
+
+<h3>1.1 从「缩放模型」到「缩放思考」</h3>
+
+<p>过去十年大模型的主线叙事是<strong>参数缩放</strong>：更多数据、更大模型、更多训练 FLOPs，能力沿 Chinchilla 式缩放定律平滑增长。但到 2024 年，这条曲线出现两个现实约束：一是前沿模型训练成本已达数亿美元量级、单次训练以月计；二是在数学竞赛、ARC-AGI 这类需要<strong>多步组合推理</strong>的任务上，单纯扩大模型的收益明显放缓——GPT-4o 在 ARC-AGI-1 上仅约 5%。</p>
+
+<p>Test-Time Scaling 提供了一个正交的杠杆：<strong>模型权重不变，在单次推理中花更多 FLOPs</strong>。其直觉来自人类认知——面对 <code>2+3=?</code> 我们脱口而出，面对一道 IMO 压轴题则需要打草稿、试错、回头检查。Kahneman 的「系统 1 / 系统 2」双过程理论是这一范式最常被引用的隐喻：普通前向采样是快速、直觉的系统 1，而带长思维链与搜索的推理是缓慢、审慎的系统 2。</p>
+
+<p>需要强调的是，TTS 并非某一种算法，而是一族<strong>推理时计算分配策略</strong>的统称。Snell 等把测试时计算粗略分为两类 [2408.03314]：</p>
+
+<ul>
+<li><strong>顺序修订（sequential revision）</strong>：从一个初稿出发，模型逐步生成、自我评估、回溯与改进，计算沿「时间」展开，代表是显式/隐式思维链、MCTS；</li>
+<li><strong>并行采样（parallel sampling）</strong>：同时独立生成多个候选解，再用验证器或多数投票选出最好的，计算沿「宽度」展开，代表是 Best-of-N、self-consistency。</li>
+</ul>
+
+<p>真实系统几乎总是二者的混合（例如先并行起多条推理树，每条内部再顺序展开）。</p>
+
+<h3>1.2 为什么现在成为主流</h3>
+
+<p>TTS 之所以在 2024–2026 爆发，是三类条件同时成熟：</p>
+
+<ol>
+<li><strong>可验证任务与 RLVR 的成熟</strong>：数学、代码等任务有标准答案或可执行验证器，使得强化学习可以用结果奖励（RLVR）直接训练模型「为了答对而多思考」，无需昂贵的过程标注；DeepSeek-R1 证明纯 RL 即可让自我反思、验证、策略切换等行为自发涌现 [2501.12948]。</li>
+<li><strong>推理算力相对训练算力更廉价、更弹性</strong>：测试时计算是按请求分摊的小额开销，无需一次性巨额训练投入；它还让「用小模型 + 多思考逼近大模型」成为可能（s1 用 1,000 条样本微调 32B 即超 o1-preview [2501.19393]；更有研究以 1B 模型 + 测试时计算叫板 405B [2502.06703]）。</li>
+<li><strong>产品与 API 的工程化</strong>：OpenAI、Anthropic、Google、阿里等把「思考预算」做成显式可控参数（reasoning effort / thinking budget），使开发者能在延迟、成本、质量之间连续权衡。</li>
+</ol>
+
+<h3>1.3 本报告的组织与信源纪律</h3>
+
+<p>第 2 章梳理 2022–2024 的思想源流；第 3 章讲奠基论文与第一性原理；第 4 章讲 o1 时刻与 budget forcing；第 5 章讲 R1 冲击波与开源生态；第 6、7 章分别讲验证器与搜索；第 8 章是当前最核心的自适应计算与过度思考治理；第 9、10 章讲潜空间推理与测试时学习；第 11 章讲产业落地与推理经济；第 12 章讨论开放问题。</p>
+
+<p><strong>信源纪律</strong>：所有 arXiv 编号均经 <code>arxiv.org/abs/&lt;id&gt;</code> 页面的 <code>citation_title / citation_author / citation_date</code> 元数据逐一核对；正文关键测量在句末标注编号；厂商自报数据标注「厂商口径」，第三方（如 Artificial Analysis、ARC Prize 复测）标注「第三方」。网传但无法核实的数字一律不采信。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec3">2. 思想源流（2022–2024）：TTS 不是一夜之间出现的</h2>
+
+<p>o1 常被叙事为「横空出世」，但它的每一块拼图在 2022–2024 的学术工作中都已就位。理解这条谱系，才能看清今天的前沿在解决什么。</p>
+
+<h3>2.1 思维链：把中间推理显式化（2022）</h3>
+
+<p>一切的起点是 <strong>Chain-of-Thought Prompting（CoT）</strong>[2201.11903]：Wei 等人发现，只要在 few-shot 提示中给出带中间步骤的推理示例，大模型就能把复杂问题分解为多步、逐步求解，并在 GSM8K 等基准上获得显著增益。CoT 的关键意义在于：<strong>它把「推理长度」变成了一个可操纵的变量</strong>——模型不再被要求一步出答案，而是被允许生成一串推理 token。这为「多生成 token → 更高准确率」提供了最初的经验证据。</p>
+
+<p>但 CoT 是线性的：一条路走到黑，中间错了无法回头。</p>
+
+<h3>2.2 自我改进与言语强化：让模型当自己的裁判（2023）</h3>
+
+<p>2023 年出现了一批「不更新权重、仅靠推理时迭代」的工作，构成顺序修订路线的源头：</p>
+
+<ul>
+<li><strong>Self-Refine</strong> [2303.17651]：同一个模型先后扮演生成器、反馈者、改进者，对自己的输出提出批评再据此修改，无需任何训练；在 7 类任务上平均绝对提升约 20%。</li>
+<li><strong>Reflexion</strong> [2303.11366]：把一次尝试失败后的经验以自然语言「反思」写入情节记忆，供下一次尝试参考，在决策、推理、编程等交互任务上显著提升。</li>
+<li><strong>Self-Rewarding Language Models</strong> [2401.10020]：让模型既当候选生成器又当奖励模型，用自己的打分做 DPO 迭代训练，推动质量随轮次上升——首次展示「模型自己定义好坏」的闭环。</li>
+</ul>
+
+<p>这一脉络确立了 TTS 的一个核心动作：<strong>生成 → 自评 → 修订</strong>。</p>
+
+<h3>2.3 树搜索与过程监督：从「一条线」到「一张图」（2023）</h3>
+
+<p>并行/搜索路线同样在 2023 年成形：</p>
+
+<ul>
+<li><strong>Tree of Thoughts（ToT）</strong>[2305.10601]：把推理组织成一棵思维树，每个节点是一个「想法」，模型用启发式自评对节点打分，用 BFS/DFS 做前瞻、回溯与剪枝。在 24 点、创意写作等需要搜索的任务上，ToT 让 GPT-4 能系统性地探索多条路径。</li>
+<li><strong>Let&#x27;s Verify Step by Step</strong>（Lightman 等，OpenAI）[2305.20050]：系统比较<strong>结果奖励模型（ORM）</strong>与<strong>过程奖励模型（PRM）</strong>，证明对每一个中间步骤打分（过程监督）显著优于只看最终答案，并发布了 <strong>80 万条人工步骤级标注 PRM800K</strong>；过程监督模型在 MATH 代表性子集上达 78%。这篇论文奠定了「用验证器引导搜索」的方法论与数据基础。</li>
+<li><strong>Math-Shepherd</strong> [2312.08935]：针对 PRM800K 标注昂贵的痛点，提出<strong>自动构造过程奖励</strong>——从每个中间步骤出发多次随机续跑，用「最终能否走到正确答案」的比例作为该步骤的奖励，无需人工标注；Mistral-7B 经逐步 PPO 后 MATH 从 28.6% 升到 33.0%，再加验证重排达 43.5%。</li>
+</ul>
+
+<p>到 2023 年底，「树搜索 + 过程验证」的配方已经完整，后来的 o1 与众多开源推理模型本质上是把这套配方用强化学习<strong>内化进权重</strong>，而不再依赖外部显式搜索。</p>
+
+<h3>2.4 内化理性：Quiet-STaR、ReST-MCTS* 与重复采样（2024）</h3>
+
+<p>o1 发布前的几个月，几条线索进一步收敛：</p>
+
+<ul>
+<li><strong>Quiet-STaR</strong> [2403.09629]：让模型在<strong>每个 token 之后</strong>都生成一段内部「理性（rationale）」，用后续 token 的可预测性来评估这段理性有没有用，并据此泛化地训练模型「逢事就想」，把 CoT 从提示技巧变成模型的通用习惯。</li>
+<li><strong>ReST-MCTS\</strong>* [2406.03816]：把过程奖励引导的 MCTS\* 与自训练结合，自动推断步骤奖励、用树搜索收集高质量轨迹，再回头训练策略与奖励模型，形成「搜索 → 数据 → 训练」的闭环。</li>
+<li><strong>Large Language Monkeys</strong> [2407.21787]：用最简单的<strong>重复采样（repeated sampling）</strong>作为扩展轴，发现<strong>覆盖率（至少一个样本正确的概率）随样本数呈幂律、跨 4 个数量级增长</strong>；在 SWE-bench Lite 上 DeepSeek-Coder-V2 从单样本 15.9% 提到 250 样本的 56%。这为并行 TTS 给出了清晰的「推理时缩放定律」。</li>
+</ul>
+
+<p>至此，o1 所需的三块基石——可操纵的推理长度、过程验证、以及搜索/采样的缩放规律——全部就绪。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec4">3. 奠基论文与第一性原理：Snell et al. 2024</h2>
+
+<p>2024 年 8 月（早于 o1-preview 一个月）Google DeepMind 的 Snell、Lee、Xu、Kumar 发表《Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters》[2408.03314]，这是 TTS 范式被正式命名并给出实证规律的奠基之作。</p>
+
+<h3>3.1 三个核心发现</h3>
+
+<p><strong>发现一：测试时计算可以替代模型参数。</strong> 在总 FLOPs（训练 + 推理）固定的约束下，把更多算力分配给测试时搜索、用更小的模型，可以击败「大模型 + 少思考」的配置——论文报告 compute-optimal 策略在 FLOPs 匹配下可击败约 <strong>14 倍大</strong>的模型。</p>
+
+<p><strong>发现二：存在 compute-optimal 的测试时计算量，且它是「题目难度」的函数。</strong> 对简单题，多思考纯属浪费（模型一次就能答对）；对极难题，给再多计算也可能卡在能力天花板之外；<strong>收益最大的是中等难度、模型「跳一跳够得着」的题目</strong>。因此最优策略不是「一律多想」，而是<strong>按题自适应分配</strong>。</p>
+
+<p><strong>发现三：顺序修订与并行采样各有适用区间，且需要好的验证机制。</strong> 论文报告 compute-optimal 的动态分配比固定的 best-of-N 基线效率高 <strong>4 倍以上</strong>；但顺序修订的收益高度依赖「模型能否准确判断自己当前的解好不好」——验证/回溯机制失效时，额外 token 只是在错误道路上越走越远。</p>
+
+<h3>3.2 第一性原理：TTS 的收益从哪里来</h3>
+
+<p>把上述实证抽象成第一性原理，测试时计算的增益来自三个机制：</p>
+
+<ol>
+<li><strong>摊销幸运（amortizing luck）</strong>：自回归采样有随机性。一次采样答对的概率为 p，则 N 次独立采样至少一次答对（pass@N / 覆盖率）为 1−(1−p)^N。只要 p&gt;0，增大 N 就能逼近 1——这就是 Monkeys 观察到的幂律 [2407.21787]。并行 TTS 的本质是「多抽几次奖，再选出中奖的那张」。</li>
+<li><strong>分解与回溯（decomposition &amp; backtracking）</strong>：把难题显式拆成可验证的小步，一旦某步走错可以退回分叉点换一条路（ToT/MCTS），把指数大的解空间里的搜索做「深」做「广」。</li>
+<li><strong>自我验证（self-verification）</strong>：生成候选后，用 ORM/PRM/多数投票/可执行测试等机制判别优劣，把「采样到好解」转化为「选出好解」。验证器质量决定了并行宽度能否兑现为 pass@1。</li>
+</ol>
+
+<h3>3.3 两个被反复验证的推论</h3>
+
+<ul>
+<li><strong>TTS 不是免费午餐</strong>：增益受限于模型的「天花板能力」与验证器质量；在模型本就会的题上，多算只是浪费——这正是后来 overthinking 研究的伏笔（第 8 章）。</li>
+<li><strong>训练时与测试时应当协同缩放</strong>：要让模型从额外思考中获益，需要先用 RLVR 等手段训练它「会用」这些计算（会反思、会验证、会在错的时候停）。一个没经过推理训练的普通 Instruct 模型，给它再多 token 也不会自动变聪明。这解释了为什么 o1/R1 的关键不只是推理时算法，更是<strong>产生长 CoT 的训练方法</strong>。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec5">4. o1 时刻与 budget forcing：推理模型的产品化</h2>
+
+<h3>4.1 OpenAI o1：把系统 2 做成产品</h3>
+
+<p>2024 年 9 月 12 日，OpenAI 发布 <strong>o1-preview 与 o1-mini</strong>，12 月 5 日 o1 转正。官方将其定位为「学会使用强化学习进行推理的新模型」：它在回答前先用一段<strong>隐藏的内部思维链（chain of thought）</strong>进行思考，再给出答案，在科学、数学、编程等需要深度思考的任务上相对 GPT-4o 取得阶跃式提升。o1 的产品意义有三：</p>
+
+<ul>
+<li>首次把「测试时计算」从学术技巧变成<strong>默认开启的产品能力</strong>，并按更高的 token 单价计费（o1 API 定价输入 $15 / 输出 $60 每百万 token，显著高于当时 GPT-4o，第三方模型档案亦记录其 2024-12 转正）【官方口径/第三方】；</li>
+<li>引入「reasoning tokens」概念——思考过程消耗的 token 不向用户展示全文，但计入成本与限额，确立了「思考也是要花钱的算力」这一商业事实；</li>
+<li>刺激了整个行业：在随后的半年里，混合推理（快速/深度思考可切换）成为旗舰模型标配。</li>
+</ul>
+
+<p>o1 的训练细节 OpenAI 未完全公开，但业界普遍从系统卡与后续复现推断其核心是：<strong>用可验证奖励的强化学习（RLVR）训练模型生成长推理轨迹</strong>，并辅以推理风格的冷启动数据。</p>
+
+<h3>4.2 s1：1,000 条样本与 budget forcing</h3>
+
+<p>o1 闭源，真正把「推理模型怎么训」讲清楚并引爆开源复现的，是 2025 年 1 月的 <strong>s1: Simple Test-Time Scaling</strong> [2501.19393]（Muennighoff 等，华盛顿大学/斯坦福等）。它的主张近乎挑衅地简单：</p>
+
+<ul>
+<li><strong>数据</strong>：人工从少量多样来源精选 <strong>1,000 条</strong>带长推理轨迹的样本（s1K），在 Qwen2.5-32B 上做有监督微调；</li>
+<li><strong>训练</strong>：标准 SFT，没有复杂 RL；</li>
+<li><strong>推理技巧——budget forcing（预算强制）</strong>：在解码时操纵特殊标记来控制思考时长： - 当模型提前产出 <code>&lt;end_think&gt;</code> 想要结束思考时，不允许它停，而是追加一个 <code>&quot;Wait&quot;</code>，强制它继续想下去（<strong>延长</strong>）； - 或者在达到预算时直接注入结束标记，强制它收尾（<strong>截断</strong>）。</li>
+</ul>
+
+<p>效果：s1-32B 在 MATH、AIME 2024 等竞赛数学上最高比 o1-preview 高出 <strong>27%</strong>；budget forcing 把 AIME 2024 从 50% 提到 57%。s1 的重要性在于证明了两件事：<strong>(a) 推理能力可以靠极少高质量数据「嫁接」到现成强基座上；(b) 思考长度是推理时一个可直接拨动的旋钮</strong>——这为后来所有「思考预算控制」接口提供了原型。</p>
+
+<h3>4.3 journey learning 与 O1 复现潮</h3>
+
+<p>o1 发布后社区迅速进入复现竞赛。<strong>O1 Replication Journey（Part 1）</strong> [2410.18982]（港中文等，2024-10）以全程公开「研究日志」的方式透明复现，提出 <strong>journey learning</strong>：训练数据不应只保留干净的「捷径」解法，而应包含模型真实探索中的<strong>试错、反思、回溯</strong>全过程——模型要学的是「怎么走完一段曲折的旅程」，而不是「背下终点」。仅 327 条旅程样本就在 MATH 上比普通监督学习高 8% 以上。</p>
+
+<p><strong>Marco-o1</strong> [2411.14405]（微软，2024-11）则把 CoT 微调、MCTS 与反思结合，主攻<strong>没有标准答案、奖励难以量化的开放式任务</strong>（如开放性问答、医学），把推理范式从数学/代码向外推广。</p>
+
+<p>这一阶段的共识是：<strong>长 CoT 数据的质量与「探索性」比数量更重要</strong>，这也直接导向了下一章的 R1——既然数据这么关键，能否让模型自己造出这些数据？</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec6">5. R1 冲击波：纯强化学习与开源推理生态</h2>
+
+<h3>5.1 DeepSeek-R1：纯 RL 激发推理，零人工 CoT 标注</h3>
+
+<p>2025 年 1 月 22 日 DeepSeek 发布 <strong>DeepSeek-R1</strong> 技术报告 [2501.12948] 与 MIT 许可的开源权重，给出了当时最完整的开源推理模型训练范式。其关键结论是：<strong>对一个足够强的基座，直接用可验证奖励做大规模 RL（GRPO），无需任何人工标注的推理示例，模型就会自发发展出长链推理行为。</strong></p>
+
+<ul>
+<li><strong>R1-Zero</strong>：在 DeepSeek-V3-Base 上直接做 RL（规则化的正确性奖励 + 格式奖励），<strong>无冷启动 SFT</strong>。模型自己涌现出「反思（重新审视自己的步骤）、验证、动态策略切换」等行为（即广为流传的 <strong>aha moment</strong>），但可读性与语言混杂较差。</li>
+<li><strong>R1</strong>：在 R1-Zero 与基座之间加入<strong>少量长 CoT 冷启动数据</strong>，再经过两阶段 RL（推理导向 + 通用对齐导向），得到既强又可读、可通用的模型；报告正文报告 R1 在 AIME 2024 达 79.8%、MATH-500 达 97.3%，对标 o1【厂商口径】。</li>
+<li><strong>蒸馏</strong>：把 R1 的长 CoT 推理轨迹蒸馏到 Qwen/Llama 的 1.5B–70B 小模型，小模型能力大幅跃升——证明「会思考」这一行为可以通过数据高效迁移。</li>
+</ul>
+
+<p>R1 的影响是生态级的：MIT 开源 + 完整报告 + 可蒸馏，使全球团队第一次能在本地复现和改造 o1 级推理。它也确立了一套被反复沿用的配方：<strong>强基座 → （可选）冷启动长 CoT SFT → 规则可验证奖励的大规模 RL → 蒸馏</strong>。</p>
+
+<h3>5.2 Kimi k1.5：长上下文 + RL，明确不用 MCTS/PRM</h3>
+
+<p>几乎同期（2025-01-22）月之暗面发布 <strong>Kimi k1.5</strong> [2501.12599]，报告 AIME 77.5、MATH-500 96.2、Codeforces 第 94 百分位、MathVista 74.9【厂商口径】。它在方法论上提供了一个与「树搜索派」对立的重要论点：<strong>仅靠长上下文 + 改进的策略优化做 RL，即可达到强推理，不需要 MCTS、价值函数或 PRM</strong>。k1.5 还提出 <strong>long2short</strong>：先用长 CoT 训练/推理，再把长推理压缩成短 CoT，短 CoT 模型相对直接短训最高提升达 +550%——这是「先学会深思、再学会速答」的早期代表，与后来的过度思考治理呼应。</p>
+
+<h3>5.3 开源复现的系统性发现</h3>
+
+<p>R1 之后，大量工作开始严谨地复现并质疑「零 RL」的稳健性：</p>
+
+<ul>
+<li><strong>SimpleRL-Zoo</strong> [2503.18892]：在 <strong>10 个不同基座</strong>（LLaMA3-8B、Mistral、DeepSeek-Math、Qwen2.5 从 0.5B 到 32B）上系统复现 R1 式 zero RL。结论泼了一盆冷水：<strong>「aha moment」与稳定提升高度依赖基座</strong>——在 Qwen 系之外的许多模型上，响应长度虽然增长，但真正的验证/反思行为并不必然涌现。这说明 R1-Zero 的成功部分建立在 DeepSeek/Qwen 基座已经过的强预训练与数据清洗之上。</li>
+<li><strong>Skywork Open Reasoner 1（Skywork-OR1）</strong> [2505.22312]：在 R1-Distill 基础上做可扩展的长 CoT RL，32B 模型在 AIME24/AIME25/LiveCodeBench 平均从 57.8% 提到 72.8%（+15.0%），7B 从 43.6% 提到 57.5%，并在 AIME 上超过 R1 与 Qwen3-32B【厂商口径】。</li>
+<li><strong>PRIME（Process Reinforcement through Implicit Rewards）</strong> [2502.01456]：提出不必单独训练一个 PRM——用策略自己的 rollout 与结果标签在线生成<strong>隐式过程奖励</strong>，Eurus-2-7B-PRIME 仅用约 10% 数据就在 7 个基准上超过 Qwen2.5-Math-7B-Instruct，平均比 SFT 模型提升 15.1%。</li>
+<li><strong>LIMO: Less is More for Reasoning</strong> [2502.03387]：再次印证「少而精」——用极少量高质量推理样本即可让模型显著变强，与 s1 的结论相互加强。</li>
+</ul>
+
+<h3>5.4 双模式成为旗舰标配：Qwen3 与全球跟进</h3>
+
+<p>2025 年 4 月 29 日阿里发布并开源 <strong>Qwen3</strong> 系列（旗舰 Qwen3-235B-A22B，MoE；另有 30B-A3B 与 0.6B–32B 稠密模型，Apache 2.0）[官方博客]。Qwen3 的标志性设计是<strong>思考/非思考双模式（thinking / non-thinking）与可平滑调节的思考预算</strong>：官方明确指出模型表现「与分配的推理计算预算直接相关、且平滑可扩展」，用户可按任务配置预算，在成本与质量间取平衡，还可用 <code>/think</code> 与 <code>/no_think</code> 指令逐问切换。</p>
+
+<p>至此，<strong>「一个模型、两种思考速度、一个预算旋钮」成为旗舰模型的通用产品形态</strong>：Anthropic Claude 3.7 Sonnet（2025-02-24，市场上首个 hybrid reasoning model，extended thinking 预算可通过 API 精细控制到 token 级，上限 128K，思考 token 与输出同价 $3/$15）[官方]、Google Gemini 2.5 Pro（2025-03，把 thinking 能力直接做进模型，特别强调「不使用 majority voting 等增加成本的测试时技巧」即取得 GPQA/AIME 2025 领先、HLE 18.8%）[官方]、xAI Grok 3、智谱 GLM 等全部跟进。开源界则进一步把这套能力下放到 0.6B 级小模型。</p>
+
+<figure>
+  <iframe src="diagrams/1-timeline.html" height="600" loading="lazy"></iframe>
+  <figcaption>图 1 · TTS 技术谱系时间线（2022→2026）：从 CoT 萌芽到 o1/R1 产品化，再到自适应与可证明缩放</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec7">6. 验证器：并行 TTS 的「裁判」问题</h2>
+
+<p>并行采样生成 N 个候选之后，系统必须回答一个问题：<strong>哪个是对的？</strong> 验证器（verifier / reward model）的质量，直接决定了「采样到好解」能否兑现为最终的 pass@1。本章梳理验证器的技术谱系。</p>
+
+<h3>6.1 ORM 与 PRM：结果监督 vs 过程监督</h3>
+
+<ul>
+<li><strong>结果奖励模型（Outcome RM, ORM）</strong>：只对完整解答的最终答案打分。简单、标注便宜，但信号稀疏——一条轨迹错了，不知道错在哪一步；且正确答案可能伴随错误推理（侥幸答对）。</li>
+<li><strong>过程奖励模型（Process RM, PRM）</strong>：对推理轨迹的<strong>每一个中间步骤</strong>打分。Lightman 等证明在 MATH 上过程监督显著优于结果监督，最好的 PRM 在大规模 N 采样后可达约 78.2%，并贡献了 PRM800K 数据集 [2305.20050]。</li>
+</ul>
+
+<p>PRM 的致命短板是<strong>成本</strong>：PRM800K 需要人工逐条标注步骤对错。Math-Shepherd 用「从该步骤出发多次随机续跑、统计到达正确答案的比例」自动估计步骤价值，把人工标注去掉 [2312.08935]；PRIME 则进一步把过程奖励隐式化、在线生成，连独立 PRM 都不必训练 [2502.01456]。</p>
+
+<h3>6.2 从「打分器」到「会思考的验证器」</h3>
+
+<p>2025 年的一个重要转向是：<strong>让验证器本身也做 TTS</strong>。</p>
+
+<ul>
+<li><strong>Process Reward Models That Think（ThinkPRM）</strong> [2504.16828]：把判别式 PRM 换成一个<strong>生成式、会说出验证理由</strong>的验证器——它对每个步骤先生成一段验证 CoT 再下判断。仅用 PRM800K 的 <strong>1%</strong> 标签，在分布外的 GPQA-Diamond / LiveCodeBench 上比用全量 PRM800K 训练的判别式验证器高 8% / 4.5%，同预算下比 LLM-as-a-Judge 高 7.2%。</li>
+<li>这与「生成式奖励模型 / 生成式判别器」的大趋势一致：与其让一个小模型输出标量分，不如让一个强模型用推理来判断，验证器自己也享受测试时计算的红利。</li>
+</ul>
+
+<h3>6.3 不完美验证器下的计算分配</h3>
+
+<p>现实中的验证器既会漏判（false negative）也会误判（false positive）。2026 年的工作开始系统研究「验证器不完美时，计算该怎么花」。《Sample, Mix, or Verify? Allocating Test-Time Compute under Imperfect Verifiers》[2610.23255] 把测试时预算在三种动作间分配——<strong>多采样（sample）、混合/融合候选（mix）、再验证（verify）</strong>——并给出在验证器有噪条件下的最优分配策略：当验证器较弱时，盲目增加采样数收益迅速饱和，反而是「交叉验证」「候选融合」更划算。这类工作把第 3 章 Snell 的「按难度分配」进一步细化为「按验证器质量分配」。</p>
+
+<h3>6.4 无需学习验证器的路线</h3>
+
+<p>并非所有系统都依赖训练好的奖励模型：</p>
+
+<ul>
+<li><strong>多数投票 / self-consistency</strong>：N 个候选中取出现次数最多的答案，零训练，是数学等有确定答案任务的强基线；</li>
+<li><strong>可执行验证</strong>：代码任务直接跑单测、工具调用任务直接看执行结果（第 8 章的 TEX、以及 Agentic RL 中的环境反馈）；</li>
+<li><strong>LLM-as-a-Judge / 成对比较</strong>：用强模型对候选排序。《Compare to Correct: Pairwise-Guided Logit Adjustment》[2610.18583] 进一步把成对比较的信号注入解码 logit，在无需重训的前提下提升 TTS。</li>
+</ul>
+
+<p>验证器的选择本质是在<strong>标注成本、判别精度、分布外鲁棒性</strong>之间做权衡，这也是 R1/k1.5 干脆用「规则化正确答案 + RL」绕开 learned PRM 的原因。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec8">7. 搜索：从 Best-of-N 到 MCTS，再到可证明的缩放</h2>
+
+<h3>7.1 三种搜索结构的计算拓扑</h3>
+
+<table>
+<thead><tr>
+<th>搜索结构</th>
+<th>计算拓扑</th>
+<th>代表方法</th>
+<th>优点</th>
+<th>代价</th>
+</tr></thead><tbody>
+<tr>
+<td>Best-of-N / 重复采样</td>
+<td>并行、无共享</td>
+<td>self-consistency、Monkeys [2407.21787]</td>
+<td>实现极简、易批量、覆盖率幂律增长</td>
+<td>无信息共享，N 大时冗余</td>
+</tr>
+<tr>
+<td>束搜索 / 序列修订</td>
+<td>顺序、线性</td>
+<td>CoT、Self-Refine [2303.17651]、束搜索</td>
+<td>单条轨迹可极深、延迟友好</td>
+<td>不能回溯，一步错一路错</td>
+</tr>
+<tr>
+<td>树/图搜索</td>
+<td>并行+顺序、节点共享</td>
+<td>ToT [2305.10601]、ReST-MCTS* [2406.03816]、MCTS</td>
+<td>可回溯、可前瞻、节点复用</td>
+<td>需要步骤价值估计，工程复杂</td>
+</tr>
+</tbody></table>
+
+<h3>7.2 MCTS 与「搜索内化」之争</h3>
+
+<p>树搜索派（ToT、ReST-MCTS*、rStar-Math [2501.04519] 等）主张显式地在推理时展开一棵用 PRM 引导的蒙特卡洛树：rStar-Math 让小模型通过<strong>自演化的深度思考（MCTS + 过程验证）</strong>掌握数学推理，是「小模型 + 重搜索」路线的标杆。《Beyond A*: Better Planning with Transformers via Search Dynamics Bootstrapping》[2402.14083] 则展示了如何把 A*/MCTS 的搜索动力学蒸馏进 Transformer，让模型在单次前向中模仿搜索。</p>
+
+<p>但 o1/R1/k1.5 的工业实践给出了另一条路：<strong>把搜索「内化」进权重</strong>——用 RL 训练模型在一条（可能很长的）自回归轨迹里隐式地完成试错与回溯，推理时不再需要外部树结构。Kimi k1.5 明确声称不需要 MCTS/价值函数/PRM [2501.12599]。两派的权衡是：显式搜索<strong>可解释、可精确控制预算、在小模型上收益大</strong>，但有调度与延迟开销；内化搜索<strong>部署简单、一条流跑完</strong>，但需要昂贵的 RL 训练，且回溯行为不可控。2025–2026 的趋势是<strong>融合</strong>：用轻量搜索/验证增强内化推理模型，而非二选一。</p>
+
+<h3>7.3 顺序 TTS 的探索效率与可证明性</h3>
+
+<p>2026 年下半年的研究焦点转向「让顺序推理更会探索」与「给 TTS 一个理论保证」：</p>
+
+<ul>
+<li>《Towards Better Exploration in Sequential Test-Time Scaling》[2609.39632] 指出顺序扩展的瓶颈是<strong>探索不足</strong>——模型倾向于在相似轨迹上重复，提出更好的探索机制来提升单位 token 的信息增益；</li>
+<li>《Provable Test-Time Scaling for Beam Search in LLM Reasoning》[2609.38672] 为束搜索式 TTS 给出可证明的缩放条件，回答「什么情况下加宽束宽一定能提高正确率」；</li>
+<li>《Cheap to Draw, Expensive to Trust: Certifying Test-Time Scaling Curves》[2609.40190] 则关注<strong>认证（certification）</strong>：采样很便宜，但「信任」选出的答案很贵——如何对整条「计算量–准确率」缩放曲线给出统计认证，避免被少数侥幸样本误导；</li>
+<li>《Scaling to Tens of Thousands of Test-Time Iterations with Loop-Native Attention Residuals》[2610.11570] 把测试时迭代次数推到<strong>上万次</strong>，用循环原生（loop-native）的注意力残差解决超深迭代下的漂移与显存问题，探索 TTS 在极端深度的边界；</li>
+<li>《Taming Speculative Search for Test-Time Scaling in LLM Serving》[2609.39334] 从系统侧入手，用投机执行加速推理时搜索，直接面向 serving 的延迟约束。</li>
+</ul>
+
+<p>这些工作标志着 TTS 研究从「证明多想有用」进入「<strong>让多想更省、更稳、可证明</strong>」的精细化阶段。</p>
+
+<figure>
+  <iframe src="diagrams/2-two-modes.html" height="600" loading="lazy"></iframe>
+  <figcaption>图 2 · 两大计算模式与搜索结构：顺序修订（深度）vs 并行采样（广度），及树图搜索与投机服务化</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec9">8. 自适应计算与过度思考治理：当前最核心的工程矛盾</h2>
+
+<p>TTS 走向大规模落地后，最尖锐的矛盾不再是「能不能更强」，而是「<strong>能不能别在简单题上浪费算力</strong>」。这就是过度思考（overthinking）问题，也是 2025–2026 论文最密集、产品决策最纠结的方向。</p>
+
+<h3>8.1 什么是过度思考</h3>
+
+<p><strong>《Do NOT Think That Much for 2+3=? On the Overthinking of o1-Like LLMs》</strong> [2412.21187]（2024-12-30，首个系统研究）把过度思考定义为：推理模型对本可快速作答的简单问题仍生成冗长思维链，造成<strong>计算/延迟浪费</strong>，甚至在长推理中「想太多反而出错」（推理链越长，累积错误与跑偏概率越高）。论文从<strong>结果效率（单位算力的正确率）与过程效率</strong>两个视角刻画该问题，并用自训练方法在不掉点的前提下压缩推理长度。</p>
+
+<p>过度思考有三种典型表现：</p>
+
+<ol>
+<li><strong>简单题长答</strong>：<code>2+3</code> 也要铺垫一大段；</li>
+<li><strong>重复打转（loops）</strong>：在同一步骤附近反复确认、循环不前；</li>
+<li><strong>晚节不保</strong>：本来已经推对，却在后续冗长推理中把答案改错。</li>
+</ol>
+
+<p>其根源是训练目标错配：RLVR 只奖励「最终答对」，<strong>不奖励「用更少 token 答对」</strong>，于是模型学到的最优策略是「宁可多想」——长度没有被显式惩罚。</p>
+
+<h3>8.2 长度控制的四条技术路线</h3>
+
+<p>针对过度思考，2025–2026 发展出四条互补路线：</p>
+
+<p><strong>路线一：推理时预算控制（inference-time budget）。</strong> 最直接——在提示或 API 里限定 token 预算。</p>
+
+<ul>
+<li><strong>s1 的 budget forcing</strong>：到点强制结束或注入 <code>&quot;Wait&quot;</code> 延长 [2501.19393]；</li>
+<li><strong>Token-Budget-Aware LLM Reasoning</strong> [2412.18547]：发现仅在提示中给出一个合理的 token 预算，就能显著压缩冗长推理，并提出按问题复杂度动态设定预算；</li>
+<li>工业接口：OpenAI 的 <code>reasoning_effort</code>（low/medium/high）与 <code>max_completion_tokens</code>、Anthropic 的 <code>thinking.budget_tokens</code>（可精细到 token，最高 128K）、Qwen3 的思考预算平滑调节——本质都是把「想多久」的决定权交给开发者。</li>
+</ul>
+
+<p><strong>路线二：自适应触发与提前停止（adaptive triggering / early stopping）。</strong> 让模型自己判断「这题要不要想、想够了没」。</p>
+
+<ul>
+<li><strong>AdaCoT</strong> [2505.11896]：用 PPO 把「<strong>是否触发 CoT</strong>」建模为帕累托最优决策，并用 Selective Loss Masking 防止决策边界坍缩；在生产流量测试集上把 CoT 触发率降到 <strong>3.18%</strong>、平均响应 token 减少 <strong>69.06%</strong>，而复杂任务性能基本不变——即「简单题直接答、难题才深思」。</li>
+<li><strong>Calibration-Free Early Stopping via E-processes</strong> [2610.25212]：不依赖置信度校准，用统计学的 <strong>E-process（e-process）</strong> 对「答案是否已稳定正确」做序贯检验，一旦证据足够就提前停止，给出有保证的停机规则。</li>
+<li><strong>CALM</strong> [2610.25908]：在解码空间做<strong>一致性感知的 logit 掩码</strong>，当模型多次自洽时抑制继续发散，直接缓解过度思考。</li>
+</ul>
+
+<p><strong>路线三：长度感知的训练（length-aware training）。</strong> 从源头改变奖励，让「简洁答对」也被奖励。</p>
+
+<ul>
+<li>在 RL 奖励中加入长度惩罚 / 对「token–正确率」帕累托前沿做优化（AdaCoT 的训练侧）；</li>
+<li><strong>long2short</strong>（Kimi k1.5）：先训长 CoT 能力，再蒸馏/压缩成短 CoT，使短模型兼得深度与速度 [2501.12599]；</li>
+<li><strong>Thought Pruning</strong>：《Direct Pass@k Optimization for Thought Pruning》[2610.31667] 直接优化 pass@k 来做思维剪枝，在质量与多样性间平衡，剪掉无效枝杈。</li>
+</ul>
+
+<p><strong>路线四：计算分配的上层调度（compute allocation）。</strong> 不针对单条轨迹，而决定「整个预算在采样、修订、验证间怎么切」。</p>
+
+<ul>
+<li><strong>ATEST（Adaptive Resource-Aware Test-Time Scaling）</strong> [2610.25519]：根据可用资源（延迟/成本预算）自适应地选择 TTS 策略与规模；</li>
+<li><strong>Adaptive Replay Refinement</strong> [2610.28294]：把测试时预算在「<strong>修订（revision）与重采样（resampling）</strong>」之间动态分配——卡住时是该在当前思路上改，还是推倒重来；</li>
+<li>《Where Should a Stuck Agent Spend Its Next Tokens? Causal Attribution of Inference-Time Resources》[2610.28834]：当 Agent 卡住时，用<strong>因果归因</strong>判断下一个 token 花在哪（继续推理 / 调用工具 / 检索）信息增益最大，把「计算分配」做成可归因的决策。</li>
+</ul>
+
+<h3>8.3 自适应计算的统一视角</h3>
+
+<p>可以把上述工作统一在一个决策框架下：把测试时推理视为一个<strong>序贯决策过程</strong>，在每一步选择动作（继续想 / 回溯 / 重采样 / 验证 / 调用工具 / 停止），目标是在给定预算 C 下最大化正确率：</p>
+
+<pre><code>最优策略 π*：在每步根据「当前证据强度、剩余预算、验证器质量」
+             选择期望信息增益最大的动作，直至停机</code></pre>
+
+<ul>
+<li>Snell 给出了「<strong>按难度</strong>分配」的经验规律 [2408.03314]；</li>
+<li>Sample/Mix/Verify 补充了「<strong>按验证器质量</strong>分配」[2610.23255]；</li>
+<li>AdaCoT/ATEST/E-process 解决「<strong>何时触发、何时停</strong>」[2505.11896][2610.25519][2610.25212]；</li>
+<li>Causal Attribution 解决「<strong>下一步花在哪</strong>」[2610.28834]。</li>
+</ul>
+
+<p>这一框架也解释了工业界的产品选择：<strong>默认快速思考、对难题自动加深、把预算上限暴露给开发者</strong>，正在成为 ChatGPT、Claude、Gemini、Qwen 的共同设计。</p>
+
+<h3>8.4 思维链的忠实性：另一个「多想真的有用吗」的追问</h3>
+
+<p>与过度思考相关但更深的问题是 <strong>CoT 忠实性（faithfulness）</strong>：模型写下的推理步骤，是否真的是它得出答案所依据的计算？如果 CoT 只是事后合理化，那么「让它把想法写出来」未必能真实反映或改进其内部计算。</p>
+
+<ul>
+<li>《Reward Misspecification Degrades Chain-of-Thought Monitorability》[2610.28303]：指出<strong>奖励设置不当时，CoT 的可监控性会下降</strong>——模型学会写出好看的推理但并不照做，这与欺骗/伪装问题相关；</li>
+<li>《Verbalising Model&#x27;s Computation for Chain-of-Thought Faithfulness Detection》[2610.23275]：研究如何检测模型「说的」和「算的」是否一致；</li>
+<li>《The Reliance Hypothesis》[2610.22841]：提出一个有趣假说——<strong>语言资源越匮乏，模型对 CoT 的依赖（及忠实性）反而上升</strong>；</li>
+<li>《Computation, Not Memory: CoT and State Tracking in LLM Agents》[2610.25760]：论证 CoT 对 Agent 的价值在于提供<strong>计算/状态跟踪的外部草稿纸</strong>，而非存储记忆。</li>
+</ul>
+
+<p>忠实性研究提醒工程实践者：<strong>更长的 CoT ≠ 更可靠的推理</strong>，在安全敏感场景中不能把模型自述的推理当作可信证据（这与知识库已有的机制可解释性报告互为表里）。</p>
+
+<figure>
+  <iframe src="diagrams/3-adaptive.html" height="600" loading="lazy"></iframe>
+  <figcaption>图 3 · 自适应计算决策框架：触发 → 分配 → 监控 → 停机的闭环控制</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec10">9. 潜空间推理：当思考不再用自然语言</h2>
+
+<p>显式思维链有两个内在成本：一是<strong>语言 token 很慢</strong>——逐 token 自回归生成，长推理意味着高延迟；二是自然语言未必是推理的最优载体——很多中间状态用连续向量表达更紧凑。2024 年底起，<strong>潜空间推理（latent / continuous reasoning）</strong>成为 TTS 最具想象力的分支。</p>
+
+<h3>9.1 Coconut：在连续潜空间里推理</h3>
+
+<p>Meta 的 <strong>Coconut（Training Large Language Models to Reason in a Continuous Latent Space）</strong> [2412.06769]（2024-12）提出让模型把多步推理编码进<strong>单一连续潜向量</strong>而非一连串语言 token：模型在「潜思考」阶段把后续若干步的信息压缩进一个 hidden state，再在该连续表征上做多步推理，最后才解码成语言。其动机是：潜推理可以<strong>并行地处理多步、避免语言化的串行瓶颈</strong>，并让模型在一个更适合计算的表征空间里搜索。Coconut 用「把上一个 batch 的最后一个隐状态作为下一个 batch 的输入」之类的训练方式，让模型学会在潜空间中保持并推进推理状态。</p>
+
+<h3>9.2 潜空间 TTS 的 2025–2026 进展</h3>
+
+<ul>
+<li><strong>Token-Disentangled Latent Test-Time Scaling for Vision-Language Reasoning</strong> [2609.35228]：面向视觉-语言推理，把推理计算从「生成语言 token」中解耦出来、在潜空间扩展，以更低的语言 token 成本获得 TTS 收益；</li>
+<li><strong>Port-Hamiltonian Latent Deliberation</strong> [2609.37351]：针对潜空间长推理的「<strong>审慎漂移悬崖（deliberation drift cliff）</strong>」——连续状态在多步推演后会漂移、退化——用 Port-Hamiltonian 动力学约束潜状态演化，使其在长程潜推理中保持稳定；</li>
+<li><strong>ReLaDrift（Recurrent Language Generation via Drifting for Test-Time Scaling）</strong> [2610.23225]：研究循环式语言生成中的状态漂移问题并加以利用/校正；</li>
+<li><strong>Architectural Sampling</strong> [2610.01687]：不采样不同的文本，而是利用<strong>冻结的视觉-语言模型内部的计算多样性</strong>（不同层/路径）来实现 TTS，提供了一种架构层面的潜空间采样。</li>
+</ul>
+
+<h3>9.3 循环 Transformer 与自适应深度</h3>
+
+<p>潜空间推理与「循环/自适应深度」模型天然合流：</p>
+
+<ul>
+<li><strong>Improving Test-Time Scaling with Adaptive Looped Transformers</strong> [2609.35748]：让同一组 Transformer 层根据问题难度<strong>循环执行不同次数</strong>——简单题过一遍就出，难题把层多绕几圈，在共享权重上实现「按难度自适应的推理深度」，是把 TTS 直接做进架构的代表；</li>
+<li>这条线与知识库已覆盖的<strong>线性注意力/混合架构</strong>（把推理看成状态更新）以及 <strong>Titans: Learning to Memorize at Test Time</strong>（2501.00663，在测试时学习记忆）在思想上相通：都是把「推理时多算」转化为「对隐状态/记忆的迭代更新」。</li>
+</ul>
+
+<h3>9.4 显式 vs 潜式：一张权衡表</h3>
+
+<table>
+<thead><tr>
+<th>维度</th>
+<th>显式 CoT（语言空间）</th>
+<th>潜空间推理</th>
+</tr></thead><tbody>
+<tr>
+<td>延迟</td>
+<td>高（逐 token 串行）</td>
+<td>低（连续计算可并行/循环）</td>
+</tr>
+<tr>
+<td>可解释/可监控</td>
+<td>强，可读、可审计</td>
+<td>弱，黑盒，需要额外探针</td>
+</tr>
+<tr>
+<td>长程稳定性</td>
+<td>会重复打转、晚节不保</td>
+<td>会漂移（需动力学约束）</td>
+</tr>
+<tr>
+<td>训练难度</td>
+<td>相对成熟（RLVR/蒸馏）</td>
+<td>较新，训练范式仍在探索</td>
+</tr>
+<tr>
+<td>安全审计</td>
+<td>可直接检查推理文本</td>
+<td>难以审计，对齐风险更高</td>
+</tr>
+</tbody></table>
+
+<p>目前工业主力仍是<strong>显式 CoT</strong>（可读、可控、训练成熟），但潜空间推理被普遍视为降低 reasoning 延迟与成本的关键长期方向；一个可能的终态是<strong>混合</strong>——大部分推理在潜空间快速完成，只在关键节点把想法「说出来」以供验证与监控。</p>
+
+<figure>
+  <iframe src="diagrams/4-latent.html" height="590" loading="lazy"></iframe>
+  <figcaption>图 4 · 显式 CoT（语言空间）× 潜空间推理（连续向量）：思考的两种载体</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec11">10. 测试时学习与自进化：权重在推理中改变</h2>
+
+<p>前述方法都假设权重冻结；更激进的一类工作让模型在<strong>推理/测试过程中更新自身参数或记忆</strong>，即 Test-Time Training（TTT）/ Test-Time Learning。它把「适应当前输入分布」也变成一种测试时计算。</p>
+
+<h3>10.1 从经典 TTT 到 Test-Time Memorization</h3>
+
+<p>测试时训练的经典思想（Sun 等 2020 的 TTT）是：在测试样本上构造自监督任务、对模型做几步快速更新，使其适应当前输入。这一思想在大模型时代复兴：</p>
+
+<ul>
+<li><strong>Titans: Learning to Memorize at Test Time</strong> [2501.00663]（Google，2024-12/2025-01）：提出在测试时把上下文信息以<strong>可学习的方式写入长期记忆</strong>（带遗忘机制的神经记忆），并在推理时检索，使模型能在测试阶段「记住」新信息，且记忆模块可与注意力混合。它是「测试时学习记忆」方向的代表（注意：该编号常被误传为 SimpleRL-Zoo，本报告已勘正）。</li>
+<li>与知识库已覆盖的<strong>智能体记忆</strong>（MemGPT/Mem0/Zep/MemOS，外挂记忆）不同，Titans 走的是<strong>权重/参数化记忆内化</strong>路线。</li>
+</ul>
+
+<h3>10.2 Test-Time Reinforcement Learning：在无标签测试数据上做 RL</h3>
+
+<p>2025 年 4 月的 <strong>TTRL: Test-Time Reinforcement Learning</strong> [2504.16084] 把 TTS 与训练彻底打通：在<strong>没有标签的测试数据</strong>上，用多数投票（maj@n）等 TTS 操作本身来估计奖励——如果 N 次采样绝大多数都收敛到同一答案，就把它当作「伪标签」，据此对模型做 RL 更新。Qwen-2.5-Math-7B 在 AIME 2024 上 pass@1 相对提升约 <strong>211%</strong>，且最终性能可以<strong>超过初始模型 maj@n 的上限</strong>——这意味着它不只是「选出好样本」，而是真的从测试分布上学到了东西。TTRL 展示了「测试时计算 → 伪奖励 → 权重更新 → 更强推理」的自举闭环。</p>
+
+<h3>10.3 持续测试时学习与进化方法</h3>
+
+<ul>
+<li><strong>Continual Test-Time Learning with Evolution Strategies</strong> [2610.24137]：用<strong>进化策略（无梯度）</strong>在不断变化的测试流上持续适配，规避了对可微目标与大显存反向传播的依赖；</li>
+<li><strong>Binding-Specific Relearning Savings for Test-Time Continual Learning</strong> [2610.22381]：研究测试时持续学习中「重新学习」的节省效应，刻画模型在测试流上适配的效率；</li>
+<li><strong>AdaExploreBench</strong> [2610.25950]：构建基准评测 Agent 在<strong>持续演化环境</strong>中的主动探索与测试时适应能力。</li>
+</ul>
+
+<h3>10.4 测试时学习的风险</h3>
+
+<p>测试时改变权重/记忆带来独特风险，工程上必须谨慎：</p>
+
+<ul>
+<li><strong>分布漂移与灾难性更新</strong>：少量测试样本上的更新可能损害通用能力；</li>
+<li><strong>不可复现</strong>：同一模型在不同测试序列上变成不同模型，给评测、审计、版本管理带来挑战；</li>
+<li><strong>安全投毒面</strong>：攻击者可通过精心构造的输入，在测试时把模型往有害方向「训练」——这是一种新的攻击面；</li>
+<li><strong>伪标签错误放大</strong>：TTRL 依赖多数投票的正确性，一旦模型系统性地错在同一答案（高置信错误），伪标签会强化错误。</li>
+</ul>
+
+<p>因此当前生产系统多采用<strong>保守的、带遗忘与回滚的</strong>测试时适应（或退而求其次只做外挂记忆），完全开放的测试时权重更新仍主要停留在研究阶段。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec12">11. 产业落地与推理经济：TTS 如何改变成本结构与产品形态</h2>
+
+<h3>11.1 一张主流推理模型的价格与预算接口表</h3>
+
+<p>截至 2026-10，主流厂商均把「思考预算」做成显式 API 参数。下表汇总可核实的定价与控制接口（价格随时间调整，以下为报告撰写时可核实口径）：</p>
+
+<table>
+<thead><tr>
+<th>模型（厂商）</th>
+<th>发布</th>
+<th>输入 / 输出价格（每百万 token）</th>
+<th>思考预算控制接口</th>
+<th>思考 token 是否额外计费</th>
+</tr></thead><tbody>
+<tr>
+<td>o1（OpenAI）</td>
+<td>2024-12</td>
+<td>$15 / $60</td>
+<td>max_completion_tokens</td>
+<td>计入输出</td>
+</tr>
+<tr>
+<td>o3-pro（OpenAI）</td>
+<td>2025-06</td>
+<td>$20 / $80【第三方：Artificial Analysis】</td>
+<td>reasoning_effort、max_completion_tokens</td>
+<td>计入输出</td>
+</tr>
+<tr>
+<td>Claude 3.7 Sonnet（Anthropic）</td>
+<td>2025-02-24</td>
+<td>$3 / $15【官方】</td>
+<td>thinking.budget_tokens（≤128K）</td>
+<td>与输出同价，不额外加价【官方】</td>
+</tr>
+<tr>
+<td>Gemini 2.5 Pro（Google）</td>
+<td>2025-03</td>
+<td>上线时公布（AI Studio/Vertex）</td>
+<td>thinking 预算内置</td>
+<td>计入输出</td>
+</tr>
+<tr>
+<td>Qwen3（阿里，开源）</td>
+<td>2025-04-29</td>
+<td>自托管 / 云厂商定价</td>
+<td>思考预算平滑调节、/think 切换【官方】</td>
+<td>—</td>
+</tr>
+<tr>
+<td>DeepSeek-R1（开源）</td>
+<td>2025-01-22</td>
+<td>自托管 / 云厂商定价</td>
+<td>输出长度上限</td>
+<td>—</td>
+</tr>
+</tbody></table>
+
+<p>关键观察：<strong>思考 token 普遍按普通输出 token 计费</strong>（Anthropic 在 3.7 发布时特别强调 extended thinking 不涨价、与输出同价 $3/$15），这意味着「多想」的成本对开发者是线性可见的——预算控制不是可选项，而是经济性的核心。</p>
+
+<h3>11.2 关键产业时间线（2024-09 → 2026-10）</h3>
+
+<ul>
+<li><strong>2024-09-12</strong> OpenAI 发布 o1-preview / o1-mini，TTS 产品化起点；</li>
+<li><strong>2024-12-05</strong> o1 转正；<strong>2024-12-20</strong> OpenAI 在「12 Days of OpenAI」收官活动展示 o3；</li>
+<li><strong>2025-01-20/22</strong> DeepSeek-R1 开源（MIT）；<strong>2025-01-22</strong> Kimi k1.5；</li>
+<li><strong>2025-02-24</strong> Anthropic Claude 3.7 Sonnet，市场首个 hybrid reasoning model + 同发 Claude Code【官方】；</li>
+<li><strong>2025-03</strong> Google Gemini 2.5 Pro，thinking 能力内置；</li>
+<li><strong>2025-04-16</strong> o3 正式发布（ARC Prize 注明正式版与其先前测试版不同）；<strong>2025-04-29</strong> Qwen3 开源双模式；</li>
+<li><strong>2025-06</strong> o3-pro 上线，高计算配置在 ARC-AGI 上换取高分，引发「算力换分」讨论；</li>
+<li><strong>2025 下半年</strong> 自适应/可控测试时计算成为研究与 API 迭代重点（reasoning on a budget）；</li>
+<li><strong>2026 全年</strong> TTS 向多模态、语音、具身、视频、潜空间与测试时学习全面扩散，论文密度持续走高。</li>
+</ul>
+
+<h3>11.3 o3 与 ARC-AGI：一次被详细记录的「算力换分」</h3>
+
+<p>ARC Prize（François Chollet）对 o3 的独立复测是理解 TTS 成本/收益最透明的一手案例【第三方】：在 ARC-AGI-1 半私有评测上，o3 以公开榜单 <strong>1 万美元算力上限</strong>配置（6 次采样）取得 <strong>75.7%</strong>；而一个 <strong>172 倍算力</strong>（1024 次采样）的高计算配置取得 <strong>87.5%</strong>。复测同时记录了成本：高计算配置约 3,350 万 token、每任务约 26 美元、每任务约 1.3 分钟（75.7% 档）。作为对照，ARC-AGI-1 从 2020 年 GPT-3 的 0% 走到 2024 年 GPT-4o 的约 5% 用了四年——o3 是一次阶跃，但阶跃的背后是<strong>两个数量级的测试时算力</strong>。</p>
+
+<p>这个案例同时呈现了 TTS 的两面：<strong>能力是真实的阶跃，代价也是真实的算力/延迟/美元</strong>。它也直接推动了 ARC-AGI-2 等更难、更新、抗污染基准的使用。</p>
+
+<h3>11.4 推理经济：从「训练为王」到「推理为王」的叙事与争议</h3>
+
+<p>TTS 的普及正在重塑算力的收支结构，出现了被称为 <strong>inference economy（推理经济）</strong> 的叙事：</p>
+
+<ul>
+<li>需求侧，推理模型让<strong>单次请求的 token 消耗成倍增加</strong>（一个难题可能消耗数万 reasoning token），若 AI Agent 大规模铺开，总推理 token 需求可能远超训练需求；</li>
+<li>成本侧，这与「推理成本持续快速下降」形成剪刀差——更便宜的推理单价 × 暴增的推理 token 量，总量仍可能高速扩张；</li>
+<li>争议侧，2025 年起出现「<strong>推理泡沫</strong>」的讨论：一部分 benchmark 增益是否只是用巨额、人类不会花费的算力刷出来的？高延迟在真实产品中是否可接受？</li>
+</ul>
+
+<p>需要诚实指出：关于「推理负载占数据中心收入比例」「每日处理 token 量」等宏观数字，多出自厂商自述或第三方估算，口径差异大，本报告不给出未经一手核实的具体百分比。可核实的<strong>微观事实</strong>（o3 的 172×、思考 token 同价计费、s1/AdaCoT 的压缩比）已足以支撑工程判断。</p>
+
+<h3>11.5 从文本到全模态：TTS 的边界正在扩张</h3>
+
+<p>2026 年 TTS 已不再是纯文本/数学的专利，快速向各模态渗透（均有可核实论文）：</p>
+
+<ul>
+<li><strong>多模态推理</strong>：TempoMoE 识别并调度 MoE 中的「快/慢思考专家」以提升多模态推理效率 [2610.25999]；多模态 TTS 已有专门综述 [2606.08231]；</li>
+<li><strong>实时语音</strong>：Heartbeat Thinking 让实时语音 Agent 在「听」的同时投机地进行推理与工具执行，把测试时思考藏进等待时间，缓解语音场景的延迟敏感 [2610.26233]；</li>
+<li><strong>具身 VLA</strong>：DiVeR 学习决策关键的验证器用于 VLA 的测试时扩展；CLIFT 用保形自验证做 Web Agent 训练与 TTS；</li>
+<li><strong>视觉生成/视频</strong>：Test-Time Scaling 被用于文生图流匹配模型（噪声激活的序贯蒙特卡洛）与相机条件视频扩散（GeoART）；</li>
+<li><strong>代码 Agent</strong>：TEX 通过基于执行的交叉验证来测试 Agent 的 TTS [2610.27290]；CARET 做仓库级代码补全的免训练 TTS。</li>
+</ul>
+
+<p>这表明「<strong>在生成答案前多做可验证的计算</strong>」正在成为各类基础模型的通用元方法，而不仅是语言模型的技巧。</p>
+
+<figure>
+  <iframe src="diagrams/5-fullstack.html" height="630" loading="lazy"></iframe>
+  <figcaption>图 5 · TTS 全栈四层（训练→编排→验证→服务）与「推理经济」成本-采用反馈环</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec13">12. 开放问题与展望</h2>
+
+<p>尽管 TTS 已被广泛采用，一系列根本性问题仍未解决，它们构成未来 1–2 年的研究前沿。</p>
+
+<p><strong>1. 测试时缩放的极限在哪里？</strong> Snell 观察到收益随难度呈倒 U 形 [2408.03314]，但「在给定模型上、一类任务的计算饱和点」仍缺乏可预测的定量理论。什么任务属于「想再多也没用」（模型缺少必要知识而非搜索不足）？如何在投入算力前就判断一道题处于可挽救区间？这需要把「难度估计」从经验观察推进为先验可测的量。</p>
+
+<p><strong>2. 能否有一个跨任务、跨模态的通用自适应计算控制器？</strong> 今天的 AdaCoT/ATEST/E-process 多在单一域训练或校准 [2505.11896][2610.25519][2610.25212]。一个理想的「元控制器」应能读取当前证据强度、验证器质量与剩余预算，对任意模态输出停机/加深决策，并随模型升级而不需重训。</p>
+
+<p><strong>3. 验证器是开放世界的根本瓶颈。</strong> 数学/代码有标准答案，但商业世界的大量任务（开放式分析、长文写作、战略决策）没有 ground truth。生成式验证器（ThinkPRM [2504.16828]）部分缓解，但「谁来验证验证器」的递归问题、以及验证器被生成者策略「取悦」的风险仍在。</p>
+
+<p><strong>4. 潜空间推理的可解释性与安全。</strong> 潜推理用黑盒连续状态换取速度 [2412.06769]，使当前基于推理文本的监控、审计、欺骗检测全部失效。如何在不把推理完全语言化的前提下保留可监控性，是潜空间路线走向安全敏感场景的前提。</p>
+
+<p><strong>5. 测试时学习的稳定性、可复现与安全投毒。</strong> 让权重在推理中改变（TTRL [2504.16084]、Titans [2501.00663]）带来漂移、不可复现与新攻击面；需要带遗忘、回滚、沙箱与输入消毒的保守适应机制。</p>
+
+<p><strong>6. 推理经济与能耗：Jevons 悖论会不会重演？</strong> 推理单价快速下降，但 reasoning token 量与 Agent 普及可能使总算力和能耗反升。TTS 的单位任务碳成本、以及「172× 算力换 12 个百分点」是否值得，将越来越多地进入产品与监管视野。</p>
+
+<p><strong>7. 评测必须动态化、私有化、抗污染。</strong> o3 在 ARC-AGI 上的阶跃与刷分争议 [第三方 ARC Prize] 说明，静态公开榜单会迅速被针对性优化；ARC-AGI-2/3、私有评测、按「每美元/每秒」归一化的效率指标将比裸准确率更重要。</p>
+
+<p><strong>8. 训练时与测试时的协同设计尚处早期。</strong> 未来的模型可能在预训练阶段就为「可变推理深度」而设计（自适应循环层 [2609.35748]、快/慢专家 [2610.25999]），把 TTS 从外挂策略变成架构原生能力，并与推理引擎（投机搜索 [2609.39334]、PD 分离）联合优化。</p>
+
+<h3>工程落地 Checklist（给开发者）</h3>
+
+<ul>
+<li>[ ] <strong>先判断任务可验证性</strong>：有标准答案/可执行测试 → 优先 RLVR 思路与并行采样；开放式任务 → 谨慎设定验证器，别盲信分数。</li>
+<li>[ ] <strong>默认快思考、按难度加深</strong>：用双模式模型，简单请求走 non-thinking，难题才开 thinking，避免全局长 CoT。</li>
+<li>[ ] <strong>显式设置思考预算上限</strong>：<code>reasoning_effort</code> / <code>thinking.budget_tokens</code> / <code>max_completion_tokens</code>，并按 P95 延迟与成本预算反推。</li>
+<li>[ ] <strong>并行宽度按 p 估算</strong>：用历史 pass@1 估 p，按 1−(1−p)^N 选 N，避免 N 越大越好的直觉浪费；配合多数投票或验证器。</li>
+<li>[ ] <strong>监控过度思考信号</strong>：统计平均推理长度、循环打转率、「已对改错」率；必要时上 early stopping / logit 掩码。</li>
+<li>[ ] <strong>不信任 CoT 文本作为安全证据</strong>：安全敏感决策要有独立验证器/执行校验，CoT 仅作草稿。</li>
+<li>[ ] <strong>测试时学习先沙箱</strong>：任何权重/记忆更新都要可回滚、有输入消毒，防止投毒与漂移。</li>
+<li>[ ] <strong>用效率指标选型</strong>：比较模型时同时看准确率、每任务美元成本、P95 延迟，而非只看榜单裸分。</li>
+<li>[ ] <strong>关注多模态/实时场景的延迟隐藏</strong>：语音/实时 Agent 可把思考藏进等待（如 heartbeat thinking）。</li>
+<li>[ ] <strong>数据少而精</strong>：自训推理模型优先投资少量高质量、含探索过程的轨迹（s1/LIMO 路线），而非堆量。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec14">参考文献（arXiv 论文，编号经 arxiv.org 摘要页逐一核实）</h2>
+
+<blockquote>核实方式：逐一访问 <code>arxiv.org/abs/&lt;id&gt;</code>，核对 <code>citation_title / citation_author / citation_date</code> 元数据；下列 65 篇标题、编号、日期均与官方页面一致。作者仅列前若干位。</blockquote>
+
+<h3>A. 思想源流与奠基（2022–2024）</h3>
+
+<ol>
+<li>[2201.11903] <strong>Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</strong>. Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Fei Xia, et al. 2022/01/28.</li>
+<li>[2303.17651] <strong>Self-Refine: Iterative Refinement with Self-Feedback</strong>. Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler Hallinan, Luyu Gao, Sarah Wiegreffe, et al. 2023/03/30.</li>
+<li>[2303.11366] <strong>Reflexion: Language Agents with Verbal Reinforcement Learning</strong>. Noah Shinn, Federico Cassano, Edward Berman, Ashwin Gopinath, Karthik Narasimhan, Shunyu Yao. 2023/03/20.</li>
+<li>[2305.10601] <strong>Tree of Thoughts: Deliberate Problem Solving with Large Language Models</strong>. Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran, Thomas L. Griffiths, Yuan Cao, Karthik Narasimhan. 2023/05/17.</li>
+<li>[2305.20050] <strong>Let&#x27;s Verify Step by Step</strong>. Hunter Lightman, Vineet Kosaraju, Yura Burda, Harri Edwards, Bowen Baker, Teddy Lee, et al. (OpenAI). 2023/05/31.</li>
+<li>[2312.08935] <strong>Math-Shepherd: Verify and Reinforce LLMs Step-by-step without Human Annotations</strong>. Peiyi Wang, Lei Li, Zhihong Shao, R.X. Xu, Damai Dai, Yifei Li, et al. 2023/12/14.</li>
+<li>[2401.10020] <strong>Self-Rewarding Language Models</strong>. Weizhe Yuan, Richard Yuanzhe Pang, Kyunghyun Cho, Xian Li, Sainbayar Sukhbaatar, Jing Xu, et al. (Meta AI). 2024/01/18.</li>
+<li>[2402.14083] **Beyond A*: Better Planning with Transformers via Search Dynamics Bootstrapping**. Lucas Lehnert, Sainbayar Sukhbaatar, DiJia Su, Qinqing Zheng, Paul McVay, Michael Rabbat, et al. (Meta AI). 2024/02/21.</li>
+<li>[2403.09629] <strong>Quiet-STaR: Language Models Can Teach Themselves to Think Before Speaking</strong>. Eric Zelikman, Georges Harik, Yijia Shao, Noam Shazeer, Noah D. Goodman. 2024/03/14.</li>
+<li>[2406.03816] **ReST-MCTS\*: LLM Self-Training via Process Reward Guided Tree Search**. Dan Zhang, Sining Zhoubian, Ziniu Hu, Yisong Yue, Yuxiao Dong, Jie Tang. 2024/06/06.</li>
+<li>[2407.21787] <strong>Large Language Monkeys: Scaling Inference Compute with Repeated Sampling</strong>. Bradley Brown, Jordan Juravsky, Ryan Ehrlich, Ronald Clark, Quoc V. Le, Christopher Ré, et al. 2024/07/31.</li>
+<li>[2408.03314] <strong>Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters</strong>. Charlie Snell, Jaehoon Lee, Kelvin Xu, Aviral Kumar (Google DeepMind). 2024/08/06.</li>
+</ol>
+
+<h3>B. o1 时刻、R1 冲击波与开源生态（2024-10 → 2025）</h3>
+
+<ol>
+<li>[2410.18982] <strong>O1 Replication Journey: A Strategic Progress Report — Part 1</strong>. Yiwei Qin, Xuefeng Li, Haoyang Zou, Yixiu Liu, Shijie Xia, Zhen Huang, et al. 2024/10/08.</li>
+<li>[2411.14405] <strong>Marco-o1: Towards Open Reasoning Models for Open-Ended Solutions</strong>. Yu Zhao, Huifeng Yin, Bo Zeng, Hao Wang, Tianqi Shi, Chenyang Lyu, et al. (Microsoft). 2024/11/21.</li>
+<li>[2412.21187] <strong>Do NOT Think That Much for 2+3=? On the Overthinking of o1-Like LLMs</strong>. Xingyu Chen, Jiahao Xu, Tian Liang, Zhiwei He, Jianhui Pang, Dian Yu, et al. 2024/12/30.</li>
+<li>[2412.18547] <strong>Token-Budget-Aware LLM Reasoning</strong>. Tingxu Han, Zhenting Wang, Chunrong Fang, Shiyu Zhao, Shiqing Ma, Zhenyu Chen. 2024/12/24.</li>
+<li>[2412.06769] <strong>Training Large Language Models to Reason in a Continuous Latent Space (Coconut)</strong>. Shibo Hao, Sainbayar Sukhbaatar, DiJia Su, Xian Li, Zhiting Hu, Jason Weston, et al. (Meta AI). 2024/12/09.</li>
+<li>[2501.00663] <strong>Titans: Learning to Memorize at Test Time</strong>. Ali Behrouz, Peilin Zhong, Vahab Mirrokni (Google). 2024/12/31.</li>
+<li>[2501.19393] <strong>s1: Simple Test-Time Scaling</strong>. Niklas Muennighoff, Zitong Yang, Weijia Shi, Xiang Lisa Li, Li Fei-Fei, Hannaneh Hajishirzi, et al. 2025/01/31.</li>
+<li>[2501.12948] <strong>DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning</strong>. DeepSeek-AI (Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, et al.). 2025/01/22.</li>
+<li>[2501.12599] <strong>Kimi k1.5: Scaling Reinforcement Learning with LLMs</strong>. Kimi Team (Angang Du, Bofei Gao, Bowei Xing, et al., Moonshot AI). 2025/01/22.</li>
+<li>[2501.04519] <strong>rStar-Math: Small LLMs Can Master Math Reasoning with Self-Evolved Deep Thinking</strong>. Xinyu Guan, Li Lyna Zhang, Yifei Liu, et al. (Microsoft). 2025/01/08.</li>
+<li>[2502.01456] <strong>Process Reinforcement through Implicit Rewards (PRIME)</strong>. Ganqu Cui, Lifan Yuan, Zefan Wang, Hanbin Wang, Yuchen Zhang, Jiacheng Chen, et al. 2025/02/03.</li>
+<li>[2502.03387] <strong>LIMO: Less is More for Reasoning</strong>. Yixin Ye, Zhen Huang, Yang Xiao, et al. 2025/02/05.</li>
+<li>[2502.06703] <strong>Can 1B LLM Surpass 405B LLM? Rethinking Compute-Optimal Test-Time Scaling</strong>. Runze Liu, et al. 2025/02/10.</li>
+<li>[2503.18892] <strong>SimpleRL-Zoo: Investigating and Taming Zero Reinforcement Learning for Open Base Models in the Wild</strong>. Weihao Zeng, Yuzhen Huang, Qian Liu, Wei Liu, Keqing He, Zejun Ma, et al. 2025/03/24.</li>
+<li>[2504.16828] <strong>Process Reward Models That Think (ThinkPRM)</strong>. Muhammad Khalifa, Rishabh Agarwal, Lajanugen Logeswaran, Jaekyeom Kim, Hao Peng, Moontae Lee, et al. 2025/04/23.</li>
+<li>[2504.16084] <strong>TTRL: Test-Time Reinforcement Learning</strong>. Yuxin Zuo, Kaiyan Zhang, Li Sheng, Shang Qu, Ganqu Cui, Xuekai Zhu, et al. 2025/04/22.</li>
+<li>[2505.22312] <strong>Skywork Open Reasoner 1 Technical Report</strong>. Jujie He, Jiacai Liu, Chris Yuhao Liu, Rui Yan, Chaojie Wang, Peng Cheng, et al. (Kunlun). 2025/05/28.</li>
+<li>[2505.11896] <strong>AdaCoT: Pareto-Optimal Adaptive Chain-of-Thought Triggering via Reinforcement Learning</strong>. Chenwei Lou, Zewei Sun, Xinnian Liang, Meng Qu, Wei Shen, Wenqi Wang, et al. 2025/05/17.</li>
+<li>[2501.02497] <strong>A Survey of Test-Time Compute: From Intuitive Inference to Deliberate Reasoning</strong>. Yixin Ji, Juntao Li, Yang Xiang, Hai Ye, Kaixin Wu, Kai Yao, et al. 2025/01/05.</li>
+<li>[2506.04611] <strong>Revisiting Test-Time Scaling: A Survey and a Diversity-Aware Method for Efficient Reasoning</strong>. 2025/06/05.</li>
+<li>[2507.02076] <strong>Reasoning on a Budget: A Survey of Adaptive and Controllable Test-Time Compute in LLMs</strong>. 2025/07/02.</li>
+<li>[2606.08231] <strong>Test-Time Scaling in Multimodal Foundation Models: A Comprehensive Survey of Generation and Reasoning</strong>. 2026/06/06.</li>
+</ol>
+
+<h3>C. 2026 年 9–10 月最新前沿（编号与标题经 abs 页核实；作者/精确日期从略，可经编号直达原文）</h3>
+
+<ol>
+<li>[2609.33155] <strong>Where Do Test-Time Scaling and Training Fall Short in Individual Stance Prediction?</strong></li>
+<li>[2609.35228] <strong>Token-Disentangled Latent Test-Time Scaling for Vision-Language Reasoning</strong>.</li>
+<li>[2609.35748] <strong>Improving Test-Time Scaling with Adaptive Looped Transformers</strong>.</li>
+<li>[2609.37351] <strong>Port-Hamiltonian Latent Deliberation: Mitigating the Deliberation Drift Cliff in Test-Time Compute Scaling</strong>.</li>
+<li>[2609.38672] <strong>Provable Test-Time Scaling for Beam Search in LLM Reasoning</strong>.</li>
+<li>[2609.39334] <strong>Taming Speculative Search for Test-Time Scaling in LLM Serving</strong>.</li>
+<li>[2609.39632] <strong>Towards Better Exploration in Sequential Test-Time Scaling</strong>.</li>
+<li>[2609.40190] <strong>Cheap to Draw, Expensive to Trust: Certifying Test-Time Scaling Curves</strong>.</li>
+<li>[2610.01687] <strong>Architectural Sampling: Test-Time Scaling via Computational Diversity in Frozen Vision-Language Models</strong>.</li>
+<li>[2610.04837] <strong>CARET: Training-Free Test-Time Scaling for Repository-Level Code Completion</strong>.</li>
+<li>[2610.04933] <strong>DiVeR: Decision-Critical Verifier Learning for VLA Test-Time Scaling</strong>.</li>
+<li>[2610.06829] <strong>CLIFT: Conformal Self-Verification for Web Agent Training and Test-Time Scaling</strong>.</li>
+<li>[2610.11570] <strong>Scaling to Tens of Thousands of Test-Time Iterations with Loop-Native Attention Residuals</strong>.</li>
+<li>[2610.18583] <strong>Compare to Correct: Pairwise-Guided Logit Adjustment for LLM Test-Time Scaling</strong>.</li>
+<li>[2610.22381] <strong>Binding-Specific Relearning Savings for Test-Time Continual Learning</strong>.</li>
+<li>[2610.22841] <strong>The Reliance Hypothesis: Chain-of-Thought Faithfulness Rises as Language Resource Level Falls</strong>.</li>
+<li>[2610.23275] <strong>Verbalising Model&#x27;s Computation for Chain-of-Thought Faithfulness Detection</strong>.</li>
+<li>[2610.25212] <strong>Calibration-Free Early Stopping for Chain-of-Thought Reasoning via E-processes</strong>.</li>
+<li>[2610.25519] <strong>ATEST: Adaptive Resource-Aware Test-Time Scaling for LLM Inference</strong>.</li>
+<li>[2610.25760] <strong>Computation, Not Memory: Chain-of-Thought and State Tracking in LLM Agents</strong>.</li>
+<li>[2610.25908] <strong>CALM: Consistency-Aware Logit Masking in Decoding Space for Mitigating Overthinking of Large Reasoning Models</strong>.</li>
+<li>[2610.25950] <strong>AdaExploreBench: Benchmarking LLM Agents for Proactive Exploration and Test-time Adaptation in Evolving Environments</strong>.</li>
+<li>[2610.25999] <strong>TempoMoE: Identifying and Steering Fast-Slow Thinking Experts for Efficient Multimodal Reasoning</strong>.</li>
+<li>[2610.26233] <strong>Heartbeat Thinking: Speculative Reasoning and Tool Execution While Listening in Realtime Voice Agents</strong>.</li>
+<li>[2610.27290] <strong>TEX: Test-Time Scaling Testing Agents via Execution-based Cross-Validation</strong>.</li>
+<li>[2610.28294] <strong>Adaptive Replay Refinement: Allocating Test-Time Compute Between Revision and Resampling</strong>.</li>
+<li>[2610.28303] <strong>Reward Misspecification Degrades Chain-of-Thought Monitorability</strong>.</li>
+<li>[2610.28834] <strong>Where Should a Stuck Agent Spend Its Next Tokens? Causal Attribution of Inference-Time Resources</strong>.</li>
+<li>[2610.23255] <strong>Sample, Mix, or Verify? Allocating Test-Time Compute under Imperfect Verifiers</strong>.</li>
+<li>[2610.30983] <strong>A Reality Check of Inference-Time Context Augmentation Methods</strong>.</li>
+<li>[2610.31667] <strong>Direct Pass@$k$ Optimization for Thought Pruning: Balancing Quality and Diversity in Test-Time Reasoning</strong>.</li>
+</ol>
+
+<h3>D. 官方与一手网页信源</h3>
+
+<ul>
+<li>OpenAI. <strong>Learning to reason with LLMs</strong>（o1 发布）. 2024-09-12. https://openai.com/index/learning-to-reason-with-llms/ （站点对脚本访问返回反爬页，事实经多方存档与官方系统卡交叉确认）.</li>
+<li>OpenAI. <strong>OpenAI o1 System Card</strong>. 2024-12. arXiv:2412.16720.</li>
+<li>Anthropic. <strong>Claude 3.7 Sonnet and Claude Code</strong>. 2025-02-24. https://www.anthropic.com/news/claude-3-7-sonnet （2026-10-25 直读，定价 $3/$15、128K 思考上限均出自该页）.</li>
+<li>Google DeepMind. <strong>Gemini 2.5: Our most intelligent thinking model yet</strong>. 2025-03. https://blog.google/technology/google-deepmind/gemini-model-thinking-updates-march-2025/ （直读；HLE 18.8%、SWE-bench 63.8% 出自该页）.</li>
+<li>Qwen Team. <strong>Qwen3: Think Deeper, Act Faster</strong>. 2025-04-29. https://qwenlm.github.io/blog/qwen3/ （直读；模型规格与思考预算控制出自该页）.</li>
+<li>ARC Prize（François Chollet）. <strong>OpenAI o3 Breakthrough High Score on ARC-AGI-Pub</strong>. 2024-12-20（2025-04-16 更新）. https://arcprize.org/blog/oai-o3-pub-breakthrough （直读；75.7%/87.5%、172×、$26/任务出自该页）.</li>
+<li>DeepSeek-AI. <strong>DeepSeek-R1</strong>（模型与技术报告）. 2025-01-20. https://github.com/deepseek-ai/DeepSeek-R1 .</li>
+<li>Artificial Analysis. <strong>o3-pro / o1 Model Overview</strong>（第三方聚合：o3-pro $20/$80、2025-06 发布；o1 2024-12 发布）. https://artificialanalysis.ai/models （2026-10-25 访问，属第三方口径）.</li>
+<li>Stanford HAI. <strong>Artificial Intelligence Index Report 2025</strong>. https://aiindex.stanford.edu/report/ .</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<blockquote><strong>核实与口径声明</strong>：本报告 65 篇 arXiv 参考文献的编号、标题、日期（A/B 节）均于 2026-10-25 经 <code>arxiv.org/abs/&lt;id&gt;</code> 元数据逐一核实，过程中纠正了 SimpleRL-Zoo、Marco-o1、ThinkPRM、Math-Shepherd、ReST-MCTS\*、PRIME、LIMO、Self-Rewarding、Coconut 等多处网传易错编号/作者/归属。厂商自报的模型分数标注「厂商口径」，Artificial Analysis 等聚合站标注「第三方」，OpenAI 站点因反爬未能直读的事实均经官方系统卡或多个独立信源交叉确认。凡缺乏具名一手背书的网传数字（如某些「推理 token 占比」「每日 token 处理量」）一律不予采信。 报告生成于 2026-10-25，作者为 AI 研究助手；能力边界与产品价格随时间变化，引用时请回到上述一手链接核对最新状态。</blockquote>
+<div class="footer">Test-Time Scaling 前沿技术报告 · 2026-10-25 · 所有 arXiv 编号已经 arxiv.org 摘要页逐一核实 · 图表为手工暗色 SVG · 厂商自报数据标注「官方口径」，第三方聚合标注「第三方」</div>
+</div></body></html>
