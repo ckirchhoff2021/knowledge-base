@@ -78,7 +78,7 @@
 |---|---|---|
 | [情绪修复与心态调整](https://ckirchhoff2021.github.io/knowledge-base/life/emotion-regulation/guide.html) | 心态修复与人际应对 | 2026-09-22 |
 | [长期失眠就医指南](https://ckirchhoff2021.github.io/knowledge-base/life/insomnia-treatment/guide.html) | 症状、治疗与杭州就医 | 2026-09-22 |
-| [提升感知力与心平气和](https://ckirchhoff2021.github.io/knowledge-base/life/mindfulness/guide.html) | 情绪稳定方法论 | 2026-09-22 |
+| [提升感知力与心平气和](https://ckirchhoff2021.github.io/knowledge-base/life/mindfulness/guide.md) | 情绪稳定方法论 | 2026-09-22 |
 | [小白理财资产配置](https://ckirchhoff2021.github.io/knowledge-base/life/wealth-management/guide.html) | 资产配置入门 | 2026-09-22 |
 | [小白理财实战手册](https://ckirchhoff2021.github.io/knowledge-base/life/wealth-practice/guide.html) | 一年理财行动方案 | 2026-09-28 |
 
