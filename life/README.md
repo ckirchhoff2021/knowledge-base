@@ -4,13 +4,13 @@
 
 ---
 
-### [情绪修复与心态调整](emotion-regulation/guide.html)
+### [情绪修复与心态调整](https://ckirchhoff2021.github.io/knowledge-base/life/emotion-regulation/guide.html)
 
 遇到糟心的人和事如何快速走出阴霾：基于认知行为疗法、情绪调节过程模型与躯体取向方法，先讲清杏仁核劫持等生理机制，再给出可操作的情绪修复工具箱。
 
 📅 2026-08-21 ｜ 📄 [Markdown](emotion-regulation/guide.md)
 
-### [长期失眠就医指南](insomnia-treatment/guide.html)
+### [长期失眠就医指南](https://ckirchhoff2021.github.io/knowledge-base/life/insomnia-treatment/guide.html)
 
 长期失眠伴后脑勺搏动与安眠药依赖的完整就医方案：症状画像、失眠病因、安眠药戒断、杭州医院推荐与异地医保流程。⚠️ 仅为信息参考，不构成诊断或用药建议。
 
@@ -22,13 +22,13 @@
 
 📅 2026-08-23 ｜ 📄 [Markdown](mindfulness/guide.md)
 
-### [小白理财资产配置](wealth-management/guide.html)
+### [小白理财资产配置](https://ckirchhoff2021.github.io/knowledge-base/life/wealth-management/guide.html)
 
 零基础人群的个人资产配置系统实施指南：宏观环境分析、理财入门、基金定投、资产配置方法与避坑防骗。⚠️ 仅为学习框架，不构成投资建议。
 
 📅 2026-02 ｜ 📄 [Markdown](wealth-management/guide.md)
 
-### [小白理财实战手册](wealth-practice/guide.html)
+### [小白理财实战手册](https://ckirchhoff2021.github.io/knowledge-base/life/wealth-practice/guide.html)
 
 理财「怎么做」的一年行动方案：账户清单、记账体检、预算表、应急金、保险清单、指数定投从开户到止盈，附年度操作日历与真实情景 FAQ。⚠️ 不构成投资建议。
 
