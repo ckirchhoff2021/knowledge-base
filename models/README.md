@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 22 个话题。
+大模型与后训练方向的论文分析，共 23 个话题。
 
 ---
 
@@ -111,6 +111,12 @@ arXiv:2605.23904（微软 + 上海交大 + 同济 + 复旦，2026-05）解读：
 对**已经开源、已发布权重、可复现训练流程**的 Jev-like System One 决策模型做训练方法横评，并补全 2026-10 月最新进展。先建立所有开源实现共享的统一契约：因果/双向骨干 + **置换等变候选头**（无位置编码的集合 Transformer + 残差 + RMSNorm/SiLU 标量打分），noul / choice / score 三原语**共用一个头**，差异仅在候选数、指标与校准温度；地基同为 Typed Decisions 数据集（含教师自一致天花板 0.735 与污染事故的社区纪律）。核心是三大已验证训练范式：①**软标签 SFT**（AgentJev-0.6B，Qwen3-0.6B 去 LM 头）——soft 交叉熵 + 0.1·Brier、案例级哈希切分 960/120/120 + test 400、600 步全参 bf16、LLRD（骨干 1e-5/头 1e-4）、独立校准集顺序锁死拟合温度，phase4 续训 **79.25%**、本地从零底座直训 78.05%（GB10 49 分钟/34GB）；②**RLCD 面向校准的强化学习**（Laya，ModernBERT-large 421M）——logits 加零均值 Gaussian 探索，奖励取 log + spherical（score 题加 RPS）等严格适当评分规则，REINFORCE + 组均值 baseline 并联 soft CE，76.6–77%、33–42ms、2×T4 4–5h，并坦承 ECE 0.213、发布权重温度在训练集拟合两大缺陷；③**真实结果标签的领域续训**（coding-gates 分支）——2100 次真实测试运行按退出码核对 + 1800 行摘要、中英/倒置问法增强、vitest/node 整组 OOD、以「TD dev CE ≤ step0+0.01」约束选点，门禁测试 100%、TD 80.85%。另覆盖通用零样本派（d3/clef/Amos）、LoRA 专家（Decider-4B 0.8205）、零权重 log-prior（0.761→0.8025）等路线；10 月前沿 **TreeEncoder 共享前缀树编码器**（服务 P50 278→44ms 即 6.3×、训练 3.69×）、Claude Code PreToolUse hook 等落地集成，并给出三范式全景对比与工程选型 Checklist。信源为上游仓库协议文件/报告、Hugging Face 模型卡与数据集卡、本地 jev-trainer 实测记录一手交叉验证，2 篇关键论文编号（SalesRLAgent arXiv:2503.23303、Confidence-Aware Routing arXiv:2510.01237）经 arXiv 官方 API 核实。
 
 📅 2026-10-20 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](open-source-jev-training/report.md)
+
+### [开源 Jev 决策模型全景（2026-10-26 更新版）](open-source-jev-landscape/report.html)
+
+以**模型目录**为主线回答"开源 Jev 都有哪些、各自怎么做"：2026-10-26 逐一打开 Hugging Face 模型卡核实，从 50+ 相关条目中梳理出**七大家族 16 个代表**。①软标签 SFT 派 AgentJev-0.6B（Qwen3-0.6B 去 LM 头 + 无位置编码集合 Transformer，soft CE+0.1·Brier 全参 bf16，78.05–79.25%）；②RLCD 校准强化学习派 Laya（ModernBERT-large 421M，零均值 Gaussian 探索 + log/spherical/RPS 严格适当评分规则 + REINFORCE 组均值 baseline 并联 soft CE，76.6–77%，坦承 ECE 0.213 与温度泄漏）；③教师分布蒸馏派 AutoTrust JEV-9B/27B/35B（**Blocks of Experts**：冻结 Qwen3.8-27B 等大模型 + 仅 108.9M/0.4% 参数的可拆卸决策块，jev-distill-corpus-v3 约 64 万行教师分布，B200 9.2 小时训完，对教师 mean KL≈0.017、ECE 0.0009、六组基准均值 84.07%，适配器关闭即恢复 System 2 生成、HumanEval 0.78）；④多模态 Agent 派 OpenJev（文本+DOM+截图，最多 52 选项，万题 84.0% 仅落后托管 Jev 1.4 点，截图下一步 88.0%，H100 FP8 80–210ms，**CC BY-NC 不可商用**）与 Jev-Omni（Gemma 4 12B、3 万题、文/图/音/视频四模态，DecisionBench 87.57%）；⑤全参微调派 Turion Jev 31B（Gemma 4 31B，token-code 读取 + order averaging + read twice，Decision Index 66.16、116ms）与 AutoTrust-JEV-27B v1.1（DI 67.31）；⑥LoRA 通用决策派 Kev 系列（12 个公开数据集）、Bespoke-Nimble-9B（165MB 适配器/255 选项）、APUS Reflex 4B/9B/35B-A3B（**可选计算深度 effort low/high** + 联合多深度后训练，85–88.75%，9B 服务中位 25.58ms）；⑦小型编码器与教学派 open-jev-deberta-v3-large（独立复现）、Bekko System One（17M/68M/400M，ONNX 29MB）、minimind-jev（冻结 bge-small-zh + 66 万参数 MLP 头，3 分钟训完的中文重排教学项目）；外加真实执行结果续训 coding-gates（2100 次测试退出码打标，门禁 100%）与最新垂直安全专家 wolf-defender-jev（mmBERT-small 提示注入检测、15 语言）。并讲清两种读取实现（token-code LM logits 归一化 vs 置换等变集合头，重排翻转率 18.5%→2.3%/7.4%）、五个共同设计决策，以及评测三铁律——0.735 教师自一致天花板、对教师 KL≠人类 gold 能力、零样本榜/train-fitted 榜/Decision Index/S1MB 不可跨榜比较，附按诉求直达的选型表与落地 Checklist。
+
+📅 2026-10-26 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](open-source-jev-landscape/report.md)
 
 ### [AI 编译器与异构全栈底座](ai-compiler-stack/report.html)
 

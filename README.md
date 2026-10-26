@@ -54,6 +54,8 @@
 
 | [**开源 Jev 模型训练方法全景**](https://ckirchhoff2021.github.io/knowledge-base/models/open-source-jev-training/report.html) | 已发布权重的开源 Jev-like 决策模型怎么训：统一判别架构（置换等变候选头，noul/choice/score 共用一头）· 三大范式——软标签 SFT（AgentJev-0.6B：soft CE+Brier/全参 bf16/独立校准，79.25%）、RLCD 校准强化学习（Laya 421M：Gaussian 探索+proper scoring rule+REINFORCE，76.6–77%）、真实测试结果领域续训（coding-gates：2100 次真实运行+受约束选点，门禁 100%）· 零样本派/LoRA 专家/log-prior · 10 月 TreeEncoder 共享前缀树（P50 278→44ms）· 污染事故与教师天花板 0.735 的纪律 · 选型 Checklist |
 
+| [**开源 Jev 模型全景（10-26 更新）**](https://ckirchhoff2021.github.io/knowledge-base/models/open-source-jev-landscape/report.html) | HF 50+ 条目中的七大家族 16 代表：软标签 SFT（AgentJev-0.6B）/RLCD（Laya 421M）/教师分布蒸馏 BoE（JEV-27B：冻结大模型+0.4% 决策块，KL≈0.017）/多模态（OpenJev 文本+DOM+截图 84.0%、Jev-Omni 四模态）/全参（Turion 31B）/LoRA（Kev/Nimble/APUS Reflex 可变算力）/小型教学（17M–66 万头）+ 真值续训与安全专家 · token-code vs 置换等变头 · 0.735 天花板与榜单不可比纪律 · 选型表 |
+
 | [**Test-Time Scaling 测试时计算扩展**](https://ckirchhoff2021.github.io/knowledge-base/models/test-time-scaling/report.html) | 第三条能力扩展轴（权重冻结、推理时投入更多 FLOPs）：CoT/ToT/PRM800K 思想源流 · Snell 固定 FLOPs 击败 14 倍大模型 · o1 与 s1 budget forcing · R1 纯 RL 与开源生态 · 验证器（→ThinkPRM）· 搜索三拓扑与可证明缩放 · 过度思考四路线治理（AdaCoT 触发率 3.18%）· 潜空间推理（Coconut/漂移悬崖）· TTRL 无标签测试 RL（+211%）· o3 在 ARC-AGI 172× 算力换 75.7%→87.5% · 全模态扩散 |
 
 ### 🌱 生活方法论

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 训练决策谱系</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 840" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="840" fill="#0d1117"/>
+  <text x="60" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 3 · 训练方法谱系：标签来源 × 损失/奖励 × 训练方式</text>
+  <text x="60" y="74" fill="#8b949e" font-size="13">每个开源模型都是这三行选择的一个组合；2026-10 社区收敛路径用粗线标出</text>
+
+  <!-- three columns headers -->
+  <g font-size="14" font-weight="700" text-anchor="middle">
+    <rect x="80"  y="100" width="280" height="40" rx="9" fill="rgba(251,146,60,0.15)" stroke="#fb923c"/>
+    <text x="220" y="126" fill="#fb923c">标签来源</text>
+    <rect x="460" y="100" width="280" height="40" rx="9" fill="rgba(76,29,149,0.25)" stroke="#a78bfa"/>
+    <text x="600" y="126" fill="#a78bfa">损失 / 奖励</text>
+    <rect x="840" y="100" width="280" height="40" rx="9" fill="rgba(6,78,59,0.25)" stroke="#34d399"/>
+    <text x="980" y="126" fill="#34d399">训练方式</text>
+  </g>
+
+  <!-- column 1 items -->
+  <g font-size="11.5">
+    <rect x="80" y="156" width="280" height="52" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="96" y="178" fill="#e6edf3" font-weight="700">教师软概率分布</text>
+    <text x="96" y="198" fill="#8b949e" font-size="10.5">Jev API / Typed Decisions 教师</text>
+    <rect x="80" y="220" width="280" height="52" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="96" y="242" fill="#e6edf3" font-weight="700">公开数据集 hard label</text>
+    <text x="96" y="262" fill="#8b949e" font-size="10.5">Banking77/BoolQ/NLI 等 12 集</text>
+    <rect x="80" y="284" width="280" height="52" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="96" y="306" fill="#e6edf3" font-weight="700">真实执行结果</text>
+    <text x="96" y="326" fill="#8b949e" font-size="10.5">测试退出码 / 环境真值（2100 次运行）</text>
+  </g>
+
+  <!-- column 2 items -->
+  <g font-size="11.5">
+    <rect x="460" y="156" width="280" height="52" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="476" y="178" fill="#e6edf3" font-weight="700">soft CE / KL 分布匹配</text>
+    <text x="476" y="198" fill="#8b949e" font-size="10.5">−Σ q log p · KL(p‖q)</text>
+    <rect x="460" y="220" width="280" height="52" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="476" y="242" fill="#e6edf3" font-weight="700">Brier / RPS 辅助项</text>
+    <text x="476" y="262" fill="#8b949e" font-size="10.5">序数敏感的 proper scoring</text>
+    <rect x="460" y="284" width="280" height="52" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="476" y="306" fill="#e6edf3" font-weight="700">RL：log/spherical 奖励</text>
+    <text x="476" y="326" fill="#8b949e" font-size="10.5">REINFORCE + baseline（RLCD）</text>
+  </g>
+
+  <!-- column 3 items -->
+  <g font-size="11.5">
+    <rect x="840" y="156" width="280" height="52" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="856" y="178" fill="#e6edf3" font-weight="700">LoRA / 小块（0.4%）</text>
+    <text x="856" y="198" fill="#8b949e" font-size="10.5">大底座主流 · 可拆卸切 System 2</text>
+    <rect x="840" y="220" width="280" height="52" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="856" y="242" fill="#e6edf3" font-weight="700">全参 bf16</text>
+    <text x="856" y="262" fill="#8b949e" font-size="10.5">≤4B · 600 步量级</text>
+    <rect x="840" y="284" width="280" height="52" rx="8" fill="#161b22" stroke="#30363d"/>
+    <text x="856" y="306" fill="#e6edf3" font-weight="700">联合多深度训练</text>
+    <text x="856" y="326" fill="#8b949e" font-size="10.5">早退 + 完整路径互教（APUS）</text>
+  </g>
+
+  <!-- converged combo paths (thick green) -->
+  <g stroke="#34d399" stroke-width="3" fill="none" opacity="0.85">
+    <path d="M360,182 C400,182 420,182 460,182"/>
+    <path d="M740,182 C780,182 800,182 840,182"/>
+  </g>
+  <text x="600" y="378" fill="#34d399" font-size="12" text-anchor="middle">⬆ 收敛组合：教师软概率 + soft CE/KL + LoRA/小块（JEV 系列 / OpenJev）</text>
+
+  <!-- alternative paths -->
+  <g stroke-width="2" fill="none">
+    <path d="M360,246 C400,246 420,182 460,182" stroke="#fb923c" stroke-dasharray="6 4"/>
+    <path d="M740,246 C780,246 800,246 840,246" stroke="#fb923c" stroke-dasharray="6 4"/>
+    <path d="M360,310 C400,310 420,310 460,310" stroke="#a78bfa" stroke-dasharray="6 4"/>
+    <path d="M740,310 C780,310 800,246 840,246" stroke="#a78bfa" stroke-dasharray="6 4"/>
+  </g>
+  <g font-size="11">
+    <text x="220" y="408" fill="#fb923c" text-anchor="middle">Kev 路线（公开 hard label）</text>
+    <text x="600" y="408" fill="#a78bfa" text-anchor="middle">RLCD 路线（奖励驱动校准）</text>
+    <text x="980" y="408" fill="#34d399" text-anchor="middle">全参/多深度</text>
+  </g>
+
+  <!-- bottom model mapping cards -->
+  <g>
+    <rect x="40" y="440" width="270" height="230" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="58" y="470" fill="#34d399" font-size="13" font-weight="700">蒸馏组合 →</text>
+    <text x="58" y="500" fill="#c9d1d9" font-size="11">JEV-9B/27B/35B</text>
+    <text x="58" y="524" fill="#c9d1d9" font-size="11">OpenJev（多模态）</text>
+    <text x="58" y="548" fill="#c9d1d9" font-size="11">Bonsai-JEV（三值复用配方）</text>
+    <text x="58" y="580" fill="#8b949e" font-size="10.5">KL≈0.017 · 84.0% · ECE 0.0009</text>
+    <text x="58" y="630" fill="#f85149" font-size="10.5">风险：连教师错误一起复制</text>
+
+    <rect x="324" y="440" width="270" height="230" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="342" y="470" fill="#a78bfa" font-size="13" font-weight="700">RL/全参组合 →</text>
+    <text x="342" y="500" fill="#c9d1d9" font-size="11">Laya（RLCD）</text>
+    <text x="342" y="524" fill="#c9d1d9" font-size="11">AgentJev-0.6B（全参 SFT）</text>
+    <text x="342" y="548" fill="#c9d1d9" font-size="11">Turion 31B（全参）</text>
+    <text x="342" y="580" fill="#8b949e" font-size="10.5">76.6–79.25% · 33–116ms</text>
+    <text x="342" y="630" fill="#fbbf24" font-size="10.5">坑：校准温度不能在训练集拟合</text>
+
+    <rect x="608" y="440" width="270" height="230" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="626" y="470" fill="#fb923c" font-size="13" font-weight="700">LoRA 组合 →</text>
+    <text x="626" y="500" fill="#c9d1d9" font-size="11">Kev 系列（12 公开集）</text>
+    <text x="626" y="524" fill="#c9d1d9" font-size="11">Nimble-9B（上下文接地）</text>
+    <text x="626" y="548" fill="#c9d1d9" font-size="11">APUS Reflex（多深度互教）</text>
+    <text x="626" y="580" fill="#8b949e" font-size="10.5">85–88.75% · 25.58ms</text>
+    <text x="626" y="630" fill="#8b949e" font-size="10.5">透明可审计，适合学习</text>
+
+    <rect x="892" y="440" width="268" height="230" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="910" y="470" fill="#22d3ee" font-size="13" font-weight="700">真值/教学组合 →</text>
+    <text x="910" y="500" fill="#c9d1d9" font-size="11">coding-gates（退出码标签）</text>
+    <text x="910" y="524" fill="#c9d1d9" font-size="11">minimind-jev（66 万头）</text>
+    <text x="910" y="548" fill="#c9d1d9" font-size="11">wolf-defender（安全专家）</text>
+    <text x="910" y="580" fill="#8b949e" font-size="10.5">门禁 100% · 3 分钟训完</text>
+    <text x="910" y="630" fill="#3fb950" font-size="10.5">专业领域最可信的监督来源</text>
+  </g>
+
+  <text x="60" y="720" fill="#8b949e" font-size="11">纪律：案例级哈希切分 → ID+内容双查重 → dev 选点锁死 → 独立校准集温度 → 最后才碰 test</text>
+  <text x="60" y="748" fill="#8b949e" font-size="11">工程：FP8/三值降本 · prefix caching · order averaging · 断点续跑 · 单片段重做</text>
+</svg>
+</body></html>

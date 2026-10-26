@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · 两种读取架构</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 820" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="820" fill="#0d1117"/>
+  <text x="60" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 2 · 决策如何被读出来：Token-code 读取 vs 置换等变候选头</text>
+  <text x="60" y="74" fill="#8b949e" font-size="13">两种实现殊途同归：把"选项上的 logits 归一化"作为概率；差异在结构与等变保证</text>
+
+  <!-- LEFT: token code -->
+  <rect x="40" y="100" width="552" height="560" rx="12" fill="rgba(6,78,59,0.22)" stroke="#34d399" stroke-width="1.6"/>
+  <text x="60" y="130" fill="#34d399" font-size="15" font-weight="700">A · Token-code 读取（LM 派，当前主流）</text>
+  <text x="60" y="152" fill="#8b949e" font-size="11">JEV-27B · Kev · Nimble · Turion · APUS · OpenJev</text>
+
+  <rect x="60" y="170" width="512" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="76" y="196" fill="#c9d1d9" font-size="12">1. prompt 拼装：state + question + 选项按码列出</text>
+  <text x="76" y="218" fill="#8b949e" font-size="11">A) ... B) ... C) ...（A–Z，再 AA/AB 两字母码，均为单/已知 token）</text>
+
+  <rect x="60" y="246" width="512" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="76" y="272" fill="#c9d1d9" font-size="12">2. 骨干一次前向，读提示结束位置</text>
+  <text x="76" y="294" fill="#8b949e" font-size="11">取每个选项码 token 的 log-prob：ℓ_A ℓ_B ℓ_C …</text>
+
+  <rect x="60" y="322" width="512" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="76" y="348" fill="#c9d1d9" font-size="12">3. 只在选项集合内重归一化（关键）</text>
+  <text x="76" y="370" fill="#8b949e" font-size="11">p_i = exp(ℓ_i / τ) / Σ_j exp(ℓ_j / τ)，τ 按问题类型取</text>
+
+  <rect x="60" y="398" width="512" height="86" rx="9" fill="rgba(251,146,60,0.12)" stroke="#fb923c"/>
+  <text x="76" y="424" fill="#fb923c" font-size="12" font-weight="700">顺序偏差的工艺修补</text>
+  <text x="76" y="448" fill="#c9d1d9" font-size="11">order averaging：正向 + 倒置各打一次取平均</text>
+  <text x="76" y="470" fill="#c9d1d9" font-size="11">read twice / 调优后翻转率 18.5%→2.3%（OpenJev）</text>
+
+  <text x="60" y="520" fill="#3fb950" font-size="12" font-weight="700">优点：零额外结构、复用 lm_head、255+ 选项</text>
+  <text x="60" y="548" fill="#f85149" font-size="12">代价：等变靠工艺逼近，非数学保证</text>
+  <text x="60" y="576" fill="#8b949e" font-size="11">训练：LoRA 即可（适配器 ~0.4% 参数）</text>
+  <text x="60" y="604" fill="#8b949e" font-size="11">System 2：适配器关 → 底座原样可用</text>
+
+  <!-- RIGHT: set head -->
+  <rect x="608" y="100" width="552" height="560" rx="12" fill="rgba(76,29,149,0.22)" stroke="#a78bfa" stroke-width="1.6"/>
+  <text x="628" y="130" fill="#a78bfa" font-size="15" font-weight="700">B · 置换等变候选头（集合编码器派）</text>
+  <text x="628" y="152" fill="#8b949e" font-size="11">AgentJev-0.6B（集合 Transformer）· Laya（双向编码器）</text>
+
+  <rect x="628" y="170" width="512" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="644" y="196" fill="#c9d1d9" font-size="12">1. state + question 经骨干编码（一次）</text>
+  <text x="644" y="218" fill="#8b949e" font-size="11">Qwen3/ModernBERT 输出语境向量 h（1024 维）</text>
+
+  <rect x="628" y="246" width="512" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="644" y="272" fill="#c9d1d9" font-size="12">2. 每个候选独立编码并投影</text>
+  <text x="644" y="294" fill="#8b949e" font-size="11">Linear 1024→256，得候选向量 c_1 … c_K</text>
+
+  <rect x="628" y="322" width="512" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+  <text x="644" y="348" fill="#c9d1d9" font-size="12">3. 无位置编码的集合 Transformer 交互</text>
+  <text x="644" y="370" fill="#8b949e" font-size="11">候选之间只做对称池化/注意力 ⇒ 天然置换等变</text>
+
+  <rect x="628" y="398" width="512" height="86" rx="9" fill="rgba(251,146,60,0.12)" stroke="#fb923c"/>
+  <text x="644" y="424" fill="#fb923c" font-size="12" font-weight="700">打分</text>
+  <text x="644" y="448" fill="#c9d1d9" font-size="11">残差 + RMSNorm/SiLU → 每候选标量 s_i</text>
+  <text x="644" y="470" fill="#c9d1d9" font-size="11">p = softmax(s)；候选数任意、顺序无影响</text>
+
+  <text x="628" y="520" fill="#3fb950" font-size="12" font-weight="700">优点：严格置换等变、不依赖 token 化技巧</text>
+  <text x="628" y="548" fill="#f85149" font-size="12">代价：需额外头部、训练成本略高</text>
+  <text x="628" y="576" fill="#8b949e" font-size="11">训练：≤4B 可全参 bf16（600 步量级）</text>
+  <text x="628" y="604" fill="#8b949e" font-size="11">三原语 noul/choice/score 共用同一头</text>
+
+  <!-- bottom cards -->
+  <g>
+    <rect x="40" y="686" width="360" height="104" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="58" y="714" fill="#34d399" font-size="12.5" font-weight="700">共同输出契约</text>
+    <text x="58" y="740" fill="#c9d1d9" font-size="11">Σp=1 · argmax · 期望分 Σ i·p_i</text>
+    <text x="58" y="764" fill="#8b949e" font-size="11">request-time 标签，换任务不重训</text>
+
+    <rect x="420" y="686" width="360" height="104" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="438" y="714" fill="#a78bfa" font-size="12.5" font-weight="700">选型直觉</text>
+    <text x="438" y="740" fill="#c9d1d9" font-size="11">要省事/选项多 → token-code</text>
+    <text x="438" y="764" fill="#c9d1d9" font-size="11">要数学等变/研究头结构 → 集合头</text>
+
+    <rect x="800" y="686" width="360" height="104" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="818" y="714" fill="#fb923c" font-size="12.5" font-weight="700">校准位置</text>
+    <text x="818" y="740" fill="#c9d1d9" font-size="11">温度 τ 在独立校准集拟合</text>
+    <text x="818" y="764" fill="#c9d1d9" font-size="11">RLCD 可训练中直接获得校准</text>
+  </g>
+</svg>
+</body></html>
