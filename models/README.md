@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 23 个话题。
+大模型与后训练方向的论文分析，共 24 个话题。
 
 ---
 
@@ -141,3 +141,9 @@ MoE 的本质不是「更多参数」，而是把**知识容量与每 token 计�
 2026 年 10 月论文密度最高的方向之一（arXiv 标题精确含 "test-time scaling" 的论文已达 **301 篇**）——继预训练参数缩放、后训练对齐之后被工业界广泛采用的**第三条能力扩展轴**：模型权重冻结，在推理阶段投入更多 FLOPs（长思维链、并行采样、树/图搜索、自验证、测试时学习）换取更高表现。报告系统覆盖：① 2022–2024 思想源流（CoT 把推理长度变成可操纵变量、Self-Refine/Reflexion 生成—自评—修订、ToT 树搜索、PRM800K 过程监督、Math-Shepherd 自动过程奖励、Quiet-STaR、Large Language Monkeys 覆盖率幂律）；② Snell 等奠基论文——固定总 FLOPs 下把计算从模型移向测试时搜索可击败约 **14 倍大**的模型，最优计算量是题目难度的倒 U 形函数；③ o1 产品化（reasoning tokens、$15/$60 定价）与 s1 的 **budget forcing**（1,000 条样本 + "Wait"/截断控制思考长度）；④ DeepSeek-R1 纯 RL 涌现 aha moment 与开源冲击波，SimpleRL-Zoo 在 10 个基座上揭示涌现依赖强基座，PRIME 隐式过程奖励、Skywork-OR1、Kimi k1.5（不用 MCTS/PRM、long2short）；⑤ 验证器从 ORM/PRM 到会思考的 ThinkPRM（1% 标签反超），不完美验证器下的 Sample/Mix/Verify 分配；⑥ 三种搜索拓扑与「搜索内化」之争，2026 前沿转向可证明、可认证、投机加速与上万次迭代；⑦ 用整章讲透当前最核心矛盾**过度思考**——四路线治理（预算接口、AdaCoT 把 CoT 触发率压到 **3.18%**/token −69%、长度感知训练、ATEST/因果归因调度）及 CoT 忠实性追问；⑧ 潜空间推理（Coconut、Port-Hamiltonian 治理漂移悬崖、自适应循环 Transformer）显式 vs 潜式权衡；⑨ 测试时学习（Titans 参数化记忆、TTRL 在无标签测试数据上用多数投票伪标签做 RL、AIME pass@1 +211%）及其投毒/不可复现风险；⑩ 推理经济与 o3 在 ARC-AGI 的透明案例（**172× 算力**换 75.7%→87.5%、每任务约 $26），TTS 向多模态/语音/具身/代码全模态扩散；八大开放问题与工程落地 Checklist。65 篇 arXiv 编号经 arxiv.org 逐一核实（另亲自抽查 12 个关键编号，含 SimpleRL-Zoo/Titans/Coconut/ThinkPRM 等网传易错编号勘误），厂商数据标注「厂商口径」、第三方复测标注「第三方」。
 
 📅 2026-10-25 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](test-time-scaling/report.md)
+
+### [全双工实时语音对话模型](full-duplex-speech/report.html)
+
+2026 年 10 月论文爆发的未覆盖方向（arXiv 全双工语音专题 **176+ 篇**，2026-09–10 单月数十篇新论文）。报告系统覆盖：① 半双工/双工/全双工概念辨析与「对讲机→打电话」的体验跃迁；② 级联 ASR-LLM-TTS → 端到端 SpeechLM（VITA/Mini-Omni/LLaMA-Omni/Freeze-Omni/GLM-4-Voice）→ 原生全双工（Moshi）三代技术谱系；③ 全双工内部架构——双流音频 token、Inner Monologue、流式神经 codec（Mimi 12.5Hz/1.1kbps/80ms 帧）、帧级 turn-taking 决策、Thinker-Talker MoE、回声消除（LMPAN）与延迟预算分解；④ 2025H2–2026 六大战线：长程稳定（FD-LHB 揭示所有模型上下文耗尽）、多方多语（MultiTalk/MultiPartyTurnBench）、扩散解码（DiffuPlex/离散扩散）、异步时钟（RUBATO）、半双工骨干升级（D2）、可控情感与 turn-taking 风格（SteerablePlex/Steering Geometry）；⑤ 评测体系（FD-Bench/FD-VAD/延迟/barge-in/双人 dyadic 自然度）与「全双工≠体验闭环」；⑥ 安全——声音克隆与 Sky/Johansson 事件、DuplexJail 语音越狱（ASR 最高 48.7%）、自我监听、spurious onset 因果分析；⑦ 产业三层生态（模型层 GPT-Realtime/Gemini Live/Moshi/Qwen3-Omni/Step-Audio 2/GLM-4-Voice/Kimi-Audio；中间件 LiveKit/Pipecat/Vapi；硬件层眼镜/耳机），含 GitHub star、融资、MAU（Gemini 63% 用户用语音，厂商口径）等实时数据；八大开放问题与工程落地 Checklist。71 篇 arXiv 编号经 arxiv.org 逐一核实（另亲自抽查核心编号），厂商数据标注「厂商口径」、媒体数据标注「第三方」。
+
+📅 2026-10-26 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](full-duplex-speech/report.md)

@@ -58,6 +58,8 @@
 
 | [**Test-Time Scaling 测试时计算扩展**](https://ckirchhoff2021.github.io/knowledge-base/models/test-time-scaling/report.html) | 第三条能力扩展轴（权重冻结、推理时投入更多 FLOPs）：CoT/ToT/PRM800K 思想源流 · Snell 固定 FLOPs 击败 14 倍大模型 · o1 与 s1 budget forcing · R1 纯 RL 与开源生态 · 验证器（→ThinkPRM）· 搜索三拓扑与可证明缩放 · 过度思考四路线治理（AdaCoT 触发率 3.18%）· 潜空间推理（Coconut/漂移悬崖）· TTRL 无标签测试 RL（+211%）· o3 在 ARC-AGI 172× 算力换 75.7%→87.5% · 全模态扩散 |
 
+| [**全双工实时语音对话模型**](https://ckirchhoff2021.github.io/knowledge-base/models/full-duplex-speech/report.html) | 当大模型学会「边听边说」：半双工/全双工定义与「对讲机→打电话」跃迁 · 级联 ASR-LLM-TTS→端到端 SpeechLM→原生全双工三代谱系 · 内部架构（双流音频 token/Inner Monologue/流式 codec/帧级 turn-taking/Thinker-Talker/回声消除）与延迟预算 · 2025H2–2026 六大战线（长程 FD-LHB 上下文耗尽/多方多语 MultiTalk/扩散 DiffuPlex·RUBATO 异步时钟/D2 半双工升级/可控情感 turn-taking/DuplexJail 语音越狱）· FD-Bench 评测与自然度 · 声音克隆 Sky 事件/自我监听/spurious onset 安全 · 产业三层（GPT-Realtime/Gemini Live/Moshi/Qwen3-Omni/Step-Audio 2/GLM-4-Voice/Kimi-Audio + LiveKit/Pipecat/Vapi + 眼镜耳机，含 star/融资/MAU） |
+
 ### 🌱 生活方法论
 
 | 报告 | 说明 |

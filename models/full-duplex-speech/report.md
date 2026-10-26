@@ -1,0 +1,462 @@
+# 全双工实时语音对话模型：当大模型学会「边听边说」
+
+> **主题**：Full-Duplex Real-Time Speech / Spoken Dialogue Models（全双工实时语音对话模型）
+> **完成日期**：2026-10-26　**信源核实**：40 篇 arXiv 论文均经 arxiv.org 摘要页 `citation_title / citation_date / citation_author` 元标签逐一核对；产业信息区分「官方口径」与「第三方估算」
+> **配图**：6 张暗色手绘 SVG 架构图（见各章引用）
+
+## 目录
+
+1. 为什么是现在：从「对讲机」到「打电话」
+2. 技术谱系：级联流水线 → 端到端 SpeechLM → 原生全双工
+3. 架构解剖：全双工模型怎样边听边说
+4. 前沿战场（2025H2–2026）：六条快速演进的技术支线
+5. 评测难题：延迟、打断与「自然度」如何度量
+6. 安全与对齐：声音克隆、语音越狱与自我监听
+7. 产业生态：模型、中间件与硬件的三层格局
+8. 开放问题与展望
+
+---
+
+## 1. 为什么是现在：从「对讲机」到「打电话」
+
+2024 年 5 月 13 日，OpenAI 春季发布会用一段流畅到令人不安的语音对话演示 GPT-4o：模型可以被随时打断、会轻笑、会在用户说话时同步回应。Sam Altman 在发布会后只发了一个词——「Her」，直指 2013 年那部人类与 AI 语音相爱的电影。这段演示在 48 小时内病毒式传播，也把一个此前只存在于语音学小圈子里的工程概念推向主流：**全双工（full-duplex）**——通信双方可以同时发送与接收信息，正如人类打电话；与之相对的**半双工（half-duplex）**同一时刻只能单向传输，正如对讲机。
+
+演示之外，现实要骨感得多。字节跳动在 2024 年 8 月的技术文章中直言：彼时主流 AIGC 语音通话「少有能实现用户随时打断，体验上更像对讲机而非打电话」——根因是用户在智能体发声时开口，声音会与智能体自身播放的声音**回声混叠**，导致识别失败 [火山引擎, 2024]。GPT-4o 的高级语音模式（Advanced Voice Mode）也因安全检测与实时基础设施扩容，从 2024 年 6 月推迟到 7 月底才开始小范围 alpha，9 月才扩大开放 [TechCrunch, 2024]。
+
+但「实时语音」这条赛道一旦被点燃，演进速度远超预期。接下来两年里发生了三件事：
+
+- **架构上**，法国非营利实验室 Kyutai 于 2024 年 9 月开源全双工语音基础模型 **Moshi**，用两条音频流统一建模对话双方，理论延迟 160 ms、L4 GPU 实测约 200 ms [Défossez et al., 2410.00037]；
+- **生态上**，OpenAI 于 2024 年 10 月 DevDay 推出 **Realtime API**，Google 于 2024 年 12 月推出 **Multimodal Live API**，Amazon 于 2025 年 4 月推出 **Nova Sonic**，语音从产品功能变成可编程的基础设施；
+- **研究上**，arXiv 上全双工方向论文在 2026 年下半年呈爆发态势——仅 2026 年 10 月前 23 天，就有「长对话崩溃分析」「半双工骨干升级全双工」「扩散式双工解码」「解耦时钟」等数十篇新工作出现（本文第 4 章）。截至 2026-10-26，arXiv 全库检索 `full-duplex speech` 命中 **176 篇**，`real-time spoken dialogue` 命中 111 篇。
+
+值得专门说明的是「全双工」一词在当下文献中的两层含义，二者常被混用：
+
+1. **工程式同步（engineering synchronization）**：系统级层面让 ASR、对话管理、TTS 等模块并发流水执行，配合 VAD（语音活动检测）、回声消除（AEC）与句末检测实现「可打断」。大多数商用语音 Agent 属于此类。
+2. **原生/端到端全双工（native / end-to-end full-duplex）**：单一神经网络在每个时间帧同时消费用户音频帧、产出自身音频帧，由模型自己决定「何时听、何时说、何时停」，无需外部轮次模块。Moshi、BayLing-Duplex、SALMONN-omni 等是代表。
+
+2025 年 9 月的综述把这一区分正式概括为「工程式同步 vs 学习式同步」[Chen & Yu, 2509.14515]；2026 年 6 月的综述则进一步提出「架构层级—交互本体—决策状态机」的三维分类法 [Lu et al., 2606.19453]。本文所称「全双工模型」主要指第二类，但会不断对照第一类的工程现实——因为**真正决定用户体验的，从来不是标签，而是延迟预算与轮次决策质量**。
+
+> ![](diagrams/1-taxonomy-timeline.html)
+
+## 2. 技术谱系：级联流水线 → 端到端 SpeechLM → 原生全双工
+
+### 2.1 第一代：级联流水线（Cascaded ASR–LLM–TTS）
+
+2023 年大模型语音助手的标准做法是把三个成熟模块串起来：**自动语音识别（ASR）**把用户语音转成文本 → **大语言模型（LLM）**生成文本回复 → **文本转语音（TTS）**把文本念出来，再由一个外部 VAD 判定用户是否说完。这条路线工程成熟、组件可独立替换、能直接复用 LLM 的全部智力，ElevenLabs 的 conversational agents 等至今仍提供这种可组合架构。
+
+但级联的结构性缺陷在实时场景下被放大，Moshi 论文对此有系统批评 [2410.00037]：
+
+- **延迟叠加**：每个模块都要等上游输出，ASR 往往要等句末才给结果，端到端常达数秒；
+- **信息瓶颈**：文本中间层丢掉了情绪、语气、停顿、笑声、哭声等副语言信息——Block 在 2026 年 10 月发布本地语音模型 Dessa 时延续了这一批判：「把你的声音变成文本，就扔掉了文本承载不了的信息」[TechCrunch, 2026-10-24]；
+- **强制轮次分割**：VAD 把对话切成整齐的回合，无法原生处理重叠、抢话、犹豫、附和（backchannel，如「嗯」「对对对」）；
+- **回声混叠**：模型发声时用户开口，ASR 听到的是「用户声 + 模型回声」，识别率骤降。
+
+### 2.2 第二代：端到端语音语言模型（SpeechLM, 2024）
+
+2024 年年中起，研究界开始把语音直接接进 LLM 的 token 空间。核心思路是：用一个**神经音频编解码器（neural audio codec）**把语音压成离散 token（类似音频版的 BPE），让 LLM 像生成文本一样生成语音 token，再由解码器还原成波形。语音不再需要「先变成文字」，情绪与声学信息得以保留。
+
+这一阶段的标志性开源工作密集出现在 2024 年 8 月至 12 月：
+
+| 模型 | 时间 | 骨干/规模 | 关键突破 |
+|---|---|---|---|
+| **VITA** [2408.05211] | 2024-08 | Mixtral 8×7B | 首个开源交互式全模态模型，支持非唤醒交互与音频打断 |
+| **Mini-Omni** [2408.16725] | 2024-08 | Qwen2 ≈0.5B | 文本与音频 token 并行生成、「边想边说」流式输出，附 VoiceAssistant-400K 数据 |
+| **LLaMA-Omni** [2409.06666] | 2024-09 | Llama-3.1-8B | 最低响应延迟 236 ms；563 ms 配置下质量接近离线模型 |
+| **Mini-Omni2** [2410.11190] | 2024-10 | Qwen2-0.5B | 加入视觉，双工交互与命令式打断 |
+| **Freeze-Omni** [2411.00774] | 2024-11 | 冻结文本 LLM | 不改动 LLM 即接入语音，统计延迟均值 745 ms |
+| **GLM-4-Voice** [2412.02612] | 2024-12 | 9B 级 | 中英端到端，情感/语调/语速/方言可控，Streaming Thoughts 模板 |
+
+这一代模型实现了「语音进、语音出」的端到端生成，但多数在交互形态上**仍是轮次制（turn-based）**：依赖外部 VAD 标记用户话轮结束，再开始生成。它们是「端到端的半双工」——质量问题解决了，时间问题还没有。
+
+### 2.3 第三代：原生全双工（Native Full-Duplex, 2024Q3 起）
+
+Moshi 第一次给出了干净的原生全双工答案：模型在每一帧（80 ms）同时处理**用户音频流**和**自身音频流**两条输入，并在预测自身音频 token 的同时预测对应的文本 token（Inner Monologue，内心独白）。对话中不再有「回合开始/结束」的显式开关，重叠、打断、附和都成为同一套 token 预测的自然产物 [2410.00037]。
+
+2025 年起，原生全双工迅速分化出多条技术路线（详见第 3、4 章）：
+
+- **Codec 注入派**：把音频 codec token 注入 LLM 词表联合建模（Moshi、BayLing-Duplex [2606.14528]）；
+- **无 Codec 注入派**：用连续声学特征直接进模型，避免污染语言空间（SALMONN-omni [2505.17060]、SALM-Duplex [2505.15670]）；
+- **Thinker–Talker 派**：把「思考的大脑」与「说话的嘴」拆成两个模块（Qwen2.5/3-Omni [2503.20215, 2509.17765]）；
+- **统一全模态派**：在生产级统一模型中把理解、生成、工具、RAG 全部打通（Step-Audio 2 [2507.16632]、Kimi-Audio [2504.18425]、MiniCPM-o 4.5 [2604.27393]）。
+
+需要强调：三代并非线性替代，而是**长期并存**。2026 年的产业现实是「级联保智力、端到端保体验」的混合体——例如 FireRedChat 同时提供级联与半级联实现 [2509.06502]，D2 框架则干脆把成熟的半双工大模型改造成全双工 [2610.17124]。路线之争的本质，是「智力上限」与「交互实时性」如何在同一个延迟预算内和解。
+
+> ![](diagrams/2-cascade-vs-e2e.html)
+
+---
+## 3. 架构解剖：全双工模型怎样边听边说
+
+一个原生全双工模型在每个时间帧（通常 80 ms 左右）要同时回答三个问题：**外界正在发生什么（听）、我该如何理解与决策（想）、我此刻该不该出声以及出什么声（说）**。本章沿数据流拆解六个关键组件。
+
+> ![](diagrams/3-fdx-architecture.html)
+
+### 3.1 流式音频编解码器：把声音变成模型能消化的 token
+
+全双工的第一块基石是**低帧率、低延迟、全流式**的神经音频编解码器。它决定了整条链路的时间分辨率下限。
+
+- **Mimi（Moshi）**：24 kHz 音频压到 **12.5 Hz** 帧率（每帧 80 ms）、约 **1.1 kbps** 码率，8 个码本中第一码本经 WavLM 蒸馏，**同时承担语义与声学双重角色**，其余码本负责声学细节；帧长 80 ms 是全系统理论延迟 160 ms 的一半来源 [2410.00037]。
+- **GLM-4-Voice** 的语音 tokenizer 码率低至 **175 bps**、帧率同为 12.5 Hz，用 700k 小时无监督语音训练 [2412.02612]。
+- **Kimi-Audio** 改用「连续特征输入 + 离散 token 输出」的非对称设计，输出端接流式 flow-matching 解压器，预训练音频超过 **1300 万小时**，骨干源自 Qwen2.5-7B [2504.18425]。
+- **SALM-Duplex** 用仅 100M 的流式编码器，帧间隔 80 ms，个性化 codec 码率 0.6 kbps [2505.15670]。
+
+低帧率是把双刃剑：帧越粗，每帧要生成的音频信息越多、单帧推理越重；帧越细，时间控制越精但序列越长。2026 年的工作开始系统性研究这个 trade-off——D2 发现 chunk 大小同时影响交互质量、通用能力与推理算力，并给出在 Qwen3-Omni、LLaMA-Omni 2 两种骨干上的适配规律 [2610.17124]。
+
+### 3.2 双流建模与时间对齐：用户流 × 自我流
+
+全双工与半双工最本质的区别，是模型上下文里始终存在**两条时间轴**：用户音频流（含模型自己的回声）与模型自身音频流。二者相位独立、可能重叠。
+
+Moshi 的做法是在同一个 7B Temporal Transformer 里联合建模两条音频流加一条文本流（Inner Monologue），用多码本 Depth Transformer 建模帧内依赖 [2410.00037]。Qwen2.5-Omni 则发明 **TMRoPE（Time-aligned Multimodal RoPE）**，把视频帧与音频块的时间戳写进旋转位置编码，让不同模态在同一时间坐标系里对齐，并采用分块流式编码实现「输入即处理」[2503.20215]。
+
+回声问题在双流框架下有了新解法：既然模型能同时看到「用户流」和「自我流」，就可以把已知的自我播放声作为条件，学会从混合信号中分离用户声音——这相当于把传统的**声学回声消除（AEC）**内化进模型。2026 年 7 月的 LMPAN 进一步用轻量多路径对齐网络联合做 AEC 与全双工对话 [arXiv:2607.02062]，说明经典信号处理模块仍在与端到端方案融合。
+
+### 3.3 轮次决策：VAD、EoT 与模型内生的「发言权控制」
+
+「什么时候该说话、什么时候该闭嘴、什么时候该让用户打断」在语音学术语中叫**发言权控制（floor control / turn-taking）**，是全双工智能的核心决策。
+
+三种实现范式代表了三个年代：
+
+1. **外部 VAD 范式**：独立模块检测人声起止，触发 ASR/TTS。简单但割裂——VAD 不懂语义，常把句中停顿误判为话轮结束（**误打断**），或在用户已说完时迟迟不接话（**响应滞后**）。LLaMA-Omni、GLM-4-Voice 一代均属此类，BayLing-Duplex 论文明确指出这「从根本上限制了交互能力」[2606.14528]。
+2. **语义端点检测（EoT/Semantic VAD）范式**：用模型判断「语义上是否说完了」而非「声学上是否安静了」。FireRedChat 的个性化流式 VAD + 语义句末检测在 170 ms 延迟下达到 90% 打断准确率，中英文 EoT 准确率 96.0%/94.9% [2509.06502]；FD-VAD 专门做流式语义端点检测 [arXiv:2609.35791]；TurnFSM 则把状态机逻辑内化进流式语义模型 [arXiv:2609.04240]。
+3. **模型内生决策范式**：单一自回归 LLM 直接输出「听/说/停」决策，无任何外部轮次模块。BayLing-Duplex 是代表，其设计只在语音 LLM 上增加少量组件即可原生处理重叠、犹豫与 barge-in [2606.14528]；SALMONN-omni 通过动态 thinking 机制仲裁双工行为，turn-taking 成功率在 Llama/Web/TriviaQA/AlpacaEval 上达 99.7/99.6/92.8/92.0，上下文无关的 barge-in/backchannel 检测 F1 达 0.88，DPO 后整体 F1 0.90 [2505.17060]。
+
+2026 年的趋势是把轮次决策**层级化、策略化**：HiPLEX 用分层策略分解（hierarchical policy factorization）管理发言权 [2610.07727]；SALMONN-duo 用快慢双系统自适应协调（类似 System 1/System 2）[2609.34247]；Instruct-FD 研究模型能否遵循人类给出的轮次风格指令（「让我多说点」「别老打断我」）[arXiv:2607.20460]。
+
+### 3.4 Thinker–Talker：把「想」和「说」解耦
+
+实时对话里，「思考耗时」与「说话节拍」天然冲突：复杂推理需要几秒，但语音必须以稳定节奏流出，否则就会卡顿或抢话。Qwen 系列的答案是**双模块架构**：
+
+- **Thinker**：大规格多模态语言模型，负责理解与推理，产出文本与高层表征；
+- **Talker**：小规格流式语音解码器，只负责把 Thinker 的输出实时变成语音 token，通过双轨 token 与 Thinker 衔接。
+
+Qwen2.5-Omni-7B 验证了该架构的有效性，VoiceBench 均分 74.12，LibriSpeech test-clean/other WER 仅 1.8/3.4 [2503.20215]。Qwen3-Omni 把它 MoE 化：Thinker 为 **30B-A3B**、Talker 为 **3B-A0.3B**，冷启动理论端到端首包延迟音频 234 ms（视频 547 ms），4/6 路并发时音频首包延迟 728/1172 ms，支持 119 种文本语言、19 种语音输入、10 种语音输出；VoiceBench 上 Thinking 版 88.8、Flash-Thinking 版 89.5 [2509.17765]。
+
+解耦带来的直接红利是**并发经济性**：昂贵的 Thinker 可以被多路对话共享，轻量 Talker 各自出声。这也是云端实时语音商业模型成立的关键。
+
+### 3.5 内心独白与流式思考：让模型「说出话」之前先「说给自己听」
+
+Moshi 的 **Inner Monologue** 是一个影响深远的小设计：模型在生成自身音频 token 的同时预测对应文本 token。文本通道充当「思考脚手架」，显著提升语言质量与可解释性——开发者甚至能从文本流实时读到模型「想说什么」[2410.00037]。GLM-4-Voice 的 **Streaming Thoughts** 异曲同工：用显式推理模板组织「边接收音频边组织语言」的过程 [2412.02612]。
+
+到 2026 年，「思考流」本身成为研究对象。RUBATO 指出：为保证内部思考流实时完成，现有方法强制固定解码速率、假设特定硬件延迟，这严重次优；理想模型应让思考流按硬件能力**异步**解码——「Think as Fast as They Can」，同时维持对话流的实时性 [2610.14299]。Realtime-Venus 则构建了带异步委派（asynchronous delegation）的全双工交互系统 [arXiv:2609.13814]。思考与说话的时钟解耦，正在成为新共识。
+
+### 3.6 语音生成后端：自回归、流式与扩散的竞速
+
+最后一环是把 token/隐表征变成波形。三条技术路线在 2025–2026 年正面竞争：
+
+- **自回归流式合成**：LLaMA-Omni2 用自回归流式语音合成，仅 20 万条多轮语音对话样本训练，7B 模型 S2S Score 4.15、ASR-WER 3.26、UTMOS 4.19，典型延迟约 600 ms、优化后 457 ms [2505.02625]；
+- **Flow-matching / 非自回归**：Kimi-Audio 的流式 flow-matching detokenizer 兼顾质量与流式性 [2504.18425]；
+- **离散扩散（discrete diffusion）**：2026 年 10 月出现两篇标志性工作——DiffuPlex 用滚动掩码扩散（rolling masked diffusion）加速全双工对话模型 [2610.12214]，陈晨等人的工作直接以「全双工口语建模与离散扩散」为题 [2610.17780]。扩散类方法的吸引力在于**并行解码**：不必逐帧自回归，有望打破 token 帧率对延迟的硬约束。
+
+### 3.7 一个统一的延迟账本
+
+把上述组件串起来，一次「用户开口 → 模型出声」的端到端延迟大致由五段构成：
+
+| 延迟段 | 典型量级 | 主要决定因素 |
+|---|---|---|
+| 采集 + 编码器帧缓冲 | 80–160 ms | codec 帧长（Mimi 80 ms） |
+| 用户意图/端点判定 | 170–750 ms | VAD vs 语义 EoT vs 内生决策 |
+| LLM 首 token（思考） | 200–600 ms | 模型规模、是否命中缓存、MoE 激活量 |
+| 语音首包生成 | 80–300 ms | Talker 规格、AR/扩散解码 |
+| 网络与播放 | 50–300 ms+ | WebRTC 边缘节点 vs 跨境公网 |
+
+这解释了为什么「理论 200 ms」与「用户感觉 1–2 秒」可以同时为真：实验室只测模型侧，真实系统还背着端点判定与网络两段大头。Freeze-Omni 报告的模型侧统计延迟均值 745 ms、P90 1020 ms，计入网络后真实场景约 1.2 s [2411.00774]；FireRedChat 生产系统端到端 P50/P95 为 2.341/3.015 s [2509.06502]。Qwen3-Omni 特别区分「冷启动理论首包 234 ms」与「4/6 并发时 728/1172 ms」[2509.17765]，正是提醒读者：**脱离并发与网络谈延迟没有意义**。
+
+---
+## 4. 前沿战场（2025H2–2026）：六条快速演进的技术支线
+
+如果说 2024 年的主题是「证明全双工可行」，那么 2025 下半年到 2026 年的主题就是「修补全双工的每一处裂缝」。从最新文献中可以清晰辨认出六条支线，它们共同勾勒出当下研究的前沿边界。
+
+> ![](diagrams/4-frontier-lines.html)
+
+### 4.1 支线一：长程稳定性——全双工模型会在长对话中「崩溃」
+
+这是 2026 年 10 月最受关注的新问题。全双工模型**每一帧都在生成 token，即使在聆听时也不停止**，这意味着它们会在几分钟内耗尽上下文窗口——而现有评测大多只测单轮或几轮，根本暴露不了长程问题。
+
+Kim 等人提出 **FD-LHB（Full-Duplex Long-Horizon Benchmark）**，用长时回放对话与 LLM 实时对谈两种方式测试五个近期全双工模型，结论尖锐：**每一个被评测的模型最终要么性能退化，要么上下文耗尽** [2610.32349]。这把全双工的矛盾从「延迟」推向了「时间尺度」——人类电话可以打一小时，而当前模型的连续工作记忆以分钟计。
+
+应对方向正在浮现：更高效的上下文压缩（音频帧远比文本 token 稠密）、滑窗与摘要记忆、以及让模型在「纯聆听」时停止生成冗余 token。同期的 PACE 提出播放对齐的上下文引擎（playback-aligned context engine）[arXiv:2608.07631]，可视为长程记忆管理的早期尝试。
+
+### 4.2 支线二：多方与多语——从二人对话到会议场景
+
+真实世界的会议、小组课、社交机器人接待要求单个模型在长时段内追踪、关联并回应**多个说话人**。MultiTalk 同时攻克「长上下文鲁棒性」与「多方交互」两个维度，把全双工语音模型扩展到长时、多方、双语对话，并指出现有公开多方语音语料既小又不是为 codec 帧级全双工建模设计的 [2609.36903]。
+
+评测侧，MultiPartyTurnBench 专门评测多人口语对话中的发言权控制（floor control）[2610.20172]；τ-Multilingual 跨语言评测语音 Agent [arXiv:2609.35820]。Soloist 则研究野外盲源语音分离 [2610.19716]，为「谁在说话」这一基础问题提供前端。说话人识别与多流追踪，正从 ASR 的附属模块升级为全双工智能的一等公民。
+
+### 4.3 支线三：半双工 → 全双工的低成本升级
+
+既然头部半双工模型（如 Qwen3-Omni）通用能力远强于多数全双工模型，能否直接把它们「改造」成全双工，而不必从头训练？**D2（Dialogue-to-Duplex）**给出了肯定答案：通过无解码器表征蒸馏把原音频编码器改造为流式，再用监督微调学习全双工交互，在细时间粒度上把预训练半双工模型转成高能力全双工模型；在 Qwen3-Omni 与 LLaMA-Omni 2 两种架构上均验证有效 [2610.17124]。
+
+这条路线的产业意义极大：它让「智力」与「双工」可以解耦积累——模型团队持续优化半双工骨干，交互团队负责最后的双工适配，避免了全双工重训导致的能力倒退。
+
+### 4.4 支线四：扩散式双工解码——打破自回归帧率枷锁
+
+自回归模型逐帧生成，延迟与帧率强绑定。2026 年 10 月，扩散方法被引入全双工：**DiffuPlex** 用滚动掩码扩散加速全双工对话模型 [2610.12214]；**Chen 等人**系统研究用离散扩散做全双工口语建模 [2610.17780]。扩散/掩码并行解码允许模型一次刷新多个音频帧，理论上可把「思考—出声」的串行等待改成并行修订。
+
+这一支线仍处早期，核心挑战是扩散迭代次数与实时性的平衡、以及流式约束下的因果性保证，但它与 2025 年扩散语言模型（DLM）的整体复兴同源，是值得持续跟踪的变量。
+
+### 4.5 支线五：全模态具身——语音、表情、手势的协同
+
+全双工正在超越纯音频。2026 年 10 月的 **Full-Duplex Interaction with Speech, Expressions and Gestures** 让模型在对话中同步产出语音、面部表情与手势 [2610.21452]；**FacePlex** 做自然全双工对话虚拟人 [2606.30145]；另有工作把面部生成集成进全双工口语系统 [arXiv:2606.21970]。DuplexOmni 则把「实时听、看、想、说」统一进一个全双工交互模型 [2606.09186]。
+
+当 AI 有了脸和身体，时间对齐问题升了一级：语音、唇形、表情、手势必须在毫秒级同步，任何一个流滞后都会产生「恐怖谷」式违和。这也是数字人/虚拟伴侣赛道的核心技术门槛。
+
+### 4.6 支线六：可控性与情感——从「能对话」到「对话得对」
+
+用户希望语音助手的风格、情感、轮次习惯可控。这一支线在 2026 年成果密集：
+
+- **SteerablePlex / SteerDuplex** 研究全双工对话的可操控性 [2610.12201, 2609.12623]；
+- **Reference-Guided Turn-Taking Style Transfer** 用参考音频迁移轮次风格 [2610.20763]；
+- **「Steering Follows Geometry, Not Labels」** 发现情感操控应沿模型内部几何方向进行、而非靠文本标签 [2610.08887]；
+- **Activation Steering** 被用于克服全双工模型的「状态惰性（state inertia）」——模型该停时停不下来、该接话时接不上 [arXiv:2606.11386]；
+- **CounselPlex** 面向心理咨询，构建压力源感知的全双工模型 [2610.32702]；JoyAI-Talker 主打共情语音 [arXiv:2608.01119]；CharDuplex 保证角色扮演一致性 [arXiv:2609.34461]。
+
+方法论上，**强化学习**被大量用于解耦对话动态：Li 等人用 RL 解耦全双工口语模型中的对话动态 [2607.07148]；Step-Audio 2 采用「推理中心 RL」提升副语言理解 [2507.16632]。轮次行为、情感、内容三者的可分离控制，正在从技巧变成工程。
+
+### 4.7 横向观察：2026 年研究热点的迁移
+
+把 2026 年 6–10 月的论文标题按主题聚类，可以清楚看到关注点的迁移轨迹：
+
+| 时期 | 主导问题 | 代表工作 |
+|---|---|---|
+| 2024H2 | 证明端到端/全双工可行 | Moshi、VITA、Mini-Omni、LLaMA-Omni |
+| 2025H1 | 统一理解与生成、降低延迟 | Step-Audio、Qwen2.5-Omni、Kimi-Audio、SALM-Duplex |
+| 2025H2 | 规模化、MoE、全双工评测 | Qwen3-Omni、Step-Audio 2、FD-Bench、全双工 survey |
+| 2026H1 | 原生单模型、虚拟人、状态惰性 | BayLing-Duplex、FacePlex、MiniCPM-o 4.5、survey |
+| 2026H2 | 长程崩溃、多方多语、扩散解码、安全 | FD-LHB、MultiTalk、D2、DiffuPlex、DuplexJail |
+
+一句话概括：**研究焦点正从「让模型开口」转向「让模型在真实时间、真实多人、真实长对话里稳定、可控、安全地开口」。**
+
+---
+## 5. 评测难题：延迟、打断与「自然度」如何度量
+
+语音对话模型的评测比文本模型难得多：文本有唯一正确答案，而「这段对话自不自然」是主观、多维、且依赖时序的。2025–2026 年学界围绕评测本身形成了一个活跃子领域。
+
+### 5.1 三个评测维度
+
+2025 年 9 月的全双工综述把评测归纳为四组目标 [2509.14515]：**时间动态（temporal dynamics）**——响应延迟、打断反应；**行为仲裁（behavior arbitration）**——该听还是该说的决策正确率；**语义连贯（semantic coherence）**——回答质量；**声学性能（acoustic performance）**——音质、可懂度、音色稳定性。实际评测通常沿以下三类指标展开：
+
+- **延迟类**：首包延迟（time to first audio byte）、响应延迟（用户停口到模型出声）、打断响应延迟（barge-in response time）、端到端 P50/P95。务必区分模型侧理论值与含网络的真实值（见 3.7）。
+- **轮次决策类**：barge-in 成功率、误触发率（false trigger）、EoT 准确率、turn-taking 成功率、backchannel F1。
+- **质量类**：ASR 反测 WER/CER（用 ASR 转模型语音算可懂度）、MOS/UTMOS（音质主观分或其神经代理）、说话人相似度 SIM、S2S Score、VoiceBench 等综合基准。
+
+### 5.2 代表性基准
+
+| 基准 | 时间 | 评测焦点 | 关键设计/数据 |
+|---|---|---|---|
+| **FD-Bench** [2507.19040] | 2025-07 | 打断、延迟、鲁棒性 | 40+ 小时语音、293 段对话、约 1,200 次打断，覆盖多类中断与噪声；Easy 设置 Moshi/Freeze-Omni/VITA-1.5 综合 4.43/3.29/2.68 |
+| **全双工 Survey 评测框架** [2509.14515] | 2025-09 | 四维分类 | 时间/仲裁/语义/声学 |
+| **FD-LHB** [2610.32349] | 2026-10 | 长程稳定性 | 长回放 + LLM 实时对谈，五模型全部退化或耗尽 |
+| **MultiPartyTurnBench** [2610.20172] | 2026-10 | 多方发言权控制 | 多人场景 floor control |
+| **延迟意图基准** [2610.00272] | 2026-09 | 意图延迟揭示 | 用户意图在话轮后期才明确时模型能否应对 |
+| **DuplexSpeechBench-IFEval** [arXiv:2609.03423] | 2026-09 | 隐式指令遵循 | 语音 Agent 的指令跟随 |
+| **JarvisBench** [2608.14870] | 2026-08 | Always-on 智能 | 人机常驻交互 |
+| **法语全双工基准** [arXiv:2609.10765] | 2026-09 | 自然对话/多语 | 法语专项 |
+
+### 5.3 评测的三个方法论陷阱
+
+1. **「神经评委」不可靠**：用 LLM/音频模型给对话自然度打分正在成为主流，但 2026 年 7 月的可靠性评估专门检验 LALM（大型音频语言模型）音频评委，发现其打分稳定性存疑 [arXiv:2607.07985]。人类主观评测（CMOS/MOS）仍是金标准，神经评委只能作大规模初筛。
+2. **指标好 ≠ 对话自然**：2026 年 10 月的「People Making Conversation」直接评测语音模型对话的自然度而非单项指标 [2610.12802]；「Conversation Is a Two-Body Problem」主张双人成对评测（dyadic evaluation）[2610.08125]；「Coupled but Late」研究全双工模型间的轮次耦合 [2610.08683]。单看延迟或 WER 都可能漏掉「节奏别扭」这一最致命的体验问题。
+3. **决策可被绕过解码操纵**：2026 年 10 月的「Batched Speech Decisions Without Decoding」提出用单 token 批量预测语音决策，既是加速手段，也暗示轮次决策评测可能被投机策略「刷分」[2610.02638]。
+
+### 5.4 数据：合成对话语料的军备竞赛
+
+全双工训练的最大瓶颈是**带帧级时间标注的真实对话数据极少**——公开语音语料多为朗读或干净独白，没有自然重叠与轮次行为。2026 年的应对是大规模合成：DuplexChat 大规模构建说话人分离的全双工对话语音 [arXiv:2607.04941]；DuplexGen 自适应合成人机轮次对话 [arXiv:2607.26178]；DuplexDrama 合成带场景、双工行为与表现力的对话 [2609.12872]；Agentic-DuplexGen 把内容、时序、声学解耦合成 [arXiv:2608.16053]；ConversationalVoice 则强调从真实对话做保真重制而非纯合成 [arXiv:2609.08147]。
+
+这与智源 2026 趋势第 7 条「合成数据占比攀升」相呼应：在语音领域，合成数据不是补充而是主力——Step-Audio 2 用 680B 文本 token 加 **800 万小时**真实/合成音频 [2507.16632]。但合成数据的风险同样明显：轮次行为分布一旦失真，模型会学到「不像人」的对话节奏，这又回到评测难题本身。
+
+## 6. 安全与对齐：声音克隆、语音越狱与自我监听
+
+随着语音成为交互入口，一条全新的攻击面被打开：**用户音频通道本身就是输入，而全双工允许攻击者在任意时刻插入音频**。
+
+### 6.1 语音越狱：DuplexJail
+
+2026 年 9 月的 **DuplexJail** 揭示了全双工特有的攻击：通过用户音频通道投放**固定的、与具体请求无关的**口语越狱提示，利用打断时机改变模型行为。研究者在四个开源模型、来自 AdvBench/HarmBench 的 720 条有害请求上，比较了固定延迟打断与拒绝触发打断。在 AdvBench 上，延迟 1.0 秒的「Guided Completion」把 PersonaPlex 的整段响应攻击成功率抬到 **40.3%**、PersonaPlex-RL 到 **48.7%**，分别比基线提高 33.8 和 39.3 个百分点；在未用于选提示的 HarmBench 上同样有效 [2609.09420]。
+
+这个攻击的要害在于**时序**：它不依赖精巧的文本 prompt，而依赖「在模型即将拒绝的瞬间插入语音」——这是只有全双工才暴露的攻击向量，传统文本安全护栏完全无法覆盖。
+
+### 6.2 虚假起始与状态惰性：模型为什么「该停不停」
+
+全双工模型还表现出一类独特的失效：**虚假起始（spurious onsets）**——模型在不该说话时突然开口。2026 年 9 月的工作对其做了因果分析并提出缓解 [2609.13445]。与之相关的是「状态惰性」：模型进入说话状态后难以切回聆听，需要用激活引导（activation steering）克服 [arXiv:2606.11386]。这类问题介于能力缺陷与安全风险之间——在电话场景里，一个无故插嘴或拒绝闭嘴的 AI 不只是体验差，还可能被利用。
+
+### 6.3 自我监听：让模型听见自己
+
+人类说话时会监听自己的声音以维持连贯。全双工模型却可能「说出了口却没进自己的上下文」，导致重复、跑题。2026 年 9 月的「What Did I Just Say?」提出**自我监听（self-listening）**机制，让模型把自身已产出的语音重新纳入感知 [2609.05592]。这与第 4.1 的长程崩溃问题同源：本质都是「模型对时间中自我状态的追踪」。
+
+### 6.4 声音克隆、深伪与监管
+
+全双工体验越逼真，声音滥用风险越高。标志性事件与监管节点包括：
+
+- **2024 年初拜登深伪电话**：新罕布什尔州初选中出现仿冒 Biden 声音的 AI robocall，诱导选民不投票，成为美国监管导火索；
+- **FCC 执法里程碑（2024 年）**：认定 AI 生成语音 robocall 违法（依据 TCPA）。注：本文调研时 fcc.gov 返回 403，事件经多方报道但未直读裁决原文，引用建议补官方文件；
+- **FTC（2024-02-15）**：寻求修改规则打击深伪；科技巨头 2024-02-16 签署打击选举相关深伪自愿承诺；
+- **Sky/Scarlett Johansson 事件（2024-05）**：把「声音肖像权」争议推到台前，直接影响名人声音授权与克隆工具的合规设计（见 7.3）；
+- **AI 身份披露争议**：OpenAI 在 2024-10 月明确 Realtime API **不内置** AI 身份自动披露、责任留给开发者，并指出加州新法可能强制要求——电话场景「AI 是否必须自报身份」成为合规焦点。
+
+### 6.5 对齐新方法
+
+对齐手段也在针对语音特性进化：SALMONN-omni 用 DPO 把双工行为 F1 从 0.88 提升到 0.90 [2505.17060]；Step-Audio 2 用推理中心 RL 同时提升事实性与副语言理解 [2507.16632]；Kyutai 在 2026 年 6 月专门发表「为更好交互性对语音模型做后训练」的工作 [kyutai.org, 2026-06-10]；多面交互对齐（multi-faceted interactivity alignment）系统处理轮次、情感与安全 [arXiv:2606.11167]。总体趋势是：**语音对齐不能只对齐「说了什么」，还要对齐「什么时候说、用什么情绪说」**——这是一个比文本对齐更宽的对齐面。
+
+---
+## 7. 产业生态：模型、中间件与硬件的三层格局
+
+全双工语音在 2024–2026 年长成了一个「模型—中间件—硬件」三层耦合的产业。本章所有 GitHub star 均为 2026-10-26 通过 GitHub API 抓取的时点值，仅表量级。
+
+### 7.1 模型层：闭源云 API 与开源模型的双线竞赛
+
+**闭源/云 API** 持续定义体验上限并快速迭代：
+
+- **OpenAI**：GPT-4o（2024-05）→ Realtime API `gpt-4o-realtime-preview`（2024-10 DevDay）→ `gpt-4o-mini-realtime`（2024-12）→ `gpt-realtime` GA（2025-08-28，输入 32k/输出 4k）→ `gpt-realtime-mini`（2025-10 DevDay，官方称比上一代便宜 70%，**厂商口径**）→ `gpt-realtime-1.5`（2026-02）→ **GPT-Realtime-2 + Translate + Whisper**（2026-05-07）：GPT-5 级推理的全双工模型按 token 计费，Translate 支持 70+ 输入语言、13 输出语言实时口译，Whisper 做实时 STT；另有 2.1 版（2026-07）。接入支持 WebRTC、WebSocket、SIP。
+- **Google**：Gemini Live（2024-05，与 Project Astra 同期）→ Multimodal Live API 随 Gemini 2.0 推出（2024-12）→ Gemini 2.5 Flash 加入 proactive audio、情感对话（2025-05 I/O）→ **Gemini 3.5 Live Translate**（2026-06-09）：流式同传、70+ 语言、2000+ 语言组合，Meet 企业私测、Translate App 全球上线。
+- **Amazon**：**Nova Sonic**（2025-04-08，Bedrock 双向流式 API，官方称比 GPT-4o 便宜约 80%，Multilingual LibriSpeech 平均 WER 4.2%，**厂商口径**），已用于 Alexa+。
+
+**开源模型**由中国团队与 Kyutai 主导，密度惊人：Moshi（11.3k stars）、Qwen2.5-Omni（4.1k）、Qwen3-Omni（4.1k）、GLM-4-Voice（3.2k）、Step-Audio 2（1.5k）、MiniCPM-o 系列、Kimi-Audio、VITA、BayLing-Duplex、Wan-Streamer v0.1（阿里，端到端实时交互基础模型，2026-06 [2606.25041]）等。开源与闭源的能力差距在 2025–2026 年显著缩小，Qwen3-Omni 官方称 ASR/音频理解/语音对话可比 Gemini 2.5 Pro（**厂商口径**）。
+
+采用规模上，最直接的厂商数字来自 Google：2026 年 8 月 Gemini App 达 **10 亿 MAU**，其中 **63% 用户直接使用语音功能**（均为**厂商口径**，Pichai 宣布，经 TechCrunch 报道）；作为对照，ChatGPT 于 2026 年 6 月达 10 亿 MAU（TechCrunch 转述，非 OpenAI 公告原文）。OpenAI 从未公开 Realtime API 调用量或语音模式独立 MAU，这是目前最大的数据缺口。
+
+### 7.2 中间件层：语音 Agent 基础设施的崛起
+
+模型不会自己变成产品，一个「实时音视频传输 + 多 Agent 编排 + STT/LLM/TTS 插拔」的中间件层在两年内迅速成型，且融资活跃：
+
+| 玩家 | 定位 | Stars（2026-10-26） | 资本/规模（口径见原文） |
+|---|---|---|---|
+| **LiveKit** | 开源 SFU + Agents + 托管云 | livekit 21.8k / agents 14.9k | 2026-01 融 $100M、估值 $1B；**为 ChatGPT 语音模式供能**（第三方）；客户 xAI/Tesla/Salesforce |
+| **Pipecat** | 开源语音/多模态对话 Agent 框架 | 16.8k（+flows 626） | Daily 孵化，可插拔各家模型 |
+| **Vapi** | 闭源托管语音平台 + 开源 SDK | client-py 128 | 2026-05 融 $50M、估值约 $500M；自称累计 10 亿+ 通话、100 万+ 开发者（**厂商口径**）；Amazon Ring 全量入站通话 |
+| **Retell AI** | 企业「接电话」语音 Agent | py-sdk 59 | 闭源平台，主打句中打断 |
+| **Daily** | 老牌 WebRTC PaaS | daily-js 146 | Pipecat 母体 |
+| **Deepgram** | 语音识别模型 + SDK | py-sdk 469 | 2026-01 融 $130M、估值 $1.3B |
+| ElevenLabs | 语音模型纵向一体 | py-sdk 3.2k | 2026-09 二级要约估值 $22B；2025 年 ARR 超 $330M（CEO 口径） |
+
+传输层，OpenAI 首推 **WebRTC**（浏览器低延迟，参考实现 openai-realtime-console 3.6k stars）、服务端用 **WebSocket**、Azure 另支持 **SIP** 电话落地；Google Live API 用 WebSocket 风格双向流；字节火山强调 **RTC** 优于 WebSocket（弱网/回声/多人）。值得注意的行业判断来自 2026 年 10 月 HumanX 大会：PolyAI CTO 称「全双工模型已成，但语音 AI 尚未迎来 ChatGPT 时刻」，下一瓶颈是推理速度——即**全双工 ≠ 体验闭环**。
+
+### 7.3 硬件层：音频优先的回归
+
+屏幕之外，一场「音频优先」的硬件竞赛同步展开，结局喜忧参半：
+
+- **失败的先行课**：Humane AI Pin（2023-11 发布，$699+$24/月）口碑崩塌，2025-02 被 HP 以 $116M 收购、设备 2025-02-28 断服；Rabbit R1（2024-01 CES，$199）发货后被指「半成品」。独立 AI 硬件的第一波尝试普遍受挫。
+- **眼镜成为主载体**：Meta Ray-Ban（Connect 2024 起支持实时视频/语音）、Oakley 线（2025-06）、Ray-Ban Display（2025-09）；Apple **AirPods Pro 3**（2025-09，$249）借 iOS 26 实现双机分语种实时翻译。
+- **巨头亲自下场**：OpenAI 计划 2026 年出货首款设备、可能是耳机；其以 $6.5B 收购 Jony Ive 的 io 团队，设计主张正是降低屏幕成瘾、音频优先。
+- **本地全双工新变量**：Block（Jack Dorsey）2026-10-24 发布**本地运行**的全双工语音模型 Dessa——单 NVIDIA GPU 机架训练、情绪内生（不用 voice tags）、可笑/停顿/哭，对标 GPT-Live。端侧与云端的路线之争因此再添变数。
+
+### 7.4 中国市场的特殊位置
+
+在全双工开源生态中，中国团队扮演了远超其在其他 AI 子领域的角色：Qwen（阿里）、Step-Audio（阶跃）、GLM-Voice（智谱）、MiniCPM-o（面壁）、Kimi-Audio（月之暗面）、VITA（腾讯/腾讯优图相关）、Wan-Streamer（阿里）构成了开源语音模型最密集的一极。消费端，豆包早在 2024-08 就以「RTC + 方舟 + 豆包 ASR/TTS」方案主打可打断的实时语音通话。需如实说明：本次调研中百度、腾讯混元、华为盘古、Kimi 语音通话的**具体发布日期未在可达信源核实**，不做推断填充。
+
+> ![](diagrams/5-ecosystem-stack.html)
+
+## 8. 开放问题与展望
+
+站在 2026 年 10 月回看，全双工语音用两年时间走完了「演示惊艳 → 模型开源 → API 化 → 中间件成型」的完整循环，但至少五个根本问题仍未解决：
+
+1. **长程记忆与上下文经济性**：每帧生成 token 的全双工模型在分钟级就耗尽上下文（FD-LHB 证实五模型全部崩溃 [2610.32349]）。未来需要音频原生的上下文压缩、按需生成（聆听时不产冗余 token）与分层记忆——这与 Agent 记忆方向深度交汇。
+2. **智力与实时性的根本和解**：全双工模型通用能力仍落后于同级半双工模型，D2 式「先做强半双工、再升级双工」可能成为主流工程范式 [2610.17124]；RUBATO 式异步时钟则试图从架构上让思考不必迁就说话节拍 [2610.14299]。
+3. **自然度的科学度量**：延迟、WER 等代理指标无法捕捉「节奏别扭」，双人成对评测、长时自然对话评测与更可靠的人类/神经混合评委仍是开放难题。
+4. **全双工特有的安全面**：时序型语音越狱（DuplexJail）、虚假起始、声音克隆深伪，要求护栏从「文本内容审核」扩展到「时序行为审计」；AI 身份披露的法律责任仍在博弈。
+5. **端云协同的最优解**：Moshi/Dessa 证明端侧全双工可行，但复杂推理仍在云端。「端侧采集与出声 + 云端思考 + 边缘节点降延迟」的混合架构如何标准化，决定普及速度。
+
+更大的叙事在于：当智源把 2026 年的核心范式概括为「从预测下一个词到预测世界的下一个状态（Next-State Prediction）」时，语音恰恰是这一转向最即时的试验场——语音对话模型必须实时预测声学状态、轮次状态乃至对方的情绪与意图状态。它可能不是 AGI 的终点，但很可能是人类与 AGI 之间**停留时间最长的那个界面**。PolyAI 所说的「ChatGPT 时刻」尚未到来；而当推理速度、长程记忆与时序安全这三道闸门被逐一跨过，语音或许会成为第一个让普通人觉得「它真的在听」的 AI 形态。
+
+---
+
+## 参考文献
+
+> 说明：以下 40 篇 arXiv 论文均于 2026-10-26 通过 arxiv.org 摘要页元标签逐一核实编号/标题/作者/日期；产业条目附原始 URL 与日期，厂商自报数据已在正文标注「厂商口径」。
+
+**A. 模型与系统（arXiv）**
+
+1. Défossez A., Mazaré L., Orsini M., et al. *Moshi: a speech-text foundation model for real-time dialogue.* arXiv:2410.00037, 2024-09-17. https://arxiv.org/abs/2410.00037
+2. Fu C., Lin H., Long Z., et al. *VITA: Towards Open-Source Interactive Omni Multimodal LLM.* arXiv:2408.05211, 2024-08-09. https://arxiv.org/abs/2408.05211
+3. Xie Z., Wu C. *Mini-Omni: Language Models Can Hear, Talk While Thinking in Streaming.* arXiv:2408.16725, 2024-08-29. https://arxiv.org/abs/2408.16725
+4. Fang Q., Guo S., Zhou Y., et al. *LLaMA-Omni: Seamless Speech Interaction with Large Language Models.* arXiv:2409.06666, 2024-09-10. https://arxiv.org/abs/2409.06666
+5. Xie Z., Wu C. *Mini-Omni2: Towards Open-source GPT-4o with Vision, Speech and Duplex Capabilities.* arXiv:2410.11190, 2024-10-15. https://arxiv.org/abs/2410.11190
+6. Wang X., Li Y., Fu C., et al. *Freeze-Omni: A Smart and Low Latency Speech-to-speech Dialogue Model with Frozen LLM.* arXiv:2411.00774, 2024-11-01. https://arxiv.org/abs/2411.00774
+7. Zeng A., Du Z., Liu M., et al. *GLM-4-Voice: Towards Intelligent and Human-Like End-to-End Spoken Chatbot.* arXiv:2412.02612, 2024-12-03. https://arxiv.org/abs/2412.02612
+8. Fu C., Lin H., Wang X., et al. *VITA-1.5: Towards GPT-4o Level Real-Time Vision and Speech Interaction.* arXiv:2501.01957, 2025-01-03. https://arxiv.org/abs/2501.01957
+9. Huang A., Wu B., Wang B., et al. *Step-Audio: Unified Understanding and Generation in Intelligent Speech Interaction.* arXiv:2502.11946, 2025-02-17. https://arxiv.org/abs/2502.11946
+10. Xu J., Guo Z., He J., et al. *Qwen2.5-Omni Technical Report.* arXiv:2503.20215, 2025-03-26. https://arxiv.org/abs/2503.20215
+11. KimiTeam, Ding D., Ju Z., et al. *Kimi-Audio Technical Report.* arXiv:2504.18425, 2025-04-25. https://arxiv.org/abs/2504.18425
+12. Fang Q., Zhou Y., Guo S., et al. *LLaMA-Omni2: LLM-based Real-time Spoken Chatbot with Autoregressive Streaming Speech Synthesis.* arXiv:2505.02625, 2025-05-05. https://arxiv.org/abs/2505.02625
+13. Hu K., Hosseini-Asl E., Chen C., et al. *SALM-Duplex: Efficient and Direct Duplex Modeling for Speech-to-Speech Language Model.* arXiv:2505.15670, 2025-05-21. https://arxiv.org/abs/2505.15670
+14. Yu W., Wang S., Yang X., et al. *SALMONN-omni: A Standalone Speech LLM without Codec Injection for Full-duplex Conversation.* arXiv:2505.17060, 2025-05-17. https://arxiv.org/abs/2505.17060
+15. Wu B., Yan C., Hu C., et al. *Step-Audio 2 Technical Report.* arXiv:2507.16632, 2025-07-22. https://arxiv.org/abs/2507.16632
+16. Xu J., Guo Z., Hu H., et al. *Qwen3-Omni Technical Report.* arXiv:2509.17765, 2025-09-22. https://arxiv.org/abs/2509.17765
+17. Fang Q., Guo S., Feng Y., et al. *BayLing-Duplex: Native Full-Duplex Speech Dialogue with a Single Autoregressive LLM.* arXiv:2606.14528, 2026-06-12. https://arxiv.org/abs/2606.14528
+18. Huang L., Wu Z.-F., Wang W., et al. *Wan-Streamer v0.1: End-to-end Real-time Interactive Foundation Models.* arXiv:2606.25041, 2026-06-23. https://arxiv.org/abs/2606.25041
+19. *MiniCPM-o 4.5: Towards Real-Time Full-Duplex Omni-Modal Interaction.* arXiv:2604.27393, 2026-04-30. https://arxiv.org/abs/2604.27393
+20. Huang M., Zhang L., Yu X., et al. *DuplexOmni: Real-Time Listening, Seeing, Thinking, and Speaking for Full-Duplex Interaction.* arXiv:2606.09186, 2026-06-08. https://arxiv.org/abs/2606.09186
+
+**B. 前沿技术（2026 长程/多方/扩散/时钟）**
+
+21. Kim Y., Godiva B., Park S. J., et al. *Why Full-Duplex Speech Models Collapse in Long Conversations.* arXiv:2610.32349, 2026-10-23. https://arxiv.org/abs/2610.32349
+22. Chang C.-K., Liu A. H., Kingsbury B., et al. *D2: High-Capability Full-Duplex Spoken Language Models from Half-Duplex Backbones.* arXiv:2610.17124, 2026-10-12. https://arxiv.org/abs/2610.17124
+23. Shih Y.-J., Peng P., Liu H., et al. *RUBATO: Decoupled Clocks Allow Full-Duplex Models to Think as Fast as They Can.* arXiv:2610.14299, 2026-10-09. https://arxiv.org/abs/2610.14299
+24. Wang K., Ren H., Lu Z., et al. *MultiTalk: Scaling Full-Duplex Speech Models to Long, Multi-Party, Bilingual Conversation.* arXiv:2609.36903, 2026-09-29. https://arxiv.org/abs/2609.36903
+25. Kim H. *DiffuPlex: Accelerating Full-Duplex Spoken Dialog Models via Rolling Masked Diffusion.* arXiv:2610.12214, 2026-10-08. https://arxiv.org/abs/2610.12214
+26. Chen C., Ku P.-J., Pasad A., et al. *Full-duplex Spoken Language Modeling with Discrete Diffusion.* arXiv:2610.17780, 2026-10-13. https://arxiv.org/abs/2610.17780
+27. Jung K., Park H., Lee Y., et al. *HiPLEX: Hierarchical Policy Factorization for Full Duplex Speech Language Models.* arXiv:2610.07727, 2026-10-06. https://arxiv.org/abs/2610.07727
+28. Yu W., Wang S., Chiba T., et al. *SALMONN-duo: Adaptive Dual-System Coordination for Full-Duplex Voice Agents.* arXiv:2609.34247, 2026-09-28. https://arxiv.org/abs/2609.34247
+29. Wang S., Yu W., Chiba T., et al. *Full-Duplex Interaction with Speech, Expressions and Gestures.* arXiv:2610.21452, 2026-10-15. https://arxiv.org/abs/2610.21452
+30. Lim H., Lew H. M., Lee J.-H., et al. *FacePlex: Toward Natural Full-Duplex Conversational Avatars.* arXiv:2606.30145, 2026-06-29. https://arxiv.org/abs/2606.30145
+31. Kim Y., Godiva B., Ro Y. M., et al. *CounselPlex: A Stressor-Aware Full-Duplex Counseling Model.* arXiv:2610.32702, 2026-10-23. https://arxiv.org/abs/2610.32702
+32. Li Y., Wu D., Lin G.-T., et al. *Decoupling Conversational Dynamics in Full-Duplex Spoken Models through Reinforcement Learning.* arXiv:2607.07148, 2026-07-08. https://arxiv.org/abs/2607.07148
+33. Chen J., Hu Y., Li J., et al. *FireRedChat: A Pluggable, Full-Duplex Voice Interaction System with Cascaded and Semi-Cascaded Implementations.* arXiv:2509.06502, 2025-09-08. https://arxiv.org/abs/2509.06502
+
+**C. 评测、数据与安全**
+
+34. Peng Y., Chao Y.-W., Ng D., et al. *FD-Bench: A Full-Duplex Benchmarking Pipeline Designed for Full Duplex Spoken Dialogue Systems.* arXiv:2507.19040, 2025-07-25. https://arxiv.org/abs/2507.19040
+35. Ji S., Chen Y., Fang M., et al. *WavChat: A Survey of Spoken Dialogue Models.* arXiv:2411.13577, 2024-11-15. https://arxiv.org/abs/2411.13577
+36. Chen Y., Yu H. *From Turn-Taking to Synchronous Dialogue: A Survey of Full-Duplex Spoken Language Models.* arXiv:2509.14515, 2025-09-18. https://arxiv.org/abs/2509.14515
+37. Lu J., Wang Y., Luo J., et al. *A Survey of Full-Duplex Spoken Dialogue Systems: Architectural Hierarchy, Interaction Ontology, and Decision State Machine.* arXiv:2606.19453, 2026-06-17. https://arxiv.org/abs/2606.19453
+38. Xiao Y., Peng T., Meng H., et al. *When Intent Arrives Late: A Benchmark for Full-Duplex Speech Models under Delayed Intent Revelation.* arXiv:2610.00272, 2026-09-24. https://arxiv.org/abs/2610.00272
+39. Mathur P., Manocha D., et al. *MultiPartyTurnBench: Benchmarking Floor Control in Multi-Party Spoken Dialogue.* arXiv:2610.20172, 2026-10-14. https://arxiv.org/abs/2610.20172
+40. Roh J., Chandran D., Houmansadr A. *DuplexJail: Spoken Interruption Attacks on Full-Duplex Speech Models.* arXiv:2609.09420, 2026-09-08. https://arxiv.org/abs/2609.09420
+41. Zhou X., Ao J., Liu X., et al. *What Did I Just Say? Self-Listening for Full-Duplex Speech Models.* arXiv:2609.05592, 2026-09-04. https://arxiv.org/abs/2609.05592
+42. Nishi K., et al. *Causal Analysis and Mitigation of Spurious Onsets in Full-Duplex Speech LLMs.* arXiv:2609.13445, 2026-09-11. https://arxiv.org/abs/2609.13445
+43. Chen C., Chen Z., et al. *JarvisBench: Always-on Intelligence Between Humans and Agents.* arXiv:2608.14870, 2026-08-14. https://arxiv.org/abs/2608.14870
+44. Anastassiou P., Chen J., Chen J., et al. *Seed-TTS: A Family of High-Quality Versatile Speech Generation Models.* arXiv:2406.02430, 2024-06-04. https://arxiv.org/abs/2406.02430
+
+**D. 产业与一手信源**
+
+45. OpenAI. *Hello GPT-4o.* 2024-05-13. https://openai.com/index/hello-gpt-4o/ （调研时 403，经 TechCrunch 交叉确认）
+46. TechCrunch. *OpenAI's DevDay brings Realtime API...* 2024-10-01. https://techcrunch.com/2024/10/01/openais-devday-brings-realtime-api-and-other-treats-for-ai-app-developers/
+47. TechCrunch. *OpenAI launches new voice intelligence features in its API.* 2026-05-07. https://techcrunch.com/2026/05/07/openai-launches-new-voice-intelligence-features-in-its-api/
+48. Google. *Gemini 3.5 Live Translate.* 2026-06-09. https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-live-3-5-translate/
+49. Google. *Gemini update December 2024（Multimodal Live API）.* 2024-12-11. https://blog.google/innovation-and-ai/models-and-research/google-deepmind/google-gemini-ai-update-december-2024/
+50. TechCrunch. *Amazon unveils Nova Sonic.* 2025-04-08. https://techcrunch.com/2025/04/08/amazon-unveils-a-new-ai-voice-model-nova-sonic/
+51. Kyutai. *Moshi release.* 2024-09-18. https://kyutai.org/blog/2024-09-18-moshi-release/
+52. TechCrunch. *Block's new voice model sounds eerily human（Dessa）.* 2026-10-24. https://techcrunch.com/2026/10/24/blocks-new-voice-model-sounds-eerily-human/
+53. 火山引擎开发者社区. 《豆包实时语音通话 RTC 技术方案》. 2024-08-09. https://developer.volcengine.com/articles/7400774724738875428
+54. TechCrunch. *Scarlett Johansson says OpenAI approached her.* 2024-05-20. https://techcrunch.com/2024/05/20/scarlett-johansson-says-that-openai-approached-her-to-use-her-voice/
+55. TechCrunch. *These execs think voice AI hasn't reached its ChatGPT moment yet.* 2026-10-11. https://techcrunch.com/2026/10/11/these-execs-think-voice-ai-hasnt-reached-its-chatgpt-moment-yet/
+56. TechCrunch. *Gemini app surges to one billion users.* 2026-08-11. https://techcrunch.com/2026/08/11/googles-gemini-app-surges-to-one-billion-users/
+57. Microsoft Learn. *Use real-time audio with the Azure OpenAI Service.* 2026 访问. https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/realtime-audio
+58. 新华网. 《智源发布2026十大AI技术趋势》. 2026-01-08. http://www.news.cn/tech/20260108/b99127c88a4640bbab49e5c6294264d2/c.html
+
+**E. 正文引用的补充论文（均经 abs 页核实，2026-10-26）**
+
+59. *LMPAN: A Lightweight Multi-Path Alignment Network for Joint Full-Duplex Acoustic Echo Cancellation.* [arXiv:2607.02062](https://arxiv.org/abs/2607.02062), 2026-07-02.
+60. *FD-VAD: Semantic Endpoint Detection for Streaming Full-Duplex Speech.* [arXiv:2609.35791](https://arxiv.org/abs/2609.35791), 2026-09-16.
+61. *TurnFSM for Full-Duplex Dialogue System: Internalizing State-Machine Logic for Streaming Semantic ...* [arXiv:2609.04240](https://arxiv.org/abs/2609.04240), 2026-08-05.
+62. *Instruct-FD: Can Your Full-Duplex Speech System Follow Turn-Taking Instructions?* [arXiv:2607.20460](https://arxiv.org/abs/2607.20460), 2026-05-15.
+63. *Realtime-Venus: A full-duplex interaction system with asynchronous delegation.* [arXiv:2609.13814](https://arxiv.org/abs/2609.13814), 2026-09-12.
+64. *PACE: A Playback-Aligned Context Engine for LLM-Based Full-Duplex Voice Dialogue.* [arXiv:2608.07631](https://arxiv.org/abs/2608.07631), 2026-08-07.
+65. *τ-Multilingual: Benchmarking Voice Agents Across Languages.* [arXiv:2609.35820](https://arxiv.org/abs/2609.35820), 2026-09-21.
+66. *Soloist: A Generative Model for Blind Voice Separation in the Wild.* [arXiv:2610.19716](https://arxiv.org/abs/2610.19716), 2026-10-14.
+67. *SteerablePlex: Can We Steer Full-Duplex Models?* [arXiv:2610.12201](https://arxiv.org/abs/2610.12201), 2026-10-08.
+68. *SteerDuplex: Steerable Duplex Speech Dialogue Models.* [arXiv:2609.12623](https://arxiv.org/abs/2609.12623), 2026-09-11.
+69. *Reference-Guided Turn-Taking Style Transfer for Full-Duplex Spoken Language Models.* [arXiv:2610.20763](https://arxiv.org/abs/2610.20763), 2026-10-14.
+70. *Steering Follows Geometry, Not Labels: Emotion Directions in a Full-Duplex Speech Model.* [arXiv:2610.08887](https://arxiv.org/abs/2610.08887), 2026-10-06.
+71. *Overcoming State Inertia in Full-Duplex Spoken Language Models via Activation Steering.* [arXiv:2606.11386](https://arxiv.org/abs/2606.11386), 2026-06-09.
+72. *People Making Conversation: Evaluating How Naturally Speech Models Converse.* [arXiv:2610.12802](https://arxiv.org/abs/2610.12802), 2026-10-08.
+73. *Conversation Is a Two-Body Problem: Dyadic Evaluation of Full-Duplex Dialogue Models.* [arXiv:2610.08125](https://arxiv.org/abs/2610.08125), 2026-10-06.
+74. *Coupled but Late: Turn-Taking Between Full-Duplex Speech Models in Unscripted Dialogue.* [arXiv:2610.08683](https://arxiv.org/abs/2610.08683), 2026-10-06.
+75. *Batched Speech Decisions Without Decoding: Single-Token Supervision ...* [arXiv:2610.02638](https://arxiv.org/abs/2610.02638), 2026-10-02.
+76. *DuplexChat: Constructing Speaker-Separated Full-Duplex Dialogue Speech at Scale.* [arXiv:2607.04941](https://arxiv.org/abs/2607.04941), 2026-07-06.
+77. *DuplexGen: Adaptive Synthesis of Human-AI Turn-Taking Dialogues.* [arXiv:2607.26178](https://arxiv.org/abs/2607.26178), 2026-07-28.
+78. *DuplexDrama: A Synthesized Dialogue Dataset with Scenarios, Full-Duplex Behaviors, Expressive Speech.* [arXiv:2609.12872](https://arxiv.org/abs/2609.12872), 2026-09-11.
+79. *Agentic-DuplexGen: Decoupling Content, Timing, and Acoustics for Synthetic Dialogue Speech.* [arXiv:2608.16053](https://arxiv.org/abs/2608.16053), 2026-08-17.
+80. *ConversationalVoice: Full-Duplex Speech Data from Real Conversations through Source-Faithful ...* [arXiv:2609.08147](https://arxiv.org/abs/2609.08147), 2026-09-08.
+81. *A Reliability Assessment of LALM Audio Judges for Full-Duplex Voice Agents.* [arXiv:2607.07985](https://arxiv.org/abs/2607.07985), 2026-07-08.
+82. *From Metrics to Natural Dialogue: French Full-Duplex Benchmark for Spoken Dialogue Models.* [arXiv:2609.10765](https://arxiv.org/abs/2609.10765), 2026-09-09.
+83. *DuplexSpeechBench-IFEval: Evaluating Implicit Instruction Following in Full-Duplex Voice Agents.* [arXiv:2609.03423](https://arxiv.org/abs/2609.03423), 2026-09-03.
+84. *Integrating Facial Generation into Full-Duplex Spoken Dialogue Systems.* [arXiv:2606.21970](https://arxiv.org/abs/2606.21970), 2026-06-20.
+85. *Multi-Faceted Interactivity Alignment in Full-Duplex Speech Models.* [arXiv:2606.11167](https://arxiv.org/abs/2606.11167), 2026-06-09.

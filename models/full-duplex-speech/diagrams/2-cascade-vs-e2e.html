@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · 三种架构对比</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 660" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="660" fill="#0d1117"/>
+<defs>
+<marker id="a2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#8b949e"/></marker>
+<marker id="a2b" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#58a6ff"/></marker>
+<marker id="a2g" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#d29922"/></marker>
+</defs>
+<text x="50" y="40" fill="#e6edf3" font-size="21" font-weight="700">图 2 · 三种语音架构对比：级联（半双工）→ 端到端 SpeechLM → 原生全双工</text>
+<text x="50" y="66" fill="#8b949e" font-size="13">箭头粗细表示实时性；关键差异在「轮次由谁决定」与「情感/非语音信息是否被保留」</text>
+
+<!-- ===== 列1 级联 ===== -->
+<rect x="50" y="92" width="340" height="380" rx="12" fill="#161b22" stroke="#8b949e" stroke-width="1.3"/>
+<text x="220" y="122" fill="#e6edf3" font-size="16" font-weight="700" text-anchor="middle">① 级联流水线（半双工）</text>
+<text x="220" y="143" fill="#8b949e" font-size="11" text-anchor="middle">VAD + ASR + LLM + TTS 模块串联</text>
+
+<rect x="150" y="160" width="140" height="34" rx="7" fill="#1f2630" stroke="#8b949e" stroke-width="1.1"/>
+<text x="220" y="182" fill="#e6edf3" font-size="12.5" text-anchor="middle">VAD 端点检测</text>
+<line x1="220" y1="194" x2="220" y2="210" stroke="#8b949e" stroke-width="1.4" marker-end="url(#a2)"/>
+<rect x="150" y="212" width="140" height="34" rx="7" fill="#1f2630" stroke="#8b949e" stroke-width="1.1"/>
+<text x="220" y="234" fill="#e6edf3" font-size="12.5" text-anchor="middle">ASR 语音转文本</text>
+<line x1="220" y1="246" x2="220" y2="262" stroke="#8b949e" stroke-width="1.4" marker-end="url(#a2)"/>
+<rect x="150" y="264" width="140" height="34" rx="7" fill="#1f2630" stroke="#8b949e" stroke-width="1.1"/>
+<text x="220" y="286" fill="#e6edf3" font-size="12.5" text-anchor="middle">LLM 文本推理</text>
+<line x1="220" y1="298" x2="220" y2="314" stroke="#8b949e" stroke-width="1.4" marker-end="url(#a2)"/>
+<rect x="150" y="316" width="140" height="34" rx="7" fill="#1f2630" stroke="#8b949e" stroke-width="1.1"/>
+<text x="220" y="338" fill="#e6edf3" font-size="12.5" text-anchor="middle">TTS 文本转语音</text>
+
+<text x="220" y="378" fill="#f85149" font-size="11.5" text-anchor="middle">延迟数秒 · 累积误差</text>
+<text x="220" y="400" fill="#f85149" font-size="11.5" text-anchor="middle">文本中间层丢失情绪/笑声/停顿</text>
+<text x="220" y="422" fill="#f85149" font-size="11.5" text-anchor="middle">强制轮次分割，无法重叠/打断</text>
+<text x="220" y="448" fill="#8b949e" font-size="11" text-anchor="middle">代表：传统语音助手、Riva</text>
+
+<!-- ===== 列2 端到端 ===== -->
+<rect x="430" y="92" width="340" height="380" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.4"/>
+<text x="600" y="122" fill="#e6edf3" font-size="16" font-weight="700" text-anchor="middle">② 端到端 SpeechLM</text>
+<text x="600" y="143" fill="#8b949e" font-size="11" text-anchor="middle">音频直接进、语音直接出，LLM 统一建模</text>
+
+<rect x="470" y="166" width="110" height="40" rx="7" fill="#12263a" stroke="#58a6ff" stroke-width="1.2"/>
+<text x="525" y="184" fill="#e6edf3" font-size="11.5" text-anchor="middle">流式音频</text>
+<text x="525" y="200" fill="#58a6ff" font-size="10.5" text-anchor="middle">编码器</text>
+<line x1="580" y1="186" x2="600" y2="186" stroke="#58a6ff" stroke-width="1.4" marker-end="url(#a2b)"/>
+<rect x="600" y="160" width="130" height="52" rx="7" fill="#12263a" stroke="#58a6ff" stroke-width="1.2"/>
+<text x="665" y="181" fill="#e6edf3" font-size="12" font-weight="700" text-anchor="middle">LLM</text>
+<text x="665" y="199" fill="#58a6ff" font-size="10" text-anchor="middle">文本token</text>
+<text x="665" y="212" fill="#58a6ff" font-size="10" text-anchor="middle">+音频token 并行</text>
+<line x1="665" y1="212" x2="665" y2="234" stroke="#58a6ff" stroke-width="1.4" marker-end="url(#a2b)"/>
+<rect x="590" y="236" width="150" height="38" rx="7" fill="#12263a" stroke="#58a6ff" stroke-width="1.2"/>
+<text x="665" y="254" fill="#e6edf3" font-size="11.5" text-anchor="middle">流式语音解码器</text>
+<text x="665" y="269" fill="#58a6ff" font-size="10" text-anchor="middle">codec / flow-matching</text>
+
+<text x="600" y="312" fill="#3fb950" font-size="11.5" text-anchor="middle">延迟约 200–700ms</text>
+<text x="600" y="334" fill="#3fb950" font-size="11.5" text-anchor="middle">保留语气、情感、方言</text>
+<text x="600" y="356" fill="#d29922" font-size="11.5" text-anchor="middle">多数仍靠外部 VAD 判轮次</text>
+<text x="600" y="378" fill="#d29922" font-size="11.5" text-anchor="middle">「伪双工」：边想边说但听/说分时</text>
+<text x="600" y="408" fill="#8b949e" font-size="11" text-anchor="middle">代表：Mini-Omni、Qwen2.5-Omni、</text>
+<text x="600" y="426" fill="#8b949e" font-size="11" text-anchor="middle">Freeze-Omni、GLM-4-Voice</text>
+<text x="600" y="450" fill="#8b949e" font-size="11" text-anchor="middle">Kimi-Audio、Step-Audio</text>
+
+<!-- ===== 列3 原生全双工 ===== -->
+<rect x="810" y="92" width="340" height="380" rx="12" fill="#1c1a12" stroke="#d29922" stroke-width="1.8"/>
+<text x="980" y="122" fill="#e6edf3" font-size="16" font-weight="700" text-anchor="middle">③ 原生全双工</text>
+<text x="980" y="143" fill="#d29922" font-size="11" text-anchor="middle">单一自回归模型同时听、说、决定轮次</text>
+
+<rect x="832" y="164" width="138" height="44" rx="7" fill="#26220f" stroke="#d29922" stroke-width="1.2"/>
+<text x="901" y="183" fill="#e6edf3" font-size="11.5" text-anchor="middle">用户音频流</text>
+<text x="901" y="199" fill="#d29922" font-size="10" text-anchor="middle">（持续输入）</text>
+<rect x="990" y="164" width="138" height="44" rx="7" fill="#26220f" stroke="#d29922" stroke-width="1.2"/>
+<text x="1059" y="183" fill="#e6edf3" font-size="11.5" text-anchor="middle">助手音频流</text>
+<text x="1059" y="199" fill="#d29922" font-size="10" text-anchor="middle">（持续输出）</text>
+<line x1="901" y1="208" x2="950" y2="232" stroke="#d29922" stroke-width="1.3"/>
+<line x1="1059" y1="208" x2="1010" y2="232" stroke="#d29922" stroke-width="1.3"/>
+<rect x="880" y="232" width="200" height="50" rx="8" fill="#2e2a12" stroke="#d29922" stroke-width="1.5"/>
+<text x="980" y="253" fill="#e6edf3" font-size="12.5" font-weight="700" text-anchor="middle">统一全双工 LLM</text>
+<text x="980" y="271" fill="#d29922" font-size="10.5" text-anchor="middle">+ 内心独白（Inner Monologue）</text>
+
+<text x="980" y="312" fill="#3fb950" font-size="11.5" text-anchor="middle">理论延迟低至 160–230ms</text>
+<text x="980" y="334" fill="#3fb950" font-size="11.5" text-anchor="middle">可重叠语音、即时 barge-in</text>
+<text x="980" y="356" fill="#3fb950" font-size="11.5" text-anchor="middle">无需 VAD，模型自决听/说/停</text>
+<text x="980" y="378" fill="#d29922" font-size="11.5" text-anchor="middle">回声/背景人声处理是难点</text>
+<text x="980" y="408" fill="#8b949e" font-size="11" text-anchor="middle">代表：Moshi、BayLing-Duplex、</text>
+<text x="980" y="426" fill="#8b949e" font-size="11" text-anchor="middle">SALM-Duplex、SALMONN-omni、</text>
+<text x="980" y="444" fill="#8b949e" font-size="11" text-anchor="middle">MiniCPM-o 4.5、Dessa</text>
+
+<!-- 底部时间轴对比 -->
+<text x="50" y="516" fill="#e6edf3" font-size="13" font-weight="700">轮次时间结构：</text>
+<text x="160" y="516" fill="#8b949e" font-size="11.5">半双工（严格交替，停顿明显）</text>
+<rect x="160" y="528" width="120" height="14" rx="3" fill="#58a6ff" opacity="0.7"/>
+<rect x="300" y="528" width="120" height="14" rx="3" fill="#f0883e" opacity="0.7"/>
+<rect x="440" y="528" width="120" height="14" rx="3" fill="#58a6ff" opacity="0.7"/>
+<text x="600" y="516" fill="#d29922" font-size="11.5">全双工（可重叠、可打断，停顿自然）</text>
+<rect x="600" y="528" width="150" height="14" rx="3" fill="#58a6ff" opacity="0.7"/>
+<rect x="700" y="528" width="150" height="14" rx="3" fill="#f0883e" opacity="0.75"/>
+<rect x="820" y="528" width="150" height="14" rx="3" fill="#58a6ff" opacity="0.7"/>
+<text x="600" y="560" fill="#8b949e" font-size="10.5">蓝=用户说话　橙=助手说话　重叠区域即全双工能力（用户可在助手说话时插入）</text>
+<text x="50" y="610" fill="#8b949e" font-size="11.5">注：「端到端」与「原生全双工」边界正在融合——D2 [arXiv:2610.17124] 表明强半双工骨干只需轻量适配即可获得细粒度全双工能力</text>
+<text x="50" y="634" fill="#8b949e" font-size="11.5">代表系统数据均为各自论文/厂商口径，非同台实测；详见报告第 2、3 章</text>
+</svg>
+</body></html>
