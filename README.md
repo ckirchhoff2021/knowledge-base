@@ -60,6 +60,7 @@
 |---|---|---|
 | [世界模型 World Models](https://ckirchhoff2021.github.io/knowledge-base/models/world-models/report.html) | 预测世界下一状态 | 2026-10-12 |
 | [智能体记忆 Agent Memory](https://ckirchhoff2021.github.io/knowledge-base/models/agent-memory/report.html) | 终身学习记忆架构 | 2026-10-13 |
+| [Agent Memory 系统设计](https://ckirchhoff2021.github.io/knowledge-base/models/agent-memory-systems/report.html) | Hermes / Mem0 / Codex 记忆架构 | 2026-10-26 |
 | [视觉-语言-动作模型 VLA](https://ckirchhoff2021.github.io/knowledge-base/models/vla-embodied/report.html) | 具身智能模型 | 2026-10-14 |
 | [智能体互联协议栈 MCP/A2A](https://ckirchhoff2021.github.io/knowledge-base/models/agent-interop/report.html) | MCP / A2A / AGENTS.md | 2026-10-16 |
 | [AI Scientist 自主科研](https://ckirchhoff2021.github.io/knowledge-base/models/ai-scientist/report.html) | 自主科研智能体 | 2026-10-17 |

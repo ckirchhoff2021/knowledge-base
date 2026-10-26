@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · Agent Memory 分类与生命周期</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1100 790" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1100" height="790" fill="#0d1117"/>
+  <text x="60" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 1 · Agent Memory 的四类记忆 × 七环节生命周期 × 范围主键</text>
+  <text x="60" y="74" fill="#8b949e" font-size="13">据 arXiv:2404.13501（记忆机制综述）、arXiv:2504.19413（Mem0）与主流商业系统整理，2026-10-26</text>
+
+<!-- 四类记忆 -->
+  <text x="60" y="112" fill="#e6edf3" font-size="16" font-weight="700">① 认知功能轴：四类记忆</text>
+
+  <rect x="60" y="126" width="236" height="118" rx="10" fill="#0a0e14" stroke="#39c5cf" stroke-width="1.5"/>
+  <text x="78" y="154" fill="#39c5cf" font-size="15" font-weight="700">工作记忆 Working</text>
+  <text x="78" y="180" fill="#e6edf3" font-size="12">系统指令 / 工具 schema</text>
+  <text x="78" y="202" fill="#e6edf3" font-size="12">载体：上下文窗口 + KV-Cache</text>
+  <text x="78" y="228" fill="#3fb950" font-size="11.5">成熟度：高</text>
+
+  <rect x="314" y="126" width="236" height="118" rx="10" fill="#0a0e14" stroke="#d29922" stroke-width="1.5"/>
+  <text x="332" y="154" fill="#d29922" font-size="15" font-weight="700">情景记忆 Episodic</text>
+  <text x="332" y="180" fill="#e6edf3" font-size="12">「经历过什么」事件序列</text>
+  <text x="332" y="202" fill="#e6edf3" font-size="12">代表：Generative Agents / A-MEM</text>
+  <text x="332" y="228" fill="#3fb950" font-size="11.5">成熟度：中高</text>
+
+  <rect x="568" y="126" width="236" height="118" rx="10" fill="#0a0e14" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="586" y="154" fill="#58a6ff" font-size="15" font-weight="700">语义记忆 Semantic</text>
+  <text x="586" y="180" fill="#e6edf3" font-size="12">事实 / 偏好 / 实体关系</text>
+  <text x="586" y="202" fill="#e6edf3" font-size="12">代表：Mem0 facts / Zep 图谱</text>
+  <text x="586" y="228" fill="#3fb950" font-size="11.5">成熟度：高</text>
+
+  <rect x="822" y="126" width="236" height="118" rx="10" fill="#1a1206" stroke="#f85149" stroke-width="1.7"/>
+  <text x="840" y="154" fill="#f85149" font-size="15" font-weight="700">程序记忆 Procedural</text>
+  <text x="840" y="180" fill="#e6edf3" font-size="12">工作流 / 工具习惯 / 规范</text>
+  <text x="840" y="202" fill="#e6edf3" font-size="12">形态：Skills / 自改 prompt</text>
+  <text x="840" y="228" fill="#d29922" font-size="11.5">成熟度最低，复利最高</text>
+
+<!-- 生命周期七环节 -->
+  <text x="60" y="296" fill="#e6edf3" font-size="16" font-weight="700">② 时间轴：记忆生命周期七环节（所有系统是同一流水线的不同裁剪）</text>
+
+  <!-- 连接线 -->
+  <line x1="60" y1="372" x2="1050" y2="372" stroke="#30363d" stroke-width="2"/>
+
+  <g font-size="12.5">
+  <rect x="60" y="330" width="130" height="84" rx="9" fill="#161b22" stroke="#39c5cf" stroke-width="1.4"/>
+  <text x="125" y="358" fill="#39c5cf" font-size="14" font-weight="700" text-anchor="middle">capture</text>
+  <text x="125" y="382" fill="#e6edf3" text-anchor="middle">捕获</text>
+  <text x="125" y="402" fill="#8b949e" font-size="11" text-anchor="middle">原始轨迹留痕</text>
+
+  <rect x="203" y="330" width="130" height="84" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.4"/>
+  <text x="268" y="358" fill="#58a6ff" font-size="14" font-weight="700" text-anchor="middle">extract</text>
+  <text x="268" y="382" fill="#e6edf3" text-anchor="middle">抽取</text>
+  <text x="268" y="402" fill="#8b949e" font-size="11" text-anchor="middle">同步 or 异步</text>
+
+  <rect x="346" y="330" width="130" height="84" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.4"/>
+  <text x="411" y="358" fill="#58a6ff" font-size="14" font-weight="700" text-anchor="middle">store</text>
+  <text x="411" y="382" fill="#e6edf3" text-anchor="middle">存储</text>
+  <text x="411" y="402" fill="#8b949e" font-size="11" text-anchor="middle">文件/向量/图多写</text>
+
+  <rect x="489" y="330" width="130" height="84" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.4"/>
+  <text x="554" y="358" fill="#bc8cff" font-size="14" font-weight="700" text-anchor="middle">retrieve</text>
+  <text x="554" y="382" fill="#e6edf3" text-anchor="middle">检索</text>
+  <text x="554" y="402" fill="#8b949e" font-size="11" text-anchor="middle">多信号融合</text>
+
+  <rect x="633" y="330" width="130" height="84" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.4"/>
+  <text x="698" y="358" fill="#bc8cff" font-size="14" font-weight="700" text-anchor="middle">inject</text>
+  <text x="698" y="382" fill="#e6edf3" text-anchor="middle">注入</text>
+  <text x="698" y="402" fill="#8b949e" font-size="11" text-anchor="middle">冻结 or 动态</text>
+
+  <rect x="776" y="330" width="130" height="84" rx="9" fill="#161b22" stroke="#d29922" stroke-width="1.4"/>
+  <text x="841" y="358" fill="#d29922" font-size="14" font-weight="700" text-anchor="middle">consolidate</text>
+  <text x="841" y="382" fill="#e6edf3" text-anchor="middle">巩固</text>
+  <text x="841" y="402" fill="#8b949e" font-size="11" text-anchor="middle">合并/消解矛盾</text>
+
+  <rect x="919" y="330" width="130" height="84" rx="9" fill="#2a1418" stroke="#f85149" stroke-width="1.6"/>
+  <text x="984" y="358" fill="#f85149" font-size="14" font-weight="700" text-anchor="middle">forget</text>
+  <text x="984" y="382" fill="#e6edf3" text-anchor="middle">遗忘</text>
+  <text x="984" y="402" fill="#8b949e" font-size="11" text-anchor="middle">TTL / 删除权 / 脱敏</text>
+  </g>
+
+  <!-- 箭头小三角 -->
+  <g fill="#8b949e">
+  <polygon points="196,372 188,367 188,377"/>
+  <polygon points="339,372 331,367 331,377"/>
+  <polygon points="482,372 474,367 474,377"/>
+  <polygon points="626,372 618,367 618,377"/>
+  <polygon points="769,372 761,367 761,377"/>
+  <polygon points="912,372 904,367 904,377"/>
+  </g>
+
+<!-- 范围主键 -->
+  <rect x="60" y="456" width="980" height="92" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="82" y="486" fill="#e6edf3" font-size="15" font-weight="700">③ 范围主键 Scoping：多租户下的安全边界</text>
+  <g font-size="12.5">
+  <rect x="82" y="501" width="150" height="30" rx="15" fill="#0a3d28" stroke="#3fb950"/>
+  <text x="157" y="521" fill="#3fb950" text-anchor="middle">user_id 属于谁</text>
+  <rect x="246" y="501" width="150" height="30" rx="15" fill="#0a3d28" stroke="#3fb950"/>
+  <text x="321" y="521" fill="#3fb950" text-anchor="middle">agent_id 谁写的</text>
+  <rect x="410" y="501" width="150" height="30" rx="15" fill="#0a3d28" stroke="#3fb950"/>
+  <text x="485" y="521" fill="#3fb950" text-anchor="middle">run_id 哪次执行</text>
+  <rect x="574" y="501" width="180" height="30" rx="15" fill="#0a3d28" stroke="#3fb950"/>
+  <text x="664" y="521" fill="#3fb950" text-anchor="middle">metadata 类别/来源/时间</text>
+  <rect x="768" y="501" width="250" height="30" rx="15" fill="#3d1d1d" stroke="#f85149"/>
+  <text x="893" y="521" fill="#f85149" text-anchor="middle">检索时必须硬过滤，非软匹配</text>
+  </g>
+
+<!-- 底部要点 -->
+  <rect x="60" y="580" width="312" height="170" rx="10" fill="#0a0e14" stroke="#30363d"/>
+  <text x="80" y="610" fill="#39c5cf" font-size="14" font-weight="700">要点 · 写时机</text>
+  <text x="80" y="640" fill="#e6edf3" font-size="12.5">Agent 主动写（Hermes）：</text>
+  <text x="80" y="662" fill="#8b949e" font-size="12">即时、语境准，但占工具轮次</text>
+  <text x="80" y="694" fill="#e6edf3" font-size="12.5">后台异步抽取（Codex/Mem0）：</text>
+  <text x="80" y="716" fill="#8b949e" font-size="12">不阻塞主循环，需队列与幂等</text>
+
+  <rect x="394" y="580" width="312" height="170" rx="10" fill="#0a0e14" stroke="#30363d"/>
+  <text x="414" y="610" fill="#d29922" font-size="14" font-weight="700">要点 · consolidation</text>
+  <text x="414" y="640" fill="#e6edf3" font-size="12.5">不巩固的记忆会越用越脏：</text>
+  <text x="414" y="662" fill="#8b949e" font-size="12">重复、矛盾、过时事实累积</text>
+  <text x="414" y="694" fill="#e6edf3" font-size="12.5">diff 驱动巩固（Codex）：</text>
+  <text x="414" y="716" fill="#8b949e" font-size="12">只处理变化量，版本可回滚</text>
+
+  <rect x="728" y="580" width="312" height="170" rx="10" fill="#0a0e14" stroke="#30363d"/>
+  <text x="748" y="610" fill="#f85149" font-size="14" font-weight="700">要点 · 遗忘是刚需</text>
+  <text x="748" y="640" fill="#e6edf3" font-size="12.5">TTL / 容量上限 / 用户删除权</text>
+  <text x="748" y="668" fill="#8b949e" font-size="12">脱敏须在抽取之前完成</text>
+  <text x="748" y="700" fill="#e6edf3" font-size="12.5">原文与派生记忆分离存储</text>
+  <text x="748" y="722" fill="#8b949e" font-size="12">保证可溯源、可重放</text>
+</svg>
+</body></html>

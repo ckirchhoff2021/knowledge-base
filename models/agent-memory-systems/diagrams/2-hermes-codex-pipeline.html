@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图2 · Hermes vs Codex 记忆流水线</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1100 920" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1100" height="920" fill="#0d1117"/>
+  <text x="60" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 2 · Hermes 冻结快照式记忆 vs Codex 两阶段抽取-巩固流水线</text>
+  <text x="60" y="74" fill="#8b949e" font-size="13">据 Hermes 本地源码/文档与 github.com/openai/codex 的 codex-rs/memories 实测整理，2026-10-26</text>
+
+<!-- ============ Hermes lane ============ -->
+  <rect x="60" y="96" width="980" height="276" rx="12" fill="#0d1520" stroke="#1c3a52"/>
+  <text x="80" y="124" fill="#39c5cf" font-size="16" font-weight="700">Hermes · 同步、极简：模型亲手写，下一轮生效</text>
+
+  <!-- flow boxes -->
+  <rect x="80" y="142" width="150" height="92" rx="9" fill="#161b22" stroke="#39c5cf" stroke-width="1.5"/>
+  <text x="155" y="178" fill="#e6edf3" font-size="13.5" font-weight="700" text-anchor="middle">会话启动</text>
+  <text x="155" y="202" fill="#8b949e" font-size="11.5" text-anchor="middle">读取磁盘记忆</text>
+
+  <rect x="266" y="142" width="210" height="92" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="371" y="170" fill="#58a6ff" font-size="13" font-weight="700" text-anchor="middle">冻结快照注入 system prompt</text>
+  <text x="371" y="194" fill="#e6edf3" font-size="12" text-anchor="middle">MEMORY.md ≤ 2200 chars</text>
+  <text x="371" y="214" fill="#e6edf3" font-size="12" text-anchor="middle">USER.md ≤ 1375 chars</text>
+
+  <rect x="512" y="142" width="220" height="92" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+  <text x="622" y="168" fill="#bc8cff" font-size="13" font-weight="700" text-anchor="middle">Agent 主循环</text>
+  <text x="622" y="190" fill="#e6edf3" font-size="11.5" text-anchor="middle">memory 工具 add/replace/remove</text>
+  <text x="622" y="210" fill="#8b949e" font-size="11" text-anchor="middle">唯一子串匹配 · 去重 · 安全扫描</text>
+
+  <rect x="768" y="142" width="252" height="92" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+  <text x="894" y="170" fill="#3fb950" font-size="13" font-weight="700" text-anchor="middle">写入立即落盘</text>
+  <text x="894" y="194" fill="#e6edf3" font-size="11.5" text-anchor="middle">~/.hermes/memories/</text>
+  <text x="894" y="214" fill="#8b949e" font-size="11" text-anchor="middle">容量满 → Agent 自行合并后重试</text>
+
+  <!-- arrows -->
+  <g fill="#8b949e">
+  <polygon points="262,188 252,182 252,194"/>
+  <polygon points="508,188 498,182 498,194"/>
+  <polygon points="764,188 754,182 754,194"/>
+  </g>
+
+  <!-- loop-back annotation -->
+  <path d="M 894 234 Q 894 256 620 256 Q 371 256 371 236" fill="none" stroke="#d29922" stroke-width="1.6" stroke-dasharray="5 4"/>
+  <text x="620" y="250" fill="#d29922" font-size="12" text-anchor="middle">当前会话 system prompt 不变 → 保护 prefix cache；变更下次会话生效</text>
+
+  <!-- side capabilities -->
+  <rect x="80" y="288" width="466" height="70" rx="9" fill="#0a0e14" stroke="#30363d"/>
+  <text x="98" y="314" fill="#39c5cf" font-size="13" font-weight="700">session_search（独立能力）</text>
+  <text x="98" y="338" fill="#8b949e" font-size="12">SQLite FTS5 全文索引 · 返回原文片段，不经 LLM 总结</text>
+
+  <rect x="566" y="288" width="454" height="70" rx="9" fill="#0a0e14" stroke="#30363d"/>
+  <text x="584" y="314" fill="#bc8cff" font-size="13" font-weight="700">External Provider（最多 1 个，与内建并存）</text>
+  <text x="584" y="335" fill="#8b949e" font-size="11.5">Honcho · OpenViking · Mem0 · Hindsight · Holographic</text>
+  <text x="584" y="351" fill="#8b949e" font-size="11">RetainDB · ByteRover · Supermemory · on_pre_compress v2 fail-closed</text>
+
+<!-- ============ Codex lane ============ -->
+  <rect x="60" y="392" width="980" height="386" rx="12" fill="#120e1a" stroke="#3a2a52"/>
+  <text x="80" y="420" fill="#bc8cff" font-size="16" font-weight="700">Codex · 异步、两级缓冲：后台模型抽取，子 Agent 巩固（root session 启动时触发）</text>
+
+  <!-- trigger chips -->
+  <g font-size="11.5">
+  <rect x="80" y="434" width="180" height="30" rx="15" fill="#1f2937" stroke="#8b949e"/>
+  <text x="170" y="454" fill="#e6edf3" text-anchor="middle">root session 启动</text>
+  <rect x="272" y="434" width="180" height="30" rx="15" fill="#1f2937" stroke="#8b949e"/>
+  <text x="362" y="454" fill="#e6edf3" text-anchor="middle">非 ephemeral</text>
+  <rect x="464" y="434" width="180" height="30" rx="15" fill="#1f2937" stroke="#8b949e"/>
+  <text x="554" y="454" fill="#e6edf3" text-anchor="middle">memory 特性开启</text>
+  <rect x="656" y="434" width="180" height="30" rx="15" fill="#1f2937" stroke="#8b949e"/>
+  <text x="746" y="454" fill="#e6edf3" text-anchor="middle">非 sub-agent</text>
+  <rect x="848" y="434" width="172" height="30" rx="15" fill="#1f2937" stroke="#8b949e"/>
+  <text x="934" y="454" fill="#e6edf3" text-anchor="middle">state DB 可用</text>
+  </g>
+
+  <!-- Phase 1 -->
+  <text x="80" y="498" fill="#d29922" font-size="14" font-weight="700">Phase 1 · Rollout Extraction（per-thread，并发有界）</text>
+
+  <rect x="80" y="510" width="180" height="92" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.4"/>
+  <text x="170" y="540" fill="#58a6ff" font-size="12.5" font-weight="700" text-anchor="middle">合格 rollouts</text>
+  <text x="170" y="562" fill="#8b949e" font-size="11" text-anchor="middle">来源允许 · 年龄窗口内</text>
+  <text x="170" y="582" fill="#8b949e" font-size="11" text-anchor="middle">空闲足够 · 有扫描上限</text>
+
+  <rect x="292" y="510" width="180" height="92" rx="9" fill="#161b22" stroke="#d29922" stroke-width="1.4"/>
+  <text x="382" y="540" fill="#d29922" font-size="12.5" font-weight="700" text-anchor="middle">claim / lease</text>
+  <text x="382" y="562" fill="#8b949e" font-size="11" text-anchor="middle">占用任务防重复处理</text>
+  <text x="382" y="582" fill="#8b949e" font-size="11" text-anchor="middle">失败退避，不空转</text>
+
+  <rect x="504" y="510" width="232" height="92" rx="9" fill="#161b22" stroke="#bc8cff" stroke-width="1.4"/>
+  <text x="620" y="538" fill="#bc8cff" font-size="12.5" font-weight="700" text-anchor="middle">并行模型抽取 → structured output</text>
+  <text x="620" y="560" fill="#e6edf3" font-size="11" text-anchor="middle">raw_memory · rollout_summary</text>
+  <text x="620" y="580" fill="#f85149" font-size="11" text-anchor="middle">secrets redaction 密钥脱敏</text>
+
+  <rect x="768" y="510" width="252" height="92" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.4"/>
+  <text x="894" y="540" fill="#3fb950" font-size="12.5" font-weight="700" text-anchor="middle">stage-1 outputs</text>
+  <text x="894" y="562" fill="#8b949e" font-size="11" text-anchor="middle">写回 state DB</text>
+  <text x="894" y="582" fill="#8b949e" font-size="11" text-anchor="middle">succeeded / no_output / failed</text>
+
+  <g fill="#8b949e">
+  <polygon points="288,556 278,550 278,562"/>
+  <polygon points="500,556 490,550 490,562"/>
+  <polygon points="764,556 754,550 754,562"/>
+  </g>
+
+  <!-- Phase 2 -->
+  <text x="80" y="638" fill="#f85149" font-size="14" font-weight="700">Phase 2 · Global Consolidation（单全局锁，Git 基线，diff 驱动）</text>
+
+  <rect x="80" y="650" width="150" height="112" rx="9" fill="#161b22" stroke="#f85149" stroke-width="1.4"/>
+  <text x="155" y="682" fill="#f85149" font-size="12.5" font-weight="700" text-anchor="middle">全局锁 + Top-N</text>
+  <text x="155" y="706" fill="#8b949e" font-size="10.5" text-anchor="middle">usage_count 优先</text>
+  <text x="155" y="724" fill="#8b949e" font-size="10.5" text-anchor="middle">max_unused_days</text>
+  <text x="155" y="742" fill="#8b949e" font-size="10.5" text-anchor="middle">未用过看 generated_at</text>
+
+  <rect x="262" y="650" width="180" height="112" rx="9" fill="#161b22" stroke="#58a6ff" stroke-width="1.4"/>
+  <text x="352" y="678" fill="#58a6ff" font-size="12.5" font-weight="700" text-anchor="middle">同步文件产物</text>
+  <text x="352" y="702" fill="#e6edf3" font-size="10.5" text-anchor="middle">raw_memories.md</text>
+  <text x="352" y="720" fill="#e6edf3" font-size="10.5" text-anchor="middle">rollout_summaries/</text>
+  <text x="352" y="740" fill="#8b949e" font-size="10.5" text-anchor="middle">剪枝旧摘要/过期资源</text>
+
+  <rect x="474" y="650" width="180" height="112" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.4"/>
+  <text x="564" y="678" fill="#3fb950" font-size="12.5" font-weight="700" text-anchor="middle">Git 基线 + diff</text>
+  <text x="564" y="702" fill="#8b949e" font-size="10.5" text-anchor="middle">~/.codex/memories/.git</text>
+  <text x="564" y="722" fill="#e6edf3" font-size="10.5" text-anchor="middle">phase2_workspace_diff.md</text>
+  <text x="564" y="742" fill="#8b949e" font-size="10.5" text-anchor="middle">无变化则直接成功</text>
+
+  <rect x="686" y="650" width="190" height="112" rx="9" fill="#2a1418" stroke="#f85149" stroke-width="1.7"/>
+  <text x="781" y="678" fill="#f85149" font-size="12.5" font-weight="700" text-anchor="middle">consolidation sub-agent</text>
+  <text x="781" y="702" fill="#e6edf3" font-size="10.5" text-anchor="middle">无审批 · 无网络</text>
+  <text x="781" y="720" fill="#e6edf3" font-size="10.5" text-anchor="middle">仅本地写 · 禁 collab</text>
+  <text x="781" y="740" fill="#8b949e" font-size="10.5" text-anchor="middle">防递归 delegation</text>
+
+  <rect x="908" y="650" width="112" height="112" rx="9" fill="#161b22" stroke="#3fb950" stroke-width="1.4"/>
+  <text x="964" y="700" fill="#3fb950" font-size="12" font-weight="700" text-anchor="middle">重置基线</text>
+  <text x="964" y="724" fill="#8b949e" font-size="10.5" text-anchor="middle">删除 diff</text>
+
+  <g fill="#8b949e">
+  <polygon points="258,706 250,700 250,712"/>
+  <polygon points="470,706 462,700 462,712"/>
+  <polygon points="682,706 674,700 674,712"/>
+  <polygon points="904,706 896,700 896,712"/>
+  </g>
+
+<!-- ============ bottom takeaways ============ -->
+  <rect x="60" y="800" width="312" height="96" rx="10" fill="#0a0e14" stroke="#30363d"/>
+  <text x="80" y="828" fill="#39c5cf" font-size="13.5" font-weight="700">同步小文件 vs 异步编译</text>
+  <text x="80" y="854" fill="#8b949e" font-size="11.5">个人 Agent：冻结快照性价比最高</text>
+  <text x="80" y="876" fill="#8b949e" font-size="11.5">高频编码 Agent：必须异步解耦</text>
+
+  <rect x="394" y="800" width="312" height="96" rx="10" fill="#0a0e14" stroke="#30363d"/>
+  <text x="414" y="828" fill="#d29922" font-size="13.5" font-weight="700">并发安全靠合同而非自觉</text>
+  <text x="414" y="854" fill="#8b949e" font-size="11.5">Phase1 lease · Phase2 全局锁</text>
+  <text x="414" y="876" fill="#8b949e" font-size="11.5">heartbeat 租约 + 失败退避</text>
+
+  <rect x="728" y="800" width="312" height="96" rx="10" fill="#0a0e14" stroke="#30363d"/>
+  <text x="748" y="828" fill="#f85149" font-size="13.5" font-weight="700">每次巩固可审计、可回滚</text>
+  <text x="748" y="854" fill="#8b949e" font-size="11.5">Git 基线 + diff 驱动子 Agent</text>
+  <text x="748" y="876" fill="#8b949e" font-size="11.5">读用量投票，旧记忆自淘汰</text>
+</svg>
+</body></html>

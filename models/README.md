@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 24 个话题。
+大模型与后训练方向的论文分析，共 25 个话题。
 
 ---
 
@@ -147,3 +147,9 @@ MoE 的本质不是「更多参数」，而是把**知识容量与每 token 计�
 2026 年 10 月论文爆发的未覆盖方向（arXiv 全双工语音专题 **176+ 篇**，2026-09–10 单月数十篇新论文）。报告系统覆盖：① 半双工/双工/全双工概念辨析与「对讲机→打电话」的体验跃迁；② 级联 ASR-LLM-TTS → 端到端 SpeechLM（VITA/Mini-Omni/LLaMA-Omni/Freeze-Omni/GLM-4-Voice）→ 原生全双工（Moshi）三代技术谱系；③ 全双工内部架构——双流音频 token、Inner Monologue、流式神经 codec（Mimi 12.5Hz/1.1kbps/80ms 帧）、帧级 turn-taking 决策、Thinker-Talker MoE、回声消除（LMPAN）与延迟预算分解；④ 2025H2–2026 六大战线：长程稳定（FD-LHB 揭示所有模型上下文耗尽）、多方多语（MultiTalk/MultiPartyTurnBench）、扩散解码（DiffuPlex/离散扩散）、异步时钟（RUBATO）、半双工骨干升级（D2）、可控情感与 turn-taking 风格（SteerablePlex/Steering Geometry）；⑤ 评测体系（FD-Bench/FD-VAD/延迟/barge-in/双人 dyadic 自然度）与「全双工≠体验闭环」；⑥ 安全——声音克隆与 Sky/Johansson 事件、DuplexJail 语音越狱（ASR 最高 48.7%）、自我监听、spurious onset 因果分析；⑦ 产业三层生态（模型层 GPT-Realtime/Gemini Live/Moshi/Qwen3-Omni/Step-Audio 2/GLM-4-Voice/Kimi-Audio；中间件 LiveKit/Pipecat/Vapi；硬件层眼镜/耳机），含 GitHub star、融资、MAU（Gemini 63% 用户用语音，厂商口径）等实时数据；八大开放问题与工程落地 Checklist。71 篇 arXiv 编号经 arxiv.org 逐一核实（另亲自抽查核心编号），厂商数据标注「厂商口径」、媒体数据标注「第三方」。
 
 📅 2026-10-26 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](full-duplex-speech/report.md)
+
+### [Agent Memory 系统设计与开源商业实现](agent-memory-systems/report.html)
+
+聚焦记忆层的**系统设计与实现对比**（与 2026-10-13 偏学术谱系的《智能体记忆》互补）：① 无状态 LLM 的会话/知识/学习三断层，Memory 与 RAG 的边界，四代记忆方案演进；② 四类记忆（工作/情景/语义/程序）× 七环节生命周期（capture→extract→store→retrieve→inject→consolidate→forget）× 范围主键（user_id/agent_id/run_id/metadata，检索硬过滤）；③ **Hermes**——MEMORY.md(≤2200)/USER.md(≤1375) 冻结快照注入以保护 prefix cache，工具 add/replace/remove 立即落盘、容量满由 Agent 自行合并，SQLite FTS5 原文回放，8 个外部 Provider 与 on_pre_compress v2 fail-closed 合同；④ **Mem0**——显式 CRUD、默认存抽取事实（infer=False 存原文）、单趟 ADD-only、实体链接、语义+BM25+实体+时序多信号检索，OSS 与 Managed 跑分口径的差距（LoCoMo 92.5/LongMemEval 94.4 为托管平台口径）；⑤ **Codex**——触发四条件（root/非临时/非子 Agent/state DB）、Phase 1 per-thread lease 抽取（raw_memory/rollout_summary/slug + 密钥脱敏）、Phase 2 全局锁 + Top-N（usage_count/max_unused_days）+ Git 基线 + phase2_workspace_diff.md + 无审批无网络禁 collab 的 consolidation 子 Agent；⑥ Claude Code Auto Memory 四类、Letta MemFS+Dreaming、Devin Memories/Rules/Skills（新版不持久化 memories）、Honcho per-peer 画像、Supermemory v5、Zep 时序图谱；⑦ 十系统九维横向对比、生产级 Memory Service 参考架构（不可变 Raw Store/幂等抽取/多写融合/diff 巩固/Memory Console）、按诉求直达选型表与七大风险。信源为一手源码/官方文档实测与 10 篇 arXiv（编号经 API 核实）。
+
+📅 2026-10-26 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](agent-memory-systems/report.md)
