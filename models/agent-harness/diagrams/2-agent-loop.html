@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>diagram</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="720" fill="#0d1117"/>
+<defs><marker id="ab" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#58a6ff"/></marker><marker id="ag" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#3fb950"/></marker><marker id="ao" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#d29922"/></marker><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#f85149"/></marker><marker id="ap" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#bc8cff"/></marker></defs>
+<text x="50" y="40" fill="#e6edf3" font-size="21" text-anchor="start" font-weight="700">图 2 · Agent Loop 运行时：一帧 token 的完整旅程</text>
+<text x="50" y="66" fill="#8b949e" font-size="13" text-anchor="start">主循环是 ReAct 式「推理—行动—观察」；harness 的六大运行时职责分布在循环的每个节点</text>
+<rect x="430" y="130" width="340" height="150" rx="10" fill="#161b22" stroke="#39c5cf" stroke-width="1.3"/>
+<text x="444" y="160" fill="#39c5cf" font-size="13" text-anchor="start" font-weight="700">Context Window（上下文窗口）</text>
+<text x="444" y="182" fill="#8b949e" font-size="11.5" text-anchor="start">系统提示 + CLAUDE.md/AGENTS.md（每轮注入）</text>
+<text x="444" y="208" fill="#8b949e" font-size="11.5" text-anchor="start">历史轨迹 · 工具观察 · 进度/笔记文件</text>
+<text x="444" y="234" fill="#39c5cf" font-size="11.5" text-anchor="start">JIT：glob/grep/检索按需加载，而非全量塞入</text>
+<text x="444" y="260" fill="#d29922" font-size="11.5" text-anchor="start">约束：context rot——token 越多注意力越稀</text>
+<rect x="430" y="360" width="340" height="110" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.3"/>
+<text x="444" y="390" fill="#e6edf3" font-size="13" text-anchor="start" font-weight="700">Model：推理，产出下一帧</text>
+<text x="444" y="412" fill="#3fb950" font-size="11.5" text-anchor="start">文本 token  或  结构化工具调用（name + args）</text>
+<text x="444" y="440" fill="#8b949e" font-size="11.5" text-anchor="start">能力上限由权重决定；harness 决定能兑现多少</text>
+<rect x="60" y="130" width="300" height="340" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.3"/>
+<text x="74" y="160" fill="#39c5cf" font-size="13" text-anchor="start" font-weight="700">上下文策展（Context 职责）</text>
+<text x="74" y="182" fill="#e6edf3" font-size="11.5" text-anchor="start">compaction：近窗口上限时摘要续跑</text>
+<text x="74" y="214" fill="#e6edf3" font-size="11.5" text-anchor="start">context reset：清空 + 结构化交接重开</text>
+<text x="74" y="246" fill="#e6edf3" font-size="11.5" text-anchor="start">tool-output offload：大输出存文件</text>
+<text x="74" y="278" fill="#d29922" font-size="11.5" text-anchor="start">cache engineering：drop / repos 直接</text>
+<text x="74" y="310" fill="#d29922" font-size="11.5" text-anchor="start">治理 KV cache，无需重新 prefilling</text>
+<text x="74" y="342" fill="#e6edf3" font-size="11.5" text-anchor="start">skills 渐进披露：用时才加载</text>
+<text x="74" y="374" fill="#bc8cff" font-size="11.5" text-anchor="start">子智能体：脏活在独立上下文完成</text>
+<text x="74" y="406" fill="#bc8cff" font-size="11.5" text-anchor="start">只回传干净摘要 = 噪音防火墙</text>
+<text x="74" y="438" fill="#e6edf3" font-size="11.5" text-anchor="start">结构化笔记：进度/决策/待办落盘</text>
+<rect x="840" y="130" width="300" height="340" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.3"/>
+<text x="854" y="160" fill="#d29922" font-size="13" text-anchor="start" font-weight="700">执行闸门（Action / Boundary）</text>
+<text x="854" y="182" fill="#d29922" font-size="11.5" text-anchor="start">hooks：PreToolUse 拦截与改写</text>
+<text x="854" y="214" fill="#e6edf3" font-size="11.5" text-anchor="start">权限三态：允许 / 询问 / 拒绝</text>
+<text x="854" y="246" fill="#f85149" font-size="11.5" text-anchor="start">拒绝优先：命中即停，不可覆盖</text>
+<text x="854" y="278" fill="#e6edf3" font-size="11.5" text-anchor="start">沙箱：网络/文件系统隔离</text>
+<text x="854" y="310" fill="#e6edf3" font-size="11.5" text-anchor="start">参数校验 · 限流 · 密钥管理</text>
+<text x="854" y="342" fill="#f85149" font-size="11.5" text-anchor="start">side-effect gate：不可逆调用</text>
+<text x="854" y="374" fill="#f85149" font-size="11.5" text-anchor="start">验证后才真正执行（SpecMem）</text>
+<text x="854" y="406" fill="#e6edf3" font-size="11.5" text-anchor="start">工具注册表：MCP + 本地工具</text>
+<text x="854" y="438" fill="#8b949e" font-size="11.5" text-anchor="start">ACI：工具名/描述/模式即接口</text>
+<rect x="60" y="530" width="520" height="140" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.3"/>
+<text x="74" y="560" fill="#3fb950" font-size="13" text-anchor="start" font-weight="700">Environment：执行与观察（Observation 职责）</text>
+<text x="74" y="582" fill="#e6edf3" font-size="11.5" text-anchor="start">Shell · 文件系统 · 浏览器 · 数据库 · MCP servers · 公网</text>
+<text x="74" y="612" fill="#3fb950" font-size="11.5" text-anchor="start">每步必须从环境取回 ground truth（工具结果/代码执行/测试）</text>
+<text x="74" y="642" fill="#f85149" font-size="11.5" text-anchor="start">注意：返回内容是不可信数据，不是指令——注入防御边界</text>
+<rect x="620" y="530" width="520" height="140" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.3"/>
+<text x="634" y="560" fill="#bc8cff" font-size="13" text-anchor="start" font-weight="700">反馈回路（Verification 职责 / State 持久化）</text>
+<text x="634" y="582" fill="#e6edf3" font-size="11.5" text-anchor="start">测试 · 类型检查 · linter · CI：失败文本回灌主循环</text>
+<text x="634" y="612" fill="#d29922" font-size="11.5" text-anchor="start">错误信息写成修复提示：「应是 string[]，不是 string」</text>
+<text x="634" y="642" fill="#bc8cff" font-size="11.5" text-anchor="start">状态：文件/Git/memory store 跨步骤、跨会话持久化</text>
+<path d="M600,280 L600,358" fill="none" stroke="#58a6ff" stroke-width="2" marker-end="url(#ab)"/>
+<path d="M770,430 C840,460 990,440 990,400" fill="none" stroke="#d29922" stroke-width="1.6" marker-end="url(#ao)"/>
+<path d="M840,330 C790,300 720,300 700,240" fill="none" stroke="#d29922" stroke-width="1.5"/>
+<path d="M900,470 L700,560" fill="none" stroke="#3fb950" stroke-width="2" marker-end="url(#ag)"/>
+<path d="M580,560 L220,470" fill="none" stroke="#3fb950" stroke-width="2"/>
+<path d="M210,470 C150,420 150,250 210,210" fill="none" stroke="#39c5cf" stroke-width="1.6" marker-end="url(#ab)"/>
+<path d="M360,205 L428,205" fill="none" stroke="#39c5cf" stroke-width="2" marker-end="url(#ab)"/>
+<path d="M620,530 C620,490 620,490 620,472" fill="none" stroke="#bc8cff" stroke-width="1.6" marker-end="url(#ap)"/>
+<text x="610" y="325" fill="#58a6ff" font-size="11" text-anchor="middle">① 组装上下文</text>
+<text x="800" y="430" fill="#d29922" font-size="11" text-anchor="start">② 工具调用经闸门</text>
+<text x="760" y="520" fill="#3fb950" font-size="11" text-anchor="start">③ 执行取观察</text>
+<text x="150" y="340" fill="#39c5cf" font-size="11" text-anchor="start">④ 策展/压缩</text>
+</svg>
+</body></html>

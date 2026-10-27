@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **25 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **26 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -167,3 +167,9 @@ MCP、A2A 与 AGENTS.md 三大互联标准的分层关系：工具接入、Agent
 当大模型学会「边听边说」：级联 ASR-LLM-TTS → 端到端 SpeechLM → Moshi 原生全双工三代谱系、流式 codec 与 turn-taking，覆盖模型/中间件/硬件三层产业生态。
 
 📅 2026-10-26 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](full-duplex-speech/report.md)
+
+### [Agent Harness 智能体脚手架](https://ckirchhoff2021.github.io/knowledge-base/models/agent-harness/report.html)
+
+当脚手架成为能力本身：「Agent = Model + Harness」的六层框架与六大运行时职责、失败归因五度量（VCR/Model-Harness Fit）、Harness Scaling 第四缩放维度、Cache Engineering 与 Token 资源经济学，以及「harness 是否会消失」的范式之争。
+
+📅 2026-10-27 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](agent-harness/report.md)

@@ -70,6 +70,7 @@
 | [GUI Agent 电脑操作](https://ckirchhoff2021.github.io/knowledge-base/models/gui-agent/report.html) | 电脑操作智能体 | 2026-10-23 |
 | [Test-Time Scaling](https://ckirchhoff2021.github.io/knowledge-base/models/test-time-scaling/report.html) | 测试时计算扩展 | 2026-10-25 |
 | [全双工实时语音对话模型](https://ckirchhoff2021.github.io/knowledge-base/models/full-duplex-speech/report.html) | 全双工实时语音对话 | 2026-10-26 |
+| [Agent Harness 智能体脚手架](https://ckirchhoff2021.github.io/knowledge-base/models/agent-harness/report.html) | 脚手架工程/失败归因/Harness Scaling | 2026-10-27 |
 | [SkillOpt 技能优化](https://ckirchhoff2021.github.io/knowledge-base/models/skillopt/report.html) | 文本空间技能优化器 | 2026-09-22 |
 
 ## 🌱 生活方法论

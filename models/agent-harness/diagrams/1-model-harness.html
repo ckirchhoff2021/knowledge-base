@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>diagram</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="720" fill="#0d1117"/>
+<defs><marker id="ab" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#58a6ff"/></marker><marker id="ag" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#3fb950"/></marker><marker id="ao" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#d29922"/></marker><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#f85149"/></marker><marker id="ap" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#bc8cff"/></marker></defs>
+<text x="50" y="40" fill="#e6edf3" font-size="21" text-anchor="start" font-weight="700">图 1 · Agent = Model + Harness：系统边界与六层脚手架</text>
+<text x="50" y="66" fill="#8b949e" font-size="13" text-anchor="start">「If you&#x27;re not the model, you&#x27;re the harness.」——Viv Trivedy；模型只产出 token，其余一切由 harness 承担</text>
+<rect x="45" y="88" width="770" height="600" rx="16" fill="#0f141b" stroke="#58a6ff" stroke-width="1.6" stroke-dasharray="7,5"/>
+<text x="68" y="118" fill="#58a6ff" font-size="15" text-anchor="start" font-weight="700">AGENT（智能体）</text>
+<rect x="80" y="140" width="200" height="510" rx="10" fill="#11202b" stroke="#58a6ff" stroke-width="1.3"/>
+<text x="94" y="180" fill="#e6edf3" font-size="13" text-anchor="start" font-weight="700">Foundation Model</text>
+<text x="94" y="202" fill="#8b949e" font-size="11.5" text-anchor="start">权重 · 推理 · 参数知识</text>
+<text x="94" y="236" fill="#8b949e" font-size="11.5" text-anchor="start"></text>
+<text x="94" y="270" fill="#8b949e" font-size="11.5" text-anchor="start">输入：上下文中的全部 token</text>
+<text x="94" y="304" fill="#8b949e" font-size="11.5" text-anchor="start"></text>
+<text x="94" y="338" fill="#3fb950" font-size="11.5" text-anchor="start">输出：下一帧 token</text>
+<text x="94" y="372" fill="#3fb950" font-size="11.5" text-anchor="start">（文本 / 工具调用请求）</text>
+<text x="94" y="406" fill="#8b949e" font-size="11.5" text-anchor="start"></text>
+<text x="94" y="440" fill="#d29922" font-size="11.5" text-anchor="start">模型本身：</text>
+<text x="94" y="474" fill="#d29922" font-size="11.5" text-anchor="start">无状态 · 无工具 · 无法行动</text>
+<text x="94" y="508" fill="#8b949e" font-size="11.5" text-anchor="start"></text>
+<text x="94" y="542" fill="#8b949e" font-size="11.5" text-anchor="start">裸模型 ≠ agent</text>
+<text x="94" y="576" fill="#8b949e" font-size="11.5" text-anchor="start">harness 给它状态、工具执行</text>
+<text x="94" y="610" fill="#8b949e" font-size="11.5" text-anchor="start">与可强制约束后才成为 agent</text>
+<rect x="315" y="140" width="235" height="150" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.3"/>
+<text x="329" y="168" fill="#d29922" font-size="13" text-anchor="start" font-weight="700">① 指令层 Instruction</text>
+<text x="329" y="190" fill="#8b949e" font-size="11.5" text-anchor="start">系统提示 · CLAUDE.md</text>
+<text x="329" y="215" fill="#8b949e" font-size="11.5" text-anchor="start">AGENTS.md · skills · 任务说明</text>
+<text x="329" y="240" fill="#8b949e" font-size="11.5" text-anchor="start">命题：给地图，不给手册</text>
+<text x="329" y="265" fill="#8b949e" font-size="11.5" text-anchor="start">每条规则可追溯到一次真实失败</text>
+<rect x="565" y="140" width="235" height="150" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.3"/>
+<text x="579" y="168" fill="#d29922" font-size="13" text-anchor="start" font-weight="700">② 上下文层 Context</text>
+<text x="579" y="190" fill="#8b949e" font-size="11.5" text-anchor="start">窗口策展 · compaction</text>
+<text x="579" y="215" fill="#8b949e" font-size="11.5" text-anchor="start">进度文件 · 子智能体噪音隔离</text>
+<text x="579" y="240" fill="#8b949e" font-size="11.5" text-anchor="start">不在上下文里的东西不存在</text>
+<text x="579" y="265" fill="#8b949e" font-size="11.5" text-anchor="start">噪音同样让模型做错判断</text>
+<rect x="315" y="320" width="235" height="150" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.3"/>
+<text x="329" y="348" fill="#d29922" font-size="13" text-anchor="start" font-weight="700">③ 工具层 Tools</text>
+<text x="329" y="370" fill="#8b949e" font-size="11.5" text-anchor="start">文件 · Bash · Git</text>
+<text x="329" y="395" fill="#8b949e" font-size="11.5" text-anchor="start">浏览器 · 数据库 · MCP servers</text>
+<text x="329" y="420" fill="#8b949e" font-size="11.5" text-anchor="start">工具并非越多越好</text>
+<text x="329" y="445" fill="#8b949e" font-size="11.5" text-anchor="start">与任务精确匹配才是最优</text>
+<rect x="565" y="320" width="235" height="150" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.3"/>
+<text x="579" y="348" fill="#d29922" font-size="13" text-anchor="start" font-weight="700">④ 边界层 Boundary</text>
+<text x="579" y="370" fill="#8b949e" font-size="11.5" text-anchor="start">权限三态 · 沙箱</text>
+<text x="579" y="395" fill="#8b949e" font-size="11.5" text-anchor="start">网络/文件系统隔离 · 密钥 · 审批</text>
+<text x="579" y="420" fill="#8b949e" font-size="11.5" text-anchor="start">边界设计得越清楚</text>
+<text x="579" y="445" fill="#8b949e" font-size="11.5" text-anchor="start">人类越敢把更多事交给它</text>
+<rect x="315" y="500" width="235" height="150" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.3"/>
+<text x="329" y="528" fill="#d29922" font-size="13" text-anchor="start" font-weight="700">⑤ 反馈层 Feedback</text>
+<text x="329" y="550" fill="#8b949e" font-size="11.5" text-anchor="start">测试 · 类型检查 · linter</text>
+<text x="329" y="575" fill="#8b949e" font-size="11.5" text-anchor="start">CI · 运行日志 · review · 判官</text>
+<text x="329" y="600" fill="#8b949e" font-size="11.5" text-anchor="start">反馈是 AI 的传感器</text>
+<text x="329" y="625" fill="#8b949e" font-size="11.5" text-anchor="start">成功静默，失败详尽可执行</text>
+<rect x="565" y="500" width="235" height="150" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.3"/>
+<text x="579" y="528" fill="#d29922" font-size="13" text-anchor="start" font-weight="700">⑥ 治理层 Governance</text>
+<text x="579" y="550" fill="#8b949e" font-size="11.5" text-anchor="start">成本监控 · 审计日志</text>
+<text x="579" y="575" fill="#8b949e" font-size="11.5" text-anchor="start">人工升级 · 失败复盘 · 回归评估</text>
+<text x="579" y="600" fill="#8b949e" font-size="11.5" text-anchor="start">防止失控循环烧光预算</text>
+<text x="579" y="625" fill="#8b949e" font-size="11.5" text-anchor="start">与权限在组织级被滥用</text>
+<path d="M280,300 C300,300 300,215 313,215" fill="none" stroke="#58a6ff" stroke-width="1.6" marker-end="url(#ab)"/>
+<path d="M313,470 C295,470 295,420 282,420" fill="none" stroke="#3fb950" stroke-width="1.6" marker-end="url(#ag)"/>
+<rect x="845" y="88" width="310" height="600" rx="16" fill="#101813" stroke="#3fb950" stroke-width="1.6"/>
+<text x="868" y="118" fill="#3fb950" font-size="15" text-anchor="start" font-weight="700">ENVIRONMENT（环境）</text>
+<rect x="870" y="140" width="260" height="62" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.1"/>
+<text x="1000" y="166" fill="#e6edf3" font-size="13" text-anchor="middle" font-weight="700">用户 / 开发者</text>
+<text x="1000" y="187" fill="#8b949e" font-size="11" text-anchor="middle">目标 · 审批 · 异常时接管</text>
+<rect x="870" y="222" width="260" height="62" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.1"/>
+<text x="1000" y="248" fill="#e6edf3" font-size="13" text-anchor="middle" font-weight="700">文件系统 + Git</text>
+<text x="1000" y="269" fill="#8b949e" font-size="11" text-anchor="middle">持久状态 · 回滚 · 人机协作面</text>
+<rect x="870" y="304" width="260" height="62" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.1"/>
+<text x="1000" y="330" fill="#e6edf3" font-size="13" text-anchor="middle" font-weight="700">Shell / 代码执行</text>
+<text x="1000" y="351" fill="#8b949e" font-size="11" text-anchor="middle">通用工具，运行于沙箱之中</text>
+<rect x="870" y="386" width="260" height="62" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.1"/>
+<text x="1000" y="412" fill="#e6edf3" font-size="13" text-anchor="middle" font-weight="700">浏览器 / 网页</text>
+<text x="1000" y="433" fill="#8b949e" font-size="11" text-anchor="middle">点击 · 表单 · 截图观察</text>
+<rect x="870" y="468" width="260" height="62" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.1"/>
+<text x="1000" y="494" fill="#e6edf3" font-size="13" text-anchor="middle" font-weight="700">MCP servers / 内部 API</text>
+<text x="1000" y="515" fill="#8b949e" font-size="11" text-anchor="middle">数据库 · 第三方工具 · 检索</text>
+<rect x="870" y="550" width="260" height="62" rx="10" fill="#161b22" stroke="#f85149" stroke-width="1.1"/>
+<text x="1000" y="576" fill="#f85149" font-size="13" text-anchor="middle" font-weight="700">公网（不可信文本！）</text>
+<text x="1000" y="597" fill="#8b949e" font-size="11" text-anchor="middle">工具返回内容 = 提示注入入口</text>
+<line x1="815" y1="330" x2="868" y2="330" stroke="#3fb950" stroke-width="2" marker-end="url(#ag)"/>
+<line x1="868" y1="372" x2="815" y2="372" stroke="#58a6ff" stroke-width="2" marker-end="url(#ab)"/>
+<text x="842" y="320" fill="#3fb950" font-size="10.5" text-anchor="middle">行动 action</text>
+<text x="842" y="392" fill="#58a6ff" font-size="10.5" text-anchor="middle">观察 observation</text>
+</svg>
+</body></html>
