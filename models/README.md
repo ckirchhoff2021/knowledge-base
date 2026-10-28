@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **26 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **27 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -57,6 +57,12 @@
 模型崩溃的机理与合成数据方法：数据放大/筛选/回炉策略、合成数据的偏差累积，以及如何用真实数据锚点修正缩放定律。
 
 📅 2026-10-19 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](synthetic-data/report.md)
+
+### [反思式提示进化 GEPA](https://ckirchhoff2021.github.io/knowledge-base/models/reflective-prompt-evolution/report.html)
+
+当提示成为可学习的程序：语言程序 Φ=⟨Π, Θ_frozen⟩ 形式化、三代谱系（APE/OPRO→EvoPrompt/Promptbreeder/TextGrad→GEPA）、反思变异 + 实例级 Pareto 选择 + System-aware Merge，六任务平均胜 GRPO 6%、rollout 省 35×，以及 2026 改进/应用/诊断/替代四路线跟进与提示级过拟合治理。
+
+📅 2026-10-28 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](reflective-prompt-evolution/report.md)
 
 ---
 

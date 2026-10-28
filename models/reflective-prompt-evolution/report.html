@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>反思式提示进化：当提示成为可学习的程序——GEPA 与自动语言程序优化</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:980px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:28px; }
+  h1 { font-size:27px; line-height:1.45; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin:0 8px 8px 0; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  figure { margin:28px 0; }
+  figure iframe { width:100%; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; word-break:break-all; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); word-break:normal; }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+
+</style>
+</head><body><div class="container">
+<header>
+  <h1>反思式提示进化：当提示成为可学习的程序——GEPA 与自动语言程序优化前沿技术报告</h1>
+  <div><span class="badge">GEPA</span><span class="badge">反思式提示进化</span><span class="badge">语言程序</span><span class="badge">自动提示优化</span><span class="badge">DSPy 编译</span><span class="badge">TextGrad 文本梯度</span><span class="badge">MIPROv2</span><span class="badge">Pareto 选择</span><span class="badge">System-aware Merge</span><span class="badge">提示级过拟合</span><span class="badge">免梯度优化</span><span class="badge">RLVR/GRPO 对比</span></div>
+  <div class="meta" style="margin-top:10px">
+    <span>信源：34 篇 arXiv 论文（编号经 arxiv.org 摘要页逐一核实），量化数据均标注作者自述口径</span>
+    &nbsp;·&nbsp;<span>报告日期：2026-10-28</span>
+  </div>
+</header>
+<nav class="toc"><h2>目录</h2><ol><li><a href="#sec1">1. 引言：大模型适应下游任务的三种范式</a></li><li><a href="#sec2">2. 问题定义：什么是「语言程序」，什么在被优化</a></li><li><a href="#sec3">3. 技术谱系：从 APE 到 GEPA 的三代演进（2022–2025）</a></li><li><a href="#sec4">4. GEPA 深度拆解：反思变异、Pareto 选择与 System-aware Merge</a></li><li><a href="#sec5">5. 实证证据：六任务基准与跨模型迁移</a></li><li><a href="#sec6">6. 扩展应用：把优化器当作推理时搜索（kernel 生成）</a></li><li><a href="#sec7">7. 2026 跟进潮：改进、应用、诊断、替代四条路线</a></li><li><a href="#sec8">8. 关键张力与失败模式：提示级过拟合、选择噪声与耦合效应</a></li><li><a href="#sec9">9. 实践指南：什么时候该用、怎么用、如何避坑</a></li><li><a href="#sec10">10. 展望与范式之争：提示优化会取代 RL 吗</a></li><li><a href="#sec11">11. 参考文献</a></li></ol></nav>
+<p><strong>——GEPA 与自动语言程序优化（Language Program Optimization）前沿技术报告</strong></p>
+
+<blockquote><strong>一句话摘要</strong>：2025 年 7 月，UC Berkeley / Stanford / Databricks 团队提出 GEPA——一个完全不碰模型权重、只让 LLM 用自然语言「反思真实执行轨迹」来进化提示的优化器，在六个任务上平均击败需要上万次 rollout 的 GRPO 强化学习（最高 +20%），rollout 用量最多省 35 倍。2026 年下半年，围绕 GEPA 的改进、应用、诊断与替代论文集中爆发，标志着「提示」已从手工调参的模板，正式成为一种<strong>可被机器自动搜索、编译与进化的程序</strong>。本报告系统梳理这一方向的技术谱系、算法机理、实证证据、失败模式与实践方法。</blockquote>
+
+<blockquote><strong>关键词</strong>：GEPA（Genetic-Pareto）、反思式提示进化（Reflective Prompt Evolution）、自动提示优化（APO/OPRO/Promptbreeder）、语言程序（Language Program）、DSPy 编译器、TextGrad 文本梯度、MIPROv2、System-aware Merge、Pareto 选择、提示级过拟合（Prompt-level Overfitting）、免梯度优化（Gradient-Free Optimization）、RLVR/GRPO 对比</blockquote>
+
+<table>
+<thead><tr>
+<th>项目</th>
+<th>内容</th>
+</tr></thead><tbody>
+<tr>
+<td>报告方向</td>
+<td>反思式提示进化 / 自动语言程序优化</td>
+</tr>
+<tr>
+<td>核心论文</td>
+<td>GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning（arXiv:2507.19457）</td>
+</tr>
+<tr>
+<td>文献规模</td>
+<td>34 篇，均经 arXiv 摘要页逐一核实（编号 / 标题 / 作者 / 日期）</td>
+</tr>
+<tr>
+<td>架构图</td>
+<td>5 张暗色 SVG（范式坐标 / GEPA 主循环 / Pareto 选择 / 技术谱系 / 2026 生态）</td>
+</tr>
+<tr>
+<td>成文日期</td>
+<td>2026-10-28</td>
+</tr>
+<tr>
+<td>证据约定</td>
+<td>凡引用具体数字均标注来源；「厂商/作者口径」指数据来自对应论文自述，非第三方复测</td>
+</tr>
+</tbody></table>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec1">1. 引言：大模型适应下游任务的三种范式</h2>
+
+<p>当我们希望一个通用大模型在具体任务（多跳问答、工具调用、写 CUDA kernel、操作 GUI）上表现得更好，工程上存在三条主流路径。它们的区别，本质上是<strong>「在什么空间里、用什么信号、以什么方式做优化」</strong>。</p>
+
+<p><strong>路径一：参数优化（梯度 / 强化学习）。</strong> 直接修改模型权重 Θ：SFT 用示范轨迹做监督微调，RLHF/RLVR 用偏好或可验证奖励做策略优化。2025 年以来，以 DeepSeek-R1 为代表的 RLVR（Reinforcement Learning with Verifiable Rewards）路线大放异彩，GRPO（Group Relative Policy Optimization，DeepSeekMath，arXiv:2402.03300）成为事实标准算法。它的代价是：需要成百上千、甚至数万次 rollout，需要可训练的权重访问与 GPU 资源，且优化结果锁死在被训练的那一个模型上。</p>
+
+<p><strong>路径二：测试时计算（冻结权重，多花推理算力）。</strong> 不训练、也不改任何外部状态，而是在推理时让模型多想、多采样、做树/图搜索与自验证（即 Test-Time Scaling，本知识库已有专题）。它提升的是单次任务的求解成功率，但不会沉淀出可复用的任务知识——下一个同类问题仍要重新思考一遍。</p>
+
+<p><strong>路径三：语言/上下文优化（冻结权重，优化提示本身）。</strong> 模型权重 Θ 完全冻结，把承载任务知识的<strong>自然语言文本</strong>——系统提示、少样本示例、工作流描述、甚至「语言程序」的代码结构——当作可优化的参数 Π，用 LLM 自身的生成与反思能力在离散文本空间里搜索最优解。优化产物是一段人类可读、可审计、可跨模型迁移的文本。</p>
+
+<figure>
+  <iframe src="diagrams/1-paradigms.html" height="600" loading="lazy"></iframe>
+  <figcaption>图 1 · 适应下游任务的三种范式坐标：权重训练 / 上下文学习 / 语言程序优化</figcaption>
+</figure>
+
+<p>GEPA 的核心主张，正是路径三在<strong>样本效率</strong>上对路径一的挑战：自然语言是一种比稀疏标量奖励稠密得多、可解释得多的学习介质。当 LLM 能用语言诊断「我上一次为什么失败」时，它往往只需几次 rollout 就能提炼出一条高层规则，而 GRPO 需要成千上万次 rollout 才能把同样的知识「压」进权重（论文原文：*&quot;the interpretable nature of language often provides a much richer learning medium for LLMs, compared to policy gradients derived from sparse, scalar rewards&quot;*，arXiv:2507.19457）。</p>
+
+<p>需要强调的是，路径三并非 GEPA 的凭空发明。早在 2022 年底 APE 就证明 LLM 可以自动写出人类水平的提示；2023 年 OPRO、Promptbreeder、EvoPrompt 把进化算法引入提示空间；2024 年 DSPy 提出「语言程序编译」、TextGrad 提出「文本反向传播」、MIPROv2 解决多模块联合优化。GEPA 的贡献是把<strong>对真实轨迹的自然语言反思</strong>与 <strong>Pareto 多样性选择</strong>结合，把这条路线的样本效率与最终性能推到了新高度，并在 2026 年引发了一波密集跟进。这也是本报告以 GEPA 为主线、但完整覆盖整个语言程序优化谱系的原因。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec2">2. 问题定义：什么是「语言程序」，什么在被优化</h2>
+
+<h3>2.1 复合 AI 系统与语言程序</h3>
+
+<p>现代 LLM 应用很少是「一次 prompt 调用」。一个深度研究 agent 可能包含：查询规划模块、检索模块、证据综合模块、引文校验模块；一个写 kernel 的 agent 包含：代码生成、编译器反馈解析、性能剖析、迭代改写。GEPA 将这类系统形式化为<strong>复合 AI 系统（Compound AI System）Φ</strong>，它由若干模块（module）串接而成，每个模块都带有一个或多个自然语言提示 π。DSPy 则更早地把这种结构称为<strong>语言程序（Language Program）</strong>：用声明式代码定义「文本如何在模块间流动」，而把每个模块里「具体怎么对 LM 说话」留给编译器自动决定（arXiv:2310.03714）。</p>
+
+<p>一个被优化的系统可以写成：</p>
+
+<pre><code>Φ = ⟨ Π, Θ_frozen ⟩
+
+Π = {π_1, π_2, ..., π_|M|}   # 各模块的自然语言提示（可优化参数）
+Θ                             # 底层 LLM 权重（冻结，不可优化）</code></pre>
+
+<p>GEPA 的优化目标，是在<strong>只改动 Π、绝不触碰 Θ</strong> 的前提下，找到使任务指标 μ 最大化的提示集合：</p>
+
+<pre><code>Π* = argmax_Π  E_{(x,m) ~ D} [ μ( Φ_Π(x), m ) ]</code></pre>
+
+<p>其中 <code>(x, m)</code> 是任务实例（输入 x、参考答案/判定 m），μ 是评测指标（如准确率、pass@1、AUROC）。</p>
+
+<h3>2.2 两个关键函数：评测指标 μ 与反馈函数 μ_f</h3>
+
+<p>GEPA 相对早期提示优化器的一个重要设计，是区分了两种信号：</p>
+
+<ul>
+<li><strong>评测指标 μ（metric）</strong>：返回一个标量分数，用于候选之间的选择与最终排序（例如答案是否正确、测试是否通过、kernel 向量利用率）。</li>
+<li><strong>反馈函数 μ_f（feedback function）</strong>：不仅返回分数，还返回<strong>丰富的自然语言反馈</strong>——编译器报错信息、未满足的评分细则（rubric）、工具调用的异常、参考答案与输出的逐条差异。GEPA 论文特别指出，除了 LLM 自己产生的「执行轨迹」（execution trace：推理、工具调用及其输出），环境在计算奖励时产生的「<strong>评测轨迹</strong>」（evaluation trace：如编译器在给出 0 分之前吐出的错误信息）是被前人忽视的第二类高价值诊断信号。</li>
+</ul>
+
+<p>这一区分直接决定了 GEPA 的反思质量：优化器看到的不是冷冰冰的「0 分」，而是「第 3 个工具调用参数类型错误」「结论声称 X 但引用的证据只支持 Y」这样可归因、可行动的具体信息。</p>
+
+<h3>2.3 数据划分：feedback / pareto / test</h3>
+
+<p>为防止「在训练题上把提示调到背答案」，GEPA 采用严格的数据划分（Algorithm 1）：</p>
+
+<ul>
+<li><strong>D_feedback</strong>：用于执行、采集轨迹与反馈、做小批量（minibatch）改进的训练集；</li>
+<li><strong>D_pareto</strong>：一个规模为 n_pareto 的独立验证集，用于在「实例维度」上记录每个候选的得分向量、做 Pareto 选择与最终候选挑选；</li>
+<li><strong>D_test（held-out）</strong>：优化过程完全不可见的留出测试集，仅在论文汇报时使用。</li>
+</ul>
+
+<p>这种「在一个集合上改、在另一个不相交的集合上选」的纪律，是后文讨论提示级过拟合时的核心防线——而 2026 年的多篇跟进工作表明，这条防线仍会被小样本选择噪声击穿。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec3">3. 技术谱系：从 APE 到 GEPA 的三代演进（2022–2025）</h2>
+
+<figure>
+  <iframe src="diagrams/4-genealogy.html" height="600" loading="lazy"></iframe>
+  <figcaption>图 4 · 从 APE 到 GEPA：三代提示优化技术谱系（2022–2026）</figcaption>
+</figure>
+
+<p>自动提示优化并非一条直线，而是多条思想支流的汇合。按「变异信号从哪来、候选如何选择」可粗分为三代。</p>
+
+<h3>3.1 第一代：把提示当候选，让 LLM 批量提案 + 打分（2022–2023 初）</h3>
+
+<p><strong>APE（Automatic Prompt Engineer，arXiv:2211.01910，2022-11）。</strong> 开山之作。给定少量输入-输出示例，APE 先让 LLM <strong>逆向归纳</strong>（propose 指令：从「示例对」反推出「可能生成这些示例的指令」）批量产生指令候选，再用 zero-shot 表现等打分函数筛选。在 24 个 NLP 任务中，19 个任务上自动指令达到或超过人类标注员手写指令。它确立了这个领域的基本动作：<strong>提案（propose）→ 评估（score）→ 选择（select）</strong>。</p>
+
+<p><strong>Self-Refine（arXiv:2303.17651，2023-03）与 Reflexion（arXiv:2303.11366，2023-03）。</strong> 两者都引入了「自我反馈」，但作用对象不同：Self-Refine 让同一个 LLM 依次扮演生成器、批评者、改写者，对<strong>单条输出</strong>反复迭代，不需要任何训练集；Reflexion 则面向 agent，把一次完整试错的环境反馈转成<strong>言语反思</strong>存入情节记忆，指导下一轮尝试，HumanEval pass@1 报告达到 91%。Reflexion 的「 verbal reinforcement 」——不更新权重、只把经验写成文字——是 GEPA 反思机制的直接前身。</p>
+
+<p>这一代的局限：候选之间相互独立，没有「种群」与「遗传」，经验无法在多代之间累积；且反馈多为笼统的自我批评，缺少与真实失败案例的绑定。</p>
+
+<h3>3.2 第二代：种群、进化算法与元提示（2023 下半年）</h3>
+
+<p>2023 年 9 月前后，三篇标志性论文把<strong>进化计算</strong>引入提示空间，提示不再是孤立候选，而是一个可繁殖、可变异、可选择的<strong>种群</strong>。</p>
+
+<p><strong>OPRO（Large Language Models as Optimizers，arXiv:2309.03409，2023-09）。</strong> 让 LLM 直接充当优化器：把「历史解 + 各自得分」组成元提示（meta-prompt），LLM 据此生成更好的新解，打分后追加回元提示循环。在 GSM8K 上最佳提示比人工提示最高 +8%，在 Big-Bench Hard 上最高 +50%。OPRO 的选择信号只有<strong>标量分数</strong>——这正是后来 GEPA/MAGE 证明的关键短板：只看分数、不看「为什么错」，在复杂任务上难以持续改进。</p>
+
+<p><strong>Promptbreeder（arXiv:2309.16797，2023-09，Google DeepMind）。</strong> 最激进的<strong>自指（self-referential）</strong>机制：种群里不仅进化「任务提示」，还进化「用来变异任务提示的变异提示」本身。变异提示与任务提示共同演化，理论上可以改进「改进方法」本身。它展示了语言空间里自我改进的递归可能，但也因搜索空间巨大、结果方差高而难以稳定复现。</p>
+
+<p><strong>EvoPrompt（arXiv:2309.08532，2023-09）。</strong> 用 LLM 的语言能力「落地」经典进化算法算子——遗传算法的交叉/变异（GA）与差分进化（DE），完全不用梯度。31 个数据集上显著优于人工提示（BBH 最高 +25%）。</p>
+
+<p>同期还有两条重要支线：</p>
+
+<ul>
+<li><strong>InstructZero（arXiv:2306.03082，2023-06）</strong>：针对只能黑盒访问的闭源 LLM，不直接优化离散指令，而是在一个开源 LLM 上优化低维<strong>软提示</strong>，由其解码出指令投喂黑盒模型，再用贝叶斯优化改进软提示。它首次系统处理了「目标模型不可训练、甚至不可见」的约束。</li>
+<li><strong>APO / ProTeGi（arXiv:2305.03495，2023-05，v2 2023-10）</strong>：Reid Pryzant 等人提出受数值梯度下降启发的「文本梯度」——用小批量数据让 LLM 写出批评性自然语言「梯度」，沿语义反方向编辑提示，并用<strong>束搜索（beam search）+ bandit 选择</strong>展开，初始提示最高提升 31%。这是「文本梯度」一词的来源，比 TextGrad 更早。</li>
+<li><strong>PromptAgent（arXiv:2310.16427，2023-10）</strong>：把提示优化建模为<strong>战略规划</strong>，用蒙特卡洛树搜索（MCTS）在庞大的专家级提示空间中导航：提示为状态、针对错误的修改为动作、模拟未来奖励，自动产出媲美专家手写的提示。</li>
+</ul>
+
+<h3>3.3 第三代：语言程序编译、文本反向传播与反思式进化（2024–2025）</h3>
+
+<p>第三代的核心转变是：优化对象从「单条提示」升级为「<strong>多模块语言程序</strong>」，并开始系统解决跨模块信用分配、优化器工程化等问题。</p>
+
+<p><strong>DSPy（arXiv:2310.03714，2023-10）。</strong> 虽与第二代同期，但思想属于新一代：它把 LM 流水线抽象为声明式模块构成的「文本变换图」，再像传统编译器一样，针对给定指标<strong>自动编译</strong>——bootstrap 指令、检索并选择少样本演示——整条流水线。它第一次让「写 LM 应用」从「手写提示字符串」变成「写程序 + 编译器优化」，是整个语言程序优化方向的工程底座。GEPA、MIPROv2 都以 DSPy 的模块抽象为载体。</p>
+
+<p><strong>TextGrad（arXiv:2406.07496，2024-06）。</strong> 把 LLM 的批评性反馈当作「文本梯度」，沿<strong>文本计算图反向传播</strong>：下游结果被批评 → 批评作为梯度回传给上游文本变量 → LLM 执行「参数更新」。它让提示、解决方案等不同文本变量能在一个统一的反向传播框架里被优化，是 GEPA 的主要对比基线之一。</p>
+
+<p><strong>MIPRO / MIPROv2（arXiv:2406.11695，2024-06）。</strong> 直面多阶段程序的<strong>跨模块信用分配</strong>：在无模块级标签、无梯度条件下，联合优化每个模块的自由指令与少样本演示；用程序感知/数据感知的方式生成指令提案，用随机小批量评估学习一个代理（surrogate）模型来预测候选表现，并对「如何生成提案」本身做元优化。在 GEPA 出现前，MIPROv2 是最强的开源提示优化器，也是 GEPA 论文中最关键的对照组。</p>
+
+<p><strong>GEPA（arXiv:2507.19457，2025-07）。</strong> 集大成者。相比 MIPROv2 主要优化「指令 + 演示」、OPRO 只看标量分数，GEPA 的两个决定性设计是：① <strong>反思式变异</strong>——把真实执行轨迹 + 评测轨迹（报错/未满足的 rubric）喂给反思 LM，让它做模块级信用归因后再改写提示；② <strong>Pareto 候选选择</strong>——不总是变异「平均分最高」的候选（易陷局部最优），而是在「实例维度的 Pareto 前沿」上按出现频率采样，保证专门擅长不同子任务的候选都有繁殖机会。此外它还提出 <strong>System-aware Merge</strong> 作为模块级交叉算子。</p>
+
+<h3>3.4 一张表看清代表性方法</h3>
+
+<table>
+<thead><tr>
+<th>方法</th>
+<th>年份/编号</th>
+<th>变异信号</th>
+<th>选择机制</th>
+<th>是否需训练集</th>
+<th>优化对象</th>
+</tr></thead><tbody>
+<tr>
+<td>APE</td>
+<td>2022 / 2211.01910</td>
+<td>从示例逆向归纳提案</td>
+<td>打分函数排序</td>
+<td>少量示例</td>
+<td>单条指令</td>
+</tr>
+<tr>
+<td>Self-Refine</td>
+<td>2023 / 2303.17651</td>
+<td>自我批评</td>
+<td>迭代至收敛</td>
+<td>否</td>
+<td>单条输出</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>2023 / 2303.11366</td>
+<td>环境反馈→言语反思</td>
+<td>情节记忆</td>
+<td>环境反馈</td>
+<td>agent 记忆</td>
+</tr>
+<tr>
+<td>APO/ProTeGi</td>
+<td>2023 / 2305.03495</td>
+<td>文本梯度</td>
+<td>束搜索 + bandit</td>
+<td>是</td>
+<td>单条指令</td>
+</tr>
+<tr>
+<td>InstructZero</td>
+<td>2023 / 2306.03082</td>
+<td>软提示→贝叶斯优化</td>
+<td>BO 采集函数</td>
+<td>少量评分</td>
+<td>黑盒模型指令</td>
+</tr>
+<tr>
+<td>OPRO</td>
+<td>2023 / 2309.03409</td>
+<td>元提示历史轨迹</td>
+<td>标量分数迭代</td>
+<td>是</td>
+<td>单条指令</td>
+</tr>
+<tr>
+<td>EvoPrompt</td>
+<td>2023 / 2309.08532</td>
+<td>GA/DE 进化算子</td>
+<td>种群适应度</td>
+<td>是</td>
+<td>离散提示</td>
+</tr>
+<tr>
+<td>Promptbreeder</td>
+<td>2023 / 2309.16797</td>
+<td>自指变异提示</td>
+<td>训练集适应度</td>
+<td>是</td>
+<td>提示+变异提示</td>
+</tr>
+<tr>
+<td>PromptAgent</td>
+<td>2023 / 2310.16427</td>
+<td>错误反思</td>
+<td>MCTS</td>
+<td>是</td>
+<td>单条指令</td>
+</tr>
+<tr>
+<td>DSPy</td>
+<td>2023 / 2310.03714</td>
+<td>编译器 bootstrap</td>
+<td>指标驱动搜索</td>
+<td>是</td>
+<td>整条程序</td>
+</tr>
+<tr>
+<td>TextGrad</td>
+<td>2024 / 2406.07496</td>
+<td>文本梯度反传</td>
+<td>计算图迭代</td>
+<td>是</td>
+<td>文本变量</td>
+</tr>
+<tr>
+<td>MIPROv2</td>
+<td>2024 / 2406.11695</td>
+<td>数据感知提案</td>
+<td>surrogate + 元优化</td>
+<td>是</td>
+<td>指令+演示</td>
+</tr>
+<tr>
+<td><strong>GEPA</strong></td>
+<td><strong>2025 / 2507.19457</strong></td>
+<td><strong>轨迹+评测反思</strong></td>
+<td><strong>Pareto 前沿采样</strong></td>
+<td><strong>是</strong></td>
+<td><strong>多模块程序</strong></td>
+</tr>
+</tbody></table>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec4">4. GEPA 深度拆解：反思变异、Pareto 选择与 System-aware Merge</h2>
+
+<figure>
+  <iframe src="diagrams/2-gepa-loop.html" height="620" loading="lazy"></iframe>
+  <figcaption>图 2 · GEPA 主循环：选模块→跑 minibatch→收集 μ_f 反馈→反思更新→两级闸门</figcaption>
+</figure>
+
+<p>GEPA 的完整算法由论文 Figure 4 中的 Algorithm 1（主循环）与 Algorithm 2（Pareto 选择）给出，附录 D 补充了 Merge 算子（Algorithm 3/4）。下面按主循环的每一步拆解。</p>
+
+<h3>4.1 主循环（Algorithm 1）</h3>
+
+<pre><code>输入：系统 Φ、训练集 D_train、指标 μ、反馈函数 μ_f、预算 B
+超参：minibatch 大小 b、Pareto 集大小 n_pareto
+1. 将 D_train 划分为 D_feedback 与 D_pareto（|D_pareto| = n_pareto）
+2. 候选池 P ← [Φ]，父代记录 A ← [None]
+3. 在 D_pareto 的每个实例上评估初始 Φ，得到得分向量
+4. while 预算 B 未耗尽:
+     k ← SelectCandidate(P, S)          # Pareto 采样选父代
+     j ← SelectModule(Φ_k)              # round-robin 选要改的模块
+     M ← 从 D_feedback 抽 b 条 minibatch
+     在 M 上运行，用 μ_f 收集分数、轨迹、模块级文本反馈
+     π&#x27;_j ← UpdatePrompt(π_j, 反馈, 轨迹)   # 反思 LM 改写
+     Φ&#x27; ← 复制 Φ_k，仅把模块 j 换成 π&#x27;_j
+     σ, σ&#x27; ← M 上改写前后的平均分
+     if σ&#x27; 提升:
+         把 Φ&#x27; 加入 P，记录父代 k
+         在整个 D_pareto 上评估 Φ&#x27;，更新其得分向量
+5. 返回在 D_pareto 上平均分最高的 Φ*</code></pre>
+
+<p>三个工程细节值得注意：</p>
+
+<ol>
+<li><strong>两级评估闸门</strong>。新提示先在廉价的小 minibatch（b 条）上与父代做配对比较，只有提升了才值得在整个 D_pareto 上重新评估。这把宝贵的 rollout 集中在「有希望」的候选上，是样本效率的重要来源。</li>
+<li><strong>模块轮选（round-robin）</strong>。每次只改一个模块，由 round-robin 策略决定改哪个，避免优化器反复盯着同一个模块。</li>
+<li><strong>遗传树的信号继承</strong>。每个候选记录父代，并同时携带「父代的学习信号 + 自己的 rollout」，知识沿遗传树累积——这也是 Merge 能够判断「两个候选各自改了哪个模块」的前提。</li>
+</ol>
+
+<h3>4.2 反思式变异：UpdatePrompt 在做什么</h3>
+
+<p>反思变异是 GEPA 的灵魂。反思 LM 在一次调用中看到：</p>
+
+<ul>
+<li><strong>当前提示</strong> π_j；</li>
+<li><strong>语言程序轨迹</strong>：模块 j 的输入、输出与中间推理，以及整条程序的执行过程；</li>
+<li><strong>分数与文本反馈</strong>：μ_f 返回的数值分，以及编译器报错、失败 rubric、逐条答案差异等评测轨迹；</li>
+</ul>
+
+<p>它的任务是：① 把成功/失败<strong>归因</strong>到具体提示要素（隐式信用分配）；② 提出修订后的指令。论文附录 C 给出了完整的反思/更新元提示。GEPA 强调，自然语言轨迹让「把错误追溯到具体模块决策」成为可能，从而可以对单个模块做<strong>大而精准</strong>的更新，而不必盲目重写整段提示。</p>
+
+<p>这一机制与 OPRO 的对比是理解 GEPA 的关键：OPRO 的元提示里只有「历史解 + 标量分」，LLM 要凭空猜测「为什么这个分低」；GEPA 则把「为什么」直接以报错和失败案例的形式摆在台面上。2026 年 MAGE 的消融为这一点提供了独立证据：<strong>只依赖分数的 OPRO、只给抽象批评的 Self-Refine 都无法稳定改进提示，唯有「扎根于失败案例的反思（failure-grounded reflection）」不可或缺</strong>（arXiv:2607.11944）。</p>
+
+<h3>4.3 Pareto 候选选择（Algorithm 2）</h3>
+
+<figure>
+  <iframe src="diagrams/3-pareto.html" height="600" loading="lazy"></iframe>
+  <figcaption>图 3 · Pareto 选择：实例级得分矩阵、非支配候选与按出现频率采样</figcaption>
+</figure>
+
+<p>如果每一代都只变异「平均分最高」的候选，种群会迅速收敛到一个局部最优，专门擅长某些子任务的「偏科」候选会被过早淘汰。GEPA 的解法是在<strong>实例维度</strong>上做 Pareto 选择：</p>
+
+<pre><code>对 D_pareto 中每个实例 i:
+    s*[i] ← 所有候选在 i 上的最高分
+    P*[i] ← 在 i 上拿到最高分的候选集合
+C ← 所有 P*[i] 的并集（即「至少在某一个实例上最好」的候选）
+在 C 内部剔除被其他候选全面支配（dominated）者
+f[Φ] ← Φ 在多少个实例的 Pareto 集合中出现
+以 ∝ f[Φ] 的概率随机采样下一个要变异的候选</code></pre>
+
+<p>直觉上：一个候选哪怕平均分不高，只要它在<strong>某些实例上是全场最佳</strong>，它就站上了 Pareto 前沿、获得繁殖机会；而它被选中的概率，取决于它「擅长的实例有多少」。这同时保证了<strong>多样性</strong>（偏科专家不会灭绝）与<strong>择优压力</strong>（擅长越多实例的候选越容易被选中继续进化）。这也是 GEPA 名字「Genetic-Pareto」的由来。</p>
+
+<h3>4.4 System-aware Merge：模块级交叉（附录 D.1）</h3>
+
+<p>变异（mutation）只从单亲产生后代；GEPA 还提供了一个双亲<strong>交叉（crossover）</strong>算子 Merge，专门用于把两个不同候选在<strong>不同模块上的互补改进</strong>拼成一个系统。其设计极具「系统感知」色彩（Algorithm 3/4）：</p>
+
+<ol>
+<li>随机抽两个候选 i、j，若二者有直系亲缘关系则跳过；</li>
+<li>找它们的共同祖先 a，沿「祖先 → 两个后代」的差异判断<strong>每个模块分别被谁改过</strong>： - 若模块 m 在祖先与 i 中相同、但被 j 改过，则把 j 的版本并入； - 反之把 i 的版本并入； - 若 i、j 对同一模块做了<strong>互不相同且都不同于祖先</strong>的修改，则取二者中得分更高的版本；</li>
+<li>只有当这种模块组合「确实有意义」（Desirable：至少存在一个模块可互补）时才执行，并避免重复尝试同一组合。</li>
+</ol>
+
+<p>换句话说，Merge 不是在字符串层面拼接提示，而是先利用遗传树识别「这两个候选各自在哪个模块上学到了东西」，再在模块粒度上做互补组合。这正是「system-aware」的含义，也使 GEPA 能优化包含多个提示的复合系统，而非单条指令。</p>
+
+<p>但 Merge 也是 GEPA 中最不稳定的部件。原论文已观察到其收益因模型而异；2026 年的机制级诊断（详见第 7、8 章）表明，Merge 的不稳定主要来自<strong>配置敏感</strong>而非算子缺陷，且无法用提示的静态特征预测某次 Merge 是否会被接受。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec5">5. 实证证据：六任务基准与跨模型迁移</h2>
+
+<h3>5.1 实验设置</h3>
+
+<p>论文在六个覆盖不同能力维度的任务上评估：多跳问答 HotpotQA、工具调用基准 IFBench、多跳事实核查 HoVer、工具使用程序理解 PUPA、竞赛数学 AIME-2025、以及 LiveBench-Math。被优化/被执行的模型是开源的 Qwen3 8B 和闭源的 GPT-4.1 Mini，采用统一推理设置；采用标准的 train / validation（D_pareto）/ test（held-out）划分。对照优化器包括 MIPROv2（含只优化指令的 MIPROv2-No-Demos）、TextGrad、Trace（OptoPrime），以及 LoRA 版 GRPO（24,000 rollouts）。</p>
+
+<h3>5.2 Qwen3 8B：GEPA vs GRPO vs MIPROv2</h3>
+
+<p>以下为论文 Table 1（作者实测口径，单位为留出测试集 % 分数）：</p>
+
+<table>
+<thead><tr>
+<th>优化方式</th>
+<th>HotpotQA</th>
+<th>IFBench</th>
+<th>HoVer</th>
+<th>PUPA</th>
+<th>AIME</th>
+<th>LiveMath</th>
+<th>聚合</th>
+</tr></thead><tbody>
+<tr>
+<td>Baseline</td>
+<td>42.33</td>
+<td>36.90</td>
+<td>35.33</td>
+<td>80.82</td>
+<td>27.33</td>
+<td>48.70</td>
+<td>45.23</td>
+</tr>
+<tr>
+<td>GRPO（24k rollouts）</td>
+<td>43.33</td>
+<td>35.88</td>
+<td>38.67</td>
+<td>86.66</td>
+<td>38.00</td>
+<td>51.26</td>
+<td>48.91</td>
+</tr>
+<tr>
+<td>MIPROv2</td>
+<td>55.33</td>
+<td>36.22</td>
+<td>47.33</td>
+<td>81.55</td>
+<td>20.00</td>
+<td>46.60</td>
+<td>47.84</td>
+</tr>
+<tr>
+<td><strong>GEPA</strong></td>
+<td><strong>62.33</strong></td>
+<td><strong>38.61</strong></td>
+<td><strong>52.33</strong></td>
+<td><strong>91.85</strong></td>
+<td>32.00</td>
+<td>51.95</td>
+<td><strong>54.85</strong></td>
+</tr>
+<tr>
+<td>GEPA+Merge</td>
+<td>64.33</td>
+<td>28.23</td>
+<td>51.67</td>
+<td>86.26</td>
+<td>32.00</td>
+<td>51.95</td>
+<td>52.40</td>
+</tr>
+</tbody></table>
+
+<p>关键观察：</p>
+
+<ul>
+<li><strong>GEPA 聚合 +9.62，是唯一大幅超过 GRPO（+3.68）与 MIPROv2（+2.61）的方法</strong>；在 HotpotQA（+20 vs baseline）、HoVer（+17）、PUPA（+11）上优势明显。</li>
+<li><strong>样本效率悬殊</strong>。以 IFBench 为例，GEPA 仅用 <strong>678 次 rollout</strong> 就找到 38.61% 的提示，超过 GRPO 用 <strong>24,000 次 rollout</strong> 得到的 35.88%。六个任务上 GEPA（含 Merge）平均总预算约 3,936 rollouts，而 GRPO 固定为 24,000——论文摘要据此报告「最多省 35 倍 rollout」。</li>
+<li><strong>AIME 是唯一 GRPO 明显占优的任务</strong>（38.00 vs GEPA 32.00）。这提示在需要深层、新颖数学发现的任务上，把知识压进权重的 RL 仍有其优势；提示空间的显式规则未必能替代参数内化。</li>
+<li><strong>Merge 在 Qwen3 上不稳定</strong>：HotpotQA 提升到 64.33，但 IFBench 暴跌至 28.23，聚合反而低于纯 GEPA。这一观察直接引发了 2026 年的 Merge 诊断研究。</li>
+</ul>
+
+<h3>5.3 GPT-4.1 Mini：闭源模型开箱即用 + 跨模型迁移</h3>
+
+<p>论文 Table 2 显示 GEPA 同样适用于只能 API 访问的闭源模型（留出测试集 %）：</p>
+
+<table>
+<thead><tr>
+<th>优化方式</th>
+<th>HotpotQA</th>
+<th>IFBench</th>
+<th>HoVer</th>
+<th>PUPA</th>
+<th>AIME</th>
+<th>LiveMath</th>
+<th>聚合</th>
+</tr></thead><tbody>
+<tr>
+<td>Baseline</td>
+<td>38.00</td>
+<td>47.79</td>
+<td>46.33</td>
+<td>78.57</td>
+<td>49.33</td>
+<td>58.20</td>
+<td>53.03</td>
+</tr>
+<tr>
+<td>Trace（OptoPrime）</td>
+<td>60.33</td>
+<td>51.19</td>
+<td>46.00</td>
+<td>74.18</td>
+<td>45.33</td>
+<td>60.74</td>
+<td>56.30</td>
+</tr>
+<tr>
+<td>MIPROv2-No-Demos</td>
+<td>38.00</td>
+<td>52.04</td>
+<td>51.33</td>
+<td>91.85</td>
+<td>48.67</td>
+<td>60.97</td>
+<td>57.14</td>
+</tr>
+<tr>
+<td>MIPROv2</td>
+<td>58.00</td>
+<td>49.15</td>
+<td>48.33</td>
+<td>83.37</td>
+<td>51.33</td>
+<td>61.84</td>
+<td>58.67</td>
+</tr>
+<tr>
+<td>TextGrad</td>
+<td>62.33</td>
+<td>48.64</td>
+<td>47.67</td>
+<td>85.68</td>
+<td>46.67</td>
+<td>63.84</td>
+<td>59.14</td>
+</tr>
+<tr>
+<td><strong>GEPA</strong></td>
+<td><strong>69.00</strong></td>
+<td>52.72</td>
+<td>51.67</td>
+<td>94.47</td>
+<td><strong>59.33</strong></td>
+<td>64.13</td>
+<td><strong>65.22</strong></td>
+</tr>
+<tr>
+<td>GEPA+Merge</td>
+<td>65.67</td>
+<td>55.95</td>
+<td>56.67</td>
+<td>96.46</td>
+<td>59.33</td>
+<td>64.13</td>
+<td>66.36</td>
+</tr>
+<tr>
+<td>GEPA-Qwen-Opt（跨模型）</td>
+<td>65.67</td>
+<td>49.83</td>
+<td>54.67</td>
+<td>90.05</td>
+<td>52.67</td>
+<td>59.31</td>
+<td>62.03</td>
+</tr>
+</tbody></table>
+
+<p>两个重要结论：</p>
+
+<ol>
+<li><strong>GEPA 聚合 +12.19（Merge 后 +13.33），全面领先 TextGrad（+6.11）、MIPROv2（+5.64）、Trace（+3.27）</strong>。在 GPT-4.1 Mini 上 Merge 反而整体有益（与 Qwen3 相反），再次说明 Merge 收益的模型依赖性。</li>
+<li><strong>跨模型迁移成立且效果惊人</strong>。最后一行「GEPA-Qwen-Opt」是<strong>完全用较弱的 Qwen3-8B 优化、再原样搬到 GPT-4.1 Mini 上执行</strong>的提示，仍获得 +9.00 聚合增益，甚至超过所有直接在 GPT-4.1 Mini 上优化的基线（MIPROv2/TextGrad/Trace）。这意味着：可以在便宜的开源模型上搜索提示，再把成果部署到昂贵的闭源模型上——这一发现被 2026 年的跨档成本优化（arXiv:2608.10694）系统化和放大。</li>
+</ol>
+
+<h3>5.4 一个必须说明的证据边界</h3>
+
+<p>上述数字均来自 GEPA 论文同一组作者的自述实验，且多数任务的测试集规模为每基准数百条、报告的是单次或少量运行的点估计。2026 年的独立复现（见第 7、8 章）显示，提示优化的增益<strong>高度依赖任务、模型与随机种子</strong>，验证集增益可能在留出集反转。因此对「GEPA 平均 +6% 击败 GRPO」「最多省 35 倍 rollout」等结论，应理解为<strong>特定实验设置下的作者口径</strong>，而非在所有场景下保证成立的普适定律。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec6">6. 扩展应用：把优化器当作推理时搜索（kernel 生成）</h2>
+
+<p>GEPA 论文第 5 节给出了一个超出「任务适配」范畴的用法：<strong>把优化器本身当作推理时搜索策略</strong>。做法是把待解的一批任务（例如一组待转成 CUDA 的 PyTorch 模块）直接当作训练集传给 GEPA，让 D_train 与 D_pareto 都包含这全部任务，从而允许优化器「过拟合」这批任务、迭代地为每个问题提出更好解，并把从一个任务 rollout 中学到的教训迁移到其他任务。论文在两个硬件平台上做了初步实验：</p>
+
+<p><strong>NPU kernel（AMD XDNA2，NPUEval 早期版）。</strong> 一个最多迭代 10 次的顺序改写 agent（Sequential10），仅用 GPT-4o 时平均向量利用率只有 4.25%；加入基于技术手册的 RAG 提升到 16.33%；再用 MIPROv2 提升到 19.03%；而<strong>把 GEPA 用于不带 RAG 的 Sequential10，平均利用率跃升到 30.52%，部分 kernel 高达 70%</strong>；由 GEPA 产出的单条提示也能让 Sequential10 达到 26.85%。</p>
+
+<p><strong>CUDA kernel（KernelBench，arXiv:2502.10517，V100）。</strong> 在 35 个代表性任务、三个难度级别上，GEPA + GPT-4o 把 GPT-4o 接近 0% 的 fast_1 分数随搜索预算提升到 20% 以上（agent 最多顺序改写 5 次）。</p>
+
+<p>这组实验有两个方法论亮点：</p>
+
+<ul>
+<li><strong>用失败信息驱动领域知识检索</strong>：μ_f 根据 rollout 的报错（如编译错误）检索技术手册的相关章节，把架构最佳实践按需注入提示进化，而非把整本手册塞进上下文。</li>
+<li><strong>在缓存下消除生成随机性</strong>：固定 temperature/缓存，使观测到的提升可归因于「提示更新 + 多样化探索」这一推理缩放，而非采样的偶然。</li>
+</ul>
+
+<p>作者也明确这些是「早期结果、有待系统研究」。但它揭示了一个重要可能性：<strong>反思式提示优化与 Test-Time Scaling 并非互斥</strong>——前者可以作为后者的「外层搜索策略」，在一批任务间沉淀和复用显式知识。这与本知识库 Test-Time Scaling 报告中「权重冻结」的谱系形成了自然衔接。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec7">7. 2026 跟进潮：改进、应用、诊断、替代四条路线</h2>
+
+<figure>
+  <iframe src="diagrams/5-ecosystem.html" height="560" loading="lazy"></iframe>
+  <figcaption>图 5 · 2026 GEPA 跟进生态：改进 / 应用 / 诊断 / 替代四路线</figcaption>
+</figure>
+
+<p>GEPA 论文（2025-07，2026-02 更新 v2）之后，尤其在 2026 年下半年，相关工作密集出现。仅 2026 年 10 月一个月，arXiv 上就有近 10 篇标题直接涉及 GEPA / 反思式提示优化的论文。按其与 GEPA 的关系，可分为四条路线。需要再次提醒：以下量化结果除特别注明外，均为<strong>各论文作者在其实验设置下的自述口径</strong>，且不少工作把 GEPA 作为要击败的基线，存在「主场优势」，横向比较时应谨慎。</p>
+
+<h3>7.1 改进路线：让 GEPA 更强、更便宜、更适配</h3>
+
+<p><strong>GEPA-Curator（arXiv:2610.37651，2026-10-27）。</strong> 在 GEPA 外层加「经验筛选（curation）」：先过滤掉噪声大、学习信号不可靠的任务，并检索该任务过去的成功轨迹作为额外上下文，再进入反思优化。在 GoBrowse、ALFWorld、AppWorld、τ-bench 上（用 Gemini 3.1 Pro、Claude Opus 5 作优化模型），相对 GEPA 最高 +20.7%、相对 ACE 最高 +21.2%。</p>
+
+<p><strong>Adaptive-GEPA（arXiv:2609.38762，2026-09-30）。</strong> 解决「同一端点收到异质请求」的问题：在同一搜索预算下同时进化一个 <strong>router + 专家程序库</strong>（router 指令、专家描述、程序代码都是可读文本）。在 4 个任务族混合、Qwen3-8B、约 18,000 次 scored calls 下，即使没有族标签也自动演化出 4 个专家，路由在全部 651 个测试请求上与真实任务划分一致；族均分 52.6→70.6，高于 GEPA full-program 的 62.5 与 GRPO 的 54.0。</p>
+
+<p><strong>Ranking-PE（arXiv:2609.40361，2026-09-30）。</strong> 面向类别极不平衡的多模态临床诊断，把 GEPA 基于二值正确性的分数矩阵，替换为（正例，负例）实例对上的<strong>成对排序</strong>，使列均值由准确率变为经验 AUROC（基于 Wilcoxon-Mann-Whitney 恒等式），并在 Pareto 判定、逐例反馈、最终选择三层统一替换，不增加模型调用。MIMIC 上三种疾病，在微调 Qwen3-VL-8B 上比准确率版配方 +5.8 AUROC 个百分点，在 MedGemma-4B 上 +16.2 pp。消融还指出：医学级视觉骨干是提示搜索无法替代的前提。</p>
+
+<p><strong>跨档成本优化（arXiv:2608.10694，2026-08-11）。</strong> 把演化优化中 LLM 的三个角色解耦：高体量的 answering（适应度打分）放到最便宜模型档，强模型只用于稀少的 reflection/variation，再把便宜档搜出的提示向上迁移到强目标模型部署。在 4 任务、4 家族 11 个模型上，提示质量匹配或超过同档优化，同时 96% 以上搜索 token 放在最便宜档，搜索成本降低 5.6–14 倍；在推理档每次打分都产生长 CoT 时，降幅达 25–54 倍。</p>
+
+<p><strong>Batching GEPA（arXiv:2610.36774，2026-10-27）。</strong> GEPA 原作者团队参与的工程改进：把「每步只提一个候选」改为「每步并行提出并评估一批候选」。多数批处理运行的墙钟时间减半甚至更短（最快约 1/4–1/3），且留出分数更高——LiveBench-Math 68.9%→72.1%（2×2），HoVer 49.0%→60.0%（8×1）。论文还给出有限 worker 池下的运行时模型，并首次讨论「固定优化预算如何在各并行轴之间分配」。</p>
+
+<p><strong>BudgetAPO（arXiv:2610.05671，2026-10-05）。</strong> 面向付费/限流 API 的「紧预算」（仅数百次调用）：先用短探针测出任务噪声以自适应决定评估切片大小，固定切片使每次接受/拒绝成为配对比较，反思算子联合改写推理策略与输出格式。在 7 个基准、5 个 subject model 上均排名第一；250 次调用时仅 13% 的运行退回 seed，而 GEPA 为 86%；在 GPT-OSS-20B 上 GEPA 需约 5 倍调用数才能达到 BudgetAPO 100 次调用的分数。</p>
+
+<h3>7.2 应用路线：把反思进化用到真实领域</h3>
+
+<p><strong>多模态时序持续学习（arXiv:2610.27468，2026-10-20）。</strong> 把时间序列预测的持续学习表示为一段由结果驱动反思、不断演化的 guidance 文本，挂在冻结的 LLM 预测器提示中，无需重训练。Llama-3.3-70B 携带约 900 词演化 guidance，在留出数据上 GM MASE 0.776，优于 TSFM（TabPFN-TS-3 为 0.898），更新成本是「几美元 vs GPU-day」，并可无损迁移到更新的模型。</p>
+
+<p><strong>深度研究 agent 的提示优化（arXiv:2610.12601，2026-10-08）。</strong> 把 GEPA 用于多 agent 深度研究系统的两个系统提示，并在训练/验证/测试<strong>主题完全不相交</strong>的划分下评估，专门区分「可迁移增益」与「提示级过拟合」。留出 citation reward 0.702→0.781（+0.079，bootstrap 95% CI [0.051, 0.107]），三种子复现均值 +0.107。其关键因果发现是：<strong>逐维度分解反馈是迁移增益的来源，把反馈压成单一标量奖励会使留出迁移变为负</strong>。</p>
+
+<p><strong>生产系统的元反思进化 CoCoEvolve（arXiv:2610.12794，2026-10-08）。</strong> 提出「元反思（meta-reflection）」：变异 agent 不只看当前 frontier 候选的失败，而从<strong>整个演化史</strong>检索证据、对在线生产系统主动探测后再提出并验证变更。在 DABStep 公开榜第一（held-out hard accuracy 92.8%，对比 Meta-Harness 78.4%、GEPA 30.4%，同条件）；data-eng-bench solve rate 59.1%→77.4%；HotpotQA 上比 GEPA 高 11 个百分点。</p>
+
+<h3>7.3 诊断路线：独立复现与机制剖析</h3>
+
+<p><strong>本地模型双模型研究（arXiv:2610.26020，2026-10-19）。</strong> 在两个本地部署的 reasoning-native 配置（DeepSeek V4 Flash、Qwen3.8-27B）上复现 GEPA 与 SkillOpt，结论相当冷静：HotpotQA（每条件 n=500）上两模型均无改善——Qwen 主实验中 GEPA 甚至直接选回 seed、行为与基线完全一致，SkillOpt 的验证增益在留出集反转；但在 MATH-500（n=250）上，GEPA 把 Qwen exact match 0.828→0.904、DeepSeek 0.852→0.908。它据此提出按 content/reasoning、answer-realization/evaluator alignment、serving-completion/reliability 分解「文本空间 headroom」。</p>
+
+<p><strong>Merge 机制级诊断（arXiv:2610.34027，2026-10-25）。</strong> 针对 GEPA 不稳定的 Merge，在 5 数据集、2 模型、9 种 merge 时机/算子配置下做机制级诊断，证明不稳定性主要来自<strong>配置敏感</strong>而非算子本身缺陷：merge 在 gpt-4.1-mini 上平均有益、在 Qwen3-8B 上平均有害；静态提示特征无法预测 merge 的接受决策。据此给出基于行为的探针 GEPA-MergeProbe（靠对高风险任务「弃权」避免大的 merge 失败），但探针尚不能稳定超过 NoMerge。</p>
+
+<p><strong>MAGE 与耦合效应（arXiv:2607.11944，2026-07-11）。</strong> 用一个可控消融框架研究多组件提示优化的交互，报告了此前未被记载的「<strong>提示优化耦合效应（POCE）</strong>」：多个随机优化信号在封闭反思环内同时作用时，会在提升性能的同时放大方差，且无法通过孤立分析各组件预测。三大发现：扎根失败的反思不可或缺（OPRO、Self-Refine 均失败）；MAGE 在 GSM8K-Hard 上 46.4% vs GEPA 34.0%（+12.4，5 种子，gpt-4o-mini），方差相当。</p>
+
+<p><strong>RSEA 留出选择（arXiv:2606.28374，2026-06-17）。</strong> 让自进化 agent 携带三层自然语言状态（策略 / 技能 / playbook），每代从自身轨迹重写三层，且<strong>仅当候选在不相交留出集上不退化时才提交</strong>（严格 keep-better gate）。在 ALFWorld、GAIA、τ-bench、WebShop 上与 ReAct/Reflexion/GEPA/AWM/ACE 等六个基线、同一本地骨干公平对比，核心结论是「<strong>没有任何 artifact 普遍获胜</strong>」：RSEA 在 ALFWorld 最强（单次 69.3% vs ReAct 64.6%，retry 后 79.4%），但在其他任务上各有赢家。</p>
+
+<h3>7.4 替代路线：质疑「迭代反思循环」本身</h3>
+
+<p><strong>CASD：代码 agent 即提示优化器（arXiv:2609.26261，2026-08-13）。</strong> 无需环境访问与验证数据：给现成 coding agent 一个静态轨迹语料，让它编写并执行分析代码、计算全语料统计、识别系统性失败模式，<strong>一次性</strong>蒸馏出优化提示，论证迭代搜索循环并非必要。在 ALFWorld、τ²-bench retail/telecom、SpreadsheetBench-Verified 上，单次 CASD 在 3/4 上超过 GEPA、全部 4 个上超过 validation-gated SkillOpt；相对基线平均 +16.6 pp（GEPA +10.9、SkillOpt +5.3）；单次离线分析约 1.60 美元，比 validation-gated 搜索便宜 22 倍以上。</p>
+
+<p><strong>RLPE（arXiv:2610.19062，2026-10-13）。</strong> 用 RL 训练一个 9B 模型专门去分析另一任务模型的轨迹、针对观察到的失败写提示。提示只生成一次、可复用，推理时无需该训练模型，且只需黑盒 query 访问，兼容闭源模型。在 Enigmata、BIG-Bench Extra Hard、PlanBench 上，该 9B 模型在 3 个 benchmark 中的 2 个写出比前沿模型（gpt-5.6-sol、claude-opus-5）和 GEPA/TextGrad 更好的提示，并能泛化到比训练时大 6 倍、跨家族的任务模型；论文还报告其未经显式训练即涌现出迭代改提示的能力。</p>
+
+<p><strong>FLARE（arXiv:2608.02919，2026-08-03）。</strong> 把先进反思机制与少量 few-shot 参考示例融合，直接挑战 GEPA「反思进化优于 RL 与 few-shot」的论点。在 GPT-5 系列模型上，每个任务-模型对都胜过 GEPA；HotPotQA 最高 +14.2（GPT-5-Chat 52.2 vs GEPA 42.2），tool calling 87.0% vs 81.0%。</p>
+
+<h3>7.5 跟进潮的整体信号</h3>
+
+<p>把四条路线放在一起，可以读出几个明确信号：① GEPA 已成为该方向的<strong>事实基线与对标中心</strong>，几乎所有新工作都以它为主要对照；② 研究焦点正从「能不能优化」转向「<strong>在有限预算/噪声/异质请求/真实生产约束下如何稳健优化</strong>」；③ 独立复现普遍比原报告保守，「没有免费午餐、没有普遍赢家」成为共识；④ 优化的产物正从单条提示扩展到 router、专家库、多层状态、代码分析等更丰富的语言/结构 artifact。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec8">8. 关键张力与失败模式：提示级过拟合、选择噪声与耦合效应</h2>
+
+<p>提示优化看似「零成本涨点」，但 2026 年的跟进工作系统揭示了它的失败模式。理解这些，比记住某个 +X% 更重要。</p>
+
+<h3>8.1 提示级过拟合（Prompt-level Overfitting）</h3>
+
+<p>在训练集上反复改提示，最直接的风险是把提示「调」成只在这些题上有效——要么记住具体答案，要么学到训练集特有的表层模式。GEPA 用独立的 D_pareto 选择、再用 D_test 汇报来防范，但留出集只能挡住「直接记忆训练题」，挡不住更隐蔽的问题。深度研究 agent 的 topic-disjoint 实验（arXiv:2610.12601）给出了细致剖析：获胜提示中近一半可被归为「记忆的答案」，但消融证明这部分即使在原训练题上也不得分（即并非真正的作弊）；而<strong>验证集与留出集之间巨大的差距，主要来自噪声评判 + 小样本下的选择，而非记忆答案</strong>。这是一个反直觉但重要的结论：很多看似「过拟合」的现象，其实是「在噪声中选错了候选」。</p>
+
+<h3>8.2 小样本选择噪声：在噪声里挑冠军</h3>
+
+<p>当评测本身有噪声（LLM 评判不稳定、任务成功率有随机性）、而候选差异又很小时，在几百条样本上选出的「最高分」候选，很可能只是运气好。BudgetAPO 把这一点讲得最直白：紧预算下 GEPA 在 250 次调用时有 86% 的运行最终退回 seed（arXiv:2610.05671）——即搜索过程看似产生了候选，最后却发现没有一个稳健地超过初始提示。多模态时序研究也发现：<strong>环内（in-loop）改进会把真实的环外增益高估 2–3 倍</strong>，必须用一个优化过程从未触碰的独立 monitor 来仲裁（arXiv:2610.27468）。对策在各工作中高度一致：固定评估切片做配对比较、扩大评估样本、用独立留出/monitor 集、报告多种子与置信区间而非单次点估计。</p>
+
+<h3>8.3 耦合效应与方差放大</h3>
+
+<p>MAGE 报告的 POCE 指出：当变异、选择、自适应评估等多个随机信号在一个封闭环内同时运作，它们的交互会在抬升均值的同时放大方差，且这种交互无法从单组件的孤立分析中预测（arXiv:2607.11944）。Promptbreeder 式的自指进化则把这种方差推到极致——搜索空间巨大、结果对种子高度敏感。实践含义是：提示优化系统需要像对待训练一样对待「稳定性」，用多种子评估、严格的 keep-better 门控（RSEA）来抑制方差，而不是只报最好的一次运行。</p>
+
+<h3>8.4 Merge 的配置敏感与模型依赖</h3>
+
+<p>System-aware Merge 在 GPT-4.1 Mini 上平均有益、在 Qwen3-8B 上平均有害（GEPA 原论文 Table 1/2 已现，arXiv:2610.34027 系统证实）。机制诊断表明问题不在算子思想，而在其收益高度依赖 merge 时机、算子配置与被优化模型，且无法用提示的静态特征预测。这意味着「开不开 Merge」不能拍脑袋，需要在目标模型上用留出集实测；在预算紧张或模型较弱时，NoMerge 往往是更安全的默认。</p>
+
+<h3>8.5 任务/模型依赖：headroom 在哪里</h3>
+
+<p>本地双模型研究（arXiv:2610.26020）提供了最清醒的边界：同一个 GEPA，在 MATH-500 上把两模型提升约 6–8 个百分点，在 HotpotQA 上却完全无增益、甚至直接选回 seed。这说明提示优化只在「<strong>文本空间里确实存在可利用的 headroom</strong>」时才有效——即失败主要源于指令/策略表述不清，而非模型本身缺知识或缺能力。若错误源于模型不会（知识/能力缺口）、或评判与目标不一致（evaluator misalignment）、或服务本身补全不可靠，再强的提示搜索也无能为力。RSEA 在四个基准上「没有任何 artifact 普遍获胜」的结论（arXiv:2606.28374）是这一判断的集中体现。</p>
+
+<h3>8.6 失败模式对照表</h3>
+
+<table>
+<thead><tr>
+<th>失败模式</th>
+<th>典型表现</th>
+<th>根因</th>
+<th>主要对策</th>
+<th>出处</th>
+</tr></thead><tbody>
+<tr>
+<td>提示级过拟合</td>
+<td>验证集涨、留出集不涨</td>
+<td>记忆/表层模式 + 小样本选择</td>
+<td>topic-disjoint、独立留出集</td>
+<td>2610.12601</td>
+</tr>
+<tr>
+<td>选择噪声</td>
+<td>多次运行结果不一致、退回 seed</td>
+<td>评判噪声 × 小样本</td>
+<td>配对比较、加样本、多种子+CI</td>
+<td>2610.05671</td>
+</tr>
+<tr>
+<td>环内增益虚高</td>
+<td>环内远超环外实测</td>
+<td>用同一批数据改+评</td>
+<td>独立 monitor 仲裁</td>
+<td>2610.27468</td>
+</tr>
+<tr>
+<td>耦合/方差放大</td>
+<td>均值涨但方差同步涨</td>
+<td>多随机信号闭环交互</td>
+<td>keep-better 门控、多种子</td>
+<td>2607.11944</td>
+</tr>
+<tr>
+<td>Merge 失效</td>
+<td>交叉后分数反降</td>
+<td>配置/模型依赖</td>
+<td>目标模型实测、默认 NoMerge</td>
+<td>2610.34027</td>
+</tr>
+<tr>
+<td>无 headroom</td>
+<td>优化器选回 seed</td>
+<td>能力缺口/评判错位</td>
+<td>先诊断错误类型再决定是否优化</td>
+<td>2610.26020</td>
+</tr>
+</tbody></table>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec9">9. 实践指南：什么时候该用、怎么用、如何避坑</h2>
+
+<p>综合 GEPA 原论文与 2026 年的经验证据，给出一份可操作的落地建议。</p>
+
+<h3>9.1 先判断：该不该上提示优化</h3>
+
+<p>在上任何自动优化器之前，先回答三个问题：</p>
+
+<ol>
+<li><strong>错误是「不会说」还是「不会做」？</strong> 抽样看失败案例：若模型其实具备知识、只是没被引导到正确的策略/格式（如没做分步、工具参数填错、没核对引用），提示优化空间大；若模型反复在同类知识点上出错、换什么说法都不会，则应回到 SFT/RL 或换更强模型。</li>
+<li><strong>有没有可靠、可规模化的反馈信号？</strong> GEPA 的威力来自 μ_f 的丰富文本反馈。若任务连「对错」都难以自动判定，先解决评测，再谈优化。</li>
+<li><strong>是否有合格的留出数据？</strong> 至少需要不相交的 train / validation / test，且评测样本足以压过噪声。数据不足时，提示优化大概率是在拟合噪声。</li>
+</ol>
+
+<h3>9.2 推荐流程</h3>
+
+<pre><code>1. 建立可自动评分的评测集（train/val/test 三划分，test 封存）
+2. 写一个合理的初始语言程序（模块化：规划/检索/综合/校验分开）
+3. 实现丰富的反馈函数 μ_f：不仅给分，还回传报错/未满足 rubric/逐条差异
+4. 先用小预算跑 GEPA（minibatch 两级闸门），Merge 默认关闭
+5. 每个候选都在固定 val 切片上与父代做配对比较
+6. 用多种子运行，只接受在独立 val/monitor 上稳定不退化的候选
+7. 在封存 test 上一次性汇报；报告均值、方差与置信区间
+8. 产物（提示文本）纳入版本管理，跨模型部署前先小流量验证</code></pre>
+
+<h3>9.3 成本与模型选择</h3>
+
+<ul>
+<li><strong>在便宜模型上搜索，向强模型迁移</strong>：跨模型迁移已被验证（GEPA-Qwen-Opt，arXiv:2507.19457），跨档成本优化可把搜索成本压低 5.6–14 倍（arXiv:2608.10694）。预算紧张时优先采用。</li>
+<li><strong>紧预算用配对比较式优化器</strong>：只有数百次 API 调用时，BudgetAPO 类方法显著优于直接跑 GEPA（arXiv:2610.05671）。</li>
+<li><strong>异质流量考虑 router + 专家库</strong>：同一端点服务多类差异很大的请求时，Adaptive-GEPA 的自动路由比单一共享提示更优（arXiv:2609.38762）。</li>
+<li><strong>没有验证环境/只有静态日志时</strong>：可考虑 CASD 式一次性代码分析，成本低且在部分 agentic 任务上优于迭代搜索（arXiv:2609.26261）。</li>
+</ul>
+
+<h3>9.4 避坑清单</h3>
+
+<ul>
+<li>不要只报单次运行的最好结果；务必多种子 + 置信区间。</li>
+<li>不要用同一批数据既改提示又评增益；必须留独立仲裁集。</li>
+<li>不要默认开启 Merge；在目标模型上实测后再决定。</li>
+<li>不要把验证集增益当成部署增益；上线前用封存 test 与小流量双重确认。</li>
+<li>不要把作者口径的 +X% 外推到自己的任务；先做小规模 A/B。</li>
+<li>不要忽视评测本身的偏差：judge 模型与目标不一致时，优化方向可能整体跑偏。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec10">10. 展望与范式之争：提示优化会取代 RL 吗</h2>
+
+<p>GEPA 标题里「Outperform Reinforcement Learning」的措辞，天然带有范式挑战的意味。但综合全部证据，更准确的判断不是「取代」，而是「<strong>分层与融合</strong>」。</p>
+
+<p><strong>第一，二者优化的知识形态不同，各有擅长。</strong> 提示优化产出的是显式、可读、可迁移的规则，样本效率高、成本低、可审计，特别适合快速任务适配、策略纠偏与跨模型复用；RL 产出的是内隐、压进权重的能力，在需要深层模式内化、新颖数学发现（如 AIME）、以及无法用语言简单概括的技能上仍占优。GEPA 自己在 AIME 上输给 GRPO，已经说明了边界。</p>
+
+<p><strong>第二，二者正在融合，而非互斥。</strong> 2026 年的工作展示了多种融合形态：RLPE 用 RL 训练一个专门「写提示」的小模型，再用它服务于免梯度优化；GEPA 被用作推理时搜索的外层策略，与 Test-Time Scaling 叠加；CoCoEvolve 用演化史检索 + 主动探测把反思升级为「元反思」。一个自然的趋势是：<strong>用 RL/梯度方法优化「优化器/反思器」，用免梯度的语言进化优化具体任务系统</strong>，两层各司其职。</p>
+
+<p><strong>第三，「语言即学习介质」的价值会随模型变强而变化。</strong> 一种观点认为，随着模型自身推理与自我纠错能力增强，外部脚手架（包括显式提示）可能逐步内化、甚至「消失」（本知识库 Agent Harness 报告记录了这一范式之争）。但另一种观点指出：只要任务知识需要在不同模型、不同时间、不同团队间低成本迁移与审计，可读的语言 artifact 就有独立价值——它是连接「模型能力」与「工程系统」的稳定接口。2026 年提示优化在生产系统中的持续落地，更支持后一种判断。</p>
+
+<p><strong>第四，方法论的严谨化是下一阶段的主题。</strong> 从「报一个好看的 +X%」到「topic-disjoint、多种子、置信区间、独立 monitor、公平同骨干对比」，这个领域正在经历一次评测纪律的升级。未来真正值得关注的，不只是又一个更高分的优化器，而是：在噪声、异质、长周期、真实生产约束下，<strong>哪些语言/结构 artifact 能稳定地产生可迁移、可审计的增益</strong>——以及如何把这些方法工程化为人人可用的「LM 程序编译器」。</p>
+
+<blockquote><strong>结语</strong>：从手写提示到 APE 的自动提案，从 OPRO 的元提示到 Promptbreeder 的自指进化，从 DSPy 的编译、TextGrad 的文本反传到 GEPA 的反思式 Pareto 进化，这条线索讲述的是同一个故事的深化——<strong>自然语言正在成为一种可编程、可编译、可自动优化的计算介质</strong>。它不否定梯度学习，而是为「如何让机器学会一项任务」提供了一条更轻、更透明、更可迁移的道路。对实践者而言，最重要的不是站队，而是看清每种范式的 headroom 与边界，在正确的问题上使用正确的优化层。</blockquote>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec11">11. 参考文献</h2>
+
+<blockquote>以下 34 篇文献均经 arXiv 摘要页（arxiv.org/abs/&amp;lt;编号&amp;gt;）逐一核实编号、标题、作者与日期；点击编号可直达原文。量化数据除注明外均为各论文作者自述口径。</blockquote>
+
+<p><strong>核心论文</strong></p>
+
+<ol>
+<li>Agrawal, L. A., Tan, S., Soylu, D., et al. <strong>GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning.</strong> 2025（v2 2026-02）. <a href="https://arxiv.org/abs/2507.19457" target="_blank" rel="noopener">arXiv:2507.19457</a></li>
+<li>Zhou, Y., Muresanu, A. I., Han, Z., et al. <strong>Large Language Models Are Human-Level Prompt Engineers (APE).</strong> 2022. <a href="https://arxiv.org/abs/2211.01910" target="_blank" rel="noopener">arXiv:2211.01910</a></li>
+<li>Madaan, A., Tandon, N., Gupta, P., et al. <strong>Self-Refine: Iterative Refinement with Self-Feedback.</strong> 2023. <a href="https://arxiv.org/abs/2303.17651" target="_blank" rel="noopener">arXiv:2303.17651</a></li>
+<li>Shinn, N., Cassano, F., Berman, E., et al. <strong>Reflexion: Language Agents with Verbal Reinforcement Learning.</strong> 2023. <a href="https://arxiv.org/abs/2303.11366" target="_blank" rel="noopener">arXiv:2303.11366</a></li>
+<li>Pryzant, R., Iter, D., Li, J., et al. <strong>Automatic Prompt Optimization with &quot;Gradient Descent&quot; and Beam Search (ProTeGi).</strong> 2023（v2 2023-10）. <a href="https://arxiv.org/abs/2305.03495" target="_blank" rel="noopener">arXiv:2305.03495</a></li>
+<li>Chen, L., Chen, J., Goldstein, T., et al. <strong>InstructZero: Efficient Instruction Optimization for Black-Box Large Language Models.</strong> 2023. <a href="https://arxiv.org/abs/2306.03082" target="_blank" rel="noopener">arXiv:2306.03082</a></li>
+<li>Yang, C., Wang, X., Lu, Y., et al. <strong>Large Language Models as Optimizers (OPRO).</strong> 2023. <a href="https://arxiv.org/abs/2309.03409" target="_blank" rel="noopener">arXiv:2309.03409</a></li>
+<li>Guo, Q., Wang, R., Guo, J., et al. <strong>EvoPrompt: Connecting LLMs with Evolutionary Algorithms Yields Powerful Prompt Optimizers.</strong> 2023. <a href="https://arxiv.org/abs/2309.08532" target="_blank" rel="noopener">arXiv:2309.08532</a></li>
+<li>Fernando, C., Banarse, D., Michalewski, H., et al. <strong>Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution.</strong> 2023. <a href="https://arxiv.org/abs/2309.16797" target="_blank" rel="noopener">arXiv:2309.16797</a></li>
+<li>Wang, X., Li, C., Wang, Z., et al. <strong>PromptAgent: Strategic Planning with Language Models Enables Expert-level Prompt Optimization.</strong> 2023. <a href="https://arxiv.org/abs/2310.16427" target="_blank" rel="noopener">arXiv:2310.16427</a></li>
+<li>Khattab, O., Singhvi, A., Maheshwari, P., et al. <strong>DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines.</strong> 2023. <a href="https://arxiv.org/abs/2310.03714" target="_blank" rel="noopener">arXiv:2310.03714</a></li>
+<li>Yuksekgonul, M., Bianchi, F., Boen, J., et al. <strong>TextGrad: Automatic &quot;Differentiation&quot; via Text.</strong> 2024. <a href="https://arxiv.org/abs/2406.07496" target="_blank" rel="noopener">arXiv:2406.07496</a></li>
+<li>Opsahl-Ong, K., Ryan, M. J., Purtell, J., et al. <strong>Optimizing Instructions and Demonstrations for Multi-Stage Language Model Programs (MIPROv2).</strong> 2024. <a href="https://arxiv.org/abs/2406.11695" target="_blank" rel="noopener">arXiv:2406.11695</a></li>
+<li>Cheng, C.-A., Nie, A., Swaminathan, A. <strong>Trace is the Next AutoDiff: Generative Optimization with Rich Feedback, Execution Traces, and LLMs.</strong> 2024. <a href="https://arxiv.org/abs/2406.16218" target="_blank" rel="noopener">arXiv:2406.16218</a></li>
+</ol>
+
+<p><strong>对比基线与相关系统</strong></p>
+
+<ol>
+<li>Shao, Z., et al. <strong>DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models（GRPO）.</strong> 2024. <a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">arXiv:2402.03300</a></li>
+<li>Wang, Z. Z., Mao, J., Fried, D., et al. <strong>Agent Workflow Memory (AWM).</strong> 2024. <a href="https://arxiv.org/abs/2409.07429" target="_blank" rel="noopener">arXiv:2409.07429</a></li>
+<li>Yang, L., et al. <strong>Agentic Context Engineering (ACE): Evolving Contexts for Self-Improving Language Models.</strong> 2025. <a href="https://arxiv.org/abs/2510.04618" target="_blank" rel="noopener">arXiv:2510.04618</a></li>
+<li>Ouyang, T., et al. <strong>KernelBench: Can LLMs Write Efficient GPU Kernels?</strong> 2025. <a href="https://arxiv.org/abs/2502.10517" target="_blank" rel="noopener">arXiv:2502.10517</a></li>
+</ol>
+
+<p><strong>2026 跟进：改进 / 应用 / 诊断 / 替代</strong></p>
+
+<ol>
+<li>Yu, Z., Lee, N., Lee, M., et al. <strong>GEPA-Curator: Curated Learning for Self Improving Agents.</strong> 2026. <a href="https://arxiv.org/abs/2610.37651" target="_blank" rel="noopener">arXiv:2610.37651</a></li>
+<li>Zhao, C., Yang, R., Liu, C., et al. <strong>When Does GEPA Merge Help? A Mechanism-Level Diagnostic.</strong> 2026. <a href="https://arxiv.org/abs/2610.34027" target="_blank" rel="noopener">arXiv:2610.34027</a></li>
+<li>Mombaerts, L., Taws, J., Gargano, J., et al. <strong>Training-Free Continual Learning for Multimodal Forecasting via Prompt Evolution.</strong> 2026. <a href="https://arxiv.org/abs/2610.27468" target="_blank" rel="noopener">arXiv:2610.27468</a></li>
+<li>Giummarra, A., Baglieri, C., Di Maria, A., et al. <strong>Understanding When Reflective Prompt and Skill Optimization Helps on Locally Served Reasoning Models: A Two-Model Study of GEPA and SkillOpt.</strong> 2026. <a href="https://arxiv.org/abs/2610.26020" target="_blank" rel="noopener">arXiv:2610.26020</a></li>
+<li>Singhal, R., Maamari, K., Tambwekar, P., et al. <strong>RLPE: Teaching LLMs to Prompt with Reinforcement Learning.</strong> 2026. <a href="https://arxiv.org/abs/2610.19062" target="_blank" rel="noopener">arXiv:2610.19062</a></li>
+<li>Yoo, S. W. W., Zeng, C., Somayajula, A., et al. <strong>Meta-Reflective Evolution Effectively Improves Production AI Systems（CoCoEvolve）.</strong> 2026. <a href="https://arxiv.org/abs/2610.12794" target="_blank" rel="noopener">arXiv:2610.12794</a></li>
+<li>Lumer, E., Sen, S., Subbiah, V. K., et al. <strong>Reflective Prompt Optimization of a Deep-Research Agent: A Topic-Disjoint, Multi-Seed Protocol for Measuring Transferable Gains and Prompt-Level Overfitting.</strong> 2026. <a href="https://arxiv.org/abs/2610.12601" target="_blank" rel="noopener">arXiv:2610.12601</a></li>
+<li>Liu, H., Wang, Z., Yan, H., et al. <strong>How Should a Prompt Optimizer Spend a Tight Budget? BudgetAPO with Noise-Adaptive Evaluation.</strong> 2026. <a href="https://arxiv.org/abs/2610.05671" target="_blank" rel="noopener">arXiv:2610.05671</a></li>
+<li>Xia, T., Liu, M., Liang, Y., et al. <strong>Ranking-Aware Prompt Optimization for Multimodal Clinical Diagnosis (Ranking-PE).</strong> 2026. <a href="https://arxiv.org/abs/2609.40361" target="_blank" rel="noopener">arXiv:2609.40361</a></li>
+<li>Chen, T., Zhang, Y., Wang, R., et al. <strong>Adaptive-GEPA: Make Your Harness Fit Heterogeneous Requests.</strong> 2026. <a href="https://arxiv.org/abs/2609.38762" target="_blank" rel="noopener">arXiv:2609.38762</a></li>
+<li>Singh, A., Gautam, S., Gupta, P., et al. <strong>Coding Agents are Strong Prompt Optimizers (CASD).</strong> 2026. <a href="https://arxiv.org/abs/2609.26261" target="_blank" rel="noopener">arXiv:2609.26261</a></li>
+<li>Oved, T., Pony, R., Naparstek, O., et al. <strong>Optimize Cheap, Deploy Strong: Cost-Aware Cross-Tier Transfer for Evolutionary Optimization.</strong> 2026. <a href="https://arxiv.org/abs/2608.10694" target="_blank" rel="noopener">arXiv:2608.10694</a></li>
+<li>Sundararaman, D., Gandhi, B., Garg, A., et al. <strong>FLARE: Few-shot Learning-based Adaptive Reflective Engine.</strong> 2026. <a href="https://arxiv.org/abs/2608.02919" target="_blank" rel="noopener">arXiv:2608.02919</a></li>
+<li>Singh, P. <strong>MAGE: Understanding Stability-Performance Trade-offs in Multi-component Prompt Optimization.</strong> 2026. <a href="https://arxiv.org/abs/2607.11944" target="_blank" rel="noopener">arXiv:2607.11944</a></li>
+<li>Nguyen, M., Nguyen, Q., Vuong, P., et al. <strong>Recursive Self-Evolving Agents via Held-Out Selection (RSEA).</strong> 2026. <a href="https://arxiv.org/abs/2606.28374" target="_blank" rel="noopener">arXiv:2606.28374</a></li>
+<li>Zhang, J., Agrawal, L. A., Tan, S., Lee, D., et al. <strong>Batching the Reflective Optimization Loop: Parallel Proposals Make GEPA Faster and Better.</strong> 2026. <a href="https://arxiv.org/abs/2610.36774" target="_blank" rel="noopener">arXiv:2610.36774</a></li>
+</ol>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<p>*本报告基于公开论文与 arXiv 一手页面整理，所有结论以可核实来源为准；如发现编号或数据有误，欢迎指正。*</p>
+<div class="footer">反思式提示进化技术报告 · 2026-10-28 · 所有 arXiv 编号已经 arxiv.org 摘要页逐一核实 · 5 张暗色 SVG · 量化数据除注明外均为各论文作者自述口径</div>
+</div></body></html>

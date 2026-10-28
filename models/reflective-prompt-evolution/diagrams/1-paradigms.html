@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>diagram</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 760" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="760" fill="#0d1117"/>
+<rect x="60" y="100" width="350" height="64" rx="10" fill="#0f141b" stroke="#f85149" stroke-width="1.4" opacity="0.98"/>
+<rect x="60" y="100" width="4" height="64" rx="2" fill="#f85149"/>
+<text x="235.0" y="127.67999999999999" fill="#e6edf3" font-size="16" text-anchor="middle" font-weight="600" font-style="normal">① 梯度强化学习</text>
+<text x="235.0" y="147.68" fill="#e6edf3" font-size="16" text-anchor="middle" font-weight="600" font-style="normal">GRPO / PPO</text>
+<rect x="60" y="180" width="350" height="380" rx="12" fill="none" stroke="#f85149" stroke-width="1.2"/>
+<circle cx="88" cy="215" r="4" fill="#f85149"/>
+<text x="104" y="220" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">更新模型权重 Θ</text>
+<circle cx="88" cy="281" r="4" fill="#f85149"/>
+<text x="104" y="286" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">策略梯度：稀疏标量奖励</text>
+<circle cx="88" cy="347" r="4" fill="#f85149"/>
+<text x="104" y="352" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">通常需数千~数万 rollout</text>
+<circle cx="88" cy="413" r="4" fill="#f85149"/>
+<text x="104" y="418" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">规则隐含在权重中，不可读</text>
+<circle cx="88" cy="479" r="4" fill="#f85149"/>
+<text x="104" y="484" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">LoRA / 全参数，训练基础设施重</text>
+<rect x="425" y="100" width="350" height="64" rx="10" fill="#0f141b" stroke="#d29922" stroke-width="1.4" opacity="0.98"/>
+<rect x="425" y="100" width="4" height="64" rx="2" fill="#d29922"/>
+<text x="600.0" y="127.67999999999999" fill="#e6edf3" font-size="16" text-anchor="middle" font-weight="600" font-style="normal">② 手工提示工程</text>
+<text x="600.0" y="147.68" fill="#e6edf3" font-size="16" text-anchor="middle" font-weight="600" font-style="normal">Human Prompt</text>
+<rect x="425" y="180" width="350" height="380" rx="12" fill="none" stroke="#d29922" stroke-width="1.2"/>
+<circle cx="453" cy="215" r="4" fill="#d29922"/>
+<text x="469" y="220" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">权重冻结，人工写提示</text>
+<circle cx="453" cy="281" r="4" fill="#d29922"/>
+<text x="469" y="286" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">靠人读 bad case 改模板</text>
+<circle cx="453" cy="347" r="4" fill="#d29922"/>
+<text x="469" y="352" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">迭代慢、强依赖个人经验</text>
+<circle cx="453" cy="413" r="4" fill="#d29922"/>
+<text x="469" y="418" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">产物可读但不可规模化复用</text>
+<circle cx="453" cy="479" r="4" fill="#d29922"/>
+<text x="469" y="484" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">搜索空间巨大，人手覆盖极少</text>
+<rect x="790" y="100" width="350" height="64" rx="10" fill="#0f141b" stroke="#3fb950" stroke-width="1.4" opacity="0.98"/>
+<rect x="790" y="100" width="4" height="64" rx="2" fill="#3fb950"/>
+<text x="965.0" y="127.67999999999999" fill="#e6edf3" font-size="16" text-anchor="middle" font-weight="600" font-style="normal">③ 语言程序自动优化</text>
+<text x="965.0" y="147.68" fill="#e6edf3" font-size="16" text-anchor="middle" font-weight="600" font-style="normal">GEPA / DSPy 家族</text>
+<rect x="790" y="180" width="350" height="380" rx="12" fill="none" stroke="#3fb950" stroke-width="1.2"/>
+<circle cx="818" cy="215" r="4" fill="#3fb950"/>
+<text x="834" y="220" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">权重冻结，把提示当「程序」</text>
+<circle cx="818" cy="281" r="4" fill="#3fb950"/>
+<text x="834" y="286" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">LLM 读轨迹+反馈做自然语言反思</text>
+<circle cx="818" cy="347" r="4" fill="#3fb950"/>
+<text x="834" y="352" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">几百次 rollout 即可显著提升</text>
+<circle cx="818" cy="413" r="4" fill="#3fb950"/>
+<text x="834" y="418" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">产物是可读文本，可迁移可审计</text>
+<circle cx="818" cy="479" r="4" fill="#3fb950"/>
+<text x="834" y="484" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-style="normal">黑盒 API 也能用，无需梯度</text>
+<rect x="260" y="600" width="680" height="70" rx="10" fill="#14111f" stroke="#bc8cff" stroke-width="1.4" opacity="0.98"/>
+<rect x="260" y="600" width="4" height="70" rx="2" fill="#bc8cff"/>
+<text x="600.0" y="640.6" fill="#e6edf3" font-size="16" text-anchor="middle" font-weight="600" font-style="normal">共同目标：在验证集上最大化任务指标 μ（准确率 / 奖励 / AUROC …）</text>
+<defs><marker id="m0" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#f85149"/></marker></defs>
+<line x1="235" y1="560" x2="235" y2="600" stroke="#f85149" stroke-width="2" marker-end="url(#m0)"/>
+<defs><marker id="m1" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#d29922"/></marker></defs>
+<line x1="600" y1="560" x2="600" y2="600" stroke="#d29922" stroke-width="2" marker-end="url(#m1)"/>
+<defs><marker id="m2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3fb950"/></marker></defs>
+<line x1="965" y1="560" x2="965" y2="600" stroke="#3fb950" stroke-width="2" marker-end="url(#m2)"/>
+<text x="60" y="700" fill="#8b949e" font-size="13" text-anchor="start" font-weight="400" font-style="italic">关键判据：可解释的语言，往往比策略梯度从稀疏标量奖励中学到的东西更丰富 —— GEPA, 2025</text>
+<text x="46" y="42" fill="#e6edf3" font-size="21" text-anchor="start" font-weight="700" font-style="normal">图 1 · 大模型适配下游任务的三种范式</text>
+<text x="46" y="68" fill="#8b949e" font-size="12.5" text-anchor="start" font-weight="400" font-style="normal">冻结权重 vs 更新权重；标量奖励 vs 自然语言反馈；本报告聚焦最右侧的「语言程序自动优化」</text>
+</svg>
+</body></html>
