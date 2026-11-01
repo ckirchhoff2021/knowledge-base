@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>diagram</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="720" fill="#0d1117"/>
+<defs>
+<marker id="ab" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#58a6ff"/></marker>
+<marker id="ag" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#3fb950"/></marker>
+<marker id="ao" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#d29922"/></marker>
+<marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#f85149"/></marker>
+<marker id="ap" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#bc8cff"/></marker>
+</defs>
+<text x="50" y="40" fill="#e6edf3" font-size="21" text-anchor="start" font-weight="700">图 4 · 参考架构：廉价门控 / 昂贵执行器——高频时机判断下沉，LLM 只在放行后生成内容</text>
+<text x="50" y="66" fill="#8b949e" font-size="13" text-anchor="start">三篇独立工作（PRISM / TGL / PRPF）收敛于此；右侧对照 Claude Duet 用「人工审批门」替代尚未成熟的「智能时机门」</text>
+
+<!-- 事件流 -->
+<rect x="45" y="100" width="150" height="150" rx="12" fill="#0f141b" stroke="#58a6ff" stroke-width="1.6"/>
+<text x="120" y="135" fill="#58a6ff" font-size="14" text-anchor="middle" font-weight="700">事件流</text>
+<text x="120" y="162" fill="#8b949e" font-size="10.5" text-anchor="middle">注视 / 场景 / 生理</text>
+<text x="120" y="182" fill="#8b949e" font-size="10.5" text-anchor="middle">时间窗口 / 行为序列</text>
+<text x="120" y="210" fill="#8b949e" font-size="10.5" text-anchor="middle">始终在线、高频</text>
+<text x="120" y="234" fill="#8b949e" font-size="10" text-anchor="middle">（智能眼镜/MR）</text>
+
+<!-- 廉价门控器 -->
+<rect x="245" y="95" width="230" height="240" rx="14" fill="#141310" stroke="#d29922" stroke-width="1.9"/>
+<text x="360" y="128" fill="#d29922" font-size="15" text-anchor="middle" font-weight="700">廉价门控器</text>
+<text x="360" y="150" fill="#8b949e" font-size="10.5" text-anchor="middle">毫秒级 · 几百 MiB · 可端侧</text>
+<rect x="265" y="164" width="190" height="40" rx="7" fill="#161b22" stroke="#30363d"/>
+<text x="360" y="189" fill="#e6edf3" font-size="11" text-anchor="middle">TGL 小图模型 11.13ms</text>
+<rect x="265" y="212" width="190" height="40" rx="7" fill="#161b22" stroke="#30363d"/>
+<text x="360" y="237" fill="#e6edf3" font-size="11" text-anchor="middle">PRISM 校准概率 vs θ</text>
+<rect x="265" y="260" width="190" height="40" rx="7" fill="#161b22" stroke="#30363d"/>
+<text x="360" y="285" fill="#e6edf3" font-size="11" text-anchor="middle">PRPF 推理前廉价感知</text>
+<text x="360" y="322" fill="#3fb950" font-size="10.5" text-anchor="middle">输出：触发？+ 打分上下文</text>
+
+<line x1="195" y1="175" x2="243" y2="175" stroke="#58a6ff" stroke-width="2.2" marker-end="url(#ab)"/>
+
+<!-- 三态决策 -->
+<rect x="525" y="95" width="190" height="240" rx="14" fill="#0f141b" stroke="#58a6ff" stroke-width="1.7"/>
+<text x="620" y="128" fill="#58a6ff" font-size="14.5" text-anchor="middle" font-weight="700">三态决策</text>
+<rect x="545" y="145" width="150" height="50" rx="8" fill="#1a1214" stroke="#f85149"/>
+<text x="620" y="168" fill="#f85149" font-size="12" text-anchor="middle" font-weight="700">保持沉默</text>
+<text x="620" y="186" fill="#8b949e" font-size="9.5" text-anchor="middle">U ≤ θ · must-not 窗口</text>
+<rect x="545" y="205" width="150" height="50" rx="8" fill="#141310" stroke="#d29922"/>
+<text x="620" y="228" fill="#d29922" font-size="12" text-anchor="middle" font-weight="700">先询问</text>
+<text x="620" y="246" fill="#8b949e" font-size="9.5" text-anchor="middle">may 窗口 · 澄清问题</text>
+<rect x="545" y="265" width="150" height="50" rx="8" fill="#101813" stroke="#3fb950"/>
+<text x="620" y="288" fill="#3fb950" font-size="12" text-anchor="middle" font-weight="700">准备行动</text>
+<text x="620" y="306" fill="#8b949e" font-size="9.5" text-anchor="middle">must 窗口 · 放行 LLM</text>
+
+<line x1="475" y1="215" x2="523" y2="215" stroke="#d29922" stroke-width="2.2" marker-end="url(#ao)"/>
+
+<!-- 沉默回路 -->
+<path d="M545,170 C500,170 490,360 245,360 C150,360 120,300 120,252" fill="none" stroke="#f85149" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#ar)"/>
+<text x="330" y="378" fill="#f85149" font-size="10.5" text-anchor="middle">沉默：不调用 LLM、零打扰，继续监听</text>
+
+<!-- 昂贵执行器 -->
+<rect x="765" y="95" width="200" height="240" rx="14" fill="#101813" stroke="#3fb950" stroke-width="1.9"/>
+<text x="865" y="128" fill="#3fb950" font-size="15" text-anchor="middle" font-weight="700">昂贵执行器 LLM</text>
+<text x="865" y="150" fill="#8b949e" font-size="10.5" text-anchor="middle">仅放行后调用</text>
+<rect x="785" y="164" width="160" height="40" rx="7" fill="#161b22" stroke="#30363d"/>
+<text x="865" y="189" fill="#e6edf3" font-size="11" text-anchor="middle">推理：说什么/怎么做</text>
+<rect x="785" y="212" width="160" height="40" rx="7" fill="#161b22" stroke="#30363d"/>
+<text x="865" y="237" fill="#e6edf3" font-size="11" text-anchor="middle">Slow 模式（边界附近）</text>
+<rect x="785" y="260" width="160" height="40" rx="7" fill="#161b22" stroke="#30363d"/>
+<text x="865" y="285" fill="#e6edf3" font-size="11" text-anchor="middle">工具编排 / 内容生成</text>
+
+<line x1="715" y1="290" x2="763" y2="290" stroke="#3fb950" stroke-width="2.2" marker-end="url(#ag)"/>
+
+<!-- 人工审批门 -->
+<rect x="1005" y="95" width="150" height="240" rx="14" fill="#16101c" stroke="#bc8cff" stroke-width="1.9"/>
+<text x="1080" y="128" fill="#bc8cff" font-size="14" text-anchor="middle" font-weight="700">人工审批门</text>
+<text x="1080" y="150" fill="#8b949e" font-size="10" text-anchor="middle">高风险动作</text>
+<text x="1080" y="182" fill="#e6edf3" font-size="10.5" text-anchor="middle">发送 · 支付</text>
+<text x="1080" y="202" fill="#e6edf3" font-size="10.5" text-anchor="middle">签署 · 删除</text>
+<text x="1080" y="234" fill="#f85149" font-size="10" text-anchor="middle">转账/交易：禁止</text>
+<text x="1080" y="266" fill="#8b949e" font-size="10" text-anchor="middle">读取/草拟可自主</text>
+<text x="1080" y="300" fill="#bc8cff" font-size="9.5" text-anchor="middle">Claude Duet 范式</text>
+
+<line x1="965" y1="215" x2="1003" y2="215" stroke="#bc8cff" stroke-width="2.2" marker-end="url(#ap)"/>
+
+<!-- 底部：反馈闭环 -->
+<rect x="45" y="420" width="1110" height="245" rx="16" fill="#0f141b" stroke="#bc8cff" stroke-width="1.8" stroke-dasharray="8,5"/>
+<text x="68" y="455" fill="#bc8cff" font-size="16" font-weight="700">反馈闭环：把每次干预变成重调 θ 的数据（reward ⊆ eval）</text>
+
+<rect x="68" y="475" width="245" height="90" rx="9" fill="#161b22" stroke="#30363d"/>
+<text x="82" y="500" fill="#e6edf3" font-size="12" font-weight="700">L0–L1 信号采集</text>
+<text x="82" y="522" fill="#8b949e" font-size="10.5">接受/忽略/再提醒 + 采纳率/注视/恢复</text>
+<text x="82" y="544" fill="#f85149" font-size="10.5">不能只用接受率（混淆内容/时机）</text>
+
+<rect x="333" y="475" width="245" height="90" rx="9" fill="#161b22" stroke="#30363d"/>
+<text x="347" y="500" fill="#e6edf3" font-size="12" font-weight="700">阈值自适应（起点）</text>
+<text x="347" y="522" fill="#8b949e" font-size="10.5">单参数 bandit 按用户/情境调 θ</text>
+<text x="347" y="544" fill="#3fb950" font-size="10.5">最小可行 RL · 避免背靠背触发</text>
+
+<rect x="598" y="475" width="245" height="90" rx="9" fill="#161b22" stroke="#30363d"/>
+<text x="612" y="500" fill="#e6edf3" font-size="12" font-weight="700">三态窗口评测</text>
+<text x="612" y="522" fill="#8b949e" font-size="10.5">must 召回 · must-not 冒犯率</text>
+<text x="612" y="544" fill="#8b949e" font-size="10.5">成本兑换率以曲线报告 · may 沉默不罚</text>
+
+<rect x="863" y="475" width="270" height="90" rx="9" fill="#1a1214" stroke="#f85149"/>
+<text x="877" y="500" fill="#f85149" font-size="12" font-weight="700">范畴警告</text>
+<text x="877" y="522" fill="#8b949e" font-size="10.5">算力门只解决「何时花算力」，</text>
+<text x="877" y="544" fill="#8b949e" font-size="10.5">≠「何时打扰用户」；注意力状态项仍空</text>
+
+<!-- 反馈回灌箭头 -->
+<path d="M360,565 C360,595 360,610 360,340" fill="none" stroke="#bc8cff" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#ap)"/>
+<text x="378" y="600" fill="#bc8cff" font-size="10.5">反馈回灌重调门控阈值 θ</text>
+
+<rect x="68" y="585" width="1065" height="60" rx="9" fill="#101813" stroke="#3fb950"/>
+<text x="862" y="610" fill="#3fb950" font-size="12" text-anchor="middle" font-weight="700">落地节奏：窄场景起步 → L0–L4 逐级放开 → 人在环审批兜底，直到注意力状态成本项可被可靠度量</text>
+<text x="862" y="632" fill="#8b949e" font-size="10.5" text-anchor="middle">端侧优先 · 数据最小化 · 凭证隔离 · 每条提议可解释 · 一键关闭主动性</text>
+</svg>
+</body></html>

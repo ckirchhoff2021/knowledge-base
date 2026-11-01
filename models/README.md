@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **27 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **28 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -179,3 +179,9 @@ MCP、A2A 与 AGENTS.md 三大互联标准的分层关系：工具接入、Agent
 当脚手架成为能力本身：「Agent = Model + Harness」的六层框架与六大运行时职责、失败归因五度量（VCR/Model-Harness Fit）、Harness Scaling 第四缩放维度、Cache Engineering 与 Token 资源经济学，以及「harness 是否会消失」的范式之争。
 
 📅 2026-10-27 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](agent-harness/report.md)
+
+### [主动式智能体 Proactive Agent](https://ckirchhoff2021.github.io/knowledge-base/models/proactive-agent/report.html)
+
+当 AI 不再等待指令：核心问题从「能不能做（capability）」转向「该不该此刻无提示地做（intervention timing）」。以 `intervene ⇔ E[收益] − E[打扰成本] > θ` 为主线，梳理五层管线与 L0–L4 分级、1999–2017 决策论谱系与 2024–2026 LLM 浪潮为何互不相通，拆解 Proactive Agent / PRISM / TGL / ProAgent / Pro²Assist / EgoSocial / Plan-Watch-Recover 等旗舰，剖析「廉价门控/昂贵执行器」收敛、reward⊆eval、接受率陷阱与 must/may/must-not 三态窗口，并以 Claude Duet 为产业样本。
+
+📅 2026-11-01 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](proactive-agent/report.md)

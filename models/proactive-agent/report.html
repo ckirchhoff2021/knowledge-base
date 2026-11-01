@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>主动式智能体（Proactive Agent）前沿技术报告：当 AI 不再等待指令</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:980px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:28px; }
+  h1 { font-size:27px; line-height:1.45; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin:0 8px 8px 0; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  figure { margin:28px 0; }
+  figure iframe { width:100%; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; word-break:break-all; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); word-break:normal; }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+
+</style>
+</head><body><div class="container">
+<header>
+  <h1>主动式智能体（Proactive Agent）前沿技术报告：当 AI 不再等待指令——干预时机、缺失的成本项与「廉价门控 / 昂贵执行器」</h1>
+  <div><span class="badge">Proactive Agent</span><span class="badge">Intervention Timing</span><span class="badge">Always-On</span><span class="badge">主动智能体</span><span class="badge">干预时机</span><span class="badge">决策论</span><span class="badge">期望效用</span><span class="badge">注意力管理</span><span class="badge">认知负荷</span><span class="badge">廉价门控</span><span class="badge">reward⊆eval</span><span class="badge">三态窗口</span><span class="badge">人在环</span><span class="badge">智能眼镜</span></div>
+  <div class="meta" style="margin-top:10px">
+    <span>信源：50 篇参考文献，其中 33 篇 arXiv 论文编号已经 arXiv 官方 API（export.arxiv.org）于 2026-11-01 逐一核实；另含 TMLR 2026 综述（OpenReview/Zenodo）、ACM/Springer 正式 DOI 与 Anthropic 官方产品页</span>
+    &nbsp;·&nbsp;<span>报告日期：2026-11-01</span>
+  </div>
+</header>
+<nav class="toc"><h2>目录</h2><ol><li><a href="#sec1">摘要</a></li><li><a href="#sec2">1. 引言：为什么是「现在」</a></li><li><a href="#sec3">2. 什么是主动式智能体</a></li><li><a href="#sec4">3. 核心决策问题：干预是不确定性下的决策</a></li><li><a href="#sec5">4. 五层技术架构</a></li><li><a href="#sec6">5. 两条互不相通的思想谱系（1999–2026）</a></li><li><a href="#sec7">6. 旗舰系统与方法深度拆解</a></li><li><a href="#sec8">7. 关键架构收敛：廉价门控 / 昂贵执行器</a></li><li><a href="#sec9">8. 评测体系与「reward ⊆ eval」</a></li><li><a href="#sec10">9. 产业落地：以 Claude Duet 为镜</a></li><li><a href="#sec11">10. 开放问题</a></li><li><a href="#sec12">11. 工程落地 Checklist</a></li><li><a href="#sec13">12. 结语</a></li><li><a href="#sec14">参考文献</a></li></ol></nav>
+<blockquote><strong>信源</strong>：33 篇 arXiv 论文（编号已经 arXiv 官方 API 逐一核实标题与日期）+ 1 篇 TMLR 2026 同行评议综述（OpenReview / Zenodo）+ 8 篇经典 HCI/UbiComp 文献（ACM/Springer 正式 DOI）+ Anthropic / Microsoft / ByteDance 等官方工程文档与产品页 <strong>报告日期</strong>：2026-11-01 <strong>关键词</strong>：Proactive Agent · Intervention Timing · Always-On Assistant · Mixed-Initiative · 注意力管理 · 决策论门控 · 智能眼镜 / MR</blockquote>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec1">摘要</h2>
+
+<p>过去三年，大模型的竞争主轴是<strong>能力（capability）</strong>：模型能不能写代码、能不能做多步推理、能不能操作电脑。而 2025 年末至 2026 年，一个更前置的问题随着「始终在线」（always-on）的智能眼镜、MR 头显和环境式副驾（ambient copilot）的普及而浮出水面：<strong>当一个系统每小时要做数百次决定时，它该不该在「无人指令」的此刻主动开口或动手？</strong></p>
+
+<p>这就是<strong>主动式智能体（Proactive Agent）</strong>与<strong>干预时机（Intervention Timing）</strong>问题。它与本知识库已覆盖的 Agent 记忆、Harness、GUI Agent、全双工语音等方向正交：那些工作回答的是「如何把一件被交代的事做好」，而本报告回答的是「在没有被交代时，如何判断一件事值不值得现在做」。</p>
+
+<p>本报告以 TMLR 2026 综述 *When Should the Agent Speak?* 提出的单一决策规则为骨架——</p>
+
+<blockquote><strong>intervene ⇔ E[行动收益] − E[打断成本] &gt; θ</strong> （当且仅当行动的期望净收益超过阈值 θ 时才干预）</blockquote>
+
+<p>系统梳理：(1) 从被动响应到主动干预的范式转移与能力分级；(2) 信号—决策—行动—记忆—评测五层技术架构；(3) 两条互不相通的思想谱系——1999–2022 年把「打断成本」形式化却没有能干的执行者，2024–2026 年有了能干的执行者却把成本项重新做成碎片；(4) Proactive Agent/ProactiveBench、PRISM、TGL 门控、ProAgent、Pro²Assist、EgoSocial、Plan-Watch-Recover 等十余个旗舰系统的逐一拆解；(5) 2026 年三篇独立工作收敛出的「廉价门控 / 昂贵执行器」架构；(6) 「reward ⊆ eval」的根本困境与评测基准矩阵；(7) 以 Anthropic Claude Duet 为代表的产业落地与安全边界；(8) 开放问题与工程落地 Checklist。</p>
+
+<p>核心判断：<strong>主动式智能体是 2026 年下半年 Agent 范式从「对话工具」走向「终身同事」的关键一跃，而决定这一跃成败的不是更强的执行者，而是被长期忽视、正在被重新发现的「打断成本」这一项。</strong></p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec2">1. 引言：为什么是「现在」</h2>
+
+<h3>1.1 「你说一句，我动一下」的天花板</h3>
+
+<p>今天绝大多数 AI 产品的交互逻辑仍是<strong>被动响应（reactive）</strong>：所有行为必须由用户的显性指令触发。用户想让模型写一份活动方案，缺预算模块就要补一句「加上预算」，缺裂变规则再补一句，来回五六次。这种模式在 AI 只做查询与创作时尚可接受，但当人们期望它成为真正的个人助理、融入办公、健康、家居等长期陪伴场景时，短板被无限放大：<strong>交互效率低、指令成本高、完全无法处理需要预判和长期跟进的事务。</strong></p>
+
+<h3>1.2 触发拐点的三股力量</h3>
+
+<p>2025 年末至 2026 年，三股力量把「主动性」从学术议题推成了工程刚需：</p>
+
+<ul>
+<li><strong>硬件始终在线化</strong>：以智能眼镜（Meta Ray-Ban 等）和 MR 头显为代表的设备具备连续的第一人称感知能力。一个「等被提问才工作」的眼镜助手，本质上只是「多了几步操作的录音机」。</li>
+<li><strong>执行者真正成熟</strong>：多步任务智能体已能对着可验证目标把整件事做完（见本知识库 GUI Agent、Agent Harness 等报告）；第一人称感知也能解析用户正在看什么、伸手够什么。<strong>唯独「该不该现在开口」这个每小时要做数百次的决定，没有人系统建模。</strong></li>
+<li><strong>产品范式集体转向</strong>：2026 年 10 月，头部厂商在同一月内密集落地主动式产品——Anthropic 于 10 月 21 日开放 <strong>Claude Duet</strong> 研究预览（监控已连接应用、主动提示待办、用户离开时继续工作、重大动作前请求批准）；Google 让 Gemini 新增 Tasks 模式可跨服务后台工作；Meta 则把持续上下文与穿越障碍的主动聚焦做成模型级能力。</li>
+</ul>
+
+<figure>
+  <iframe src="diagrams/1-paradigm-shift.html" height="560" loading="lazy"></iframe>
+  <figcaption>图 1 · 从被动响应到主动智能体：交互范式的转移与主动性 L0–L4 分级</figcaption>
+</figure>
+
+<h3>1.3 与既有方向的正交性</h3>
+
+<p>本知识库已覆盖的方向中，Agent 记忆解决「记得什么」，Harness 解决「如何被脚手架支撑」，GUI Agent 解决「如何操作界面」，全双工语音解决「如何边听边说」。它们共享一个隐含前提：<strong>任务已经被发起</strong>。主动式智能体研究的恰恰是这个前提之前的决定——<strong>在无人发起时，是否、何时、以何种强度介入。</strong> 这是一个尚未被覆盖的新方向。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec3">2. 什么是主动式智能体</h2>
+
+<h3>2.1 定义</h3>
+
+<ul>
+<li><strong>被动响应式智能体（Reactive Agent）</strong>：仅响应显性输入，所有行为的触发源都来自用户的直接请求（普通版 ChatGPT、传统语音助手）。</li>
+<li><strong>主动式智能体（Proactive Agent）</strong>：具备多模态感知、长期记忆与意图预判能力，可在<strong>无显性指令</strong>时，基于上下文与历史行为主动识别潜在需求，发起交互甚至自动执行任务的智能体。</li>
+</ul>
+
+<p>需要强调：<strong>「主动」不等于「放任」</strong>。一个设计良好的主动式系统，其标志恰恰是知道何时保持沉默、何时先询问、以及把重大动作的最终控制权留给用户。</p>
+
+<h3>2.2 主动性的两个正交轴</h3>
+
+<p>TMLR 综述与 IBM 的工作共同提示，主动性至少要在两个正交轴上刻画：</p>
+
+<ul>
+<li><strong>时机轴（timing）</strong>：是否在无人指令时行动、何时行动——本报告主线。</li>
+<li><strong>内容轴（content）</strong>：一旦决定行动，去追求什么信息。IBM 把它进一步分为<strong>水平主动（horizontal）</strong>——追求当前上下文已经暴露出的未言明信息，与<strong>垂直主动（vertical）</strong>——追求只有更早的证据才能揭示的深层需求。</li>
+</ul>
+
+<h3>2.3 能力分级：从被动响应到自主执行</h3>
+
+<p>综合产业实践，可把主动能力分为五级，落地时应逐级放开：</p>
+
+<table>
+<thead><tr>
+<th>级别</th>
+<th>名称</th>
+<th>触发方式</th>
+<th>典型表现</th>
+<th>风险</th>
+</tr></thead><tbody>
+<tr>
+<td>L0</td>
+<td>被动响应</td>
+<td>完全由用户触发</td>
+<td>一问一答</td>
+<td>最低</td>
+</tr>
+<tr>
+<td>L1</td>
+<td>规则提醒</td>
+<td>预设规则</td>
+<td>日程/待办提醒</td>
+<td>低</td>
+</tr>
+<tr>
+<td>L2</td>
+<td>主动提议</td>
+<td>预判 + 上下文</td>
+<td>提前给出建议，<strong>待用户确认</strong></td>
+<td>中（打扰）</td>
+</tr>
+<tr>
+<td>L3</td>
+<td>授权自动执行</td>
+<td>高信任 + 边界内</td>
+<td>自动整理纪要、草拟回复</td>
+<td>高</td>
+</tr>
+<tr>
+<td>L4</td>
+<td>跨场景自主协同</td>
+<td>多设备/长程目标</td>
+<td>主动监控、异常处置、长期跟进</td>
+<td>最高</td>
+</tr>
+</tbody></table>
+
+<p>主流产品（如 Claude Duet）在 2026 年仍谨慎地停留在「可读可草拟可监控、发送/支付/删除必须审批」的 L2–L3 之间。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec4">3. 核心决策问题：干预是不确定性下的决策</h2>
+
+<h3>3.1 统一决策规则</h3>
+
+<p>整个领域可以由一条规则统领：</p>
+
+<blockquote><strong>intervene ⇔ E[benefit of acting] − E[cost of interrupting] &gt; θ</strong></blockquote>
+
+<p>即：<strong>干预是一个在不确定性下的决策，当且仅当行动的期望收益减去打断的期望成本超过阈值 θ 时才介入。</strong> 每一项研究都可以按它推进了不等式的哪一部分来归类。</p>
+
+<p>与之等价的意图概率视角是贝叶斯更新：以用户历史行为序列 S 为先验、当前上下文 C 为观测，计算潜在需求 A 的后验</p>
+
+<p>P(A|S,C) = P(C|A,S) · P(A|S) / P(C|S)</p>
+
+<p>再用效用函数 U(A) = V(A) − λ · D(A)（V 为提议价值、D 为打扰成本、λ 为用户对打扰的耐受权重）决定是否推送。</p>
+
+<h3>3.2 「沉默」与「询问」也是一等动作</h3>
+
+<p>决策几何的关键洞察（最早可追溯到 Horvitz 1999 年的混合发起界面原则）是：</p>
+
+<ul>
+<li><strong>等待/沉默是具有可计算价值的一等动作</strong>，其价值随时间贴现；</li>
+<li>动作阈值会<strong>随用户专注深度而升高</strong>——用户越专注，开口门槛越高；</li>
+<li>把「追问澄清」作为第三个动作，就得到<strong>三态策略：保持沉默 / 先询问 / 直接行动</strong>。这比简单的「说或不说」二元决策精细得多，也是现代助手重新发现「澄清式提问」这一 UX 模式的理论源头。</li>
+</ul>
+
+<h3>3.3 干预不是二元开关： graduated action（分级动作）</h3>
+
+<p>语音社区的 turn-taking 研究提示，干预存在一个<strong>成本递增的动作菜单</strong>：一次轻提示音（chime）、一个附和式 backchannel、一句完整插话、一次接管式操作，成本逐级升高。「一声提示音不等于一次接管」，因此度量时要对分级动作给予折扣。这一点直接决定了第 8 节的指标设计。</p>
+
+<figure>
+  <iframe src="diagrams/2-intervention-pipeline.html" height="620" loading="lazy"></iframe>
+  <figcaption>图 2 · 主动干预五层管线：信号 → 决策 → 行动 → 记忆 → 评测/自改进</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec5">4. 五层技术架构</h2>
+
+<p>TMLR 综述把主动干预组织为一条五层管线（信号 → 决策 → 行动 → 记忆，外层由评测与自改进闭环包裹）：</p>
+
+<h3>4.1 信号层 Signals：什么能触发干预</h3>
+
+<p>可观测的触发信号包括：注视/眼手协同、场景变化、时间上下文、用户行为序列、生理与环境传感器。</p>
+
+<ul>
+<li><strong>眼手协同</strong>：SIAgent 把注视与手部微动作翻译成自然语言，再由 LLM 推断意图，在 60+ VR 任务上达到 97.2% 的意图识别率（优于仅用注视+捏合的 93.1%）。</li>
+<li><strong>场景变化 + 任务对齐</strong>：YETI 用相邻帧的结构相似性（SSIM）检测场景切换，并把用户动作与预期任务步骤对齐以标记偏差。</li>
+<li><strong>分层日常感知</strong>：ProAgent 让廉价线索始终在线、富感知按需触发，并与存储的偏好融合，在 AR 眼镜上实现主动预测准确率 +27.7%、误检 −20.5%。</li>
+<li><strong>时间本身</strong>：TicToc 测试模型的工具调用决策是否符合人类时间感知，在 76 个场景中，<strong>即使把显式时间戳递到手里，也没有模型超过 65% 的对齐度</strong>——「时间盲」是比「缺信号」更强的发现。</li>
+<li><strong>注视的前瞻性</strong>：StreamGaze 研究注视能否预测「接下来会发生什么」（anticipation），而非仅当前意图。</li>
+</ul>
+
+<h3>4.2 决策层 Decision：何时行动（领域核心）</h3>
+
+<p>决策机制可粗分为三族：<strong>规则式</strong>（偏离脚本即干预，无成本项，如 YETI）、<strong>决策论式</strong>（显式权衡收益—成本，如 PRISM 与 1999–2017 的通知管理谱系）、<strong>学习式</strong>（用人类接受/拒绝标签训练奖励模型，如 Proactive Agent；或用小型图模型直接产出触发概率，如 TGL）。第 5、6 节将展开。</p>
+
+<h3>4.3 行动层 Action：决定之后做什么</h3>
+
+<p>行动层是相对成熟的「手」：GUI 操作（UI-TARS-2 多轮 RL，OSWorld 47.5 / AndroidWorld 73.3）、视觉理解（Seed1.5-VL 在 38/60 公开基准取得 SOTA）、几何空间定位（Depth Anything 3 从任意视角恢复视觉空间）、毫秒级何时开口（Full-Duplex-Bench 的停顿处理、话轮转换、backchannel、barge-in）。<strong>瓶颈在决策层而非行动层。</strong></p>
+
+<h3>4.4 记忆层 Memory：它了解你什么</h3>
+
+<p>时机决策是高度个人化的：同一条干预对甲是帮助、对乙是噪音，因此成本模型必须由记忆条件化。记忆基础设施（MemGPT 的 OS 式分页、Mem0 的生产级长期记忆、MemOS 把记忆作为一等 OS 资源）在本知识库的记忆专题已有详述；在主动场景下，SpeechLess 实现了 AR 中个性化空间记忆助手，是「记忆条件化干预」最接近的先例。</p>
+
+<h3>4.5 评测与自改进层：闭合环路</h3>
+
+<p>这是最不标准化、却「卡住一切」的一层：<strong>没有可靠评测，就无法定义干预质量的 RL 奖励。</strong> 详见第 8 节。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec6">5. 两条互不相通的思想谱系（1999–2026）</h2>
+
+<p>TMLR 综述最有价值的史学判断是：<strong>主动干预的两半分别握在两个互不引用的社群手里。</strong></p>
+
+<h3>5.1 左线：1999–2022，成本项被形式化，但没有执行者</h3>
+
+<p>在任何语言模型能代你行动之前，一个 HCI/普适计算社群花了二十年研究另一半问题：<strong>打断一个人的成本是多少、该如何权衡。</strong></p>
+
+<ul>
+<li><strong>1999 · Horvitz, Jacobs &amp; Hovel《Attention-Sensitive Alerting》</strong>：把告警建模为期望效用——在推断出的潜在注意力状态上求「告警期望成本」，把沉默当作一等动作并做时间贴现，仅当净期望价值为正才触发；推断的消息紧急度与专家打分相关性达 0.9。</li>
+<li><strong>1999 · Horvitz《混合发起界面原则》</strong>：动作阈值随专注深度升高，加入对话得到沉默/询问/行动三态策略。</li>
+<li><strong>2002 · McFarlane</strong>：时机是一种「协调」选择——立即/协商/中介/计划式，36 人双任务实验中「协商式」（先告知、让用户自选时机）在多数设计目标上胜出。</li>
+<li><strong>2003 · Horvitz &amp; Apacible</strong>：从桌面/日历/音频流中以「支付意愿」的美元口径学习打断成本，并预测下一个可低成本打断的窗口；跨用户迁移的模型甚至差于多数类猜测——这是对「人群通用时机策略」的长期警告。</li>
+<li><strong>2006 · Iqbal &amp; Bailey</strong>：仅凭任务结构（无需传感器）就能预测打断成本，三个计划特征可造成恢复滞后 3.7 倍的跨度（464 → 1,702 ms）。</li>
+<li><strong>2007 · Iqbal &amp; Horvitz</strong>：27 名知识工作者、2,267 记录小时的现场实测——<strong>一次告警带来约 20–25 分钟的扰动弧，27% 被打断的窗口在两小时后仍未恢复。</strong> 任何把打断成本定价为「模型回答时长」的模型，都偏差了两个数量级。</li>
+<li><strong>2014 · InterruptMe</strong>：打断成本是路径依赖的——前两小时内已有 8 条通知后，对新通知的好感度下降过半；因此背靠背触发的上下文门控在「可打断性耗尽」时比随机更糟。</li>
+<li><strong>2017 · Pielot 等</strong>：把问题从「能否打断」推进到「是否是投入的良机」，337 人现场研究中行为历史带来 5 倍提升。</li>
+<li><strong>2019 · Okoshi 等</strong>：基于断点的延迟调度，382,518 人部署研究点击率最高 +60.7%，随后为 Yahoo! JAPAN App 全部 1,000 万+ Android 用户启用——这条谱系的人口规模级证据。</li>
+<li><strong>2022 · Chen 等《Opportune Moments in VR》</strong>：可打断性预测在主动式 MR 浪潮的四年前就已进入头显，却被后者忽略。</li>
+<li><strong>移动健康 JITAI（2016, Nahum-Shani 等）</strong>：给出时机的形式化——决策点、裁剪变量、显式的「什么都不提供」动作，以及把负担/疲劳列为一等成本；但其阈值是理论设定的自由参数，两个期望都未被估计。</li>
+</ul>
+
+<p><strong>这条线为何沉寂？</strong> 不是工作失败，而是无处复利：当一次完美时机干预的最大收益不过是「用户稍早一点读到一条消息」时，更好的成本模型没有回报。深刻的形式化是为一个<strong>尚不存在的执行者</strong>而建。</p>
+
+<h3>5.2 右线：2024–2026，有了执行者，成本项碎成四片</h3>
+
+<p>执行者现在存在了，但建造它的浪潮把决策层从零重做，且几乎不引用左线。TMLR 综述审计了其引用网络：<strong>右线只有一篇论文引用了左线，而那一篇最终去定价的是算力。</strong></p>
+
+<p>更诚实的现状判断不是「没人给打断定价」，而是更糟也更可修复的局面：<strong>四个社群各自只定价成本的一个组件，互不引用，也不复用彼此正在独立重新发现的形式化。</strong></p>
+
+<table>
+<thead><tr>
+<th>成本组件</th>
+<th>由谁定价（年份）</th>
+<th>状态</th>
+</tr></thead><tbody>
+<tr>
+<td>误报（false alarm）</td>
+<td>PRISM（2026）</td>
+<td>已定价（贝叶斯风险阈值）</td>
+</tr>
+<tr>
+<td>认知负荷（cognitive load）</td>
+<td>Precision Proactivity（2025）</td>
+<td>已测量，未接入决策</td>
+</tr>
+<tr>
+<td>社交冒犯（social violation）</td>
+<td>EgoSocial（2025）</td>
+<td>已命名，未计费</td>
+</tr>
+<tr>
+<td>算力（compute）</td>
+<td>TGL / PRPF / ProAgent（2026）</td>
+<td>仅定价算力</td>
+</tr>
+<tr>
+<td>注意力状态（attentional state）</td>
+<td>——</td>
+<td>自 1999 后无人接手</td>
+</tr>
+<tr>
+<td>沉默成本（cost of silence）</td>
+<td>——</td>
+<td>自 1999 后无人接手</td>
+</tr>
+<tr>
+<td>告警疲劳（alert fatigue）</td>
+<td>InterruptMe（2014）</td>
+<td>自 2014 后无人接手</td>
+</tr>
+<tr>
+<td>个人化成本</td>
+<td>Sensing What Surveys Miss（2026）</td>
+<td>单一实验室实现</td>
+</tr>
+</tbody></table>
+
+<p><strong>两个没有主人的条目，恰恰是 1999 年就已经拥有的那两个。</strong> 这正是「两条线互不相通」造成的直接损失。</p>
+
+<figure>
+  <iframe src="diagrams/3-two-lineages.html" height="620" loading="lazy"></iframe>
+  <figcaption>图 3 · 两条互不相通的思想谱系：成本形式化无执行者 × 有执行者成本碎片化</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec7">6. 旗舰系统与方法深度拆解</h2>
+
+<h3>6.1 Proactive Agent 与 ProactiveBench（2024.10）：数据驱动的奖励模型范式</h3>
+
+<p>清华等团队的 *Proactive Agent: Shifting LLM Agents from Reactive Responses to Active Assistance* 是 LLM 时代主动性的奠基工作。其方法链条：</p>
+
+<ol>
+<li>采集真实世界人类活动，生成主动任务预测；</li>
+<li>由人工标注员把预测标注为「接受/拒绝」；</li>
+<li>用标注数据训练一个<strong>模拟人类判断的奖励模型</strong>，作为 LLM 主动性的自动评估器；</li>
+<li>构建数据生成管线，产出含 <strong>6,790 个事件</strong>的 <strong>ProactiveBench</strong>；</li>
+<li>用 ProactiveBench 微调模型，微调后主动提供帮助的 <strong>F1 达 66.47%</strong>，超过所有开源与闭源模型。</li>
+</ol>
+
+<p><strong>关键教训（单边奖励导致「沉默崩溃」）</strong>：当团队在推理期把单边的奖励模型反馈（只惩罚误报、不珍视及时帮助）回灌时，GPT-4o 的召回率从 <strong>98.11 骤降到 56.76</strong>。这从经验上复现了「决策为什么必须有两个项」——<strong>只罚误报而不估价及时帮助，最优解就是缄默（mutism）。</strong></p>
+
+<h3>6.2 PRISM（2026.02）：决策论门控的现代重建</h3>
+
+<p>*PRISM: Festina Lente Proactivity —— Risk-Sensitive, Uncertainty-Aware Deliberation for Proactive Agents* 把问题形式化为<strong>成本敏感的选择性干预</strong>，由三部分组成：</p>
+
+<ul>
+<li><strong>决策论门控</strong>：推理时仅当一个<strong>经过校准的用户接受概率</strong>超过某个阈值才干预；该阈值由「错过帮助」与「误报」的<strong>非对称成本</strong>导出。这正是 Horvitz 规则用「学习到的概率」替换「启发式概率」的现代版。</li>
+<li><strong>双过程推理</strong>：取意「欲速则不达（festina lente）」，只在决策边界附近才调用昂贵的 Slow 模式做反事实检查，把算力集中在模糊与高风险情形。</li>
+<li><strong>门控对齐、模式锁定的蒸馏</strong>：跑完整管线的教师在无标签交互轨迹上提供密集、可执行的监督；学生学习的响应策略与干预门控显式解耦，以便可调、可审计。</li>
+</ul>
+
+<p><strong>实测（ProactiveBench，摘要原文）</strong>：误报减少 <strong>22.78%</strong>、F1 提升 <strong>20.14</strong> 个点。TMLR 综述给出的绝对口径为：误报率从 <strong>50.22% 降到 22.94%</strong>、F1 从 <strong>66.47 升到 86.61</strong>。</p>
+
+<p><strong>PRISM 仍看不见的东西</strong>：成本比是一个「部署常量」，作者把它从 1:4 扫到 1.2:1，却从未从任何用户身上实测；因此门控对「打断一个正望向窗外的人」和「打断一个会议中话说到一半的人」收取同样的价格。<strong>这种状态依赖性正是 1999 年的核心洞见，它没有随形式化一起回来。</strong> PRISM 自己在 §6 也承认：LLM 判官代理「无法完全捕捉复杂心流状态中不合时宜打断的认知负荷」。</p>
+
+<h3>6.3 TGL 门控（2026.05）：决策层或许根本不需要 LLM</h3>
+
+<p>*Do Proactive Agents Need an LLM to Decide When to Act?* 的核心洞察是：<strong>用户活动天然具有图结构</strong>——事件涉及持续存在的实体，实体的复现把多次交互连接起来；触发与上下文选择可直接映射为对事件节点与实体节点的预测。</p>
+
+<ul>
+<li>提出<strong>时间图学习（TGL）控制器</strong>，一次前向同时产出「触发概率」与「打分后的上下文实体」；</li>
+<li>GPU 服务器上每事件 <strong>11.13 ms</strong>，在九种触发架构中 AUC 最高，相对两种单次前向 LLM 触发器取得约 <strong>4–7× 的触发阶段加速</strong>；</li>
+<li>共享的 TGL 模型为全部 14 个下游骨干平均提升 F1 <strong>16.7</strong> 个点；</li>
+<li>在消费级笔记本上 <strong>13.99 ms</strong>、约 <strong>220 MiB</strong> BF16 常驻占用，使主动控制可端侧部署。</li>
+</ul>
+
+<h3>6.4 ProAgent（2025.12）：按需分层感知的真实世界系统</h3>
+
+<p>*ProAgent: Harnessing On-Demand Sensory Contexts* 是一套端到端、落地于 AR 眼镜的真实世界系统：</p>
+
+<ul>
+<li><strong>按需分层感知</strong>：廉价上下文线索始终在线、富感知按需触发，持续感知周围环境；</li>
+<li><strong>面向主动的上下文抽取</strong>：整合感官上下文与人类偏好，得到分层上下文；</li>
+<li><strong>上下文感知主动推理器</strong>：推断需求并调用外部工具交付帮助。</li>
+</ul>
+
+<p>实测：主动预测准确率最高 <strong>+27.7%</strong>、误检 <strong>−20.5%</strong>；20 人用户研究中 <strong>85%</strong> 满意并愿意日常使用。</p>
+
+<h3>6.5 Pro²Assist（2026.05）：长程程序任务的步骤感知</h3>
+
+<p>*Pro²Assist* 针对多步骤的长程程序任务：用 AR 眼镜的多模态数据做基于运动的感知，从多尺度时间动态与专家知识中抽取步骤化程序上下文，持续推理并在眼镜上显示及时帮助。程序化动作理解准确率超最强基线 <strong>21%</strong> 以上，<strong>主动时机准确率最高达基线的 2.29 倍</strong>；20 人研究中 <strong>90%</strong> 认为有用。</p>
+
+<h3>6.6 EgoSocial（2025.10）：把社交时机做成指标</h3>
+
+<p>*EgoSocial* 构建含 <strong>13,500 个社交视频-问答对</strong>的第一人称数据集，专测社交干预。前沿全模态 LLM 在干预时机上仍严重吃力——<strong>Gemini 2.5 Pro 仅 14.4%</strong>，而它们在「察觉社交互动正在发生」上已能达到 51.65–56.08 的 macro-F1：<strong>看得见局面，却选不准时机。</strong> 其提出的 EgoSoD 用社交思维图融合音视频线索，把 Phi-4 的干预时机提升 45.6%、Gemini 2.5 Pro 提升 9.9%。</p>
+
+<h3>6.7 Plan, Watch, Recover / EgoProactive 与 Pro²Bench（2026.06，Meta）</h3>
+
+<p>*Plan, Watch, Recover* 引入 <strong>EgoProactive</strong> 智能眼镜数据集（四个领域，用户在步骤级偏离计划并从中恢复），结合五个重标注数据集组成 <strong>Pro²Bench</strong>，对干预时机、程序完成度与响应质量打分。</p>
+
+<ul>
+<li>零样本下，<strong>没有任何前沿或开放权重模型能在首次出错前完成超过 26% 的程序干预</strong>；</li>
+<li>提出 <strong>PWR 架构</strong>：在上下文中保持显式计划状态，每次干预后修订计划，偏离后补入恢复步骤；</li>
+<li>在三个开放权重骨干上，无计划地训练几乎不改变性能，加入动态计划后平均程序完成度从 <strong>20% 升到 27%</strong>，且在未见过的偏离上依然有效。</li>
+</ul>
+
+<h3>6.8 内容轴的主动：IBM Q&amp;D（2026.09）</h3>
+
+<p>*Asking for What Was Never Requested* 研究「决定行动后去追求什么」。用从基准自身分解恢复出的<strong>需求图（need graph）</strong>记录需求间依赖，使水平/垂直主动及「是否在恰当时机停止」都能仅凭转录打分、无需模型判官。其 <strong>Q&amp;D（提问者+起草者）</strong>训练提问者偏好「续写能检索到更多所需证据」的问题：在等检索开销下，训练后的提问者在三个多跳 QA 基准上全面超过同一模型的提示版，并在其中两个上胜过 <strong>15 倍大</strong>的提示模型；迁移到客服智能体后，能以更少提问完成更多任务。</p>
+
+<h3>6.9 生理信号个性化：Sensing What Surveys Miss（2026.02）</h3>
+
+<p>该工作用<strong>皮肤电活动（EDA）与鼠标移动</strong>预测受访者何时需要支持，个性化分类器 + 基于规则的阈值自适应来触发 LLM 澄清。32 人被试内实验：时机对齐的帮助把回答准确率提升 <strong>21%</strong>、假阴性率从 50.9% 降到 22.9%；这是罕见的、对「时机本身」做消融（对齐 vs 错位 vs 随机）的研究。</p>
+
+<h3>6.10 回避时机问题的最可部署系统：VisionClaw（2026.04）</h3>
+
+<p>*VisionClaw* 在 Meta Ray-Ban 眼镜上把实时第一人称感知与 OpenClaw 智能体执行耦合，支持把实物加入购物车、从纸质文档生成笔记、从海报建日程等。12 人实验室 + 5 人长期部署研究显示任务完成更快、交互开销更低。<strong>但它的行动严格由语音发起、由用户充当闸门</strong>——最可部署的 2026 系统以「不拥有时机问题」的方式绕开了时机问题。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec8">7. 关键架构收敛：廉价门控 / 昂贵执行器</h2>
+
+<p>2026 年一个值得专门标记的现象是：<strong>三篇相互独立的论文收敛到同一个架构——用一个廉价的门控器守在昂贵的执行器前面。</strong></p>
+
+<ul>
+<li><strong>PRISM 的审议门控</strong>：校准接受概率 vs 成本导出阈值，只在边界附近调用昂贵 Slow 推理；</li>
+<li><strong>TGL 时间图触发器</strong>：小图模型先决定是否触发，LLM 只在触发后才被调用（4–7× 加速、约 220 MiB 端侧可跑）；</li>
+<li><strong>Pre-Reasoning Perception Framework（PRPF，2026.06）</strong>：在推理之前先做一层廉价感知，为高效可靠的移动智能体把关。</li>
+</ul>
+
+<p>这一收敛的工程含义清晰：</p>
+
+<ol>
+<li><strong>时机判断是高频、低延迟、需要常驻的决策</strong>，让一个每事件毫秒级、几百 MiB 的小模型（甚至非神经网络的规则/生理阈值）来做，比让 LLM 反复解读活动历史更合理——后者在助手保持沉默时也在持续支付推理成本。</li>
+<li><strong>昂贵的 LLM 只应在门控放行后处理「说什么、怎么做」</strong>。</li>
+<li>这同时是一条成本治理路线：把「算力」这一可度量的成本项接到门控上，是目前唯一被右线真正定价的成本。</li>
+</ol>
+
+<p>但要警惕：廉价门控解决的是「何时值得花算力」，<strong>它并不自动等于「何时值得打扰用户」</strong>——后者需要的注意力状态/认知负荷项仍是空的（见第 5.2 节）。把算力门误当成打扰门，是这个架构最容易犯的范畴错误。</p>
+
+<figure>
+  <iframe src="diagrams/4-cheap-gate-architecture.html" height="620" loading="lazy"></iframe>
+  <figcaption>图 4 · 廉价门控 / 昂贵执行器参考架构，与产业「人工审批门」对照</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec9">8. 评测体系与「reward ⊆ eval」</h2>
+
+<h3>8.1 为什么评测是卡住一切的一层</h3>
+
+<p>强化学习在奖励有真值（ground truth）时才成立。GUI 智能体有「任务是否完成」作为奖励，而<strong>干预质量没有等价物</strong>：没有人能断言某一时刻的某次干预究竟好不好。因此：</p>
+
+<blockquote><strong>reward ⊆ eval（奖励包含于评测）</strong>：主动智能体可被训练的目标，上界于这个领域能构造出的评测。在干预质量可度量之前，主动性的 RL 可以被运行，却无法被验证。</blockquote>
+
+<p>移动健康是反例也是范本：它能在部署中在线学习干预时机，是因为有一个经过验证的近端结果可学（如提示后 30 分钟内的步数）。开放世界辅助没有这样的结果，于是今天写下的任何奖励，定价的都是一个尚未被证明能度量「真正重要之物」的代理。</p>
+
+<h3>8.2 反馈的四个深度层级</h3>
+
+<p>每个已部署的主动系统其实都在持续产生奖励流，多数却被丢弃。反馈随深度递增，信号越真、归因越难：</p>
+
+<table>
+<thead><tr>
+<th>层级</th>
+<th>信号</th>
+<th>成本</th>
+<th>归因</th>
+</tr></thead><tbody>
+<tr>
+<td>L0 显式</td>
+<td>接受 / 忽略 / 拒绝 /「三天后再提醒」</td>
+<td>免费但稀疏、有偏</td>
+<td>平凡</td>
+</tr>
+<tr>
+<td>L1 隐式行为</td>
+<td>是否采纳建议、注视停留 vs 回避、打断后恢复时间、撤销</td>
+<td>稠密、零用户负担</td>
+<td>易—中</td>
+</tr>
+<tr>
+<td>L2 结果</td>
+<td>任务完成度变化、节省时间、避免的错误</td>
+<td>需任务埋点</td>
+<td>延迟 → 信用分配难</td>
+</tr>
+<tr>
+<td>L3 长期</td>
+<td>留存、信任、用户彻底关闭主动性（终极负奖励）</td>
+<td>仅人群级 A/B</td>
+<td>最难</td>
+</tr>
+</tbody></table>
+
+<p>实践中可见三种成熟度：<strong>(1) 只记录</strong>（多数产品）；<strong>(2) 阈值自适应</strong>——按用户/上下文以 bandit 方式更新 θ 这一个参数，是「最小可行的 RL」，也应是常驻助手的起点；<strong>(3) 策略学习</strong>——在干预上学习奖励模型（Proactive Agent 是其离线版）。</p>
+
+<p><strong>核心不对称</strong>：负信号廉价而丰富（每次忽略都是一个），正信号微弱而延迟（没被打扰的人什么都不会说，明天才省下的十分钟今天不产生任何信号）。这就是为什么自改进被画在评测层内部而非独立的第六阶段：<strong>反馈边的质量，上限由定义它的度量决定。</strong></p>
+
+<h3>8.3 为什么「接受率」不能当奖励</h3>
+
+<p>时机选得好时接受率约 0.676，随机时机 0.444，反时机 0.388——接受率确实携带时机信号。但<strong>只看接受率会把 PRISM 的误报率推高到 62.50%</strong>，因为用户常常会接受「内容有用但时机糟糕」的建议。接受率度量的是「我是否想要这个内容」，而非「我是否想要它在此刻出现」。它混淆了 *I wanted this* 与 *I wanted this now*。</p>
+
+<h3>8.4 基准矩阵：没有一个基准答全三个问题</h3>
+
+<p>一个上线的时机策略必须能回答：<strong>你选择行动的时刻里，有多少是受欢迎的？需要你的时刻里，你抓住了多少？你的错误代价几何？</strong></p>
+
+<table>
+<thead><tr>
+<th>基准</th>
+<th>受欢迎？</th>
+<th>被抓住？</th>
+<th>被定价？</th>
+<th>说明</th>
+</tr></thead><tbody>
+<tr>
+<td>HoloAssist（2023）</td>
+<td>○</td>
+<td>○</td>
+<td>○</td>
+<td>166h 第一人称协作操作；窗口锚定在「已知会发生」的干预上，只分类干预类型、从不判断是否该开口</td>
+</tr>
+<tr>
+<td>ProactiveBench（2024）</td>
+<td>●</td>
+<td>◐</td>
+<td>○</td>
+<td>6,790 事件接受/拒绝标签</td>
+</tr>
+<tr>
+<td>ProactiveEval（2025）</td>
+<td>○</td>
+<td>○</td>
+<td>○</td>
+<td>主动对话体系统一框架</td>
+</tr>
+<tr>
+<td>ProAgentBench（2026）</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>真实世界数据的主动辅助评测</td>
+</tr>
+<tr>
+<td>EgoSocial（2025）</td>
+<td>◐</td>
+<td>◐</td>
+<td>○</td>
+<td>社交时机即指标；前沿模型 12.50–17.67%</td>
+</tr>
+<tr>
+<td>ProactiveVideoQA / PAUC（2025）</td>
+<td>◐</td>
+<td>●</td>
+<td>○</td>
+<td>首个经人验证的时机动态指标 PAUC，但开篇即无成本项</td>
+</tr>
+<tr>
+<td>Pro²Bench（2026）</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>五基准统一；但其质量分对假阳性和假阴性都记 0</td>
+</tr>
+<tr>
+<td>TMLR §8 设计</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>must/may/must-not 三态窗口 + 成本加权曲线</td>
+</tr>
+</tbody></table>
+
+<p>第三列（错误是否被定价）整列为空，这正是领域内任意两个系统都无法在「本问题真正关心的量」上被比较的原因。最尖锐的例子：<strong>Pro²Bench 的质量分对假阳性和假阴性都给 0，于是「在别人倒东西时插嘴说无关的话」和「眼睁睁看着菜烧糊」被当成相同结果</strong>——再强的策略学习也修不好一个对问题本质差异无动于衷的奖励。</p>
+
+<h3>8.5 TMLR §8.4：三态窗口与四个一起报告的数</h3>
+
+<p>TMLR 综述提出的标注协议让标注员标记决策<strong>窗口</strong>（而非瞬间），每个窗口给三态标签：<strong>must（必须干预）/ may（可以干预）/ must-not（禁止干预）</strong>。三态是全部要点：二元标签会把 *may* 的质量强行压向某一侧，抹掉那块「靠成本—收益推理而非分类」发挥作用的区域。</p>
+
+<p>由此产出四个<strong>必须一起报告、不可压成一个分</strong>的数：must 窗口上的时机召回、must-not 窗口上的冒犯率、成本加权分（其兑换率以<strong>曲线扫描</strong>而非隐藏常量给出）、以及分级动作折扣。在 *may* 窗口保持沉默永不被罚（避免 ProactiveBench 已暴露的单边惩罚错误）。</p>
+
+<p>其机器打分试点（规则播种、尚非人工判定）在 1,758 个会话、131.5 小时、4,144 个 must / 21,707 个 may / 3,170 个 must-not 窗口上跑了五个参考策略：「每秒都说」的策略时机召回最高（0.962）却在每个兑换率下成本加权分最低（λ=1 时 −367,752）；一个抓住 70% 错误、并在用户说话时保持沉默的模拟检测器，以 0.09%（对比 0.82%）的冒犯率达到 0.703 召回、λ=1 时 +5,932；但从 λ=2 起「永不开口」反而更优——这正说明兑换率必须作为曲线报告。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec10">9. 产业落地：以 Claude Duet 为镜</h2>
+
+<p>2026 年 10 月 21 日，Anthropic 开放 <strong>Claude Duet</strong> 研究预览，这是第一个围绕「主动回路」构建的 Anthropic 产品，也是观察产业如何处理时机问题的最佳样本（以下事实依据 Anthropic 官方产品页及公开资料，研究预览阶段，功能可能变化）。</p>
+
+<p><strong>产品形态</strong>：独立应用（iOS / Android / Web），运行在 Claude Opus 5.5 上，面向美国 Claude Pro/Max 用户候补；研究预览期不额外收费、共享订阅额度。</p>
+
+<p><strong>三个相对普通 Claude 的新增能力</strong>：一条持续的对话线程、一台云端私有计算机（带浏览器的云 VM，用户设备关机也能继续工作）、以及<strong>主动发起对话</strong>的能力。</p>
+
+<p><strong>它如何处理「主动」与「可控」的张力</strong>：</p>
+
+<ul>
+<li><strong>周期性而非连续监控</strong>：每隔几小时检查一次已连接账户（Gmail、Slack、QuickBooks、Stripe、HubSpot、DocuSign、Shopify 等），用户可指定关注内容与频率；官方明确提示它不保证实时、可能误判紧急程度，频繁后台活动会更快消耗订阅额度。</li>
+<li><strong>分级授权</strong>：读取邮件/日历/文件、草拟回复/报告可自主进行；<strong>发送消息、支付、签署文件、删除数据必须先请求批准</strong>；证券交易、账户间转账、访问他人账户则即便批准也禁止。</li>
+<li><strong>安全架构</strong>：凭证隔离、外部审批层、敏感数据分类器——与构建可信企业级智能体所需的模式一致。</li>
+</ul>
+
+<p><strong>对照本报告框架的解读</strong>：Claude Duet 在行动层（云 VM + 连接器）与记忆层（复用既有 Claude 上下文）上相当完整，但在决策层刻意保守——用「低频周期检查 + 重大动作人工审批」这种<strong>制度性约束</strong>替代了尚未成熟的个性化时机模型。它把时机风险主要转化为「审批门」而非「智能门」，这与学术前沿「廉价门控 + 昂贵执行器」的收敛方向一致，只是把门控器换成了人。这也印证了第 10 节的判断：在注意力状态成本项被可靠度量之前，<strong>人在环（human-in-the-loop）的审批是当前唯一可规模化的安全解。</strong></p>
+
+<p>同月，Google（Gemini 的 Tasks 后台模式）、Meta（把持续记忆与主动聚焦做成模型级能力）等也朝同一方向演进；产业共识已经从「长时执行」进一步走向「无需提示的主动工作」，但持久上下文、主动性、后台执行与审批检查点正在成为消费级与专业级智能体的共同特征。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec11">10. 开放问题</h2>
+
+<ol>
+<li><strong>无真值下的奖励。</strong> GUI 智能体有任务完成作奖励，干预质量没有等价物。什么样的评测能让 RL 奖励变得可定义？（reward ⊆ eval）</li>
+<li><strong>统一的成本项 θ。</strong> 截至 2026 年，成本被碎成四块（误报/认知负荷/社交冒犯/算力）分别建模，无人把它们统一进一个 θ，也无人继承 1999–2017 的效用形式化。最近的可行修复是「替代」而非「综合」：把 PRISM 形状正确的阈值里那个被扫描的误报成本，替换成 Precision Proactivity 已证明可从交互轨迹算出的负荷估计。</li>
+<li><strong>无脚本的时机。</strong> YETI 式偏差检测需要任务脚本，开放世界日常场景没有脚本。</li>
+<li><strong>延迟收益的信用分配。</strong> 一次「明天才省下十分钟」的干预，今天收不到任何信号。</li>
+<li><strong>个性化阈值。</strong> 同一个 θ 对不同用户、情境、时段都是错的，时机策略必须由记忆条件化；而 2003 年的跨用户迁移失败警告仍在。</li>
+<li><strong>基准碎片化。</strong> 各基准测量不同切片，Pro²Bench 的五合一仍是脚本锚定的，没有任何基准端到端覆盖开放世界 MR 干预时机。</li>
+<li><strong>模型的时间盲。</strong> TicToc 表明即便递上时间戳，模型对人类时间感知的对齐也不超过 65%；「经过多久」本身作为信号尚未被模型真正掌握。</li>
+<li><strong>主动性的安全与隐私。</strong> 始终在线感知放大监控面；主动执行叠加凭证与网络后，越权与提示注入的后果比被动助手严重得多（与本知识库机制可解释性、Agent 安全报告呼应）。端侧优先、数据最小化、一键关闭与可解释的提议理由是基本要求。</li>
+</ol>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec12">11. 工程落地 Checklist</h2>
+
+<p><strong>范围与分级</strong></p>
+
+<ul>
+<li>[ ] 从单一窄场景切入（如周报提醒），不要一上来做全场景；按 L0→L4 逐级放开主动性。</li>
+<li>[ ] 明确三态策略：保持沉默 / 先询问 / 直接行动；默认偏保守。</li>
+<li>[ ] 为每个动作标注风险等级，发送/支付/签署/删除一律人工审批，红线动作（转账、交易）直接禁止。</li>
+</ul>
+
+<p><strong>决策层</strong></p>
+
+<ul>
+<li>[ ] 显式实现效用门控 U = V − λ·D &gt; θ，而非无条件触发或让 LLM 自由发挥。</li>
+<li>[ ] 采用「廉价门控 / 昂贵执行器」：毫秒级小模型/规则做高频触发，LLM 仅在放行后生成内容。</li>
+<li>[ ] 成本比不要写死成全局常量；至少接入可从交互轨迹估计的认知负荷/忙碌状态，并支持按用户、时段、场景个性化。</li>
+<li>[ ] 尊重「可打断性耗尽」：避免背靠背触发，纳入告警疲劳与路径依赖。</li>
+</ul>
+
+<p><strong>反馈与评测</strong></p>
+
+<ul>
+<li>[ ] 同时采集 L0 显式与 L1 隐式反馈（采纳率、注视、恢复时间、撤销），不要只记不用。</li>
+<li>[ ] 从「单参数 bandit 调 θ」起步做在线自适应，而非直接上策略学习。</li>
+<li>[ ] 绝不能只用接受率当奖励（会混淆「想要内容」与「想要此刻」）；必须同时统计冒犯率与时机召回。</li>
+<li>[ ] 用 must/may/must-not 三态窗口评估，成本兑换率以曲线报告；在 may 窗口沉默不罚。</li>
+</ul>
+
+<p><strong>系统与信任</strong></p>
+
+<ul>
+<li>[ ] 每条主动提议都给出可解释理由；提供一键关闭主动功能、自定义免打扰时段、查看/删除全部记忆。</li>
+<li>[ ] 端侧优先、数据最小化；凭证隔离、外部审批层、敏感数据分类器。</li>
+<li>[ ] 周期性检查 + 明确非实时承诺，管理用户对紧急性的预期；监控后台算力/额度消耗。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec13">12. 结语</h2>
+
+<p>主动式智能体把 AI 交互的基本问题从「用户适应机器」翻转为「机器主动适应用户」。但 2026 年的证据给出一个反直觉的结论：<strong>这一跃的瓶颈不在更强的执行者，而在一个被忽视了二十年的成本项。</strong> 1999–2017 年的 HCI 社群把「打断值多少钱」研究得极为透彻，却没有能交付收益的执行者；2024–2026 年的 LLM 浪潮拥有了能完成任务的执行者，却把决策层推倒重做，让成本碎成四片、让两个最关键的成本（注意力状态、沉默成本）长期无人认领。</p>
+
+<p>好消息是，桥梁已经出现：PRISM 用学习概率重建了 Horvitz 的阈值，TGL 证明时机判断可以不需要 LLM，三篇独立工作收敛到「廉价门控/昂贵执行器」，TMLR 的三态窗口第一次让「错误的代价」可被度量。当有人把可测量的认知负荷放进形状正确的阈值、把个性化记忆接进 θ、并用三态评测闭合奖励回路时，主动式智能体才会从「会插嘴的工具」真正变成「懂得分寸的同事」。</p>
+
+<p><strong>在下一个十年，衡量一个智能体高下的，可能不再只是它能做多少事，而是它有多少次恰当地选择了什么都不做。</strong></p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec14">参考文献</h2>
+
+<blockquote>说明：arXiv 编号均已经 arXiv 官方 API（export.arxiv.org/api）于 2026-11-01 逐一核实标题与发布日期；HCI/普适计算经典文献给出 ACM/Springer 正式 DOI；TMLR 综述给出 OpenReview 与 Zenodo。厂商产品事实标注「官方口径」。</blockquote>
+
+<h3>一、综述与领域地图</h3>
+
+<ol>
+<li>Tao An. *When Should the Agent Speak? A Survey of Intervention Timing for Always-On AI Assistants.* Transactions on Machine Learning Research (TMLR), 2026. OpenReview: https://openreview.net/forum?id=b0yKEdAXEr    Zenodo 存档（DOI 始终指向最新版）: https://doi.org/10.5281/zenodo.21438396</li>
+<li>Tao An. *The Missing Cost Term*（综述交互伴读文章）, 2026-07-14（更新 2026-09-28）. https://tao-hpu.github.io/articles/intervention-timing</li>
+<li>Tao An. *awesome-proactive-agents*（活的领域地图）. GitHub. https://github.com/tao-hpu/awesome-proactive-agents</li>
+<li>Junlong Li, Huaiyuan Xu, Sijie Cheng, Kejun Wu, et al. *Building Egocentric Procedural AI Assistant: Methods, Benchmarks, and Challenges.* arXiv:2511.13261, 2025. https://arxiv.org/abs/2511.13261</li>
+<li>Deng et al. *Proactive Conversational AI.* ACM Transactions on Information Systems (TOIS), 2025. https://doi.org/10.1145/3715097</li>
+</ol>
+
+<h3>二、决策论与注意力管理经典谱系（1999–2022）</h3>
+
+<ol>
+<li>Eric Horvitz, Andy Jacobs, David Hovel. *Attention-Sensitive Alerting.* UAI 1999（arXiv 存档:1301.6707）. https://arxiv.org/abs/1301.6707</li>
+<li>Eric Horvitz. *Principles of Mixed-Initiative User Interfaces.* CHI 1999. https://doi.org/10.1145/302979.303030</li>
+<li>Daniel McFarlane. *Comparison of Four Coordinating Methods for the-Way Human-Computer Interruption.* Human–Computer Interaction, 2002. https://doi.org/10.1207/S15327051HCI1701_2</li>
+<li>Eric Horvitz, Johnson Apacible. *Learning and Reasoning about Interruption.* ICMI 2003. https://www.microsoft.com/en-us/research/publication/learning-and-reasoning-about-interruption/</li>
+<li>Shamsi T. Iqbal, Brian P. Bailey. *Leveraging Task Structure to Improve the Cost of Interruption.* CHI 2006. https://doi.org/10.1145/1124772.1124882</li>
+<li>Shamsi T. Iqbal, Eric Horvitz. *Disruption and Recovery of Computing Tasks.* CHI 2007. https://doi.org/10.1145/1240624.1240730</li>
+<li>Veljko Pejović, Mirco Musolesi. *InterruptMe: Designing Intelligent Prompting Mechanisms for Pervasive Applications.* UbiComp 2014. https://doi.org/10.1145/2632048.2632062</li>
+<li>Martin Pielot, et al. *Beyond Interruptibility: Predicting Opportune Moments to Engage.* IMWUT/UbiComp 2017. https://dl.acm.org/doi/10.1145/3130956</li>
+<li>Tadashi Okoshi, et al. *Adaptive Notification Scheduling for Production.* KDD 2019. https://doi.org/10.1145/3292500.3330732</li>
+<li>Chen, Chang, Chan. *Opportune Moments in VR.* CHI 2022. https://doi.org/10.1145/3491102.3517529</li>
+<li>Inbal Nahum-Shani, et al. *Just-in-Time Adaptive Interventions (JITAIs) in Mobile Health.* Annals of Behavioral Medicine, 2018. https://doi.org/10.1007/s12160-016-9830-8</li>
+<li>Anderson, et al. *Attention Management Systems: A Survey.* IMWUT 2018（arXiv:1806.06771）. https://arxiv.org/abs/1806.06771</li>
+</ol>
+
+<h3>三、LLM 时代的主动智能体（2024–2026）</h3>
+
+<ol>
+<li>Yaxi Lu, Shenzhi Yang, Cheng Qian, Guirong Chen, et al. *Proactive Agent: Shifting LLM Agents from Reactive Responses to Active Assistance.* arXiv:2410.12361, 2024. https://arxiv.org/abs/2410.12361</li>
+<li>Yuxuan Fu, Xiaoyu Tan, Teqi Hao, Chen Zhan, et al. *PRISM: Festina Lente Proactivity — Risk-Sensitive, Uncertainty-Aware Deliberation for Proactive Agents.* arXiv:2602.01532, 2026. 项目页: https://prism-festinalente.github.io/</li>
+<li>Xiaoze Liu, Ruowang Zhang, Amir H. Abdi, Michel Galley, et al. *Do Proactive Agents Need an LLM to Decide When to Act?* arXiv:2605.30152, 2026. https://arxiv.org/abs/2605.30152</li>
+<li>Bufang Yang, Lilin Xu, Liekang Zeng, Yunqi Guo, et al. *ProAgent: Harnessing On-Demand Sensory Contexts for Proactive LLM Agent Systems in the Wild.* arXiv:2512.06721, 2025. https://arxiv.org/abs/2512.06721</li>
+<li>Lilin Xu, Bufang Yang, Siyang Jiang, Kaiwei Liu, et al. *Pro²Assist: Continuous Step-aware Proactive Assistance with Multi-modal Egocentric Perception for Long-horizon Procedural Tasks.* arXiv:2605.04227, 2026. https://arxiv.org/abs/2605.04227</li>
+<li>Saptarashmi Bandyopadhyay, et al. *YETI (YET to Intervene): Proactive Interventions by Multimodal AI Agents in Augmented Reality Tasks.* arXiv:2501.09355, 2025. https://arxiv.org/abs/2501.09355</li>
+<li>Xijun Wang, Tanay Sharma, Achin Kulshrestha, Abhimitra Meka, et al. *EgoSocial: Benchmarking Proactive Intervention Ability of Omnimodal LLMs via Egocentric Social Interaction Perception.* arXiv:2510.13105, 2025. https://arxiv.org/abs/2510.13105</li>
+<li>Kaustav Kundu, Ritvik Shrivastava, Maxim Arap, Nanshu Wang, et al. *Plan, Watch, Recover: A Benchmark and Architectures for Proactive Procedural Assistance.* arXiv:2606.04970, 2026. https://arxiv.org/abs/2606.04970</li>
+<li>Ido Levy, Asaf Yehudai, Segev Shlomov, Asaf Adi. *Asking for What Was Never Requested: Horizontal and Vertical Proactivity in Agents.* arXiv:2609.37236, 2026. https://arxiv.org/abs/2609.37236</li>
+<li>Ailin Liu, Yesmine Karoui, Fiona Draxler, Frauke Kreuter, et al. *Sensing What Surveys Miss: Understanding and Personalizing Proactive LLM Support by User Modeling.* arXiv:2602.00880, 2026. https://arxiv.org/abs/2602.00880</li>
+<li>Xiaoan Liu, DaeHo Lee, Eric J. Gonzalez, Mar Gonzalez-Franco, et al. *VisionClaw: Always-On AI Agents through Smart Glasses.* arXiv:2604.03486, 2026. https://arxiv.org/abs/2604.03486</li>
+<li>Yichi Zhang, Xin Luna Dong, Zhaojiang Lin, Andrea Madotto, et al. *Proactive Assistant Dialogue Generation from Streaming Egocentric Videos.* arXiv:2506.05904, 2025. https://arxiv.org/abs/2506.05904</li>
+<li>Zhimin Wang, Chenyu Gu, Feng Lu. *SIAgent: Spatial Interaction Agent via LLM-powered Eye-Hand Motion Intent Understanding in VR.* arXiv:2603.00522, 2026. https://arxiv.org/abs/2603.00522</li>
+<li>Yize Cheng, Arshia Soltani Moakhar, Chenrui Fan, Parsa Hosseini, et al. *Your LLM Agents are Temporally Blind: The Misalignment Between Tool Use Decisions and Human Time Perception.* arXiv:2510.23853, 2025. https://arxiv.org/abs/2510.23853</li>
+<li>Daeun Lee, Subhojyoti Mukherjee, Branislav Kveton, Ryan A. Rossi, et al. *StreamGaze: Gaze-Guided Temporal Reasoning and Proactive Understanding in Streaming Videos.* arXiv:2512.01707, 2025. https://arxiv.org/abs/2512.01707</li>
+<li>Sicheng Yang, Yukai Huang, Weitong Cai, Shitong Sun, et al. *Egocentric Co-Pilot: Web-Native Smart-Glasses Agents for Assistive Egocentric AI.* arXiv:2603.01104, 2026. https://arxiv.org/abs/2603.01104</li>
+<li>Zhijie Ding, Weinan Hong, Zicheng Zhu, Lei Li, et al. *Perceive Before Reasoning: A Pre-Reasoning Perception Framework for Efficient and Reliable Proactive Mobile Agents.* arXiv:2606.03236, 2026. https://arxiv.org/abs/2606.03236</li>
+<li>Tianjian Liu, Fanqi Wan, Jiajian Guo, Xiaojun Quan. *ProactiveEval: A Unified Evaluation Framework for Proactive Dialogue Agents.* arXiv:2508.20973, 2025. https://arxiv.org/abs/2508.20973</li>
+<li>Yuanbo Tang, Huaze Tang, Tingyu Cao, Lam Nguyen, et al. *ProAgentBench: Evaluating LLM Agents for Proactive Assistance with Real-World Data.* arXiv:2602.04482, 2026. https://arxiv.org/abs/2602.04482</li>
+<li>Yueqian Wang, Xiaojun Meng, Yifan Wang, Huishuai Zhang, et al. *ProactiveVideoQA: A Comprehensive Benchmark Evaluating Proactive Interactions in Video Large Language Models.* arXiv:2507.09313, 2025. https://arxiv.org/abs/2507.09313</li>
+<li>Brandon Lepine, Juho Kim, Pamela Mishkin, Matthew Beane. *Precision Proactivity: Measuring Cognitive Load in Real-World AI-Assisted Work.* arXiv:2505.10742, 2025. https://arxiv.org/abs/2505.10742</li>
+<li>Yoonsang Kim, Devshree Jadeja, Divyansh Pradhan, Yalong Yang, et al. *SpeechLess: Micro-utterance with Personalized Spatial Memory-aware Assistant in Everyday Augmented Reality.* arXiv:2602.00793, 2026. https://arxiv.org/abs/2602.00793</li>
+</ol>
+
+<h3>四、支撑性感知 / 行动 / 记忆基础设施</h3>
+
+<ol>
+<li>Haoming Wang, Haoyang Zou, Huatong Song, Jiazhan Feng, et al. *UI-TARS-2 Technical Report: Advancing GUI Agent with Multi-Turn Reinforcement Learning.* arXiv:2509.02544, 2025. https://arxiv.org/abs/2509.02544</li>
+<li>Dong Guo, Faming Wu, Feida Zhu, Fuxing Leng, et al. *Seed1.5-VL Technical Report.* arXiv:2505.07062, 2025. https://arxiv.org/abs/2505.07062</li>
+<li>Haotong Lin, Sili Chen, Junhao Liew, Donny Y. Chen, et al. *Depth Anything 3: Recovering the Visual Space from Any Views.* arXiv:2511.10647, 2025. https://arxiv.org/abs/2511.10647</li>
+<li>Guan-Ting Lin, Jiachen Lian, Tingle Li, Qirui Wang, et al. *Full-Duplex-Bench: A Benchmark to Evaluate Full-duplex Spoken Dialogue Models on Turn-taking Capabilities.* arXiv:2503.04721, 2025. https://arxiv.org/abs/2503.04721</li>
+<li>Charles Packer, Sarah Wooders, Kevin Lin, Vivian Fang, et al. *MemGPT: Towards LLMs as Operating Systems.* arXiv:2310.08560, 2023. https://arxiv.org/abs/2310.08560</li>
+<li>Prateek Chhikara, Dev Khant, Saket Aryan, Taranjeet Singh, et al. *Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory.* arXiv:2504.19413, 2025. https://arxiv.org/abs/2504.19413</li>
+<li>Zhiyu Li, Chenyang Xi, Chunyu Li, Ding Chen, et al. *MemOS: A Memory OS for AI System.* arXiv:2507.03724, 2025. https://arxiv.org/abs/2507.03724</li>
+<li>Xin Wang, Taein Kwon, Mahdi Rad, Bowen Pan, et al. *HoloAssist: an Egocentric Human Interaction Dataset for Interactive AI Assistants in the Real World.* arXiv:2309.17024, 2023（ICCV）. https://arxiv.org/abs/2309.17024</li>
+<li>Kristen Grauman, Andrew Westbury, Eugene Byrne, Zachary Chavis, et al. *Ego4D: Around the World in 3,000 Hours of Egocentric Video.* arXiv:2110.07058, 2021（CVPR）. https://arxiv.org/abs/2110.07058</li>
+</ol>
+
+<h3>五、产业产品与趋势信源</h3>
+
+<ol>
+<li>Anthropic. *Claude Duet*（研究预览，2026-10-21 开放）. 官方产品页（官方口径）: https://claude.com/product/claude-duet</li>
+<li>LLM Trends. *LLM Trends 2026: Monthly AI Model &amp; Agent Updates*（2026-10 月条目：Agents stop waiting for prompts）. https://llmtrends.com</li>
+</ol>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<p>*本报告所有 arXiv 编号已经 arXiv 官方 API 逐一核实；经典 HCI 文献为 ACM/Springer 正式 DOI；产业事实以厂商官方页为准并标注「官方口径」，聚合趋势站标注为二手信源。报告为技术调研，不构成任何投资或采购建议。*</p>
+<div class="footer">主动式智能体前沿技术报告 · 2026-11-01 · 33 篇 arXiv 编号已经官方 API 逐一核实 · 4 张手工暗色 SVG 架构图 · 厂商产品事实标注「官方口径」，聚合趋势站为二手信源</div>
+</div></body></html>
