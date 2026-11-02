@@ -1,6 +1,6 @@
 # 🤖 Agent 技术报告
 
-LLM Agent 方向的深度调研合集，共 **9 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`）。
+LLM Agent 方向的深度调研合集，共 **10 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`）。
 
 ---
 
@@ -57,3 +57,9 @@ Anthropic「AI 同事」三份配套调研：技术调研讲四大能力与分�
 用 LLM + 多模态模型制作真人风短剧/AI 漫剧的全流程：七层流水线、结构化剧本、角色一致性四代方案、视频/音频模型横评、成本账与三条落地路线，附分镜级 Checklist。
 
 📅 2026-10-22 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](ai-short-drama/report.md)
+
+### [Codex CLI 完全使用教程](https://ckirchhoff2021.github.io/knowledge-base/agents/codex-cli/tutorial.html)
+
+OpenAI 开源终端编程 Agent 的完整实操教程（基于 codex-cli 0.142.2 实测）：四种安装方式（一键脚本/npm/Homebrew/二进制）、两种登录（ChatGPT 套餐 / API key）、三种运行模式（交互 TUI、非交互 exec、代码评审 review）；详解**沙箱三档**（read-only/workspace-write/danger-full-access）与审批策略、TUI 快捷键和常用斜杠命令（/init、/model、/diff、/compact）；`~/.codex/config.toml` 配置全集、自定义模型供应商（`env_key` 取密钥、`wire_api` 匹配端点）、`-c` 临时覆盖与 profile；AGENTS.md 项目规则、会话 resume/fork/apply、MCP 与插件；CI/CD 自动化（`--json`、`--dangerously-bypass-approvals-and-sandbox` 仅用于隔离环境）、接入 Ollama/LM Studio 本地开源模型；附常用命令速查表与常见问题排查。
+
+📅 2026-11-02 ｜ 📄 [Markdown](codex-cli/tutorial.md)

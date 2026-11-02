@@ -23,6 +23,7 @@
 | [拟人化 Agent 产品设计](https://ckirchhoff2021.github.io/knowledge-base/agents/anthropomorphic-agent/product-design.html) | 拟人化设计框架（2 篇） | 2026-09-22 |
 | [OPD / OPSD 在线策略蒸馏](https://ckirchhoff2021.github.io/knowledge-base/agents/online-policy-distillation/report.html) | on-policy 蒸馏（2 篇） | 2026-09-22 |
 | [Hermes Agent API 指南](agents/hermes/API.md) | Agent API 调用方式 | 2026-09-22 |
+| [Codex CLI 完全使用教程](https://ckirchhoff2021.github.io/knowledge-base/agents/codex-cli/tutorial.html) | 安装/登录/沙箱/自动化 | 2026-11-02 |
 | [大模型制作短剧完全指南](https://ckirchhoff2021.github.io/knowledge-base/agents/ai-short-drama/report.html) | AI 短剧制作全流程 | 2026-10-22 |
 
 ## 🧠 大模型技术

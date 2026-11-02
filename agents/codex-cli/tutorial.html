@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Codex CLI 完全使用教程</title><style>
+:root {
+  --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+  --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+  --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+}
+* { box-sizing:border-box; }
+body { background:var(--bg); color:var(--text);
+  font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif; line-height:1.85; margin:0; }
+.container { max-width:960px; margin:0 auto; padding:40px 24px 80px; }
+h1 { font-size:30px; margin:0 0 8px; letter-spacing:-0.02em; }
+h2 { font-size:22px; margin:56px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+h3 { font-size:17px; margin:32px 0 12px; color:var(--accent); }
+h4 { font-size:15px; margin:20px 0 8px; color:var(--cyan); }
+p { margin:12px 0; font-size:15px; }
+code { background:#1f2937; padding:2px 6px; border-radius:4px;
+  font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px;
+  padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+pre code { background:none; padding:0; color:#d1d9e0; }
+table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+th { background:var(--panel); color:var(--accent); white-space:nowrap; }
+tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0;
+  background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+figure { margin:28px 0; }
+figure iframe { width:100%; height:860px; border:1px solid var(--border);
+  border-radius:12px; background:#020617; }
+figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+.toc { background:var(--panel); border:1px solid var(--border); border-radius:10px;
+  padding:20px 28px; margin:24px 0 40px; }
+.toc h2 { border:none; margin:0 0 12px; font-size:16px; color:var(--accent); padding:0; }
+.toc ol { padding-left:20px; margin:0; }
+.toc li { margin:4px 0; font-size:14px; }
+.toc a { color:var(--text); text-decoration:none; }
+.toc a:hover { color:var(--accent); text-decoration:underline; }
+ul, ol { padding-left:24px; }
+li { margin:6px 0; font-size:15px; }
+strong { color:#fff; }
+hr { border:none; border-top:1px solid var(--border); margin:40px 0; }
+a { color:var(--accent); }
+.footer { text-align:center; color:var(--muted); font-size:12px; margin-top:60px;
+  padding-top:20px; border-top:1px solid var(--border); }
+</style></head>
+<body><div class="container"><h1>Codex CLI 完全使用教程：从安装、登录到自动化与自定义模型接入</h1>
+<blockquote>
+<p><strong>教程日期</strong>：2026-11-02　<strong>实测版本</strong>：codex-cli <strong>0.142.2</strong>（官方开源仓库 <code>github.com/openai/codex</code>）</p>
+<p><strong>TL;DR</strong>：Codex CLI 是 OpenAI 开源（Apache-2.0）的终端 AI 编程助手。它不是简单的「终端版 ChatGPT」，而是一个能<strong>读代码库、写文件、执行命令、自我验证</strong>的 Agent，并由「沙箱 + 审批 + 规则文件」三重机制约束安全。本教程覆盖：① 四种安装方式；② 两种登录方式（ChatGPT 套餐 / API key）；③ 三种运行模式（交互 TUI / 非交互 exec / 代码评审 review）；④ 沙箱三档与审批策略；⑤ <code>~/.codex/config.toml</code> 配置全集与 <code>-c</code> 临时覆盖；⑥ AGENTS.md 规则文件与 <code>/init</code>；⑦ 会话管理（resume/fork/apply）；⑧ MCP 工具与插件；⑨ CI/CD 自动化；⑩ 接入本地开源模型（Ollama/LM Studio）和第三方兼容端点；⑪ 常见问题与 <code>codex doctor</code>。所有命令均在本机实测，不同小版本以 <code>codex --help</code> 和 <code>/help</code> 实际输出为准。</p>
+</blockquote><nav class="toc"><h2>目录</h2><ol><li><a href="#一-Codex-CLI-是什么">一、Codex CLI 是什么</a></li><li><a href="#二-安装-四种方式任选">二、安装：四种方式任选</a></li><li><a href="#三-登录认证-两种路线">三、登录认证：两种路线</a></li><li><a href="#四-三种运行模式">四、三种运行模式</a></li><li><a href="#五-沙箱与审批-安全配置详解">五、沙箱与审批：安全配置详解</a></li><li><a href="#六-配置文件-codex-config-toml">六、配置文件：~/.codex/config.toml</a></li><li><a href="#七-会话管理-恢复-分叉-应用改动">七、会话管理：恢复、分叉、应用改动</a></li><li><a href="#八-AGENTS-md-给-Agent-立规矩">八、AGENTS.md：给 Agent 立规矩</a></li><li><a href="#九-MCP-工具与插件">九、MCP 工具与插件</a></li><li><a href="#十-自动化与-CI-CD">十、自动化与 CI/CD</a></li><li><a href="#十一-接入本地开源模型-离线-隐私">十一、接入本地开源模型（离线/隐私）</a></li><li><a href="#十二-常用命令速查表">十二、常用命令速查表</a></li><li><a href="#十三-常见问题与排查">十三、常见问题与排查</a></li><li><a href="#十四-参考资料">十四、参考资料</a></li></ol></nav>
+<h2 id="一-Codex-CLI-是什么">一、Codex CLI 是什么</h2>
+<h3>1.1 定位</h3>
+<p>Codex CLI 是一个运行在终端里的<strong>自主编程 Agent</strong>。与普通问答式 AI 不同，它在接到任务后会自主执行一个循环：</p>
+<pre><code class="language-text">理解任务 → 浏览代码库 → 制定计划 → 编写代码 → 运行命令/测试 → 根据结果修正 → 交付
+</code></pre>
+<p>它可以独立完成「修复这个 bug」「给这个模块加单测」「重构这个函数」「评审这次改动」这类<strong>多步骤、需要读写仓库、需要运行验证</strong>的任务，而不只是输出一段代码让你自己粘贴。</p>
+<h3>1.2 安全模型：为什么敢让它执行命令</h3>
+<p>让 AI 在你的机器上执行 shell 命令天然有风险，Codex 用三重机制控制：</p>
+<table>
+<thead>
+<tr>
+<th>机制</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>沙箱 Sandbox</strong></td>
+<td>限制命令的读写范围和网络访问（三档可选，见第五章）</td>
+</tr>
+<tr>
+<td><strong>审批 Approval</strong></td>
+<td>超出沙箱或高风险操作前请求确认，可手动批准也可配置自动评审</td>
+</tr>
+<tr>
+<td><strong>规则文件 AGENTS.md</strong></td>
+<td>你写的项目约定，模型必须遵守（构建命令、代码风格、禁区，见第八章）</td>
+</tr>
+</tbody>
+</table>
+<p>理解这三个概念是用好 Codex 的前提——<strong>你对「沙箱档位」和「审批策略」的选择，决定了它的自主性与安全性的平衡点。</strong></p>
+<h2 id="二-安装-四种方式任选">二、安装：四种方式任选</h2>
+<p>以下命令来自官方仓库 README（2026-11-02 核实）。</p>
+<h3>2.1 一键脚本（macOS / Linux）</h3>
+<pre><code class="language-bash">curl -fsSL https://chatgpt.com/codex/install.sh | sh
+</code></pre>
+<p>该脚本默认从 <code>https://releases.openai.com/codex</code> 下载，不可用时回退 GitHub Releases。强制使用 GitHub Releases：</p>
+<pre><code class="language-bash">curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_INSTALLER_USE_RELEASES_OPENAI_COM=false sh
+</code></pre>
+<h3>2.2 Windows（PowerShell）</h3>
+<pre><code class="language-powershell">powershell -ExecutionPolicy ByPass -c &quot;irm https://chatgpt.com/codex/install.ps1 | iex&quot;
+</code></pre>
+<h3>2.3 包管理器</h3>
+<pre><code class="language-bash"># npm（全平台，需要 Node.js）
+npm install -g @openai/codex
+
+# Homebrew（macOS）
+brew install --cask codex
+</code></pre>
+<h3>2.4 手动下载二进制</h3>
+<p>到 GitHub Releases 页面选对应平台压缩包：<a href="https://github.com/openai/codex/releases/latest">https://github.com/openai/codex/releases/latest</a></p>
+<p>常用包：</p>
+<table>
+<thead>
+<tr>
+<th>平台</th>
+<th>文件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>macOS Apple Silicon</td>
+<td><code>codex-aarch64-apple-darwin.tar.gz</code></td>
+</tr>
+<tr>
+<td>macOS Intel</td>
+<td><code>codex-x86_64-apple-darwin.tar.gz</code></td>
+</tr>
+<tr>
+<td>Linux x86_64</td>
+<td><code>codex-x86_64-unknown-linux-musl.tar.gz</code></td>
+</tr>
+<tr>
+<td>Linux arm64</td>
+<td><code>codex-aarch64-unknown-linux-musl.tar.gz</code></td>
+</tr>
+</tbody>
+</table>
+<p>解压后里面的文件名带平台后缀，重命名为 <code>codex</code> 放进 <code>PATH</code> 即可。安装完验证：</p>
+<pre><code class="language-bash">codex --version
+# 输出示例：codex-cli 0.142.2
+</code></pre>
+<h2 id="三-登录认证-两种路线">三、登录认证：两种路线</h2>
+<p>首次运行 <code>codex</code> 会引导登录。官方推荐用 <strong>ChatGPT 账号</strong>，也可以用 <strong>API key</strong>。</p>
+<h3>3.1 用 ChatGPT 套餐登录（推荐）</h3>
+<p>直接运行 <code>codex</code>，选择 <strong>Sign in with ChatGPT</strong>，浏览器完成授权。这样 Codex 用量包含在你的 ChatGPT Plus / Pro / Business / Edu / Enterprise 套餐中，<strong>不单独按 token 计费</strong>，通常是性价比最高的方式。</p>
+<h3>3.2 用 API key 登录</h3>
+<pre><code class="language-bash"># 方式一：交互输入（不留在 shell 历史里更安全）
+codex login
+
+# 方式二：管道传入
+printenv OPENAI_API_KEY | codex login --with-api-key
+</code></pre>
+<p>用 API key 时按实际 token 消耗计费。查看当前登录状态：</p>
+<pre><code class="language-bash">codex login status
+</code></pre>
+<p>退出登录：</p>
+<pre><code class="language-bash">codex logout
+</code></pre>
+<blockquote>
+<p>凭据保存在 <code>$CODEX_HOME</code>（默认 <code>~/.codex/</code>）下的 <code>auth.json</code>，该文件不应提交到任何仓库。</p>
+</blockquote>
+<h2 id="四-三种运行模式">四、三种运行模式</h2>
+<h3>4.1 交互模式（TUI，默认）</h3>
+<p>在项目目录直接运行：</p>
+<pre><code class="language-bash">codex
+# 或带初始任务
+codex &quot;帮我看看这个项目的结构，然后修复 utils.py 里日期解析的 bug&quot;
+</code></pre>
+<p>进入全屏终端界面，底部输入框对话，主区域展示它的思考、文件改动和命令执行过程。</p>
+<p><strong>常用快捷键</strong>（具体以 <code>/help</code> 和实际版本为准）：</p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>按键</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>发送消息</td>
+<td><code>Enter</code></td>
+</tr>
+<tr>
+<td>换行</td>
+<td><code>Shift</code> + <code>Enter</code>（部分终端）</td>
+</tr>
+<tr>
+<td>循环切换「审批/沙箱」模式</td>
+<td><code>Shift</code> + <code>Tab</code></td>
+</tr>
+<tr>
+<td>中断当前生成/执行</td>
+<td><code>Ctrl</code> + <code>C</code></td>
+</tr>
+<tr>
+<td>斜杠命令</td>
+<td>输入 <code>/</code> 会弹出命令列表</td>
+</tr>
+</tbody>
+</table>
+<p><strong>常用斜杠命令</strong>（0.142 版命令很多，下表为最常用的稳定子集，输入 <code>/</code> 可看完整列表）：</p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/init</code></td>
+<td>扫描仓库并生成 <code>AGENTS.md</code>（首次进入一个项目建议先跑）</td>
+</tr>
+<tr>
+<td><code>/model</code></td>
+<td>查看/切换当前使用的模型</td>
+</tr>
+<tr>
+<td><code>/diff</code></td>
+<td>查看当前会话产生的所有改动 diff</td>
+</tr>
+<tr>
+<td><code>/review</code></td>
+<td>对当前改动做一次代码评审</td>
+</tr>
+<tr>
+<td><code>/clear</code></td>
+<td>清空当前对话上下文（不删文件）</td>
+</tr>
+<tr>
+<td><code>/compact</code></td>
+<td>手动压缩上下文（长会话省 token）</td>
+</tr>
+<tr>
+<td><code>/new</code></td>
+<td>开始一个新会话</td>
+</tr>
+<tr>
+<td><code>/config</code></td>
+<td>查看当前生效的配置</td>
+</tr>
+<tr>
+<td><code>/cwd</code></td>
+<td>查看/切换工作目录</td>
+</tr>
+<tr>
+<td><code>/agents</code></td>
+<td>查看多 Agent / 子任务状态</td>
+</tr>
+<tr>
+<td><code>/quit</code></td>
+<td>退出</td>
+</tr>
+</tbody>
+</table>
+<h3>4.2 非交互模式（exec，适合脚本与自动化）</h3>
+<p><code>codex exec</code> 把任务跑完后退出，不进入交互界面，是 shell 脚本和 CI 的入口：</p>
+<pre><code class="language-bash"># 直接传任务
+codex exec &quot;给 src/parser.py 补充单元测试，覆盖空输入和非法格式&quot;
+
+# 从 stdin 读任务
+cat requirements.txt | codex exec &quot;根据这份需求检查代码是否全部满足，列出差距&quot;
+
+# 指定工作目录、沙箱、模型
+codex exec -C ./backend -s workspace-write -m &quot;gpt-5.5&quot; &quot;修复所有 lint 错误&quot;
+</code></pre>
+<p><code>exec</code> 的常用专有参数（均经本机 <code>codex exec --help</code> 核实）：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-s, --sandbox &lt;MODE&gt;</code></td>
+<td>沙箱：<code>read-only</code> / <code>workspace-write</code> / <code>danger-full-access</code></td>
+</tr>
+<tr>
+<td><code>-C, --cd &lt;DIR&gt;</code></td>
+<td>指定工作根目录</td>
+</tr>
+<tr>
+<td><code>--add-dir &lt;DIR&gt;</code></td>
+<td>追加可写目录（可重复）</td>
+</tr>
+<tr>
+<td><code>-m, --model &lt;MODEL&gt;</code></td>
+<td>指定模型</td>
+</tr>
+<tr>
+<td><code>-i, --image &lt;FILE&gt;</code></td>
+<td>给初始 prompt 附加图片（可多个）</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>以 JSONL 输出事件流（方便程序解析）</td>
+</tr>
+<tr>
+<td><code>-o, --output-last-message &lt;FILE&gt;</code></td>
+<td>把最终回复写入指定文件</td>
+</tr>
+<tr>
+<td><code>--output-schema &lt;FILE&gt;</code></td>
+<td>用 JSON Schema 约束最终输出结构</td>
+</tr>
+<tr>
+<td><code>--skip-git-repo-check</code></td>
+<td>允许在非 Git 目录运行（默认要求在仓库里）</td>
+</tr>
+<tr>
+<td><code>--ephemeral</code></td>
+<td>不向磁盘保存会话文件</td>
+</tr>
+<tr>
+<td><code>--ignore-user-config</code></td>
+<td>不加载 config.toml（auth 仍生效）</td>
+</tr>
+<tr>
+<td><code>-p, --profile &lt;NAME&gt;</code></td>
+<td>叠加使用指定配置 profile</td>
+</tr>
+<tr>
+<td><code>--dangerously-bypass-approvals-and-sandbox</code></td>
+<td>跳过所有审批与沙箱（仅限外部已隔离环境，见第十章）</td>
+</tr>
+</tbody>
+</table>
+<h3>4.3 代码评审模式（review）</h3>
+<p><code>codex review</code> 专门针对改动做非交互评审：</p>
+<pre><code class="language-bash"># 评审相对 main 分支的改动
+codex review --base main
+
+# 评审未提交（含暂存/未暂存/未跟踪）的改动
+codex review --uncommitted
+
+# 评审某个具体 commit
+codex review --commit &lt;SHA&gt;
+
+# 自定义评审关注点
+codex review --base main &quot;重点检查并发安全和错误处理，风格问题不用提&quot;
+</code></pre>
+<p>适合接在提交前或 PR 流程里，做一道自动化的第二双眼睛。</p>
+<h2 id="五-沙箱与审批-安全配置详解">五、沙箱与审批：安全配置详解</h2>
+<h3>5.1 沙箱三档（最重要）</h3>
+<p><code>codex exec -s</code> 或 <code>--sandbox</code> 可选：</p>
+<table>
+<thead>
+<tr>
+<th>档位</th>
+<th>文件权限</th>
+<th>网络</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>read-only</strong></td>
+<td>只读，不能改任何文件</td>
+<td>默认关</td>
+<td>让它分析、讲解、出方案，零风险</td>
+</tr>
+<tr>
+<td><strong>workspace-write</strong>（最常用）</td>
+<td>可写当前工作区，但不能越界</td>
+<td>可配置开关</td>
+<td>绝大多数改代码任务</td>
+</tr>
+<tr>
+<td><strong>danger-full-access</strong></td>
+<td>整个文件系统可写</td>
+<td>开</td>
+<td>明确信任、需要系统级操作时</td>
+</tr>
+</tbody>
+</table>
+<p><code>workspace-write</code> 的网络可单独配置（config 里 <code>[sandbox_workspace_write]</code> 的 <code>network_access</code>，见第六章）。<strong>默认从保守档位开始，需要时再放开——这是推荐的使用习惯。</strong></p>
+<h3>5.2 审批策略</h3>
+<p>当模型想做沙箱不允许的事（如写入工作区外、联网），会触发审批。<code>approval_policy</code> 常用值：</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>untrusted</code></td>
+<td>频繁确认，最保守</td>
+</tr>
+<tr>
+<td><code>on-request</code></td>
+<td>按请求审批（常用平衡项）</td>
+</tr>
+<tr>
+<td><code>on-failure</code></td>
+<td>命令失败时才确认</td>
+</tr>
+<tr>
+<td><code>never</code></td>
+<td>不询问（配合宽松沙箱，风险自担）</td>
+</tr>
+</tbody>
+</table>
+<p>交互模式中最快捷的切换方式就是 <code>Shift+Tab</code>：在「自动执行（当前权限内）→ 只读 → 完全访问」几个组合间循环。</p>
+<h2 id="六-配置文件-codex-config-toml">六、配置文件：~/.codex/config.toml</h2>
+<h3>6.1 常用配置项（通用化示例）</h3>
+<p><code>$CODEX_HOME/config.toml</code>（默认 <code>~/.codex/config.toml</code>）持久化所有偏好。一份带注释的典型配置：</p>
+<pre><code class="language-toml"># ── 模型 ──
+model = &quot;gpt-5.5&quot;                          # 默认模型
+model_reasoning_effort = &quot;high&quot;            # 推理投入：low/medium/high
+web_search = &quot;live&quot;                        # 联网搜索：live 开启
+
+# ── 安全 ──
+approval_policy = &quot;on-request&quot;             # 审批策略
+sandbox_mode = &quot;workspace-write&quot;           # 沙箱档位
+
+# workspace-write 沙箱的细项
+[sandbox_workspace_write]
+network_access = true                      # 允许联网（改 false 完全离线）
+
+# ── 项目信任（对应路径上的信任级别）──
+[projects.&quot;/path/to/your/project&quot;]
+trust_level = &quot;trusted&quot;
+
+# ── TUI 偏好 ──
+[tui]
+# 可在其中配置 keymap、显示等
+</code></pre>
+<h3>6.2 自定义模型供应商（接第三方兼容端点）</h3>
+<p>Codex 支持自定义 provider，这对使用兼容 OpenAI 协议的网关 / 其他云 / 自建端点非常有用：</p>
+<pre><code class="language-toml">model = &quot;your-model-name&quot;
+model_provider = &quot;custom_provider&quot;
+
+[model_providers.custom_provider]
+name = &quot;Custom Provider&quot;
+base_url = &quot;https://your-endpoint.example.com/v1&quot;
+wire_api = &quot;responses&quot;                     # &quot;responses&quot; 或 &quot;chat&quot;（按端点支持情况）
+env_key = &quot;CUSTOM_API_KEY&quot;                 # 从该环境变量取 key（不写死）
+model_context_window = 262144
+max_output_tokens = 8192
+supports_streaming = true
+supports_function_calling = true
+supports_vision = false
+</code></pre>
+<p>要点：<strong>密钥一律走 <code>env_key</code> 指定的环境变量，绝不写进配置文件或命令行</strong>；<code>wire_api</code> 要与端点实际支持的 API 形态匹配（新版用 responses，传统兼容端用 chat）。</p>
+<h3>6.3 临时覆盖：<code>-c</code> 与 profile</h3>
+<p>不必为一次性需求改配置文件：</p>
+<pre><code class="language-bash"># -c 覆盖任意键，值按 TOML 解析
+codex -c 'model=&quot;o3&quot;'
+codex -c 'model_reasoning_effort=&quot;low&quot;' &quot;快速回答这个报错什么意思&quot;
+codex exec -c 'sandbox_workspace_write.network_access=false' &quot;离线检查代码&quot;
+
+# profile：把不同场景的配置存成独立文件 $CODEX_HOME/&lt;name&gt;.config.toml，按需叠加
+codex exec -p ci &quot;运行完整测试并修复失败项&quot;
+</code></pre>
+<p>用 <code>--strict-config</code> 可让无法识别的配置字段直接报错，排查拼写问题很好用。</p>
+<h2 id="七-会话管理-恢复-分叉-应用改动">七、会话管理：恢复、分叉、应用改动</h2>
+<p>Codex 会持久化会话（除非 <code>--ephemeral</code>），可以事后操作：</p>
+<pre><code class="language-bash">codex resume            # 弹出选择器，恢复之前的交互会话
+codex resume --last     # 直接接上最近一次会话
+codex fork --last       # 从最近会话分叉出一条新线（保留原会话不动）
+codex archive           # 归档会话（选择器）
+codex unarchive         # 取消归档
+codex delete            # 永久删除会话
+
+codex apply             # 把最近一次会话产生的 diff 用 git apply 应用到当前工作树
+</code></pre>
+<p>典型场景：昨天的任务没做完，<code>codex resume --last</code> 直接继续；想保留原版试个新思路，<code>fork</code> 一条出来。</p>
+<h2 id="八-AGENTS-md-给-Agent-立规矩">八、AGENTS.md：给 Agent 立规矩</h2>
+<h3>8.1 是什么</h3>
+<p><code>AGENTS.md</code> 是放在仓库里的<strong>项目指令文件</strong>，Codex 每次启动自动加载，相当于整个团队对 Agent 的约定。建议用 <code>/init</code> 自动生成初稿，再手工完善。</p>
+<h3>8.2 推荐内容</h3>
+<pre><code class="language-markdown"># AGENTS.md
+
+## 项目概述
+一句话说明这是个什么项目、技术栈。
+
+## 常用命令
+- 安装依赖：pip install -e .
+- 运行测试：pytest -q
+- 代码检查：ruff check .
+- 启动服务：uvicorn app.main:app --reload
+
+## 代码风格
+- 类型注解必填；函数需 docstring；行宽 100。
+
+## 注意事项 / 禁区
+- 不要修改 generated/ 目录（自动生成）。
+- 不要提交 .env；数据库迁移需人工确认。
+
+## 测试要求
+- 改完代码必须跑 pytest；新增逻辑需带单测。
+</code></pre>
+<p>层级规则：根目录的 <code>AGENTS.md</code> 始终生效，子目录可放各自的指令，进入该子树时自动叠加。<strong>它比口头在 prompt 里重复要求更可靠，且可以 Git 管理、团队共享。</strong></p>
+<h2 id="九-MCP-工具与插件">九、MCP 工具与插件</h2>
+<h3>9.1 MCP（接外部能力）</h3>
+<p>Codex 内建 MCP 客户端，可接入数据库、浏览器、内部 API 等外部工具：</p>
+<pre><code class="language-bash">codex mcp list                          # 查看已配置的 server
+codex mcp add mydb -- npx -y some-mcp-server   # 添加一个 stdio 类型 server
+codex mcp get mydb                      # 查看详情
+codex mcp remove mydb                   # 移除
+codex mcp login mydb                    # 处理该 server 的认证
+</code></pre>
+<h3>9.2 插件</h3>
+<pre><code class="language-bash">codex plugin --help       # 插件的安装/列出/管理
+</code></pre>
+<p>适合把常用 MCP 组合、主题、额外命令打包复用。</p>
+<h2 id="十-自动化与-CI-CD">十、自动化与 CI/CD</h2>
+<p><code>exec</code> 模式 + JSON 事件流是自动化的标准组合。</p>
+<h3>10.1 本地脚本示例</h3>
+<pre><code class="language-bash">codex exec \
+  --json \
+  -s workspace-write \
+  --skip-git-repo-check \
+  -o /tmp/last_msg.md \
+  &quot;修复编译错误并运行全部测试，全部通过后总结改动&quot;
+</code></pre>
+<ul>
+<li><code>--json</code> 让外层程序逐行解析 Agent 的动作（思考、命令、文件改动、结果）；</li>
+<li><code>-o</code> 拿到最终结论用于后续通知或门禁判断。</li>
+</ul>
+<h3>10.2 在 CI 中运行</h3>
+<p>CI Runner / 容器本身已经是隔离环境，此时可以使用：</p>
+<pre><code class="language-bash">codex exec \
+  --dangerously-bypass-approvals-and-sandbox \
+  --ephemeral \
+  --skip-git-repo-check \
+  &quot;确保 CI 失败的测试被修复；不要推送，不要修改 CI 配置&quot;
+</code></pre>
+<p>⚠️ <strong><code>--dangerously-bypass-approvals-and-sandbox</code> 名字里的危险是认真的</strong>——它完全放开权限，<strong>只能在容器/CI 这种外部已隔离、可丢弃的环境使用</strong>，绝不能在日常开发机图省事加这个参数。<code>--ephemeral</code> 让会话不留痕，适合无状态 CI。</p>
+<h3>10.3 结构化输出对接流水线</h3>
+<p>需要 Agent 产出给程序消费时：</p>
+<pre><code class="language-bash">codex exec --output-schema result.schema.json -o result.json \
+  &quot;分析本次构建日志，按 schema 返回失败原因分类与建议&quot;
+</code></pre>
+<h2 id="十一-接入本地开源模型-离线-隐私">十一、接入本地开源模型（离线/隐私）</h2>
+<p>不想把代码发到云端，可以用本地 provider：</p>
+<pre><code class="language-bash"># 走开源 provider，交互式选择或指定本地后端
+codex exec --oss --local-provider ollama &quot;解释这个函数在做什么&quot;
+codex exec --oss --local-provider lmstudio &quot;给这个文件写注释&quot;
+
+# 纯只读 + 本地模型，实现完全离线分析
+codex exec --oss --local-provider ollama -s read-only \
+  -c 'sandbox_workspace_write.network_access=false' &quot;审查这段代码的安全问题&quot;
+</code></pre>
+<p>前提是本机已启动 <strong>Ollama</strong> 或 <strong>LM Studio</strong> 并加载了支持工具调用的模型。注意：本地小模型在复杂多步 Agent 任务上的能力与云端旗舰差距明显，适合分析、注释、简单修改，复杂任务仍建议云端模型。</p>
+<h2 id="十二-常用命令速查表">十二、常用命令速查表</h2>
+<table>
+<thead>
+<tr>
+<th>需求</th>
+<th>命令</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开始交互</td>
+<td><code>codex</code></td>
+</tr>
+<tr>
+<td>直接下任务</td>
+<td><code>codex "任务描述"</code></td>
+</tr>
+<tr>
+<td>非交互执行</td>
+<td><code>codex exec "任务描述"</code></td>
+</tr>
+<tr>
+<td>只读分析（零风险）</td>
+<td><code>codex exec -s read-only "讲讲这个模块"</code></td>
+</tr>
+<tr>
+<td>指定模型</td>
+<td><code>codex -m "gpt-5.5"</code></td>
+</tr>
+<tr>
+<td>临时改配置</td>
+<td><code>codex -c 'approval_policy="never"'</code></td>
+</tr>
+<tr>
+<td>生成 AGENTS.md</td>
+<td>TUI 内 <code>/init</code></td>
+</tr>
+<tr>
+<td>评审改动</td>
+<td><code>codex review --base main</code></td>
+</tr>
+<tr>
+<td>评审未提交改动</td>
+<td><code>codex review --uncommitted</code></td>
+</tr>
+<tr>
+<td>继续昨天的会话</td>
+<td><code>codex resume --last</code></td>
+</tr>
+<tr>
+<td>应用最近改动</td>
+<td><code>codex apply</code></td>
+</tr>
+<tr>
+<td>添加 MCP 工具</td>
+<td><code>codex mcp add NAME -- CMD</code></td>
+</tr>
+<tr>
+<td>本地开源模型</td>
+<td><code>codex exec --oss --local-provider ollama</code></td>
+</tr>
+<tr>
+<td>诊断问题</td>
+<td><code>codex doctor</code></td>
+</tr>
+<tr>
+<td>查看登录状态</td>
+<td><code>codex login status</code></td>
+</tr>
+<tr>
+<td>Shell 补全</td>
+<td><code>codex completion bash</code>（支持 zsh/fish 等）</td>
+</tr>
+<tr>
+<td>更新 CLI</td>
+<td><code>codex update</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="十三-常见问题与排查">十三、常见问题与排查</h2>
+<p><strong>Q：执行命令被拦 / 权限不足？</strong>
+用 <code>Shift+Tab</code>（交互）或 <code>-s</code>（exec）切换更合适的沙箱档位；或检查 <code>[projects.路径]</code> 的 <code>trust_level</code>。不要直接跳到 <code>danger-full-access</code>，优先用 <code>workspace-write</code> + <code>--add-dir</code> 精确放权。</p>
+<p><strong>Q：提示不在 Git 仓库无法运行？</strong>
+Codex 默认要求在 Git 仓库中工作（便于 diff 和回滚）。确认目录无误后加 <code>--skip-git-repo-check</code>；更推荐先 <code>git init</code>，这样改动可审查、可撤销。</p>
+<p><strong>Q：模型调用失败 / 认证异常？</strong>
+先跑 <code>codex doctor</code>，它会检查安装、配置、auth 和运行时健康；再 <code>codex login status</code> 确认登录方式与套餐/额度。</p>
+<p><strong>Q：长会话变慢、token 爆？</strong>
+用 <code>/compact</code> 手动压缩，或 <code>/clear</code> 重新开始；自动化场景可拆成多个 <code>codex exec</code> 子任务。</p>
+<p><strong>Q：自定义端点连不上？</strong>
+核对 <code>base_url</code> 是否正确、<code>wire_api</code> 是否与端点匹配（responses vs chat）、<code>env_key</code> 指向的环境变量是否已设置。</p>
+<p><strong>Q：担心它乱改东西？</strong>
+从 <code>read-only</code> 开始，让它先出方案；确认后再用 <code>workspace-write</code>；改动统一用 <code>/diff</code> 检查；由于基于 Git，不满意可 <code>git checkout</code> 回滚。让 Agent「先计划后执行」是最稳的协作方式。</p>
+<h2 id="十四-参考资料">十四、参考资料</h2>
+<h3>官方一手资料</h3>
+<ol>
+<li>Codex 开源仓库：https://github.com/openai/codex （Apache-2.0）</li>
+<li>Codex 官方文档入口：https://developers.openai.com/codex</li>
+<li>交互模式特性：https://developers.openai.com/codex/cli/features</li>
+<li>斜杠命令：https://developers.openai.com/codex/cli/slash-commands</li>
+<li>认证方式：https://github.com/openai/codex —— 见 docs/authentication</li>
+<li>GitHub Releases：https://github.com/openai/codex/releases/latest</li>
+<li>ChatGPT 套餐包含 Codex 的说明：https://help.openai.com/en/articles/11369540-codex-in-chatgpt</li>
+</ol>
+<h3>知识库内相关教程</h3>
+<ol>
+<li>《Hermes Agent API 指南》，<code>agents/hermes/API.md</code>——另一款本地 Agent 的 API 调用方式，可对照</li>
+<li>《Agent Memory 系统设计报告》，<code>models/agent-memory-systems/</code>——理解 Codex 两阶段记忆流水线</li>
+<li>《Agent Harness 报告》，<code>models/agent-harness/</code>——理解「Agent = Model + Harness」，AGENTS.md/沙箱都属于 Harness 层</li>
+<li>《Context Engineering 报告》，<code>models/context-engineering/</code>——长会话上下文管理与 <code>/compact</code> 的原理</li>
+</ol>
+<hr>
+<p><em>本教程命令基于 codex-cli 0.142.2 实测（2026-11-02），CLI 迭代较快，参数与斜杠命令可能随版本增减；以你本机 <code>codex --help</code>、<code>codex exec --help</code> 和 TUI 内 <code>/help</code> 为最终依据。</em></p>
+<p class="footer">Codex CLI 完全使用教程 · 2026-11-02 · Research Report</p>
+</div></body></html>
