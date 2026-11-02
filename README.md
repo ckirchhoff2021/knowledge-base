@@ -85,6 +85,7 @@
 | [提升感知力与心平气和](https://github.com/ckirchhoff2021/knowledge-base/blob/main/life/mindfulness/guide.md) | 情绪稳定方法论 | 2026-09-22 |
 | [小白理财资产配置](https://ckirchhoff2021.github.io/knowledge-base/life/wealth-management/guide.html) | 资产配置入门 | 2026-09-22 |
 | [小白理财实战手册](https://ckirchhoff2021.github.io/knowledge-base/life/wealth-practice/guide.html) | 一年理财行动方案 | 2026-09-28 |
+| [金融的本质是欺诈吗](https://ckirchhoff2021.github.io/knowledge-base/life/finance-and-fraud/report.html) | 金融思辨与自保清单 | 2026-11-02 |
 
 ---
 
