@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>diagram</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="720" fill="#0d1117"/>
+<text x="50" y="42" fill="#e6edf3" font-size="22" text-anchor="start" font-weight="700">图 2 · Context Rot：标称窗口 ≠ 有效窗口</text>
+<text x="50" y="70" fill="#8b949e" font-size="13.5" text-anchor="start">Chroma 实测 18 模型：即使简单任务，表现也随输入变长而退化；退化由位置 / 难度 / 字面重合三股独立力量叠加</text>
+
+<!-- 上：标称 vs 有效 条形 -->
+<text x="55" y="115" fill="#e6edf3" font-size="15" font-weight="700">标称窗口 vs 实测可靠长度</text>
+
+<!-- GPT-4.1 -->
+<text x="55" y="155" fill="#c9d1d9" font-size="13">GPT-4.1</text>
+<rect x="180" y="140" width="700" height="18" rx="4" fill="#21262d"/>
+<rect x="180" y="140" width="11" height="18" rx="4" fill="#f85149"/>
+<text x="890" y="155" fill="#8b949e" font-size="12">标称 1M → NoLiMa ≈16k</text>
+
+<!-- GPT-4o -->
+<text x="55" y="195" fill="#c9d1d9" font-size="13">GPT-4o</text>
+<rect x="180" y="180" width="700" height="18" rx="4" fill="#21262d"/>
+<rect x="180" y="180" width="6" height="18" rx="4" fill="#f85149"/>
+<text x="890" y="195" fill="#8b949e" font-size="12">标称 128k → NoLiMa ≈8k</text>
+
+<!-- Llama 3.1 70B -->
+<text x="55" y="235" fill="#c9d1d9" font-size="13">Llama3.1-70B</text>
+<rect x="180" y="220" width="700" height="18" rx="4" fill="#21262d"/>
+<rect x="180" y="220" width="45" height="18" rx="4" fill="#3fb950"/>
+<rect x="180" y="220" width="3" height="18" rx="2" fill="#f85149"/>
+<text x="890" y="235" fill="#8b949e" font-size="12">RULER 64k / NoLiMa 2k（32× 差距）</text>
+<text x="55" y="272" fill="#8b949e" font-size="11.5">条长按比例示意；数字为对应测试下结果，应理解为「警告而非定律」（Chroma / Oracle）</text>
+
+<!-- 下：三股力量 -->
+<rect x="55" y="305" width="350" height="330" rx="16" fill="#16120f" stroke="#d29922" stroke-width="1.8"/>
+<text x="80" y="342" fill="#d29922" font-size="17" font-weight="700">① 位置 Position</text>
+<text x="80" y="375" fill="#c9d1d9" font-size="13">U 形曲线：首尾可靠、中段最差</text>
+<!-- mini U curve -->
+<path d="M90,470 Q230,520 370,470" fill="none" stroke="#d29922" stroke-width="3"/>
+<circle cx="90" cy="470" r="5" fill="#3fb950"/><circle cx="370" cy="470" r="5" fill="#3fb950"/>
+<text x="80" y="560" fill="#8b949e" font-size="12">Lost in the Middle（arXiv:2307.03172）</text>
+<text x="80" y="585" fill="#8b949e" font-size="12">证据放中段，回忆率显著下降</text>
+<text x="80" y="612" fill="#8b949e" font-size="12">→ 计划 / 目标写在窗口末端</text>
+
+<rect x="425" y="305" width="350" height="330" rx="16" fill="#0f1620" stroke="#58a6ff" stroke-width="1.8"/>
+<text x="450" y="342" fill="#58a6ff" font-size="17" font-weight="700">② 难度 Difficulty</text>
+<text x="450" y="378" fill="#c9d1d9" font-size="13">NIAH 只测词面检索，过于简单</text>
+<text x="450" y="410" fill="#8b949e" font-size="12.5">RULER 增加：</text>
+<text x="450" y="438" fill="#8b949e" font-size="12.5">· 多针 multi-needle</text>
+<text x="450" y="464" fill="#8b949e" font-size="12.5">· 聚合 aggregation</text>
+<text x="450" y="490" fill="#8b949e" font-size="12.5">· 多跳追踪 multi-hop tracing</text>
+<text x="450" y="540" fill="#f85149" font-size="12.5">半数模型远低于标称窗口即失效</text>
+<text x="450" y="575" fill="#8b949e" font-size="12">RULER（arXiv:2404.06654）</text>
+<text x="450" y="610" fill="#8b949e" font-size="12">有效窗口是「测出来」的</text>
+
+<rect x="795" y="305" width="350" height="330" rx="16" fill="#1a1214" stroke="#f85149" stroke-width="1.8"/>
+<text x="820" y="342" fill="#f85149" font-size="17" font-weight="700">③ 字面重合 Literal overlap</text>
+<text x="820" y="378" fill="#c9d1d9" font-size="13">去掉问题 / 证据的共享措辞</text>
+<text x="820" y="418" fill="#8b949e" font-size="12.5">问：谁去过赫尔辛基？</text>
+<text x="820" y="446" fill="#8b949e" font-size="12.5">证据：Yuki 住在 Kiasma 博物馆旁</text>
+<text x="820" y="474" fill="#8b949e" font-size="12.5">→ 需推断 Kiasma 在赫尔辛基</text>
+<text x="820" y="520" fill="#f85149" font-size="12.5">有效长度大幅坍缩</text>
+<text x="820" y="552" fill="#8b949e" font-size="12">NoLiMa（arXiv:2502.05167）</text>
+<text x="820" y="580" fill="#8b949e" font-size="12">72.4% 样本需外部知识</text>
+<text x="820" y="612" fill="#8b949e" font-size="12">非词面匹配才是真实 Agent 任务</text>
+</svg>
+</body></html>

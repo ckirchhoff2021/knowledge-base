@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>diagram</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="720" fill="#0d1117"/>
+<defs>
+<marker id="ab" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 Z" fill="#58a6ff"/></marker>
+<marker id="ag" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 Z" fill="#3fb950"/></marker>
+<marker id="ay" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 Z" fill="#d29922"/></marker>
+</defs>
+<text x="50" y="42" fill="#e6edf3" font-size="22" text-anchor="start" font-weight="700">图 6 · 生产级上下文工程参考架构与评测闭环</text>
+<text x="50" y="70" fill="#8b949e" font-size="13.5" text-anchor="start">分层装配 + 带外强制 + 以「压缩后约束恢复」为核心的观测；模型 / 任务固定，只改预算策略做受控对比</text>
+
+<!-- Layer 1: Out-of-band enforcement -->
+<rect x="55" y="100" width="1090" height="78" rx="13" fill="#101813" stroke="#3fb950" stroke-width="1.8"/>
+<text x="78" y="130" fill="#3fb950" font-size="15" font-weight="700">① 带外强制层（压缩够不到）</text>
+<text x="78" y="158" fill="#8b949e" font-size="12.5">网关 Guardrail（LLM in/out、MCP pre/post-tool）· 工具权限 TBAC · 预算上限 · 可信带外操作者通道</text>
+
+<!-- Layer 2: Context assembly -->
+<rect x="55" y="192" width="1090" height="120" rx="13" fill="#0f1620" stroke="#58a6ff" stroke-width="1.8"/>
+<text x="78" y="222" fill="#58a6ff" font-size="15" font-weight="700">② 上下文装配层（每步决定窗口内容）</text>
+<g font-size="12" fill="#c9d1d9">
+<rect x="78" y="238" width="200" height="58" rx="9" fill="#161b22" stroke="#30363d"/><text x="94" y="263">钉扎指令 / 约束</text><text x="94" y="285" fill="#8b949e">稳定前缀（利于缓存）</text>
+<rect x="292" y="238" width="200" height="58" rx="9" fill="#161b22" stroke="#30363d"/><text x="308" y="263">实时状态</text><text x="308" y="285" fill="#8b949e">本步加载</text>
+<rect x="506" y="238" width="200" height="58" rx="9" fill="#161b22" stroke="#30363d"/><text x="522" y="263">即时证据 Select</text><text x="522" y="285" fill="#8b949e">RAG / glob / grep</text>
+<rect x="720" y="238" width="200" height="58" rx="9" fill="#161b22" stroke="#30363d"/><text x="736" y="263">压缩 Compress</text><text x="736" y="285" fill="#8b949e">留标识符，原文可寻址</text>
+<rect x="934" y="238" width="190" height="58" rx="9" fill="#161b22" stroke="#30363d"/><text x="950" y="263">隔离 Isolate</text><text x="950" y="285" fill="#8b949e">子智能体 / 凭证最小化</text>
+</g>
+
+<!-- Layer 3: Storage -->
+<rect x="55" y="326" width="1090" height="72" rx="13" fill="#151320" stroke="#bc8cff" stroke-width="1.8"/>
+<text x="78" y="356" fill="#bc8cff" font-size="15" font-weight="700">③ 持久化层（让缩减可逆）</text>
+<text x="78" y="382" fill="#8b949e" font-size="12.5">原始记录（稳定 ID）· 记忆库（用户/Agent/线程/TTL）· 结构化笔记 / 进度文件 · 向量 + 关系/JSON 一体检索</text>
+
+<!-- arrows down -->
+<path d="M600,178 L600,190" stroke="#3fb950" stroke-width="3"/>
+<path d="M600,312 L600,324" stroke="#58a6ff" stroke-width="3"/>
+
+<!-- Layer 4: Eval loop -->
+<rect x="55" y="424" width="1090" height="220" rx="13" fill="#16120f" stroke="#d29922" stroke-width="1.8"/>
+<text x="78" y="454" fill="#d29922" font-size="15" font-weight="700">④ 观测与评测闭环（测「缩减后恢复」，而非快乐路径成功率）</text>
+<g font-size="12" fill="#c9d1d9">
+<rect x="78" y="472" width="248" height="70" rx="9" fill="#161b22" stroke="#30363d"/><text x="94" y="498">压缩事件可观测</text><text x="94" y="522" fill="#8b949e">行为变化 ↔ 压缩时间点关联</text>
+<rect x="342" y="472" width="248" height="70" rx="9" fill="#161b22" stroke="#30363d"/><text x="358" y="498">精确约束恢复率</text><text x="358" y="522" fill="#8b949e">N 次压缩后仍可还原</text>
+<rect x="606" y="472" width="248" height="70" rx="9" fill="#161b22" stroke="#30363d"/><text x="622" y="498">有用 token 密度 / 出处覆盖</text><text x="622" y="522" fill="#8b949e">再水化成功率</text>
+<rect x="870" y="472" width="254" height="70" rx="9" fill="#161b22" stroke="#30363d"/><text x="886" y="498">每解决任务成本 + 缓存命中率</text><text x="886" y="522" fill="#8b949e">稳定前缀保护缓存</text>
+</g>
+<text x="78" y="576" fill="#8b949e" font-size="12.5">受控实验：模型 / 检索器 / 上下文上限固定，每次只改预算策略；红队「减法路径」——能否让系统忘掉一条规则</text>
+<path d="M1080,600 L1080,632 L130,632 L130,545" fill="none" stroke="#d29922" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#ay)"/>
+<text x="600" y="660" fill="#d29922" font-size="12.5" text-anchor="middle">指标反馈 → 更新预算 / 钉扎 / 装配策略（闭环）</text>
+</svg>
+</body></html>

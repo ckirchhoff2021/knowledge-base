@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>diagram</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="720" fill="#0d1117"/>
+<text x="50" y="42" fill="#e6edf3" font-size="22" text-anchor="start" font-weight="700">图 3 · 四大工程杠杆 Write / Select / Compress / Isolate</text>
+<text x="50" y="70" fill="#8b949e" font-size="13.5" text-anchor="start">四者不是由低到高的阶梯，而是各买回 token、各付一种代价的并列选择；Write 让其他杠杆可逆（LangChain / Oracle）</text>
+
+<!-- 4 lever cards -->
+<!-- Write -->
+<rect x="55" y="110" width="258" height="300" rx="15" fill="#151320" stroke="#bc8cff" stroke-width="1.9"/>
+<text x="78" y="146" fill="#bc8cff" font-size="18" font-weight="700">Write</text>
+<text x="78" y="170" fill="#c9d1d9" font-size="13">写到窗口之外</text>
+<line x1="78" y1="184" x2="290" y2="184" stroke="#30363d"/>
+<text x="78" y="212" fill="#8b949e" font-size="12.5">· 外部记忆 / 文件存储</text>
+<text x="78" y="240" fill="#8b949e" font-size="12.5">· CLAUDE.md / memory 工具</text>
+<text x="78" y="268" fill="#8b949e" font-size="12.5">· Devin 结构化笔记</text>
+<text x="78" y="296" fill="#8b949e" font-size="12.5">· Manus 每步重写 todo</text>
+<text x="78" y="340" fill="#3fb950" font-size="12">买回：状态跨重置不丢</text>
+<text x="78" y="368" fill="#f85149" font-size="12">代价：额外存储与写回</text>
+<text x="78" y="396" fill="#d29922" font-size="11.5">特殊地位：让其他杠杆可逆</text>
+
+<!-- Select -->
+<rect x="331" y="110" width="258" height="300" rx="15" fill="#0f1620" stroke="#58a6ff" stroke-width="1.9"/>
+<text x="354" y="146" fill="#58a6ff" font-size="18" font-weight="700">Select</text>
+<text x="354" y="170" fill="#c9d1d9" font-size="13">即时按需取</text>
+<line x1="354" y1="184" x2="566" y2="184" stroke="#30363d"/>
+<text x="354" y="212" fill="#8b949e" font-size="12.5">· RAG / 语义搜索</text>
+<text x="354" y="240" fill="#8b949e" font-size="12.5">· glob / grep 即时文件</text>
+<text x="354" y="268" fill="#8b949e" font-size="12.5">· 工具描述 RAG（约 3×）</text>
+<text x="354" y="296" fill="#8b949e" font-size="12.5">· 只维护轻量指针</text>
+<text x="354" y="340" fill="#3fb950" font-size="12">买回：占用与需求成比例</text>
+<text x="354" y="368" fill="#f85149" font-size="12">代价：往返 + 「发现」决策</text>
+<text x="354" y="396" fill="#d29922" font-size="11.5">应对：Context Confusion</text>
+
+<!-- Compress -->
+<rect x="607" y="110" width="258" height="300" rx="15" fill="#16120f" stroke="#d29922" stroke-width="1.9"/>
+<text x="630" y="146" fill="#d29922" font-size="18" font-weight="700">Compress</text>
+<text x="630" y="170" fill="#c9d1d9" font-size="13">压缩只留信号</text>
+<line x1="630" y1="184" x2="842" y2="184" stroke="#30363d"/>
+<text x="630" y="212" fill="#8b949e" font-size="12.5">· Compaction 压缩</text>
+<text x="630" y="240" fill="#8b949e" font-size="12.5">· Context editing 清理</text>
+<text x="630" y="268" fill="#8b949e" font-size="12.5">· auto-compact @95%</text>
+<text x="630" y="296" fill="#8b949e" font-size="12.5">· 微调压缩模型（Cognition）</text>
+<text x="630" y="340" fill="#3fb950" font-size="12">买回：小窗口容纳长程</text>
+<text x="630" y="368" fill="#f85149" font-size="12">代价：不可逆遗漏</text>
+<text x="630" y="396" fill="#d29922" font-size="11.5">应对：Distraction / Poisoning</text>
+
+<!-- Isolate -->
+<rect x="883" y="110" width="262" height="300" rx="15" fill="#101813" stroke="#3fb950" stroke-width="1.9"/>
+<text x="906" y="146" fill="#3fb950" font-size="18" font-weight="700">Isolate</text>
+<text x="906" y="170" fill="#c9d1d9" font-size="13">跨智能体 / 环境隔离</text>
+<line x1="906" y1="184" x2="1122" y2="184" stroke="#30363d"/>
+<text x="906" y="212" fill="#8b949e" font-size="12.5">· 子智能体独立窗口</text>
+<text x="906" y="240" fill="#8b949e" font-size="12.5">· 返回 1–2k 浓缩摘要</text>
+<text x="906" y="268" fill="#8b949e" font-size="12.5">· 并行工作流 / 沙箱</text>
+<text x="906" y="296" fill="#8b949e" font-size="12.5">· Bigtool 预选工具</text>
+<text x="906" y="340" fill="#3fb950" font-size="12">买回：主智能体不看全轨迹</text>
+<text x="906" y="368" fill="#f85149" font-size="12">代价：证词替代证据</text>
+<text x="906" y="396" fill="#d29922" font-size="11.5">应对：Context Clash</text>
+
+<!-- 下方：失败 -> 杠杆 映射条 -->
+<text x="55" y="468" fill="#e6edf3" font-size="15" font-weight="700">失败模式 → 主要杠杆</text>
+<g font-size="12.5">
+<rect x="55" y="486" width="262" height="52" rx="9" fill="#161b22" stroke="#30363d"/>
+<text x="70" y="508" fill="#f85149">Context Poisoning</text>
+<text x="70" y="529" fill="#8b949e">幻觉累积 → Compress 驱逐</text>
+
+<rect x="333" y="486" width="256" height="52" rx="9" fill="#161b22" stroke="#30363d"/>
+<text x="348" y="508" fill="#f85149">Context Distraction</text>
+<text x="348" y="529" fill="#8b949e">依赖历史（~100k）→ Compress</text>
+
+<rect x="605" y="486" width="260" height="52" rx="9" fill="#161b22" stroke="#30363d"/>
+<text x="620" y="508" fill="#f85149">Context Confusion</text>
+<text x="620" y="529" fill="#8b949e">工具淹没 → Select 即时加载</text>
+
+<rect x="881" y="486" width="264" height="52" rx="9" fill="#161b22" stroke="#30363d"/>
+<text x="896" y="508" fill="#f85149">Context Clash</text>
+<text x="896" y="529" fill="#8b949e">信息冲突（o3 98→64）→ Isolate</text>
+</g>
+<text x="55" y="585" fill="#8b949e" font-size="12">多数生产 Agent 需要四者在生命周期不同节点同时工作；只做最显眼的压缩，常会在混淆与冲突上再次失败</text>
+<text x="55" y="615" fill="#8b949e" font-size="12">观察来源：Gemini 2.5 报告、Berkeley Function-Calling Leaderboard、arXiv:2505.06120（Microsoft/Salesforce）</text>
+</svg>
+</body></html>

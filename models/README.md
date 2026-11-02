@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **28 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **29 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -185,3 +185,9 @@ MCP、A2A 与 AGENTS.md 三大互联标准的分层关系：工具接入、Agent
 当 AI 不再等待指令：核心问题从「能不能做（capability）」转向「该不该此刻无提示地做（intervention timing）」。以 `intervene ⇔ E[收益] − E[打扰成本] > θ` 为主线，梳理五层管线与 L0–L4 分级、1999–2017 决策论谱系与 2024–2026 LLM 浪潮为何互不相通，拆解 Proactive Agent / PRISM / TGL / ProAgent / Pro²Assist / EgoSocial / Plan-Watch-Recover 等旗舰，剖析「廉价门控/昂贵执行器」收敛、reward⊆eval、接受率陷阱与 must/may/must-not 三态窗口，并以 Claude Duet 为产业样本。
 
 📅 2026-11-01 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](proactive-agent/report.md)
+
+### [上下文工程 Context Engineering](https://ckirchhoff2021.github.io/knowledge-base/models/context-engineering/report.html)
+
+当 Agent 的主战场从「写提示」转向「管理 token 全生命周期」：提示工程只写指令，上下文工程决定运行每一步窗口里的全部 token。以「标称窗口≠有效窗口」为切入点，深度拆解 Context Rot（Chroma 18 模型、完美检索仍退化；位置/难度/字面重合三股独立力量）、Write/Select/Compress/Isolate 四杠杆与中毒/分心/混淆/冲突四失败的映射、Compaction 可逆性三分（掩码/卸载/摘要）与 Prompt Cache 经济学、ACE 生成→反思→策展三阶段自改进闭环（编码 +10.6% / 金融 +8.6%）、静态 AGENTS.md 之争（Gloaguen −3% vs Lulla 运行时 −28.64%）、Governance Decay（压缩静默删除合规约束；约束存活 0% 违规 vs 被删 38%）与带外策略层，以及「压缩后约束恢复率」评测和 12 条落地 Checklist。
+
+📅 2026-11-02 ｜ 🖼 架构图 ×6 ｜ 📄 [Markdown](context-engineering/report.md)
