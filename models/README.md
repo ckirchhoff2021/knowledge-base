@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **29 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **30 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -17,6 +17,12 @@
 用「线性注意力 = 可并行训练的线性 RNN」统一视角，梳理 Linear Transformer → RetNet → Mamba 的演进、门控更新规则，以及 Kimi Linear、MiniMax Lightning、Jamba 等旗舰横评。
 
 📅 2026-10-15 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](linear-attention/report.md)
+
+### [稀疏注意力 Sparse Attention](https://ckirchhoff2021.github.io/knowledge-base/models/sparse-attention/report.html)
+
+当「每个 token 看全部」不再成立：算力 O(L²·d) 与显存 O(L·d) 两笔账、Prefill/Decode 两阶段，以及固定模式（Sparse Transformer/Reformer/Longformer/BigBird）→ 免训练动态（H₂O/Quest/SnapKV/MInference）→ 原生可训练（NSA/MoBA/MSA/DSA/CSA2）三代谱系；深度拆解 NSA 三分支门控、MoBA MoE 式无参数块路由、MSA 双分支固定 2048 预算、V4.1 CSA2+FP4 把全局 KV 压到 890 字节/token，梳理稀疏×线性×KV 压缩正交可叠加关系与 12 条落地 Checklist。
+
+📅 2026-11-03 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](sparse-attention/report.md)
 
 ### [MoE 稀疏混合专家](https://ckirchhoff2021.github.io/knowledge-base/models/moe-architecture/report.html)
 

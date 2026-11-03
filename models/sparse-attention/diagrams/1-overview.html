@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 稀疏注意力问题定义与三代总览</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1200" height="900" fill="#0d1117"/>
+  <text x="60" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 1 · 稀疏注意力：两笔账、两阶段与三代演进</text>
+  <text x="60" y="76" fill="#8b949e" font-size="13">核心思想：保留 Softmax，只让每个 query 与历史中的少数 token 块交互 —— oₜ = Σ_{j∈Sₜ} softmax(qₜᵀkⱼ)vⱼ，|Sₜ| ≪ L</text>
+
+  <!-- 两笔账 -->
+  <rect x="50" y="100" width="540" height="180" rx="12" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
+  <rect x="50" y="100" width="540" height="38" rx="12" fill="#f85149" opacity="0.13"/>
+  <text x="70" y="126" fill="#f85149" font-size="16" font-weight="700">算力账（compute）O(L²·d)</text>
+  <text x="70" y="160" fill="#e6edf3" font-size="13">QKᵀ 是 L×L 注意力矩阵，序列翻倍计算量约 ×4</text>
+  <text x="70" y="188" fill="#3fb950" font-size="13" font-weight="700">→ 稀疏注意力主要砍这笔：跳过大部分 q·k 点积</text>
+  <text x="70" y="220" fill="#8b949e" font-size="12">Prefill 阶段算力受限（compute-bound）最受惠</text>
+  <text x="70" y="250" fill="#8b949e" font-size="12">代表：NSA / MoBA / MSA / MInference</text>
+
+  <rect x="610" y="100" width="540" height="180" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <rect x="610" y="100" width="540" height="38" rx="12" fill="#58a6ff" opacity="0.13"/>
+  <text x="630" y="126" fill="#58a6ff" font-size="16" font-weight="700">显存账（memory）KV = O(L·d)</text>
+  <text x="630" y="160" fill="#e6edf3" font-size="13">解码需缓存全部历史 K/V，每步从 HBM 全量读取</text>
+  <text x="630" y="188" fill="#3fb950" font-size="13" font-weight="700">→ KV 压缩主要砍这笔：驱逐 / 量化 / MLA 低秩</text>
+  <text x="630" y="220" fill="#8b949e" font-size="12">Decode 阶段访存受限（memory-bound）最受惠</text>
+  <text x="630" y="250" fill="#8b949e" font-size="12">代表：H₂O / Quest / MLA / FP4-KV（与稀疏可叠加）</text>
+
+  <!-- 选择器核心 -->
+  <rect x="300" y="310" width="600" height="86" rx="12" fill="#1c1424" stroke="#bc8cff" stroke-width="1.8"/>
+  <text x="600" y="342" fill="#bc8cff" font-size="16" font-weight="700" text-anchor="middle">Select(g, qₜ, {Bⱼ})：全部差异浓缩在「怎么选」</text>
+  <text x="600" y="370" fill="#e6edf3" font-size="12.5" text-anchor="middle">① 选择依据：固定位置 / 内容相似度 / query 感知 / 可学习门控</text>
+  <text x="600" y="390" fill="#e6edf3" font-size="12.5" text-anchor="middle">② 粒度：token · 页 · 块 · 头　　③ 时机：离线免训练 / 预训练原生 / 事后蒸馏</text>
+
+  <!-- 三代 -->
+  <rect x="50" y="430" width="350" height="420" rx="12" fill="#161b22" stroke="#d29922" stroke-width="1.6"/>
+  <rect x="50" y="430" width="350" height="40" rx="12" fill="#d29922" opacity="0.13"/>
+  <text x="70" y="457" fill="#d29922" font-size="15" font-weight="700">第一代 · 固定模式（2019–2021）</text>
+  <text x="70" y="492" fill="#e6edf3" font-size="12.5">手写连接模式，与内容无关</text>
+  <text x="70" y="524" fill="#9ecbff" font-size="12.5">• Sparse Transformer（跨步局部）</text>
+  <text x="70" y="552" fill="#9ecbff" font-size="12.5">• Reformer（LSH 哈希分桶）</text>
+  <text x="70" y="580" fill="#9ecbff" font-size="12.5">• Longformer（滑窗+全局）</text>
+  <text x="70" y="608" fill="#9ecbff" font-size="12.5">• BigBird（局部+全局+随机）</text>
+  <text x="70" y="636" fill="#9ecbff" font-size="12.5">• Routing Transformer（聚类）</text>
+  <line x1="70" y1="660" x2="380" y2="660" stroke="#30363d"/>
+  <text x="70" y="688" fill="#f85149" font-size="12">✗ 位置先验，关键信息不在预设点则漏</text>
+  <text x="70" y="714" fill="#3fb950" font-size="12">✓ 证明「只看一小部分也能工作」</text>
+  <text x="70" y="748" fill="#8b949e" font-size="11.5">复杂度 O(L√L)，主要用于长文档/生成</text>
+  <text x="70" y="788" fill="#8b949e" font-size="11.5">选择依据：固定位置　时机：架构内置</text>
+
+  <rect x="425" y="430" width="350" height="420" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <rect x="425" y="430" width="350" height="40" rx="12" fill="#58a6ff" opacity="0.13"/>
+  <text x="445" y="457" fill="#58a6ff" font-size="15" font-weight="700">第二代 · 免训练动态（2023–2024）</text>
+  <text x="445" y="492" fill="#e6edf3" font-size="12.5">推理时即插即用，启发式重要性</text>
+  <text x="445" y="524" fill="#9ecbff" font-size="12.5">• H₂O / StreamingLLM（驱逐/sink）</text>
+  <text x="445" y="552" fill="#9ecbff" font-size="12.5">• Quest（query 感知选页）</text>
+  <text x="445" y="580" fill="#9ecbff" font-size="12.5">• SnapKV / PyramidKV / DuoAttention</text>
+  <text x="445" y="608" fill="#9ecbff" font-size="12.5">• MInference（prefill 三模式）</text>
+  <text x="445" y="636" fill="#9ecbff" font-size="12.5">• SpargeAttn / RetrievalAttention</text>
+  <line x1="445" y1="660" x2="755" y2="660" stroke="#30363d"/>
+  <text x="445" y="688" fill="#3fb950" font-size="12">✓ 零侵入现有模型，无需重训</text>
+  <text x="445" y="714" fill="#f85149" font-size="12">✗ 训练仍全注意力，训推模式不对齐</text>
+  <text x="445" y="748" fill="#8b949e" font-size="11.5">精度靠经验信号，特定任务或误删</text>
+  <text x="445" y="788" fill="#8b949e" font-size="11.5">选择依据：query/注意力分数　时机：推理</text>
+
+  <rect x="800" y="430" width="350" height="420" rx="12" fill="#12261a" stroke="#3fb950" stroke-width="2"/>
+  <rect x="800" y="430" width="350" height="40" rx="12" fill="#3fb950" opacity="0.15"/>
+  <text x="820" y="457" fill="#3fb950" font-size="15" font-weight="700">第三代 · 原生可训练（2025–2026）</text>
+  <text x="820" y="492" fill="#e6edf3" font-size="12.5">选择可学习，预训练起就稀疏</text>
+  <text x="820" y="524" fill="#7ee787" font-size="12.5">• NSA（压缩+选择+滑窗三门控）</text>
+  <text x="820" y="552" fill="#7ee787" font-size="12.5">• MoBA（MoE 式无参数块路由）</text>
+  <text x="820" y="580" fill="#7ee787" font-size="12.5">• MSA / DSA / CSA2（量产旗舰）</text>
+  <text x="820" y="608" fill="#7ee787" font-size="12.5">• SeerAttention（学习门控蒸馏）</text>
+  <text x="820" y="636" fill="#7ee787" font-size="12.5">• NAMOH 头稀疏 / HyScale 训练</text>
+  <line x1="820" y1="660" x2="1130" y2="660" stroke="#30363d"/>
+  <text x="820" y="688" fill="#3fb950" font-size="12">✓ 训推全周期一致，不掉点且量产</text>
+  <text x="820" y="714" fill="#3fb950" font-size="12">✓ 保留 Softmax，精确检索占优</text>
+  <text x="820" y="748" fill="#d29922" font-size="11.5">需从头训练/续训 + 硬件对齐内核</text>
+  <text x="820" y="788" fill="#8b949e" font-size="11.5">选择依据：可学习门控　时机：预训练原生</text>
+
+  <text x="600" y="878" fill="#8b949e" font-size="12" text-anchor="middle">2025-02 NSA 与 MoBA 同月发布为分水岭；2025-12 起 DSA/MSA/CSA2 进入 DeepSeek、MiniMax、GLM 万亿参数级生产系统</text>
+</svg>
+</body></html>

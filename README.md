@@ -34,6 +34,7 @@
 |---|---|---|
 | [Transformer × 位置编码](https://ckirchhoff2021.github.io/knowledge-base/models/transformer-pe/report.html) | 架构全解与长上下文扩展 | 2026-09-30 |
 | [线性注意力与混合架构](https://ckirchhoff2021.github.io/knowledge-base/models/linear-attention/report.html) | 线性 RNN 视角与 Mamba 等 | 2026-10-15 |
+| [稀疏注意力 Sparse Attention](https://ckirchhoff2021.github.io/knowledge-base/models/sparse-attention/report.html) | NSA/MoBA/MSA 三代演进 | 2026-11-03 |
 | [MoE 稀疏混合专家](https://ckirchhoff2021.github.io/knowledge-base/models/moe-architecture/report.html) | 容量与计算解耦 | 2026-10-22 |
 | [扩散语言模型 DLM](https://ckirchhoff2021.github.io/knowledge-base/models/diffusion-language-models/report.html) | 非自回归生成新范式 | 2026-10-11 |
 

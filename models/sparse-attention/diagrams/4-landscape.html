@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · 稀疏×线性×KV压缩 统一地图</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 880" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="880" fill="#0d1117"/>
+  <text x="60" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 4 · 高效注意力统一地图：三条正交路线与可叠加关系</text>
+  <text x="60" y="74" fill="#8b949e" font-size="13">判据：是否保留 Softmax（检索精度）× 主要省算力还是显存 × 历史信息是显式 KV 还是固定状态</text>
+
+  <!-- 三大列 -->
+  <!-- 稀疏 -->
+  <rect x="40" y="100" width="360" height="430" rx="12" fill="#12261a" stroke="#3fb950" stroke-width="2"/>
+  <rect x="40" y="100" width="360" height="42" rx="12" fill="#3fb950" opacity="0.15"/>
+  <text x="220" y="128" fill="#3fb950" font-size="17" font-weight="700" text-anchor="middle">稀疏注意力</text>
+  <text x="60" y="170" fill="#7ee787" font-size="13" font-weight="700">保留 Softmax ✔　主要省：算力</text>
+  <text x="60" y="200" fill="#e6edf3" font-size="12.5">历史 = 显式 KV，只是不全部参与</text>
+  <g font-size="11.5">
+    <rect x="60" y="220" width="150" height="34" rx="6" fill="#163020" stroke="#3fb950"/><text x="135" y="241" fill="#7ee787" text-anchor="middle">NSA / DSA / CSA2</text>
+    <rect x="220" y="220" width="150" height="34" rx="6" fill="#163020" stroke="#3fb950"/><text x="295" y="241" fill="#7ee787" text-anchor="middle">MoBA / MSA</text>
+    <rect x="60" y="264" width="150" height="34" rx="6" fill="#182338" stroke="#58a6ff"/><text x="135" y="285" fill="#9ecbff" text-anchor="middle">Quest / H₂O</text>
+    <rect x="220" y="264" width="150" height="34" rx="6" fill="#182338" stroke="#58a6ff"/><text x="295" y="285" fill="#9ecbff" text-anchor="middle">MInference</text>
+  </g>
+  <line x1="60" y1="320" x2="380" y2="320" stroke="#30363d"/>
+  <text x="60" y="348" fill="#3fb950" font-size="12">✓ 精确检索强（大海捞针）</text>
+  <text x="60" y="376" fill="#3fb950" font-size="12">✓ 训练可并行（仍是注意力）</text>
+  <text x="60" y="404" fill="#f85149" font-size="12">✗ 选择本身有成本</text>
+  <text x="60" y="432" fill="#f85149" font-size="12">✗ 最坏情况仍可能退化</text>
+  <text x="60" y="468" fill="#8b949e" font-size="11.5">复杂度：近线性（亚二次）</text>
+  <text x="60" y="500" fill="#8b949e" font-size="11.5">2026 头部厂商量产共识</text>
+
+  <!-- 线性 -->
+  <rect x="420" y="100" width="360" height="430" rx="12" fill="#161b22" stroke="#d29922" stroke-width="1.7"/>
+  <rect x="420" y="100" width="360" height="42" rx="12" fill="#d29922" opacity="0.13"/>
+  <text x="600" y="128" fill="#d29922" font-size="17" font-weight="700" text-anchor="middle">线性 / 循环注意力</text>
+  <text x="440" y="170" fill="#e3b341" font-size="13" font-weight="700">去掉 Softmax ✘　主要省：算力</text>
+  <text x="440" y="200" fill="#e6edf3" font-size="12.5">历史 = 固定大小状态 Sₜ（被压缩）</text>
+  <g font-size="11.5">
+    <rect x="440" y="220" width="150" height="34" rx="6" fill="#2a2415" stroke="#d29922"/><text x="515" y="241" fill="#e3b341" text-anchor="middle">Mamba / SSM</text>
+    <rect x="600" y="220" width="150" height="34" rx="6" fill="#2a2415" stroke="#d29922"/><text x="675" y="241" fill="#e3b341" text-anchor="middle">Lightning</text>
+    <rect x="440" y="264" width="150" height="34" rx="6" fill="#2a2415" stroke="#d29922"/><text x="515" y="285" fill="#e3b341" text-anchor="middle">DeltaNet / KDA</text>
+    <rect x="600" y="264" width="150" height="34" rx="6" fill="#2a2415" stroke="#d29922"/><text x="675" y="285" fill="#e3b341" text-anchor="middle">RWKV / TTT</text>
+  </g>
+  <line x1="440" y1="320" x2="760" y2="320" stroke="#30363d"/>
+  <text x="440" y="348" fill="#3fb950" font-size="12">✓ 理论 O(n)，状态常数无 KV 爆炸</text>
+  <text x="440" y="376" fill="#3fb950" font-size="12">✓ 可并行训练（线性=循环对偶）</text>
+  <text x="440" y="404" fill="#f85149" font-size="12">✗ 固定状态容量有限</text>
+  <text x="440" y="432" fill="#f85149" font-size="12">✗ 精确召回（大海捞针）弱</text>
+  <text x="440" y="468" fill="#8b949e" font-size="11.5">详见本知识库《线性注意力》报告</text>
+  <text x="440" y="500" fill="#8b949e" font-size="11.5">MiniMax M3 已从线性转向稀疏</text>
+
+  <!-- KV压缩 -->
+  <rect x="800" y="100" width="360" height="430" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.7"/>
+  <rect x="800" y="100" width="360" height="42" rx="12" fill="#58a6ff" opacity="0.13"/>
+  <text x="980" y="128" fill="#58a6ff" font-size="17" font-weight="700" text-anchor="middle">KV 压缩</text>
+  <text x="820" y="170" fill="#9ecbff" font-size="13" font-weight="700">保留 Softmax ✔　主要省：显存</text>
+  <text x="820" y="200" fill="#e6edf3" font-size="12.5">历史 = 低维潜空间/共享头/低比特</text>
+  <g font-size="11.5">
+    <rect x="820" y="220" width="150" height="34" rx="6" fill="#182338" stroke="#58a6ff"/><text x="895" y="241" fill="#9ecbff" text-anchor="middle">MLA（低秩潜空间）</text>
+    <rect x="980" y="220" width="150" height="34" rx="6" fill="#182338" stroke="#58a6ff"/><text x="1055" y="241" fill="#9ecbff" text-anchor="middle">MQA / GQA</text>
+    <rect x="820" y="264" width="150" height="34" rx="6" fill="#182338" stroke="#58a6ff"/><text x="895" y="285" fill="#9ecbff" text-anchor="middle">KIVI 2-bit</text>
+    <rect x="980" y="264" width="150" height="34" rx="6" fill="#182338" stroke="#58a6ff"/><text x="1055" y="285" fill="#9ecbff" text-anchor="middle">FP4 KV</text>
+  </g>
+  <line x1="820" y1="320" x2="1140" y2="320" stroke="#30363d"/>
+  <text x="820" y="348" fill="#3fb950" font-size="12">✓ 直接治理 Decode 显存墙</text>
+  <text x="820" y="376" fill="#f85149" font-size="12">✗ 不改 O(L²) 算力复杂度</text>
+  <text x="820" y="404" fill="#f85149" font-size="12">✗ 高压缩比下检索或受损</text>
+  <text x="820" y="432" fill="#8b949e" font-size="11.5">与稀疏/线性正交，可叠加</text>
+  <text x="820" y="468" fill="#8b949e" font-size="11.5">MLA 省 KV 约 93%</text>
+  <text x="820" y="500" fill="#8b949e" font-size="11.5">详见《推理优化》报告</text>
+
+  <!-- 叠加关系 -->
+  <rect x="40" y="560" width="1120" height="150" rx="12" fill="#1c1424" stroke="#bc8cff" stroke-width="1.8"/>
+  <rect x="40" y="560" width="1120" height="40" rx="12" fill="#bc8cff" opacity="0.13"/>
+  <text x="60" y="587" fill="#bc8cff" font-size="16" font-weight="700">可叠加：三笔账一起算（以 DeepSeek-V4.1-Flash 为范本）</text>
+  <g font-size="12.5">
+    <rect x="70" y="620" width="240" height="60" rx="8" fill="#163020" stroke="#3fb950"/><text x="190" y="646" fill="#7ee787" text-anchor="middle" font-weight="700">稀疏（CSA2）</text><text x="190" y="668" fill="#8b949e" text-anchor="middle">省算力：跳过点积</text>
+    <text x="330" y="655" fill="#bc8cff" font-size="22" text-anchor="middle">＋</text>
+    <rect x="360" y="620" width="240" height="60" rx="8" fill="#182338" stroke="#58a6ff"/><text x="480" y="646" fill="#9ecbff" text-anchor="middle" font-weight="700">跨层 KV 复用</text><text x="480" y="668" fill="#8b949e" text-anchor="middle">省显存：层间共享</text>
+    <text x="620" y="655" fill="#bc8cff" font-size="22" text-anchor="middle">＋</text>
+    <rect x="650" y="620" width="240" height="60" rx="8" fill="#2a2415" stroke="#d29922"/><text x="770" y="646" fill="#e3b341" text-anchor="middle" font-weight="700">FP4 KV</text><text x="770" y="668" fill="#8b949e" text-anchor="middle">省显存：低比特</text>
+    <text x="910" y="655" fill="#bc8cff" font-size="22" text-anchor="middle">＝</text>
+    <rect x="940" y="620" width="200" height="60" rx="8" fill="#241a38" stroke="#bc8cff"/><text x="1040" y="646" fill="#d8c4ff" text-anchor="middle" font-weight="700">890 字节/token</text><text x="1040" y="668" fill="#8b949e" text-anchor="middle">KV 1/4、持久 1/8</text>
+  </g>
+
+  <!-- 头维度新战场 -->
+  <rect x="40" y="730" width="1120" height="110" rx="12" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
+  <text x="60" y="760" fill="#f85149" font-size="15" font-weight="700">新战场：头维度稀疏（Mixture-of-Head / NAMOH）</text>
+  <text x="60" y="790" fill="#e6edf3" font-size="12.5">每 token 只激活 H 个头中的 K 个 → 头选择同时决定「激活参数」与「可用上下文」</text>
+  <text x="60" y="818" fill="#3fb950" font-size="12">增加 H 而固定 K：参数缩放与上下文缩放统一，缩短每头历史且不增总 KV 存储（arXiv:2609.38832）</text>
+</svg>
+</body></html>

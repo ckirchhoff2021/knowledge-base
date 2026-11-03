@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>稀疏注意力前沿技术报告</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:980px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:28px; }
+  h1 { font-size:28px; line-height:1.4; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin:0 8px 8px 0; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  figure { margin:28px 0; }
+  figure iframe { width:100%; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; word-break:break-all; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); word-break:normal; }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+
+</style>
+</head><body><div class="container">
+<header>
+  <h1>稀疏注意力前沿技术报告：当「每个 token 看全部」不再成立——从固定模式、查询感知到原生可训练的三代演进</h1>
+  <div><span class="badge">稀疏注意力</span><span class="badge">NSA</span><span class="badge">MoBA</span><span class="badge">MSA / DSA / CSA2</span><span class="badge">查询感知</span><span class="badge">原生可训练</span><span class="badge">长上下文</span></div>
+  <div class="meta" style="margin-top:10px">
+    <span>信源：47 篇 arXiv 原始论文/技术报告（编号经 export.arxiv.org 官方 API 逐一核实）+ 官方技术报告原文 + 8 条二手信源交叉验证</span>
+    &nbsp;·&nbsp;<span>报告日期：2026-11-02</span>
+  </div>
+</header>
+<nav class="toc"><h2>目录</h2><ol><li><a href="#sec1">摘要</a></li><li><a href="#sec2">0. 为什么是现在：头部厂商为何在 2026 集体对注意力动刀</a></li><li><a href="#sec3">1. 第一性原理：两笔账、两个阶段、两个稀疏度</a></li><li><a href="#sec4">2. 三代技术谱系（2019–2026）</a></li><li><a href="#sec5">3. 原生可训练稀疏深度拆解：NSA / MoBA / MSA / DSA·CSA2</a></li><li><a href="#sec6">4. 免训练推理稀疏：驱逐、查询感知、学习门控与量化近似</a></li><li><a href="#sec7">5. 三条路线的统一地图：稀疏 × 线性 × KV 压缩</a></li><li><a href="#sec8">6. 硬件对齐与内核工程：从「理论稀疏」到「实际加速」</a></li><li><a href="#sec9">7. 评测体系与方法论陷阱</a></li><li><a href="#sec10">8. 旗舰系统横评与产业地图</a></li><li><a href="#sec11">9. 开放问题与未来展望</a></li><li><a href="#sec12">10. 工程落地 Checklist</a></li><li><a href="#sec13">11. 结论</a></li><li><a href="#sec14">12. 参考文献</a></li></ol></nav>
+<blockquote>关键词：稀疏注意力（Sparse Attention）、原生稀疏注意力（NSA / DSA / MSA）、MoBA 块注意力混合、KV Cache 稀疏化、查询感知稀疏（Quest / SnapKV）、学习式门控（SeerAttention）、长上下文、注意力量化（SageAttention）、硬件对齐内核、Prefill/Decode 分离</blockquote>
+
+<blockquote>信源声明：本报告基于 <strong>47 篇 arXiv 原始论文/技术报告</strong>（编号已通过 export.arxiv.org 官方 API 逐一核实，标题与作者一一对应；其中 A–E 组 43 篇核心技术论文，F 组 4 篇综述与评测）、DeepSeek/MiniMax 官方技术报告原文，以及腾讯云、知乎专栏、Kili Technology、Artificial Analysis、七牛云等 8 条官方/二手信源交叉验证。凡厂商自报性能数据，均标注「厂商口径」；媒体/第三方估算标注「第三方」。报告日期：2026-11-02。</blockquote>
+
+<h2 id="sec1">摘要</h2>
+
+<p>自 2017 年《Attention is All You Need》以来，Softmax 自注意力的 <strong>O(L²) 二次复杂度</strong>就是长上下文头顶的紧箍咒。过去八年，破局思路沿三条路线展开：<strong>稀疏注意力</strong>（只算一部分 token 对）、<strong>线性/循环注意力</strong>（去掉 Softmax、把历史压进固定状态）、<strong>KV 压缩</strong>（在显存维度做文章）。本知识库已用专文覆盖后两条路线（《线性注意力与混合架构》《大模型推理优化》），本报告补上缺失的、也是 <strong>2025 年末至 2026 年产业共识收敛最快的一块拼图：稀疏注意力</strong>。</p>
+
+<p>2025 年 2 月是一个分水岭：DeepSeek 发布 <strong>NSA（Native Sparse Attention，arXiv:2502.11089，梁文锋署名）</strong>，月之暗面发布 <strong>MoBA（Mixture of Block Attention，arXiv:2502.13189）</strong>，第一次把「动态、可学习、从预训练阶段就稀疏、且对硬件友好」四件事同时做全。此后短短一年，稀疏注意力从论文迅速走进旗舰生产系统：<strong>DeepSeek-V3.2（2025-12，DSA）、MiniMax M3（2026-06，MSA，注意力计算在 1M 上下文下降 28.4×）、DeepSeek-V4.1-Flash（2026-09，CSA2 + FP4 KV，全局 KV 占用压到 890 字节/token）、GLM-5.1（HyScale 训练系统）</strong> 相继采用。一个极具信号意义的事件是：MiniMax 在 M1 时代押注线性注意力（Lightning Attention），又在 M2 系列连续四代以「稀疏注意力尚不成熟」为由退回全注意力，最终在 M3 上以全新的双分支 MSA 重回稀疏——头部厂商在两代旗舰之间用脚投票，指向了同一个方向。</p>
+
+<p>本报告系统梳理：（1）稀疏注意力的第一性原理——它到底在省「算力」还是「显存」，Prefill 与 Decode 两阶段的稀疏有何本质不同；（2）<strong>三代技术谱系</strong>——固定模式稀疏（Sparse Transformer/Longformer/BigBird）→ 免训练动态/查询感知稀疏（H₂O/Quest/MInference/SnapKV）→ 原生可训练/学习式稀疏（NSA/MoBA/MSA/DSA/SeerAttention）；（3）四大原生稀疏机制的架构与超参数逐项拆解；（4）稀疏注意力与线性注意力、KV 压缩的三维正交关系（可叠加而非互斥）；（5）硬件对齐与内核工程——为什么「理论稀疏」常常「实际更慢」；（6）评测体系、旗舰横评、开放问题与工程落地 Checklist。</p>
+
+<h2 id="sec2">0. 为什么是现在：头部厂商为何在 2026 集体对注意力动刀</h2>
+
+<h3>0.1 一个被 Agent 工作负载改变的成本结构</h3>
+
+<p>2025 年之前，长上下文还主要是「卖点」；2026 年它成了「默认负载」。DeepSeek-V4.1-Flash 技术报告（arXiv:2609.19969）开篇给出的判断是：<strong>长程智能体（long-horizon agents）的普及使模型工作负载日益「输入偏重」（input-heavy）</strong>——Agent 连续运行数小时，把历史对话、工具返回、整文件引用不断堆进上下文，Prefill 计算昂贵，巨大的 KV Cache 持续挤压 HBM、SSD 容量与数据传输带宽。计算、存储、带宽三者共同构成了进一步降低部署成本的主要瓶颈。</p>
+
+<p>这与本知识库《大模型推理优化》报告中的结论一致：KV Cache 是推理显存与成本的最大单一来源。但那篇报告侧重的是<strong>显存维度的治理</strong>（驱逐、量化、MLA 压缩、PD 分离）；本报告聚焦的是<strong>注意力计算本身的稀疏化</strong>——让每个 query 不再与全部历史 token 做 Softmax。</p>
+
+<h3>0.2 2025–2026 的标志性事件链</h3>
+
+<table>
+<thead><tr>
+<th>时间</th>
+<th>事件</th>
+<th>意义</th>
+</tr></thead><tbody>
+<tr>
+<td>2025-02</td>
+<td>DeepSeek <strong>NSA</strong>（2502.11089）、Kimi <strong>MoBA</strong>（2502.13189）前后脚发布</td>
+<td>首次同时实现「动态 + 可学习 + 原生训练 + 硬件对齐」</td>
+</tr>
+<tr>
+<td>2025-12</td>
+<td><strong>DeepSeek-V3.2</strong>（2512.02556）搭载 <strong>DSA</strong> 稀疏注意力量产</td>
+<td>稀疏注意力进入万亿参数级生产旗舰</td>
+</tr>
+<tr>
+<td>2026-06</td>
+<td><strong>MiniMax M3 / MSA</strong>（2606.13392）发布，1M 上下文注意力计算降 28.4×（厂商口径）</td>
+<td>曾放弃稀疏的厂商以新机制回归，产业共识形成</td>
+</tr>
+<tr>
+<td>2026-09</td>
+<td><strong>DeepSeek-V4.1-Flash</strong>（2609.19969）CSA2 + FP4 KV，全局 KV 890 字节/token</td>
+<td>稀疏 + 跨层复用 + 低比特三路叠加</td>
+</tr>
+<tr>
+<td>2026-10</td>
+<td><strong>HyScale</strong>（2610.32057）为 GLM-5.1 的 1M token 学习式稀疏训练提速</td>
+<td>训练系统侧开始专门优化「选择」这一新瓶颈</td>
+</tr>
+<tr>
+<td>2026 全年</td>
+<td>arXiv 单月数十篇稀疏注意力新论文（见第 9 章）</td>
+<td>学术密度进入爆发期</td>
+</tr>
+</tbody></table>
+
+<p>新华社 2026 年 1 月刊发、清华大学官网转载的《2026 年中国 AI 发展趋势前瞻》中，中国信通院明确把「以 DeepSeek 的 NSA、月之暗面的 MoBA 等为代表的稀疏注意力机制」列为「提升模型推理效率的重要技术路径」，并引述判断：行业已不再单纯依靠参数规模，<strong>精细化机制、算法架构、训练方法的优化成为主要提升方向</strong>。这标志着稀疏注意力从社区热点上升为产业与政策层面的共识方向。</p>
+
+<h3>0.3 MiniMax 的「转向—回退—再转向」说明了什么</h3>
+
+<p>最能说明问题的是 MiniMax 的路线摇摆（据 Kili Technology 2026-06 对 M3 的数据故事梳理与 MiniMax 官方博客）：</p>
+
+<ul>
+<li><strong>MiniMax-01 / M1（2025-01 起，arXiv:2501.08313）</strong>：采用 Lightning Attention（线性注意力）+ 标准 Softmax 的混合架构；</li>
+<li><strong>M2、M2.1、M2.5、M2.7（2026 年上半年）</strong>：连续四代<strong>移除</strong>稀疏/线性注意力、回到全注意力，工程博客的理由是「稀疏注意力基础设施尚不成熟，高效注意力要确定性地击败全注意力还有一段路」；</li>
+<li><strong>M3（2026-06）</strong>：以全新的双分支 <strong>MSA</strong> 重回稀疏——但这已不是当年被放弃的那种稀疏：它是<strong>可学习、固定注意力预算、在未压缩 KV 上跑精确 Softmax</strong> 的新机制。</li>
+</ul>
+
+<p>这条曲线说明三点：（1）早期固定模式/启发式稀疏确实会在复杂推理与编程任务上掉点；（2）线性注意力「精确检索弱」的硬伤在 Agent/代码场景被放大；（3）<strong>保留 Softmax、只动态选择参与计算的 token 子集</strong>的原生稀疏路线，在 2026 年走到了「不掉点且可量产」的拐点。</p>
+
+<figure>
+  <iframe src="diagrams/1-overview.html" height="900" loading="lazy"></iframe>
+  <figcaption>图 1 · 稀疏注意力：两笔账、两阶段与三代演进</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec3">1. 第一性原理：两笔账、两个阶段、两个稀疏度</h2>
+
+<h3>1.1 两笔账：省算力与省显存是两件事</h3>
+
+<p>标准缩放点积注意力（单头）：</p>
+
+<pre><code>O = softmax(Q Kᵀ / √dₕ) V        Q,K,V ∈ R^{L×d}</code></pre>
+
+<p>注意力矩阵 <code>QKᵀ</code> 是 <code>L×L</code> 的，由此产生两笔不同的成本：</p>
+
+<ul>
+<li><strong>算力账（compute）</strong>：<code>QKᵀ</code> 与 <code>softmax(·)V</code> 共 <code>O(L²·d)</code> 次乘加。序列翻倍，注意力计算量约变四倍。<strong>稀疏注意力主要砍这笔账</strong>——跳过大部分 <code>qᵢ·kⱼ</code> 的计算。</li>
+<li><strong>显存账（memory）</strong>：自回归解码需缓存全部历史 K/V，空间 <code>O(L·d)</code>，且每生成一个 token 都要从 HBM 读取全部 KV。<strong>KV 压缩（量化/驱逐/MLA）主要砍这笔账</strong>。</li>
+</ul>
+
+<blockquote>关键认知：这两笔账落在不同维度，<strong>互不冲突、可以叠加</strong>。DeepSeek-V4.1-Flash 正是「CSA2 稀疏（省算力）+ 跨层 KV 复用与 FP4 KV（省显存）」三路并用的典型（见第 3.4 节）。把「稀疏注意力」和「KV 压缩」混为一谈，是理解这一领域最常见的错误。</blockquote>
+
+<p>此外还要区分第三类技术：<strong>FlashAttention（arXiv:2205.14135）是 IO 感知的精确算法</strong>，它通过分块（tiling）减少 HBM 读写，<strong>不改变 O(L²) 的渐近复杂度、不丢任何精度</strong>。稀疏注意力通常需要构建在 FlashAttention 风格的块稀疏内核之上才能真正跑出速度（见第 6 章）。</p>
+
+<h3>1.2 两个阶段：Prefill 稀疏与 Decode 稀疏的瓶颈不同</h3>
+
+<p>这是 2026 年文献中最重要、也最容易被忽略的一组区分：</p>
+
+<table>
+<thead><tr>
+<th>维度</th>
+<th>Prefill（预填充）</th>
+<th>Decode（解码）</th>
+</tr></thead><tbody>
+<tr>
+<td>形态</td>
+<td>一次处理整个 prompt，L 个 query × L 个 key，<strong>算力受限（compute-bound）</strong></td>
+<td>逐 token 生成，1 个 query × L 个 key，<strong>访存受限（memory-bound）</strong></td>
+</tr>
+<tr>
+<td>主要浪费</td>
+<td>大量 token 对的注意力矩阵乘</td>
+<td>每步都要从 HBM 读取全部 KV</td>
+</tr>
+<tr>
+<td>稀疏的收益</td>
+<td>减少 FLOPs（如 MInference、MSA prefill）</td>
+<td>减少 KV 读取量（如 Quest、H₂O、SnapKV）</td>
+</tr>
+<tr>
+<td>代表方法</td>
+<td>MInference、NSA、MoBA、MSA、SpargeAttn</td>
+<td>Quest、H₂O、PyramidKV、DuoAttention、SeerAttention</td>
+</tr>
+</tbody></table>
+
+<ul>
+<li><strong>Prefill 稀疏</strong>：注意力矩阵天然呈现结构化模式（MInference 发现的 A 形、竖斜线、块稀疏三种模式），可以离线/在线地只算少数块，直接削减矩阵乘 FLOPs。</li>
+<li><strong>Decode 稀疏</strong>：每步只有一个 query，瓶颈不是矩阵乘而是<strong>把 L 长度的 KV 从显存搬进来</strong>。此时稀疏的价值在于「只加载 top-k 个关键 KV 页」，Quest 观察到「一个 token 是否关键高度依赖于当前 query」，因此用 query 对 KV 页做动态估计，只加载最关键的页，自注意力最高加速 2.23×、端到端推理延迟最多降低 7.03×（论文口径，arXiv:2406.10774）。</li>
+</ul>
+
+<p>一套机制能否同时服务好两个阶段，是原生稀疏（NSA/MoBA/MSA）与纯推理时稀疏（Quest 等）的分水岭——前者从训练时就稀疏，训练/Prefill/Decode 全生命周期对齐；后者免训练、即插即用，但只在推理时生效。</p>
+
+<h3>1.3 两个稀疏度：计算稀疏与访存稀疏</h3>
+
+<p>NSA 论文特别强调一个在 GQA/MQA 架构下容易被忽视的陷阱：单个 query 头的选择是稀疏的（<strong>计算稀疏</strong>），但在 GQA 分组中，多个 query 头共享一组 KV，实际需要读取的 KV 是<strong>组内所有头选择结果的并集</strong>——这个并集可能一点也不稀疏（<strong>访存稀疏失效</strong>）。因此，只证明「每个头只算少数 token」是不够的，必须同时证明「组内选择的并集仍然小」，才能在现代 GQA 架构上真正减少显存访问。这也是 NSA 强调「算术强度平衡（arithmetic intensity-balanced）」与硬件对齐设计的根本原因。</p>
+
+<h3>1.4 形式化：稀疏注意力在做什么</h3>
+
+<p>给定 query <code>qₜ</code>，全注意力访问全部历史块集合 <code>B = {B₁,…,Bₘ}</code>；稀疏注意力引入一个<strong>选择器/门控</strong> <code>g</code>，先选出一个子集 <code>Sₜ ⊂ B</code>（|Sₜ| = k ≪ m），只在子集上做精确 Softmax：</p>
+
+<pre><code>全注意力：   oₜ = Σ_{j=1}^{t} softmax(qₜᵀkⱼ/√dₕ) vⱼ
+稀疏注意力： Sₜ = Select(g, qₜ, {Bⱼ})            ← 关键：怎么选、谁来选、何时选
+            oₜ = Σ_{j ∈ Sₜ} softmax(qₜᵀkⱼ/√dₕ) vⱼ   ← 保留 Softmax，精度天然占优</code></pre>
+
+<p>不同方法的全部差异，几乎都浓缩在 <code>Select</code> 这一步的三个问题上：</p>
+
+<ol>
+<li><strong>选择依据</strong>：固定位置（局部/全局/随机）？内容相似度？query 感知？可学习门控？</li>
+<li><strong>选择粒度</strong>：token、页（page）、块（block）、还是头（head）？</li>
+<li><strong>选择时机</strong>：纯离线（免训练）？预训练阶段学习（原生）？还是事后轻量蒸馏（适配）？</li>
+</ol>
+
+<p>这三个问题的不同回答，正好对应第 2 章的三代谱系。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec4">2. 三代技术谱系（2019–2026）</h2>
+
+<h3>2.1 第一代：固定模式稀疏（2019–2021）——证明「稀疏可行」，但模式是手写的</h3>
+
+<p>最早一批工作针对的是长文档建模，思路是<strong>用人工设计的固定连接模式替代全连接</strong>，每个 token 只看「局部邻域 + 少量全局锚点」。</p>
+
+<ul>
+<li><strong>Sparse Transformer</strong>（Child et al., OpenAI, arXiv:1904.10509, 2019）：把注意力模式分解为<strong>跨步（strided）局部注意力 + 局部卷积式注意力</strong>，用于生成长序列（音频、图像、文本），首次把全注意力的二次复杂度降到 O(L√L) 量级，是整个领域的奠基作。</li>
+<li><strong>Reformer</strong>（Kitaev et al., arXiv:2001.04451, 2020）：用 <strong>LSH（局部敏感哈希）</strong> 把相近的 query/key 哈希到同一桶，只在桶内做注意力，并配合可逆层省显存。</li>
+<li><strong>Longformer</strong>（Beltagy et al., arXiv:2004.05150, 2020）：面向长文档的「<strong>滑动窗口 + 少数全局 token</strong>」模式，局部注意力 O(L)、全局注意力覆盖任务关键位置（如 &lt;[BOS_never_used_51bce0c785ca2f68081bfa7d91973934]&gt;），在长文档 QA 上显著优于 BERT 截断。</li>
+<li><strong>BigBird</strong>（Zaheer et al., Google, arXiv:2007.14062, 2020）：「<strong>局部 + 全局 + 随机</strong>」三组固定连接，并从图论上证明这种稀疏图满足图的扩展性质（作为图注意力网络是万能的）、且是 Turing 完备的，为固定模式稀疏提供了理论支撑。</li>
+<li><strong>Routing Transformer</strong>（Roy et al., arXiv:2003.05997, 2020）：开始引入<strong>内容路由</strong>——基于 k-means 聚类把 query/key 分到同簇，簇内做注意力，是「动态选择」的雏形。</li>
+</ul>
+
+<p>第一代的共同特征与局限：连接模式<strong>位置先验、人工设计、与输入内容无关</strong>（Routing Transformer 除外）。它们证明了「只看一小部分 token 也能工作」，但固定模式无法适应「关键信息恰好不在预设位置」的输入，泛化受限，且主要用于特定长文档/生成场景，没有进入通用大模型骨干。</p>
+
+<h3>2.2 第二代：免训练动态/查询感知稀疏（2023–2024）——即插即用，但只在推理时生效</h3>
+
+<p>大模型时代，研究重心转向<strong>不改动预训练、直接在推理时动态挑选关键 KV</strong>。这批方法利用一个被反复验证的经验现象——<strong>注意力高度集中在少数关键 token 上，且重要性在层间/时间上相对稳定</strong>。</p>
+
+<ul>
+<li><strong>H₂O（Heavy-Hitter Oracle）</strong>（Zhang et al., arXiv:2306.14048, 2023）：基于「heavy-hitter」（累计注意力得分高的 token）做 KV 驱逐，在显存受限时动态淘汰低贡献 KV，显著降低显存而性能损失小。</li>
+<li><strong>StreamingLLM</strong>（Xiao et al., arXiv:2309.17453, 2023）：发现模型对序列<strong>最开始几个 token（attention sink，注意力汇聚点）</strong>有系统性高注意力；只保留「起始 token + 滑窗」即可让模型流式处理超长输入，免训练。代价是它并不真正记住窗口外内容，适合流式无限生成而非全文检索问答。</li>
+<li><strong>Scissorhands</strong>（Liu et al., arXiv:2305.17118, 2023）：提出「重要性持续性假设（Persistence of Importance）」——当前重要的 token 在后续仍重要，据此在测试时压缩 KV。</li>
+<li><strong>FastGen / Adaptive KV</strong>（Ge et al., arXiv:2310.01801, 2023）：自适应地按头决定保留哪些 token（「Model tells you what to discard」）。</li>
+<li><strong>Quest</strong>（Tang et al., MIT-HAN-Lab, arXiv:2406.10774, 2024）：<strong>query 感知</strong>的 Decode 稀疏——追踪每个 KV 页内 key 的最小/最大值，用当前 query 估计页的关键度，只加载 top-k 页。</li>
+<li><strong>PyramidKV</strong>（Zhang et al., arXiv:2406.02069, 2024）：按「金字塔式信息汇聚」动态分配 KV 预算——浅层多留、深层少留。</li>
+<li><strong>SnapKV</strong>（Li et al., arXiv:2404.14469, 2024）：在生成<strong>开始之前</strong>，用最后几个 query 位置的注意力模式识别该关注哪些 KV，prefill 阶段就完成选择。</li>
+<li><strong>DuoAttention</strong>（Xiao et al., arXiv:2410.10819, 2024）：把注意力头分为「检索头（retrieval）」与「流式头（streaming）」，分别用不同策略，兼顾长上下文检索与流式效率。</li>
+<li><strong>MInference 1.0</strong>（Jiang et al., Microsoft, arXiv:2407.02490, 2024）：针对 <strong>Prefill</strong>，离线为每个头选定 A 形/竖斜线/块稀疏三种模式之一，在线动态构建稀疏索引 + 专用 GPU 内核，大幅加速长序列 prefill，无需改动预训练或微调。</li>
+<li><strong>SpargeAttn</strong>（Zhang et al., arXiv:2502.18137, 2025）：<strong>免训练</strong>的稀疏注意力，通过精心设计的近似为任意模型的推理（prefill+decode）提速。</li>
+<li><strong>RetrievalAttention</strong>（Liu et al., arXiv:2409.10516, 2024）：用向量检索来定位相关 KV，加速长上下文推理。</li>
+</ul>
+
+<p>第二代的共同特征：<strong>免训练、即插即用、基于启发式重要性信号或 query 动态选择</strong>。优点是对现有模型零侵入；局限是（1）只在推理时生效，训练仍用全注意力，训练—推理注意力模式不对齐；（2）启发式选择在特定任务上可能误删关键信息，精度保证依赖经验而非端到端学习。</p>
+
+<h3>2.3 第三代：原生可训练/学习式稀疏（2025–2026）——让模型自己学会「看哪里」</h3>
+
+<p>第三代的核心跃迁是：<strong>把「选择」变成可学习、可端到端训练的一部分，从预训练阶段就使用与推理完全相同的稀疏机制</strong>，并做硬件对齐，使稀疏在训练、Prefill、Decode 全生命周期一致。</p>
+
+<ul>
+<li><strong>NSA</strong>（Yuan et al., DeepSeek, arXiv:2502.11089, 2025-02）：压缩 + 选择 + 滑窗三分支 + 可学习门控，硬件对齐、原生可训练（详见 3.1）。</li>
+<li><strong>MoBA</strong>（Lu et al., Moonshot, arXiv:2502.13189, 2025-02）：把 MoE 路由思想搬到注意力，query 无参数门控动态选块，可在全/稀疏注意力间无缝切换（详见 3.2）。</li>
+<li><strong>SeerAttention</strong>（Zhang et al., Microsoft, arXiv:2410.13276, 2024-10/持续更新）：用<strong>可学习门控网络</strong>预测块级稀疏，仅需以自蒸馏方式轻量训练门控参数，配合块稀疏 FlashAttention 内核，长上下文 prefill 精度/延迟双优。</li>
+<li><strong>DSA（DeepSeek Sparse Attention）</strong>：随 <strong>DeepSeek-V3.2</strong>（arXiv:2512.02556, 2025-12）量产，大幅降低长上下文计算复杂度而保持性能。</li>
+<li><strong>MSA（MiniMax Sparse Attention）</strong>（Lai et al., arXiv:2606.13392, 2026-06）：索引分支 + 主分支双分支、固定 2048 token 注意力预算，KL 对齐训练（详见 3.3）。</li>
+<li><strong>CSA2（Compressed Sparse Attention 2）</strong>：随 <strong>DeepSeek-V4.1-Flash</strong>（arXiv:2609.19969, 2026-09）推出，跨层 KV 复用 + FP4 KV（详见 3.4）。</li>
+<li><strong>NAMOH（Mixture-of-Head）</strong>（Fu et al., arXiv:2609.38832, 2026-09）：从「头」维度做稀疏——每个 token 只激活 H 个头中的 K 个，头选择同时决定活跃参数与可用上下文，把「参数缩放」与「上下文缩放」统一起来。</li>
+<li><strong>SeerAttention-R</strong>（Microsoft, arXiv:2506.08889, 2025-06）：面向<strong>长推理链（long reasoning）</strong>的稀疏注意力适配。</li>
+<li><strong>训练系统 HyScale</strong>（Deng et al., arXiv:2610.32057, 2026-10）：指出「选择」本身成为学习式稀疏训练的新瓶颈（每个 query 要给所有历史 token 打分），用 HyTopK 免打分表精确 top-k + 选择重放为 GLM-5.1 的 1M token 训练提速。</li>
+</ul>
+
+<figure>
+  <iframe src="diagrams/2-lineage.html" height="860" loading="lazy"></iframe>
+  <figcaption>图 2 · 2017–2026 技术演进时间线：从「写死看哪里」到「学会看哪里」</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec5">3. 原生可训练稀疏深度拆解：NSA / MoBA / MSA / DSA·CSA2</h2>
+
+<h3>3.1 NSA：三分支动态层次稀疏（DeepSeek）</h3>
+
+<p>NSA 的设计目标是同时满足三点：<strong>全局语境感知、局部精确、以及在现代硬件上真正跑得快</strong>。它把历史 token 组织成时间块，通过三条并行注意力路径处理，再用可学习门控融合。</p>
+
+<p><strong>三条分支：</strong></p>
+
+<ol>
+<li><strong>压缩分支（Compressed）——粗看全局</strong>：按压缩块大小 <code>l=32</code> 把远处 token 压缩成少量摘要 token，用低成本扫一遍全局大意；</li>
+<li><strong>选择分支（Selected）——精看重点</strong>：在全部历史块中按相关性挑出 <code>n=16</code> 个块（选择块大小 <code>l′=64</code>，含固定激活的 1 个初始块和 2 个局部块），只对这些块做细粒度注意力，绝大部分块被跳过；</li>
+<li><strong>滑窗分支（Sliding Window）——细看近邻</strong>：窗口大小 <code>w=512</code>，滑动步长 <code>d=16</code>，保证相邻 token 的局部信息不丢。</li>
+</ol>
+
+<p>三条分支的输出由<strong>可学习门控</strong>加权合并。论文还刻意让压缩/选择分支与局部模式「隔离」，避免模型走局部捷径而不去学习长程选择。</p>
+
+<p><strong>关键超参数（论文原文，27B 骨干评测配置）</strong>：压缩块 <code>l=32</code>、滑窗步长 <code>d=16</code>、选择块 <code>l′=64</code>、选择块数 <code>n=16</code>、滑窗 <code>w=512</code>；GQA 分组 <code>h=16</code>，query/key 维度 <code>dₖ=192</code>，value 维度 <code>dᵥ=128</code>。</p>
+
+<p><strong>两大创新：</strong></p>
+
+<ul>
+<li><strong>算术强度平衡的算法 + 硬件对齐内核</strong>：专门设计 Triton 内核，使稀疏计算模式在 GPU 上真正跑出速度，而不是「理论稀疏、实际更慢」；</li>
+<li><strong>端到端原生可训练</strong>：从预训练就用稀疏，训练与推理同一套机制。在 <strong>27B 参数、260B token</strong> 的骨干上，NSA 在通用基准、长上下文任务与基于指令的推理上<strong>保持或超过全注意力</strong>，预训练损失稳定平滑且更低。</li>
+</ul>
+
+<p><strong>实测效率（论文口径）</strong>：64k 上下文下，前向最高 <strong>9.0×</strong>、后向 <strong>6.0×</strong> 加速；解码时每注意力操作的访存量随上下文增长远低于全注意力（8k→64k 下访存仅从 2048 增至 5632 等价 token，而理论全注意力对应 4×→11.6× 的访存增长）。</p>
+
+<h3>3.2 MoBA：把 MoE 路由搬到注意力（Moonshot）</h3>
+
+<p>MoBA 遵循「<strong>更少结构（less structure）</strong>」原则——不引入 sink/窗口这类预定义位置偏置，而是让模型根据内容自主决定看哪里。它把长度 <code>N</code> 的上下文切成 <code>n</code> 个块（块大小 <code>B=N/n</code>），每个 query 通过<strong>无参数门控</strong>（query 与块代表向量算相关性，不引入待训练参数）路由到最相关的 <strong>top-k 个块</strong>做注意力。</p>
+
+<p><strong>工程细节与关键参数：</strong></p>
+
+<ul>
+<li>「当前块」（含 query 自身的块）的路由会破坏因果性（块内 mean pooling 会看到未来），需用因果掩码特殊处理；</li>
+<li>在 1M 连续预训练阶段：块大小设为 <strong>4096、top-K=12</strong>，注意力稀疏度达 <code>1 − 4096×12/1M = </code> <strong>95.31%</strong>；在 1M 连续预训练完成后，再激活 MoBA 训练 100B token；</li>
+<li>支持上下文从 8K 到 <strong>10M</strong> 的长度缩放，通过变化块大小保持恒定稀疏率（固定 64 个 MoBA 块、top-k=3）。</li>
+</ul>
+
+<p><strong>两大特性：</strong></p>
+
+<ul>
+<li><strong>全/稀疏无缝切换</strong>：同一套权重，需要精度时切回全注意力、需要速度时切稀疏，降低了「上稀疏掉点」的风险；</li>
+<li><strong>已部署</strong>：MoBA 已用于支撑 Kimi 的长上下文请求。<strong>Prefill 1M token 时加速比最高 6.5×（论文口径）</strong>，且在所有上下文长度上都比全注意力更快，呈现亚二次复杂度。</li>
+</ul>
+
+<h3>3.3 MSA：双分支固定预算稀疏（MiniMax）</h3>
+
+<p>MSA 是 MiniMax 为 M3 设计的新机制，其哲学是「<strong>不近似注意力，只在精选子集上跑全精度 Softmax</strong>」。</p>
+
+<p><strong>双分支结构（块大小 128 token）：</strong></p>
+
+<ol>
+<li><strong>索引分支（Index Branch）</strong>：轻量分支，为每个 query 选出 <strong>top-16 个最相关 KV 块</strong>，把注意力窗口封顶在 <strong>16×128 = 2048 token</strong>——无论总上下文是 10K 还是 1M，注意力预算恒定；</li>
+<li><strong>主分支（Main Branch）</strong>：只在被选中的块上运行<strong>精确 Softmax 注意力</strong>。</li>
+</ol>
+
+<p>索引分支用<strong>与主分支对齐的 KL 散度损失</strong>训练，使「什么是相关」在预训练中被学习，而非固定启发式。</p>
+
+<p><strong>验证与实测：</strong></p>
+
+<ul>
+<li>在一个 <strong>109B 参数、3T token 从头训练</strong>的验证模型上，MSA 在下游基准上追平标准 GQA（论文口径）；</li>
+<li>1M 上下文下，每 token 注意力计算减少 <strong>28.4×（厂商口径，arXiv:2606.13392）</strong>；</li>
+<li>内核采用 <strong>KV-outer gather</strong>（每个块只读一次、连续访存），据 Tech Times 报道比 Flash-Sparse-Attention、flash-moba 等开源方案快约 4×（第三方/媒体口径）；</li>
+<li><strong>与 MLA 的取舍</strong>：MSA 在<strong>未压缩 KV</strong> 上操作，显存占用更高，但长上下文深处细微信息的检索保真度更高；MLA 把 KV 压进低维潜空间省显存。二者代表「检索精度 vs 显存」的不同权衡。</li>
+</ul>
+
+<h3>3.4 DSA 与 CSA2：DeepSeek 的量产与极限压缩</h3>
+
+<p><strong>DeepSeek-V3.2（2025-12，arXiv:2512.02556）的 DSA</strong>：作为三大技术突破之首，DSA「在长上下文场景大幅降低计算复杂度，同时保持模型性能」。V3.2 配合可扩展 RL 框架与大规模 Agent 任务合成流水线，性能对标 GPT-5（厂商口径）。</p>
+
+<p><strong>DeepSeek-V4.1-Flash（2026-09，arXiv:2609.19969）的 CSA2</strong>，把稀疏推到新的极限，是「三笔账一起算」的范本：</p>
+
+<ul>
+<li><strong>模型本体</strong>：552B 骨干参数的多模态 MoE，支持最高 <strong>1M token</strong>；采用<strong>因果编码器-解码器（CED）非对称架构</strong>——前 20 层因果编码器处理输入、后 20 层解码器生成输出，decode 每 token 激活 16B、prefill 仅激活 8B，对输入偏重的 Agent 负载成本效率极高；</li>
+<li><strong>CSA2（Compressed Sparse Attention 2）</strong>：<strong>跨层 KV Cache 复用</strong>（相邻层共享/复用 KV）+ 稀疏注意力；</li>
+<li><strong>FP4 KV</strong>：KV 以 FP4 低比特缓存；</li>
+<li><strong>成果（厂商口径）</strong>：全局 KV 占用（始终在 HBM）降到 <strong>890 字节/token，约为 DeepSeek-V4-Flash 的 1/4</strong>；通过 <strong>SWA Bounded Replay</strong> 部署优化，持久化 KV 占用（SSD/主机内存）约为 V4-Flash 的 <strong>1/8</strong>；在 KV 占用大幅缩小的同时性能显著优于基线。</li>
+</ul>
+
+<figure>
+  <iframe src="diagrams/3-native-mechanisms.html" height="920" loading="lazy"></iframe>
+  <figcaption>图 3 · NSA/MoBA/MSA/CSA2 四大原生稀疏机制：分支结构、选择粒度与关键预算</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec6">4. 免训练推理稀疏：驱逐、查询感知、学习门控与量化近似</h2>
+
+<p>原生稀疏需要从头训练或大规模续训；对于<strong>已经训练好、不想重训</strong>的模型，免训练方法是落地首选。本章按机理分四族。</p>
+
+<h3>4.1 驱逐派：H₂O 与 StreamingLLM</h3>
+
+<ul>
+<li><strong>H₂O（arXiv:2306.14048）</strong>：把 KV 驱逐建模为「保留 heavy-hitter」——累计获得高注意力的 token 更可能影响未来输出，显存受限时淘汰累计贡献最低者。它是推理时 KV 预算治理的代表性算法。</li>
+<li><strong>StreamingLLM（arXiv:2309.17453）</strong>：揭示 attention sink 现象，只保留「初始几个 token + 滑窗」即可流式处理超 400 万 token 输入，无需微调。但要清醒：它维持的是<strong>流式生成的稳定性</strong>，并不对窗口外内容做真实检索，不能用于需要全文证据的问答。</li>
+<li><strong>Scissorhands（arXiv:2305.17118）</strong>：以「重要性持续性假设」为依据做测试时 KV 压缩。</li>
+</ul>
+
+<h3>4.2 查询感知派：Quest、SnapKV、PyramidKV</h3>
+
+<p>这一族的核心洞察是「<strong>token 的关键度依赖于 query，不能用全局固定排名一刀切</strong>」。</p>
+
+<ul>
+<li><strong>Quest（arXiv:2406.10774）</strong>：Decode 时按 KV <strong>页</strong>（而非单 token）管理——记录每页 key 的 min/max，用当前 query 估计该页能达到的最大注意力，只加载 top-k 关键页。自注意力最高 2.23× 加速、端到端延迟最多降 7.03×，长依赖任务精度损失可忽略（论文口径）。</li>
+<li><strong>SnapKV（arXiv:2404.14469）</strong>：在生成前用 prompt 尾部若干「验证位置」的 query 对 KV 的注意力作为重要性信号，prefill 阶段就完成 KV 筛选，无需逐生成步重判。</li>
+<li><strong>PyramidKV（arXiv:2406.02069）</strong>：按层做金字塔式预算分配——浅层保留较多 KV（底层汇聚信息）、深层大幅压缩，契合「信息沿层汇聚」的观察。</li>
+<li><strong>DuoAttention（arXiv:2410.10819）</strong>：区分检索头/流式头，检索头需要从全文召回、流式头只需近期 KV，按头分配不同 KV 策略。</li>
+</ul>
+
+<h3>4.3 学习门控派：SeerAttention（轻量蒸馏适配）</h3>
+
+<p>SeerAttention（arXiv:2410.13276）介于「免训练」与「原生」之间：它不重训整个模型，而是<strong>单独训练一个轻量门控网络</strong>——门控由可学习线性层从 K/V 块产出打分，预测块级注意力稀疏；门控参数以<strong>自蒸馏</strong>方式（让稀疏输出对齐原模型全注意力输出）快速收敛，再配合块稀疏 FlashAttention 内核。这为「给现成模型加可学习稀疏」提供了一条成本远低于从头原生训练的路径。<strong>SeerAttention-R（arXiv:2506.08889）</strong>进一步把该思想用于长推理链场景。</p>
+
+<h3>4.4 量化近似派：SageAttention（注意力量化，与稀疏正交）</h3>
+
+<p>严格说注意力量化不属于「选择 token 子集」，但它常与稀疏配合，是推理加速的重要拼图：</p>
+
+<ul>
+<li><strong>SageAttention（arXiv:2410.02367）</strong>：对 Q/K 做高精度 8-bit 量化后再算注意力，即插即用；OPS 比 FlashAttention2/xformers 高约 2.1×/2.7×，端到端指标几乎无损（论文口径）。</li>
+<li><strong>SageAttention2（arXiv:2411.10958）</strong>：彻底平滑离群值 + per-thread INT4 量化，在 Hopper GPU 上速度追平 FlashAttention3(FP8) 而精度更高。</li>
+<li><strong>SageAttention2++（arXiv:2505.21136）</strong>：更高效的工程实现。</li>
+</ul>
+
+<blockquote>注意：量化近似改变的是「每次点积的数值精度与速度」，稀疏改变的是「算多少次点积」，二者正交、可叠加。这也是为什么 V4.1-Flash 能同时使用稀疏（CSA2）与 FP4 KV。</blockquote>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec7">5. 三条路线的统一地图：稀疏 × 线性 × KV 压缩</h2>
+
+<p>把视野拉到整个「高效注意力/高效推理」版图，存在三条常被混淆、实则正交的路线。本知识库已分别为后两条立传，此处给出统一对照。</p>
+
+<table>
+<thead><tr>
+<th>路线</th>
+<th>代表</th>
+<th>保留 Softmax？</th>
+<th>主要省</th>
+<th>历史信息形态</th>
+<th>精确检索（大海捞针）</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>稀疏注意力</strong></td>
+<td>NSA / MoBA / MSA / DSA / Quest</td>
+<td>✅ 保留（只选子集）</td>
+<td>算力（+部分显存）</td>
+<td>仍是显式 KV 列表，只是不全部参与</td>
+<td>强（选中即精确）</td>
+</tr>
+<tr>
+<td><strong>线性/循环注意力</strong></td>
+<td>Lightning / Mamba / DeltaNet / KDA</td>
+<td>❌ 去掉</td>
+<td>算力</td>
+<td>压缩进固定大小状态</td>
+<td>弱（状态容量有限）</td>
+</tr>
+<tr>
+<td><strong>KV 压缩</strong></td>
+<td>MLA / MQA·GQA / KIVI / FP4 KV</td>
+<td>✅（MLA/GQA 仍是 softmax）</td>
+<td>显存</td>
+<td>低维潜空间 / 共享头 / 低比特</td>
+<td>中（取决于压缩比）</td>
+</tr>
+<tr>
+<td><strong>IO 感知精确</strong></td>
+<td>FlashAttention 三代</td>
+<td>✅</td>
+<td>显存读写（不改复杂度）</td>
+<td>完整 KV</td>
+<td>强（无损）</td>
+</tr>
+</tbody></table>
+
+<p>三条判据帮助厘清关系：</p>
+
+<ol>
+<li><strong>稀疏 vs 线性</strong>：稀疏保留 Softmax、检索精度天然占优，代价是选择本身有成本、最坏情况仍可能退化；线性彻底改计算方式、理论 O(n)，但固定状态在精确召回上吃亏。MiniMax 从 Lightning（线性）转向 MSA（稀疏），本质是在 Agent/代码这类强检索场景用「保留 Softmax」换检索精度。</li>
+<li><strong>稀疏 vs KV 压缩</strong>：前者砍算力、后者砍显存，维度不同、<strong>可叠加</strong>。DeepSeek 自家就是 MLA（显存）与 NSA/DSA（算力）一起上。</li>
+<li><strong>头维度是新战场</strong>：NAMOH（Mixture-of-Head，arXiv:2609.38832）证明还可以从「激活哪些头」做稀疏，让参数缩放与上下文缩放统一——增加 H 而固定 K，既加参数又缩短每头历史、不增总 KV 存储。</li>
+</ol>
+
+<figure>
+  <iframe src="diagrams/4-landscape.html" height="880" loading="lazy"></iframe>
+  <figcaption>图 4 · 高效注意力统一地图：三条正交路线与可叠加关系</figcaption>
+</figure>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec8">6. 硬件对齐与内核工程：从「理论稀疏」到「实际加速」</h2>
+
+<p>稀疏注意力最残酷的一课是：<strong>渐近复杂度更优，不等于墙上时间（wall-clock）更短</strong>。不规则的稀疏访存若处理不当，GPU 大量时间耗在 gather、分支与等待上，反而比稠密的 FlashAttention 慢。这也是早期稀疏被 MiniMax 判「不成熟」的原因。硬件对齐要解决四件事。</p>
+
+<h3>6.1 块对齐与算术强度平衡</h3>
+
+<ul>
+<li><strong>块大小必须与 GPU 张量核（tensor core）的 tile 对齐</strong>：NSA 要求内核块 <code>Bₖ</code> 整除选择块 <code>l′</code>，使内层循环能跑满张量核；</li>
+<li><strong>算术强度（arithmetic intensity）= 每字节访存对应的计算量</strong>。稀疏容易「访存多、算得少」而沦为访存受限；NSA 通过三分支负载设计让算术强度平衡，使稀疏计算在硬件上真正受惠。</li>
+</ul>
+
+<h3>6.2 GQA 下的「并集」陷阱</h3>
+
+<p>如 1.3 节所述，GQA 组内多 query 头共享 KV，单头选择稀疏不代表组内访存稀疏。必须以「组内选择并集」为优化目标，才能在 GQA/MQA 这一现代主流架构上真正减少 KV 读取。</p>
+
+<h3>6.3 专用内核与 gather 模式</h3>
+
+<ul>
+<li><strong>MSA 的 KV-outer gather</strong>：以 KV 块为外层循环，每个块只读一次、连续访存，再分发给选了它的 query，避免重复读取；</li>
+<li><strong>块稀疏 FlashAttention</strong>：SeerAttention、MoBA 都构建在 FlashAttention 风格的块稀疏内核上，把不规则索引转化为对若干连续块的稠密注意力调用；</li>
+<li><strong>MInference 三模式内核</strong>：针对 A 形/竖斜线/块稀疏分别优化 GPU 内核。</li>
+</ul>
+
+<h3>6.4 训练侧的新瓶颈：「选择」本身很贵</h3>
+
+<p>HyScale（arXiv:2610.32057）指出了一个 2026 年才凸显的问题：学习式稀疏训练时，<strong>每个 query 要先给所有历史 token 打分才能选出 top-k，而真正的稀疏注意力只读 k 个</strong>——选择步骤反而成了训练瓶颈；现有系统还会物化完整打分表、并在重计算时重复选择。其解法：</p>
+
+<ul>
+<li><strong>HyTopK</strong>：流式地算出精确 top-k，不物化完整打分表（把选择输出视为「一组索引」而非「一张激活表」）；</li>
+<li><strong>选择重放（selection replay）</strong>：反向重计算时直接复用前向的选择结果；</li>
+<li>据此为 GLM-5.1 在 1M token 序列上的训练显著提速。</li>
+</ul>
+
+<p>这标志着稀疏注意力的工程重心已从「推理内核」延伸到「训练系统」，与本知识库《大模型推理优化》中 PD 分离、《AI 编译器与异构底座》中 LLM 自动写 kernel 的趋势相互呼应。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec9">7. 评测体系与方法论陷阱</h2>
+
+<h3>7.1 长上下文/稀疏的主流基准</h3>
+
+<ul>
+<li><strong>RULER（arXiv:2404.06654）</strong>：通过可配置的检索长度、多键检索、聚合、多变量追踪等任务，测量模型「真实有效上下文长度」，专门暴露「标称窗口 ≠ 有效窗口」，是长上下文/稀疏方法最常用的压力测试。</li>
+<li><strong>LongBench（arXiv:2308.14508）</strong>：双语、多任务长上下文理解基准（单/多文档 QA、摘要、代码等）。</li>
+<li><strong>Needle In A Haystack（NIAH）</strong>：在长文本中插入一个事实，测单点精确召回，对稀疏方法「是否恰好漏掉关键块」极为敏感。</li>
+<li><strong>InfiniteBench / PG-19</strong>：MInference 等用于超长 prefill 与长程语言建模评测。</li>
+</ul>
+
+<h3>7.2 方法论陷阱</h3>
+
+<ol>
+<li><strong>加速比口径不可横比</strong>：NSA 的 9.0×（64k，前向）、MoBA 的 6.5×（1M prefill）、MSA 的 28.4×（1M 注意力计算）测的上下文长度、硬件、基线（全注意力 vs FlashAttention）、统计对象（端到端 vs 仅注意力内核）都不同，<strong>不能直接排名</strong>，只能看趋势。</li>
+<li><strong>「性能基本持平」要看任务分布</strong>：平均指标持平可能掩盖特定任务（多跳检索、长链推理）上的损失；需报告最差情况与分任务结果，而非只看平均分。</li>
+<li><strong>训练—推理对齐</strong>：只在推理时稀疏的方法（第二代）与原生稀疏（第三代）评测的不是一回事——前者测「启发式不丢信息的边界」，后者测「模型学会选择后的能力」，不宜混在一张表里比高低。</li>
+<li><strong>评测污染</strong>：超长基准可能进入新模型训练数据；需配合 RULER 这类可程序化生成、可变长度/位置的任务降低污染风险。</li>
+<li><strong>EEI 排序的稳定性</strong>：2026 年的注意力综述（arXiv:2608.15459）用效率/表达力/可解释性（EEI）框架比较 21 种方法，并以 20 万次 Monte Carlo 扰动证明：细粒度排名在 67–70% 的样本中会发生超过一位的变化，结论只支持<strong>粗粒度分层比较</strong>，不支持精确名次。这为整个领域的「榜单崇拜」提供了清醒剂。</li>
+</ol>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec10">8. 旗舰系统横评与产业地图</h2>
+
+<h3>8.1 四大原生机制横评</h3>
+
+<table>
+<thead><tr>
+<th>机制</th>
+<th>厂商</th>
+<th>结构</th>
+<th>选择粒度</th>
+<th>关键预算</th>
+<th>标志性数据（口径）</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>NSA</strong></td>
+<td>DeepSeek</td>
+<td>压缩+选择+滑窗三分支+门控</td>
+<td>块（64）</td>
+<td>选 16 块、窗 512</td>
+<td>64k 前向 9.0×；27B/260B token 验证</td>
+</tr>
+<tr>
+<td><strong>MoBA</strong></td>
+<td>Moonshot</td>
+<td>单门控动态选块（无参数门控）</td>
+<td>块（4096）</td>
+<td>top-12，稀疏 95.31%</td>
+<td>1M prefill 6.5×；可切全注意力；已上线</td>
+</tr>
+<tr>
+<td><strong>MSA</strong></td>
+<td>MiniMax</td>
+<td>索引+主双分支（KL 对齐）</td>
+<td>块（128）</td>
+<td>top-16，封顶 2048</td>
+<td>1M 注意力计算 −28.4×（厂商口径）</td>
+</tr>
+<tr>
+<td><strong>CSA2</strong></td>
+<td>DeepSeek</td>
+<td>跨层 KV 复用+稀疏+FP4</td>
+<td>层 + 块</td>
+<td>890 字节/token</td>
+<td>全局 KV 1/4、持久 KV 1/8（对比 V4-Flash）</td>
+</tr>
+</tbody></table>
+
+<h3>8.2 采用稀疏注意力的旗舰模型</h3>
+
+<table>
+<thead><tr>
+<th>模型</th>
+<th>时间</th>
+<th>注意力</th>
+<th>规模/上下文</th>
+<th>要点</th>
+</tr></thead><tbody>
+<tr>
+<td>DeepSeek-V3.2</td>
+<td>2025-12</td>
+<td>DSA</td>
+<td>长上下文</td>
+<td>三大突破之首，配合可扩展 RL，对标 GPT-5（厂商口径）</td>
+</tr>
+<tr>
+<td>MiniMax M3</td>
+<td>2026-06</td>
+<td>MSA</td>
+<td>428B MoE / 23B 激活 / 1M</td>
+<td>100T+ token、原生多模态；AA 智能指数 55（第三方）</td>
+</tr>
+<tr>
+<td>DeepSeek-V4.1-Flash</td>
+<td>2026-09</td>
+<td>CSA2 + FP4</td>
+<td>552B / 1M</td>
+<td>CED 非对称架构，prefill 仅激活 8B</td>
+</tr>
+<tr>
+<td>GLM-5.1</td>
+<td>2026</td>
+<td>学习式稀疏</td>
+<td>1M 训练</td>
+<td>由 HyScale 系统支撑训练</td>
+</tr>
+<tr>
+<td>Kimi 长上下文服务</td>
+<td>2025 起</td>
+<td>MoBA</td>
+<td>1M+</td>
+<td>已部署支撑生产请求</td>
+</tr>
+</tbody></table>
+
+<h3>8.3 产业信号与中国布局</h3>
+
+<ul>
+<li>稀疏注意力是 2026 年<strong>中国头部厂商集体引领</strong>的架构方向：DeepSeek（NSA/DSA/CSA2）、Moonshot（MoBA）、MiniMax（MSA）、智谱 GLM（学习式稀疏）均已落地；新华社/中国信通院将其列为重点技术路径。</li>
+<li>美国侧以 <strong>Microsoft（MInference、SeerAttention）</strong> 及学界（MIT-HAN-Lab 的 Quest）为代表，更多从「现成模型推理加速」切入。</li>
+<li>配套生态正在成熟：专用内核（块稀疏 FlashAttention）、训练系统（HyScale）、部署指南（NVIDIA 已发布 M3 官方部署指南）、以及 vLLM/SGLang/llama.cpp 的社区适配。</li>
+<li>需注意许可差异：M3 采用 <strong>MiniMax Community License</strong>（非 MIT/Apache，商用需授权），「开放权重 ≠ 可自由商用」。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec11">9. 开放问题与未来展望</h2>
+
+<ol>
+<li><strong>稀疏是不是终局？</strong> 线性注意力火过又被稀疏盖过；注意力地基层八年改了无数次。稀疏保留 Softmax 赢得了检索精度，但是否会被「稀疏 + 线性」更深融合或全新机制取代，仍无定论。</li>
+<li><strong>选择的质量如何给形式化保证？</strong> 2026-10 已出现《Certified Sparse Attention via Perturbed Retrieval》（arXiv:2610.24991）这类<strong>可认证稀疏</strong>的尝试，以及《Sparse Attention Is Matrix Approximation, Not Choosing from a Bag of Values》（arXiv:2610.10871）对理论框架的反思——把稀疏理解为矩阵近似而非「从一袋值里挑」，可能催生更好的误差界。</li>
+<li><strong>非对称/头维度稀疏的潜力</strong>：《More Value per Key: Asymmetric Sparse Attention》（arXiv:2610.04753）与 NAMOH 头稀疏（arXiv:2609.38832）刚起步，参数缩放与上下文缩放能否真正统一，是值得跟踪的前沿。</li>
+<li><strong>长推理链下的稀疏</strong>：推理模型（o1/R1 类）会产生数万 token 的思维链，注意力在长链上如何分布、稀疏是否伤害推理，SeerAttention-R（arXiv:2506.08889）开了头但远未解决。</li>
+<li><strong>训练稳定性与缩放律</strong>：原生稀疏在超大规模（万亿参数、百万 token）下的训练稳定性、以及「稀疏预算 k 应如何随模型/上下文规模缩放」，尚缺系统的缩放定律。</li>
+<li><strong>跨层/跨模态泛化</strong>：跨层 KV 复用（CSA2）的极限、视频/音频等稠密模态上稀疏模式是否与文本一致（VideoNSA, arXiv:2510.02295 已在探索），都需更多证据。</li>
+<li><strong>理论与实证的落差</strong>：固定模式稀疏有 BigBird 式图论保证但灵活性差；动态/学习式稀疏效果好却缺误差界。如何为「学习到的选择」提供可证明的召回保证，是连接两代的核心理论难题。</li>
+</ol>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec12">10. 工程落地 Checklist</h2>
+
+<p><strong>选型判断</strong></p>
+
+<ul>
+<li>☐ 先分清瓶颈在 <strong>Prefill（算力受限）还是 Decode（访存受限）</strong>：前者选 MInference/MSA/NSA 类 prefill 稀疏，后者选 Quest/H₂O/PyramidKV 类 KV 读取稀疏。</li>
+<li>☐ 能从头训练/大规模续训 → 优先<strong>原生稀疏（NSA/MoBA/MSA 路线）</strong>，训练—推理全生命周期对齐；不能重训 → 用<strong>免训练方法</strong>或 SeerAttention 式轻量门控适配。</li>
+<li>☐ 强检索/多跳/代码场景优先<strong>保留 Softmax 的稀疏</strong>而非线性注意力，避免精确召回掉点。</li>
+</ul>
+
+<p><strong>叠加优化</strong></p>
+
+<ul>
+<li>☐ 稀疏（省算力）与 KV 压缩（MLA/FP4，省显存）<strong>叠加使用</strong>，并评估 GQA 组内「选择并集」的真实访存稀疏度。</li>
+<li>☐ 稀疏内核构建在 <strong>FlashAttention 风格块稀疏内核</strong>上；块大小与张量核 tile 对齐，评估算术强度，避免「理论稀疏、实际更慢」。</li>
+<li>☐ 训练侧评估「选择」开销，必要时采用 HyTopK/选择重放等免打分表方案。</li>
+</ul>
+
+<p><strong>评测与风险</strong></p>
+
+<ul>
+<li>☐ 用 <strong>RULER + NIAH + LongBench</strong> 组合测真实有效上下文，报告分任务与最差情况，不只看平均分。</li>
+<li>☐ 加速比标注清楚上下文长度/硬件/基线/统计口径，不跨研究横比排名。</li>
+<li>☐ 核查模型许可（社区许可 vs MIT/Apache）与评测污染；关键业务用自有领域数据做独立验收。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec13">11. 结论</h2>
+
+<p>稀疏注意力在 2025 年 2 月因 NSA 与 MoBA 迎来范式转折，又在随后一年内通过 DeepSeek-V3.2/V4.1、MiniMax M3、GLM-5.1 等旗舰迅速完成「从论文到量产」的闭环。它的胜出并非偶然：相较线性注意力，它<strong>保留 Softmax、因而保住了大模型最依赖的精确内容寻址能力</strong>；相较固定模式稀疏，它<strong>让模型自己学会「看哪里」</strong>，摆脱了手写位置先验；同时它与 KV 压缩、注意力量化正交可叠加，给系统留出了持续压缩的空间。</p>
+
+<p>MiniMax「线性 → 全注意力 → 原生稀疏」的路线曲线，是整个行业认知收敛的缩影：真正走到拐点的不是「稀疏」这个老概念，而是「<strong>动态可学习 + 原生训练对齐 + 硬件对齐内核</strong>」三者齐备的新稀疏。面向 2027，可认证的选择质量、头/非对称维度稀疏、长推理链与跨模态稀疏、以及学习式选择的缩放定律，将决定这条路线是成为终局，还是再次被更新的范式吸收。无论结果如何，「让每个 token 只看它该看的地方」已经是当前大模型架构演进中最确定、最值得投入的方向之一。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec14">12. 参考文献</h2>
+
+<blockquote>以下 43 篇文献编号均于 2026-11-02 通过 export.arxiv.org 官方 API（id_list 直查与标题检索）逐一核实，标题与作者对应一致。</blockquote>
+
+<p><strong>A. 奠基与固定模式稀疏（第一代）</strong></p>
+
+<ol>
+<li>Vaswani, A., et al. *Attention Is All You Need*. arXiv:1706.03762, 2017. https://arxiv.org/abs/1706.03762</li>
+<li>Child, R., et al. *Generating Long Sequences with Sparse Transformers*. arXiv:1904.10509, 2019. https://arxiv.org/abs/1904.10509</li>
+<li>Kitaev, N., et al. *Reformer: The Efficient Transformer*. arXiv:2001.04451, 2020. https://arxiv.org/abs/2001.04451</li>
+<li>Beltagy, I., Peters, M. E., Cohan, A. *Longformer: The Long-Document Transformer*. arXiv:2004.05150, 2020. https://arxiv.org/abs/2004.05150</li>
+<li>Zaheer, M., et al. *Big Bird: Transformers for Longer Sequences*. arXiv:2007.14062, 2020. https://arxiv.org/abs/2007.14062</li>
+<li>Roy, A., et al. *Efficient Content-Based Sparse Attention with Routing Transformers*. arXiv:2003.05997, 2020. https://arxiv.org/abs/2003.05997</li>
+</ol>
+
+<p><strong>B. 免训练动态 / 查询感知稀疏（第二代）</strong></p>
+
+<ol>
+<li>Zhang, Z., et al. *H₂O: Heavy-Hitter Oracle for Efficient Generative Inference of Large Language Models*. arXiv:2306.14048, 2023. https://arxiv.org/abs/2306.14048</li>
+<li>Xiao, G., et al. *Efficient Streaming Language Models with Attention Sinks (StreamingLLM)*. arXiv:2309.17453, 2023. https://arxiv.org/abs/2309.17453</li>
+<li>Liu, Y., et al. *Scissorhands: Exploiting the Persistence of Importance Hypothesis for LLM KV Cache Compression at Test Time*. arXiv:2305.17118, 2023. https://arxiv.org/abs/2305.17118</li>
+<li>Ge, S., et al. *Model Tells You What to Discard: Adaptive KV Cache Compression for LLMs (FastGen)*. arXiv:2310.01801, 2023. https://arxiv.org/abs/2310.01801</li>
+<li>Tang, Y., et al. *Quest: Query-Aware Sparsity for Efficient Long-Context LLM Inference*. arXiv:2406.10774, 2024. https://arxiv.org/abs/2406.10774</li>
+<li>Zhang, Z., et al. *PyramidKV: Dynamic KV Cache Compression based on Pyramidal Information Funneling*. arXiv:2406.02069, 2024. https://arxiv.org/abs/2406.02069</li>
+<li>Li, Y., et al. *SnapKV: LLM Knows What You are Looking for Before Generation*. arXiv:2404.14469, 2024. https://arxiv.org/abs/2404.14469</li>
+<li>Xiao, Y., et al. *DuoAttention: Efficient Long-Context LLM Inference with Retrieval and Streaming Heads*. arXiv:2410.10819, 2024. https://arxiv.org/abs/2410.10819</li>
+<li>Jiang, H., et al. *MInference 1.0: Accelerating Pre-filling for Long-Context LLMs via Dynamic Sparse Attention*. arXiv:2407.02490, 2024. https://arxiv.org/abs/2407.02490</li>
+<li>Zhang, J., et al. *SpargeAttention: Accurate and Training-free Sparse Attention Accelerating Any Model Inference*. arXiv:2502.18137, 2025. https://arxiv.org/abs/2502.18137</li>
+<li>Liu, D., et al. *RetrievalAttention: Accelerating Long-Context LLM Inference via Vector Retrieval*. arXiv:2409.10516, 2024. https://arxiv.org/abs/2409.10516</li>
+<li>Zhang, Y., et al. *Keyformer: KV Cache Reduction through Key Tokens Selection for Efficient Generative Inference*. arXiv:2403.09054, 2024. https://arxiv.org/abs/2403.09054</li>
+</ol>
+
+<p><strong>C. 原生可训练 / 学习式稀疏（第三代）</strong></p>
+
+<ol>
+<li>Yuan, J., et al. *Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention (NSA)*. arXiv:2502.11089, 2025. https://arxiv.org/abs/2502.11089</li>
+<li>Lu, E., et al. *MoBA: Mixture of Block Attention for Long-Context LLMs*. arXiv:2502.13189, 2025. https://arxiv.org/abs/2502.13189</li>
+<li>Zhang, Y., et al. *SeerAttention: Learning Intrinsic Sparse Attention in Your LLMs*. arXiv:2410.13276, 2024. https://arxiv.org/abs/2410.13276</li>
+<li>DeepSeek-AI, et al. *DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models*. arXiv:2512.02556, 2025. https://arxiv.org/abs/2512.02556</li>
+<li>Lai, X., et al. *MiniMax Sparse Attention (MSA)*. arXiv:2606.13392, 2026. https://arxiv.org/abs/2606.13392</li>
+<li>DeepSeek-AI, et al. *DeepSeek-V4.1-Flash: Pushing the Limits of KV Cache Compression*. arXiv:2609.19969, 2026. https://arxiv.org/abs/2609.19969</li>
+<li>Fu, Z., Wang, R., Li, M. *Scaling Parameter and Context in Attention: Native Sparse Attention from Mixture-of-Head (NAMOH)*. arXiv:2609.38832, 2026. https://arxiv.org/abs/2609.38832</li>
+<li>Deng, Y., et al. *HyScale: Scaling Long-Context Training for Learned Sparse Attention*. arXiv:2610.32057, 2026. https://arxiv.org/abs/2610.32057</li>
+<li>*SeerAttention-R: Sparse Attention Adaptation for Long Reasoning*. arXiv:2506.08889, 2025. https://arxiv.org/abs/2506.08889</li>
+<li>*VideoNSA: Native Sparse Attention Scales Video Understanding*. arXiv:2510.02295, 2025. https://arxiv.org/abs/2510.02295</li>
+<li>*FSA: An Alternative Efficient Implementation of Native Sparse Attention Kernel*. arXiv:2508.18224, 2025. https://arxiv.org/abs/2508.18224</li>
+</ol>
+
+<p><strong>D. 2026 前沿：可认证、非对称与理论反思</strong></p>
+
+<ol>
+<li>*Certified Sparse Attention via Perturbed Retrieval*. arXiv:2610.24991, 2026. https://arxiv.org/abs/2610.24991</li>
+<li>Wan, F., et al. *Sparse Attention Is Matrix Approximation, Not Choosing from a Bag of Values*. arXiv:2610.10871, 2026. https://arxiv.org/abs/2610.10871</li>
+<li>Elata, N., et al. *More Value per Key: Asymmetric Sparse Attention for Faster LLM Decoding*. arXiv:2610.04753, 2026. https://arxiv.org/abs/2610.04753</li>
+<li>*Subquadratic Attention with a Hierarchical Tree-Structured Indexer*. arXiv:2610.42112, 2026. https://arxiv.org/abs/2610.42112</li>
+<li>*LazyFlash: Forward-Dense, Backward-Sparse Attention for Accelerated Long-Context Fine-Tuning*. arXiv:2610.31911, 2026. https://arxiv.org/abs/2610.31911</li>
+<li>*SAS: Simple Attention Sparsification via End-to-End Optimization of Context Ranking*. arXiv:2609.13141, 2026. https://arxiv.org/abs/2609.13141</li>
+<li>*Joint Subspace Sparse Attention for Efficient Long-Context Decoding*. arXiv:2610.19026, 2026. https://arxiv.org/abs/2610.19026</li>
+</ol>
+
+<p><strong>E. 相关：量化近似、线性注意力、KV 压缩与 IO 感知（对照）</strong></p>
+
+<ol>
+<li>Zhang, X., et al. *SageAttention: Accurate 8-Bit Attention for Plug-and-play Inference Acceleration*. arXiv:2410.02367, 2024. https://arxiv.org/abs/2410.02367</li>
+<li>*SageAttention2: Efficient Attention with Thorough Outlier Smoothing and Per-thread INT4 Quantization*. arXiv:2411.10958, 2024. https://arxiv.org/abs/2411.10958</li>
+<li>*SageAttention2++: A More Efficient Implementation of SageAttention2*. arXiv:2505.21136, 2025. https://arxiv.org/abs/2505.21136</li>
+<li>Dao, T., et al. *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness*. arXiv:2205.14135, 2022. https://arxiv.org/abs/2205.14135</li>
+<li>Liu, H., et al. *Ring Attention with Blockwise Transformers for Near-Infinite Context*. arXiv:2310.01889, 2023. https://arxiv.org/abs/2310.01889</li>
+<li>DeepSeek-AI, et al. *DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model*. arXiv:2405.04434, 2024. https://arxiv.org/abs/2405.04434</li>
+<li>MiniMax, et al. *MiniMax-01: Scaling Foundation Models with Lightning Attention*. arXiv:2501.08313, 2025. https://arxiv.org/abs/2501.08313</li>
+</ol>
+
+<p><strong>F. 综述与评测</strong></p>
+
+<ol>
+<li>*Efficient Attention Mechanisms for Large Language Models: A Survey*. arXiv:2507.19595, 2025. https://arxiv.org/abs/2507.19595</li>
+<li>*Not All Attention Is Equal: A Quantitative Survey of the EEI Trade-off*. arXiv:2608.15459, 2026. https://arxiv.org/abs/2608.15459</li>
+<li>Hsieh, C.-P., et al. *RULER: What&#x27;s the Real Context Size of Your Long-Context Language Models?* arXiv:2404.06654, 2024. https://arxiv.org/abs/2404.06654</li>
+<li>Bai, Y., et al. *LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding*. arXiv:2308.14508, 2023. https://arxiv.org/abs/2308.14508</li>
+</ol>
+
+<p><strong>G. 官方与二手信源（交叉验证，非 arXiv）</strong></p>
+
+<ol>
+<li>DeepSeek-AI. *Native Sparse Attention*（NSA 论文 HTML 全文，超参数与 9.0×/6.0× 加速数据核对）. https://arxiv.org/html/2502.11089v2</li>
+<li>Moonshot AI. *MoBA: Mixture of Block Attention for Long-Context LLMs*（论文 HTML 全文，95.31% 稀疏度与 6.5× 数据核对）. https://arxiv.org/html/2502.13189v1</li>
+<li>新华社（清华大学官网转载）.《2026 年中国 AI 发展趋势前瞻》, 2026-01-31. https://www.tsinghua.edu.cn/info/1182/124190.htm</li>
+<li>乐小野.《一文读懂稀疏注意力，DeepSeek、Kimi、MiniMax 为什么集体动了 Transformer 的根》, 腾讯云开发者社区, 2026-06. https://cloud.tencent.com/developer/article/2684229</li>
+<li>Kili Technology. *Data Story: How MiniMax M3 Reversed Its Own Engineering Decision*, 2026-06-30（MSA 双分支、28.4×、109B 验证模型与许可信息）. https://kili-technology.com/blog/data-story-minimax-m3</li>
+<li>MiniMax. *MiniMax M3* 官方模型页与博客. https://www.minimax.io/blog/minimax-m3</li>
+<li>Artificial Analysis. *MiniMax-M3*（智能指数 55、AA-Omniscience 尝试率等第三方评测）. https://artificialanalysis.ai/models/minimax-m3</li>
+<li>七牛云.《Kimi K3.1 Pro vs DeepSeek V4.1 Flash：2026 年国产旗舰如何选？》, 2026-10-28（CED 架构与产业动态，第三方）. https://news.qiniu.com/archives/1793156564314</li>
+</ol>
+
+<blockquote>说明：正文称「43 篇 arXiv」指 A–E 组核心技术论文（第 1–43 条）；F 组另含 2 篇综述与 2 篇评测（第 44–47 条），G 组为 8 条官方/二手信源（第 48–55 条）。全部 arXiv 编号经官方 API 核实。</blockquote>
+<div class="footer">稀疏注意力前沿技术报告 · 2026-11-02 · 所有 arXiv 编号经官方 API 逐一核实 · 图表为手工暗色 SVG</div>
+</div></body></html>
