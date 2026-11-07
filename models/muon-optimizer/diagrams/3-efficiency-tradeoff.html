@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · 两种效率的权衡</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1240 860" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="1240" height="860" fill="#0d1117"/>
+  <text x="50" y="48" fill="#e6edf3" font-size="24" font-weight="700">图 3 · Muon 的「两种效率」必须分开看：token/FLOPs 效率 ≠ wall-clock 效率</text>
+  <text x="50" y="76" fill="#8b949e" font-size="13">每步省下的训练 FLOPs，可能被更贵的优化器步吃掉；净收益取决于 NS 暴露时间占比与系统优化程度</text>
+
+  <!-- Left: the good news -->
+  <rect x="50" y="110" width="555" height="300" rx="12" fill="#0f1a12" stroke="#3fb950" stroke-width="1.6"/>
+  <text x="75" y="146" fill="#3fb950" font-size="17" font-weight="700">① Token / FLOPs 效率：明确占优</text>
+
+  <text x="75" y="190" fill="#e6edf3" font-size="15">达到同等 loss，Muon 只需 AdamW 约</text>
+  <text x="430" y="196" fill="#3fb950" font-size="34" font-weight="800">52%</text>
+  <text x="515" y="190" fill="#e6edf3" font-size="15">FLOPs</text>
+  <text x="75" y="222" fill="#8b949e" font-size="12.5">Moonlight 缩放定律（compute-optimal，399M–1.5B 拟合）</text>
+
+  <!-- simple bars -->
+  <text x="75" y="266" fill="#e6edf3" font-size="13">达到目标 loss 所需相对训练 FLOPs：</text>
+  <rect x="75" y="282" width="420" height="30" fill="#58a6ff" opacity="0.55"/>
+  <text x="85" y="303" fill="#0d1117" font-size="14" font-weight="700">AdamW = 100%</text>
+  <rect x="75" y="322" width="218" height="30" fill="#3fb950" opacity="0.8"/>
+  <text x="85" y="343" fill="#0d1117" font-size="14" font-weight="700">Muon ≈ 52%</text>
+  <text x="75" y="382" fill="#3fb950" font-size="12.5">数学 / 代码、MoE 路由器等方向收益最明显</text>
+
+  <!-- Right: the caveat -->
+  <rect x="635" y="110" width="555" height="300" rx="12" fill="#1c1213" stroke="#f85149" stroke-width="1.6"/>
+  <text x="660" y="146" fill="#f85149" font-size="17" font-weight="700">② 单步 wall-clock：优化器步更贵</text>
+
+  <text x="660" y="186" fill="#e6edf3" font-size="13">7B 模型 · 4× GH200，优化器步相对 AdamW 的耗时：</text>
+  <!-- bars vertical -->
+  <text x="700" y="380" fill="#e6edf3" font-size="13" text-anchor="middle">AdamW</text>
+  <rect x="675" y="360" width="50" height="14" fill="#8b949e"/>
+  <text x="700" y="352" fill="#8b949e" font-size="11" text-anchor="middle">1×</text>
+
+  <text x="830" y="380" fill="#e6edf3" font-size="13" text-anchor="middle">标准 Muon</text>
+  <rect x="805" y="216" width="50" height="158" fill="#f85149" opacity="0.8"/>
+  <text x="830" y="208" fill="#f85149" font-size="12" text-anchor="middle" font-weight="700">≈26×</text>
+
+  <text x="960" y="380" fill="#e6edf3" font-size="13" text-anchor="middle">Dion3</text>
+  <rect x="935" y="336" width="50" height="38" fill="#d29922" opacity="0.85"/>
+  <text x="960" y="328" fill="#d29922" font-size="12" text-anchor="middle" font-weight="700">≈4×</text>
+
+  <text x="660" y="398" fill="#8b949e" font-size="11.5">Newton–Schulz 立方复杂度 + 分片额外通信</text>
+  <text x="1030" y="250" fill="#3fb950" font-size="11.5">Gram NS</text>
+  <text x="1030" y="272" fill="#3fb950" font-size="11.5">对称 kernel</text>
+  <text x="1030" y="294" fill="#3fb950" font-size="11.5">行/列子采样</text>
+  <text x="1030" y="316" fill="#3fb950" font-size="11.5">megabatching</text>
+
+  <!-- Decisive variable -->
+  <rect x="50" y="440" width="1140" height="180" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.4"/>
+  <text x="75" y="476" fill="#58a6ff" font-size="16" font-weight="700">决定净收益的变量：Newton–Schulz 暴露时间占总训练时间的比例</text>
+
+  <!-- K2 case -->
+  <rect x="80" y="500" width="520" height="92" rx="10" fill="#0f1a12" stroke="#3fb950" stroke-width="1.2"/>
+  <text x="100" y="530" fill="#3fb950" font-size="14" font-weight="700">Kimi K2（超大规模预训练）</text>
+  <text x="100" y="560" fill="#e6edf3" font-size="14">NS 暴露时间 ≈ 总训练时间</text>
+  <text x="360" y="566" fill="#3fb950" font-size="26" font-weight="800">2%</text>
+  <text x="100" y="583" fill="#8b949e" font-size="11.5">前向/反向主导 → token 效率几乎直接转化为净收益</text>
+
+  <!-- Llama SFT case -->
+  <rect x="640" y="500" width="520" height="92" rx="10" fill="#1c1213" stroke="#f85149" stroke-width="1.2"/>
+  <text x="660" y="530" fill="#f85149" font-size="14" font-weight="700">Llama3-70B SFT（小样本后训练）</text>
+  <text x="660" y="560" fill="#e6edf3" font-size="14">NS 暴露时间 ≈</text>
+  <text x="900" y="566" fill="#f85149" font-size="26" font-weight="800">17%</text>
+  <text x="660" y="583" fill="#8b949e" font-size="11.5">步多、序列短、batch 小 → wall-clock 代价显著，需 Dion3 类优化</text>
+
+  <text x="50" y="670" fill="#e6edf3" font-size="14" font-weight="700">实践结论</text>
+  <text x="50" y="700" fill="#3fb950" font-size="13">· 大规模 / 长序列 / 前向反向主导的预训练：Muon 的 2× token 效率大概率是净赚。</text>
+  <text x="50" y="728" fill="#d29922" font-size="13">· 小 batch / 短序列 / 多优化器步的 SFT、小模型 RL：先测 NS 暴露占比，再决定是否上 Muon 或其高效变体。</text>
+  <text x="50" y="756" fill="#8b949e" font-size="13">· 宣称「Muon 更快」时必须注明口径：是每 token/FLOPs，还是端到端 wall-clock；二者结论可以相反。</text>
+  <text x="50" y="790" fill="#8b949e" font-size="12.5">数据来源：Moonlight（arXiv:2502.16982）、Dion3（arXiv:2608.11612）、Practical Efficiency（arXiv:2505.02222）。</text>
+</svg>
+</body></html>

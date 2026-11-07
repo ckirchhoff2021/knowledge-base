@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **30 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **31 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -69,6 +69,12 @@
 当提示成为可学习的程序：语言程序 Φ=⟨Π, Θ_frozen⟩ 形式化、三代谱系（APE/OPRO→EvoPrompt/Promptbreeder/TextGrad→GEPA）、反思变异 + 实例级 Pareto 选择 + System-aware Merge，六任务平均胜 GRPO 6%、rollout 省 35×，以及 2026 改进/应用/诊断/替代四路线跟进与提示级过拟合治理。
 
 📅 2026-10-28 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](reflective-prompt-evolution/report.md)
+
+### [Muon 优化器：矩阵正交化](https://ckirchhoff2021.github.io/knowledge-base/models/muon-optimizer/report.html)
+
+「后 Adam」优化器方向：把权重矩阵的动量做极分解正交化（奇异值谱拉平为满数值秩），用 Newton–Schulz 5 次迭代廉价近似。Moonlight 论文补入解耦 weight decay 与 consistent update RMS 两个规模化关键，缩放定律测得 Muon 达到 AdamW 同等性能仅需约 52% FLOPs（约 2× 算力效率）；万亿参数 Kimi K2 用 MuonClip（QK-Clip，τ=100）约束注意力 logits，15.5T tokens 零 loss spike。报告还梳理 NorMuon/Dion3/Hierarchical/Turbo-Muon/Muon^p 等百变体、收敛性反例，并严格区分 token/FLOPs 效率与 wall-clock 效率（标准 Muon 优化器步可达 26× AdamW）。
+
+📅 2026-11-26 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](muon-optimizer/report.md)
 
 ---
 
