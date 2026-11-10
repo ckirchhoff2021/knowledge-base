@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图4 · RSI 双循环与治理门禁</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1240 880" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8b949e"/>
+    </marker>
+    <marker id="ok" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#3fb950"/>
+    </marker>
+    <marker id="no" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#f85149"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1240" height="880" fill="#0d1117"/>
+  <text x="50" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 4 · RSI 双循环：内层改能力、外层改过程，治理层决定保留与否</text>
+  <text x="50" y="74" fill="#8b949e" font-size="13">经验只有改变了「产生能力的过程」才构成递归；每一代被接受的系统接管下一轮（L0–L3）</text>
+
+  <!-- OUTER LOOP panel -->
+  <rect x="40" y="100" width="700" height="340" rx="14" fill="none" stroke="#bc8cff" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="60" y="128" fill="#bc8cff" font-size="16" font-weight="700">外层循环 · Improver —— 修订「产生能力的过程」</text>
+
+  <rect x="70" y="150" width="190" height="80" rx="10" fill="#241b30" stroke="#bc8cff"/>
+  <text x="88" y="178" fill="#e6edf3" font-size="13.5" font-weight="700">课程 / 研究程序</text>
+  <text x="88" y="202" fill="#8b949e" font-size="11.5">选方向 · 并行研究线</text>
+  <text x="88" y="220" fill="#8b949e" font-size="11.5">Director / Selector</text>
+
+  <rect x="300" y="150" width="190" height="80" rx="10" fill="#241b30" stroke="#bc8cff"/>
+  <text x="318" y="178" fill="#e6edf3" font-size="13.5" font-weight="700">奖励 / 验证器</text>
+  <text x="318" y="202" fill="#8b949e" font-size="11.5">Evaluator / Reviewer</text>
+  <text x="318" y="220" fill="#8b949e" font-size="11.5">防评测漏洞</text>
+
+  <rect x="530" y="150" width="190" height="80" rx="10" fill="#241b30" stroke="#bc8cff"/>
+  <text x="548" y="178" fill="#e6edf3" font-size="13.5" font-weight="700">Harness 资产</text>
+  <text x="548" y="202" fill="#8b949e" font-size="11.5">工具 / 提示 / 控制环</text>
+  <text x="548" y="220" fill="#8b949e" font-size="11.5">代码化可热重载</text>
+
+  <!-- INNER LOOP panel -->
+  <rect x="40" y="250" width="700" height="180" rx="14" fill="none" stroke="#58a6ff" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="60" y="278" fill="#58a6ff" font-size="16" font-weight="700">内层循环 · Learner —— 更新能力</text>
+
+  <rect x="70" y="296" width="150" height="110" rx="10" fill="#11202c" stroke="#58a6ff"/>
+  <text x="88" y="324" fill="#e6edf3" font-size="13" font-weight="700">策略 / 模型</text>
+  <text x="88" y="348" fill="#8b949e" font-size="11">权重编辑</text>
+  <text x="88" y="368" fill="#8b949e" font-size="11">WSP 局部修复</text>
+  <text x="88" y="392" fill="#d29922" font-size="11">OPSD 自蒸馏</text>
+
+  <rect x="240" y="296" width="150" height="110" rx="10" fill="#11202c" stroke="#58a6ff"/>
+  <text x="258" y="324" fill="#e6edf3" font-size="13" font-weight="700">记忆 / 技能库</text>
+  <text x="258" y="348" fill="#8b949e" font-size="11">追加 · 取代</text>
+  <text x="258" y="368" fill="#8b949e" font-size="11">知识库沉淀</text>
+  <text x="258" y="392" fill="#8b949e" font-size="11">经验与反思</text>
+
+  <rect x="410" y="296" width="150" height="110" rx="10" fill="#11202c" stroke="#58a6ff"/>
+  <text x="428" y="324" fill="#e6edf3" font-size="13" font-weight="700">任务执行</text>
+  <text x="428" y="348" fill="#8b949e" font-size="11">环境交互</text>
+  <text x="428" y="368" fill="#8b949e" font-size="11">收集结果</text>
+  <text x="428" y="392" fill="#8b949e" font-size="11">识别差异</text>
+
+  <rect x="580" y="296" width="140" height="110" rx="10" fill="#11202c" stroke="#58a6ff"/>
+  <text x="596" y="324" fill="#e6edf3" font-size="13" font-weight="700">候选改进</text>
+  <text x="596" y="348" fill="#8b949e" font-size="11">Executor 生成</text>
+  <text x="596" y="368" fill="#8b949e" font-size="11">新版本 / 补丁</text>
+  <text x="596" y="392" fill="#8b949e" font-size="11">送验证</text>
+
+  <!-- feedback arrows -->
+  <path d="M650 406 C700 406, 700 190, 724 190" fill="none" stroke="#bc8cff" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="690" y="300" fill="#bc8cff" font-size="10.5" transform="rotate(90 690 300)">结果反哺过程</text>
+
+  <!-- GOVERNANCE column -->
+  <rect x="780" y="100" width="420" height="560" rx="14" fill="#161b22" stroke="#f85149" stroke-width="2"/>
+  <text x="802" y="130" fill="#f85149" font-size="16" font-weight="700">治理层 · 保留门禁（Governance Gates）</text>
+
+  <rect x="802" y="150" width="376" height="64" rx="9" fill="#1c2330" stroke="#30363d"/>
+  <text x="818" y="176" fill="#e6edf3" font-size="13" font-weight="700">① 独立冻结验证器</text>
+  <text x="818" y="198" fill="#8b949e" font-size="11.5">隐藏测试 + 独立 oracle；仅当严格不劣于在任版本</text>
+
+  <rect x="802" y="226" width="376" height="64" rx="9" fill="#1c2330" stroke="#30363d"/>
+  <text x="818" y="252" fill="#e6edf3" font-size="13" font-weight="700">② 跨模型族 Critic</text>
+  <text x="818" y="274" fill="#8b949e" font-size="11.5">筛查 benchmark gaming（只骗过评测的补丁）</text>
+
+  <rect x="802" y="302" width="376" height="64" rx="9" fill="#1c2330" stroke="#30363d"/>
+  <text x="818" y="328" fill="#e6edf3" font-size="13" font-weight="700">③ 证据盲化 + 独立复核</text>
+  <text x="818" y="350" fill="#8b949e" font-size="11.5">失败判定与修复审核对输出盲化</text>
+
+  <rect x="802" y="378" width="376" height="64" rx="9" fill="#1c2330" stroke="#30363d"/>
+  <text x="818" y="404" fill="#e6edf3" font-size="13" font-weight="700">④ 权限守恒 + 可回滚</text>
+  <text x="818" y="426" fill="#8b949e" font-size="11.5">唯一父代 / 完整谱系；原子切换；回滚不重铸权限</text>
+
+  <rect x="802" y="454" width="376" height="64" rx="9" fill="#2d1418" stroke="#f85149"/>
+  <text x="818" y="480" fill="#f85149" font-size="13" font-weight="700">⑤ 人工发布批准</text>
+  <text x="818" y="502" fill="#8b949e" font-size="11.5">自动闭环仅限沙箱 / staging；生产必须人工放行</text>
+
+  <!-- decision diamond -->
+  <polygon points="990,540 1080,576 990,612 900,576" fill="#0d1117" stroke="#d29922" stroke-width="1.8"/>
+  <text x="962" y="572" fill="#d29922" font-size="12.5" font-weight="700">验证</text>
+  <text x="962" y="589" fill="#d29922" font-size="12.5" font-weight="700">通过?</text>
+
+  <!-- arrow from loops to governance -->
+  <path d="M720 350 L778 350" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- accept / reject outcomes -->
+  <rect x="60" y="700" width="520" height="120" rx="12" fill="#102016" stroke="#3fb950" stroke-width="1.8"/>
+  <text x="80" y="728" fill="#3fb950" font-size="14" font-weight="700">通过 → 接受并继承（Accept）</text>
+  <text x="80" y="756" fill="#e6edf3" font-size="12.5">新版本原子激活，成为下一代的改进主体</text>
+  <text x="80" y="780" fill="#8b949e" font-size="12">同时监控其他关键能力，防跨能力退化</text>
+  <text x="80" y="804" fill="#8b949e" font-size="12">例：GPQA 65.2→73.2；SimpleQA 82→85→88 [16]</text>
+
+  <rect x="620" y="700" width="560" height="120" rx="12" fill="#2a1416" stroke="#f85149" stroke-width="1.8"/>
+  <text x="640" y="728" fill="#f85149" font-size="14" font-weight="700">不通过 → 拒绝 / 保留原权重（Reject）</text>
+  <text x="640" y="756" fill="#e6edf3" font-size="12.5">候选无法可靠验证时宁可不改（WSP 16 轨迹中 6 条保留原权）</text>
+  <text x="640" y="780" fill="#8b949e" font-size="12">记录失败原因与诊断知识，供后续轮次参考</text>
+  <text x="640" y="804" fill="#8b949e" font-size="12">回滚产生新一代，而非恢复已消耗的权限</text>
+
+  <path d="M940 576 L600 696" fill="none" stroke="#3fb950" stroke-width="1.8" marker-end="url(#ok)"/>
+  <path d="M990 612 L900 696" fill="none" stroke="#f85149" stroke-width="1.8" marker-end="url(#no)"/>
+</svg>
+</body></html>

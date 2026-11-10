@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图3 · WSL 三维与权重对称群</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1240 840" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8b949e"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1240" height="840" fill="#0d1117"/>
+  <text x="50" y="46" fill="#e6edf3" font-size="24" font-weight="700">图 3 · 权重空间学习：三维任务 × 必须尊重的对称群</text>
+  <text x="50" y="74" fill="#8b949e" font-size="13">同一功能可由无穷组权重实现；元模型必须对神经元置换 / 注意力 GL 对称 / 头置换等变</text>
+
+  <!-- three dimensions -->
+  <rect x="50" y="110" width="360" height="200" rx="12" fill="#101f18" stroke="#3fb950" stroke-width="1.8"/>
+  <text x="72" y="142" fill="#3fb950" font-size="17" font-weight="700">WSU · 理解</text>
+  <text x="72" y="170" fill="#e6edf3" font-size="12.5">权重的几何与对称性</text>
+  <text x="72" y="196" fill="#8b949e" font-size="12">· 模型在权重空间如何组织</text>
+  <text x="72" y="220" fill="#8b949e" font-size="12">· 模型动物园 / 余弦相似</text>
+  <text x="72" y="244" fill="#8b949e" font-size="12">· 留一混合 / 方差分解</text>
+  <text x="72" y="278" fill="#d29922" font-size="11.5">代表：LLM Zoo [8]</text>
+
+  <rect x="440" y="110" width="360" height="200" rx="12" fill="#0f1a24" stroke="#58a6ff" stroke-width="1.8"/>
+  <text x="462" y="142" fill="#58a6ff" font-size="17" font-weight="700">WSR · 表征</text>
+  <text x="462" y="170" fill="#e6edf3" font-size="12.5">学习网络权重的嵌入</text>
+  <text x="462" y="196" fill="#8b949e" font-size="12">· 图元网络（对称等变）</text>
+  <text x="462" y="220" fill="#8b949e" font-size="12">· interface / module 类型图</text>
+  <text x="462" y="244" fill="#8b949e" font-size="12">· 跨架构单一编码器 UWE</text>
+  <text x="462" y="278" fill="#d29922" font-size="11.5">代表：Graph MetaNet [10] / UWE [11]</text>
+
+  <rect x="830" y="110" width="360" height="200" rx="12" fill="#241b30" stroke="#bc8cff" stroke-width="1.8"/>
+  <text x="852" y="142" fill="#bc8cff" font-size="17" font-weight="700">WSG · 生成</text>
+  <text x="852" y="170" fill="#e6edf3" font-size="12.5">合成新的权重</text>
+  <text x="852" y="196" fill="#8b949e" font-size="12">· 超网络生成权重</text>
+  <text x="852" y="220" fill="#8b949e" font-size="12">· 数据条件流匹配生成完整 LLM</text>
+  <text x="852" y="244" fill="#8b949e" font-size="12">· 少样本迁移 / 无数据重构</text>
+  <text x="852" y="278" fill="#d29922" font-size="11.5">代表：Flow Matching [8] / HyperNet [33]</text>
+
+  <!-- symmetry group section -->
+  <text x="50" y="360" fill="#e6edf3" font-size="18" font-weight="700">核心难点：权重空间的对称群（功能不变、表示可变）</text>
+
+  <!-- MLP symmetry -->
+  <rect x="50" y="384" width="360" height="180" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="72" y="414" fill="#58a6ff" font-size="15" font-weight="700">MLP：神经元置换</text>
+  <text x="72" y="442" fill="#8b949e" font-size="12">交换两个隐藏神经元 → 权重数值变</text>
+  <text x="72" y="462" fill="#8b949e" font-size="12">但前向计算功能完全相同</text>
+  <!-- two neurons swap diagram -->
+  <circle cx="110" cy="500" r="16" fill="#11202c" stroke="#58a6ff"/>
+  <text x="103" y="505" fill="#58a6ff" font-size="13">1</text>
+  <circle cx="110" cy="540" r="16" fill="#11202c" stroke="#58a6ff"/>
+  <text x="103" y="545" fill="#58a6ff" font-size="13">2</text>
+  <path d="M150 500 h120 M150 540 h120" stroke="#30363d"/>
+  <path d="M270 500 l16 0 M270 540 l16 0" stroke="#8b949e" marker-end="url(#arr)"/>
+  <text x="200" y="492" fill="#3fb950" font-size="11">置换 π</text>
+  <text x="150" y="524" fill="#f85149" font-size="11">f(W) = f(π·W)</text>
+
+  <!-- Transformer symmetry -->
+  <rect x="440" y="384" width="360" height="180" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="462" y="414" fill="#bc8cff" font-size="15" font-weight="700">Transformer：更丰富的连续对称</text>
+  <text x="462" y="442" fill="#8b949e" font-size="12">· 注意力矩阵的一般线性（GL）对称</text>
+  <text x="462" y="466" fill="#8b949e" font-size="12">· 整个注意力头（head）的置换</text>
+  <text x="462" y="490" fill="#8b949e" font-size="12">· token embedding 需专门处理</text>
+  <text x="462" y="524" fill="#d29922" font-size="12">完整 decoder-only LM 的对称群</text>
+  <text x="462" y="552" fill="#3fb950" font-size="12">图构造对整个群不变 [10]</text>
+
+  <!-- solution -->
+  <rect x="830" y="384" width="360" height="180" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="852" y="414" fill="#3fb950" font-size="15" font-weight="700">解法：等变图编码</text>
+  <text x="852" y="442" fill="#8b949e" font-size="12">interface = 联合置换的坐标空间</text>
+  <text x="852" y="466" fill="#8b949e" font-size="12">module = 类型化超边（算子）</text>
+  <text x="852" y="490" fill="#8b949e" font-size="12">局部等变更新 + 全局不变注意力</text>
+  <text x="852" y="524" fill="#d29922" font-size="12">编译器从 PyTorch 自动导出</text>
+  <text x="852" y="552" fill="#3fb950" font-size="12">1200 网络 / 100 架构可扩展 [11]</text>
+
+  <!-- bottom note -->
+  <rect x="50" y="600" width="1140" height="180" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="72" y="632" fill="#e6edf3" font-size="15" font-weight="700">两个补充洞察</text>
+  <text x="72" y="664" fill="#e6edf3" font-size="13">① 行为信息率 R*：微调需写入多少 bit，取决于「数据集—接收者对」而非数据集本身 [12]</text>
+  <text x="92" y="690" fill="#8b949e" font-size="12">同一数据集在不同冻结基座上 R* 甚至重排；校正谱可在同一接收者内排序 R*</text>
+  <text x="72" y="720" fill="#e6edf3" font-size="13">② 压缩即去噪：污染数据训练的适配器压缩后反超基座（GSM8K 23.7%→82.9% vs 基座 77.6%）</text>
+  <text x="92" y="746" fill="#8b949e" font-size="12">损伤集中在适配器少数主导奇异方向，压缩恰好滤除；域外泛化也更好（难数学保留 97% vs 44%）</text>
+</svg>
+</body></html>

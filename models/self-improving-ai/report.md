@@ -1,0 +1,522 @@
+# 当 AI 开始改写自己：权重空间编程（WSP）与递归自我改进（RSI）前沿技术报告
+
+> 从「人用梯度下降训练模型」到「模型直接读写模型的权重、并递归地改进改进过程本身」
+
+> 关键词：Weight-Space Programming · Weight Space Learning · Recursive Self-Improvement · Self-Evolving Agents · Meta-Networks · Model Editing · Gödel Machine · Darwin Gödel Machine · Harness Optimization · Training-Free Adaptation
+
+---
+
+## TL;DR
+
+**一句话论点**：2025 年下半年到 2026 年 11 月，大模型领域出现一条可能改变「模型如何被生产」本身的前沿——**前沿推理模型开始把神经网络的权重当作一种可以直接阅读、诊断、手工编辑甚至从零书写的「程序」，并把这种能力接进「执行→反馈→改进→再改进」的递归闭环**；它被分别命名为**权重空间编程（Weight-Space Programming, WSP）**、**权重空间学习（Weight Space Learning, WSL）**与**递归自我改进（Recursive Self-Improvement, RSI）**。本报告论证：这是 2026-11 中文社区与全球论文同时引爆、而本知识库此前完全没有覆盖的新范式。
+
+1. **问题意识**：过去十年，「改变一个模型」几乎等价于一次**优化问题**——定义损失函数、采样数据、沿梯度反传更新权重。2026 年出现的新现象是：一个冻结的前沿 LLM（如 GPT-6 Astra、Claude Opus 5.5）在**没有梯度、没有训练循环、甚至没有数据**的条件下，仅凭把权重以纯文本读入，就能定位缺陷并直接改写少量参数，或从一份规格说明手工设定整个小网络的全部权重。
+2. **关键实证（作者口径，已核对一手摘要）**：在 16 条编辑轨迹、7 个基准上，WSP 仅修改 **1,023 个参数**即使 Qwen3.5-0.8B 的 MATH-500 提升 **29.45 个百分点**，GPQA Diamond / IFEval / SciBench 最多分别提升 4.42 / 36.72 / 17.11 分 [1]；在机器人基础策略 π0.5 上，编辑 **65 个 token-embedding 行**即使 765 条转述指令成功率从 86.3% 升到 92.0%（p=1.31×10⁻¹⁰）[6]；在临床决策小网络上盲审 18 个有缺陷网络、命名出 16 个出错规则，每处修复中位只改 **3 个参数** [5]。
+3. **但能力被显著高估**：同周发表的严格审计指出，所谓「读懂权重」更接近**网络边缘的局部算术 + 对公开数据集的记忆先验**，而非对权重流（weight-flow）的整体推理——把 CIFAR-10 标签置换后，模型对每一对类别的解读全部错误 [2]；另一项把「读权重」和「跑代码」严格分离的实验发现，**黑盒（只看预测）与白盒（看全部权重）审计效果一样好**，真正起作用的是计算与引导方式，而非权重访问本身 [3]。
+4. **RSI 是系统级的递归闭环**：与单点编辑不同，RSI 让系统不仅更新「能力」（策略、模型、记忆、技能），还更新「产生能力的过程」（课程、奖励、验证器、harness、研究程序本身），并由每一代被接受的系统接管下一轮改进。奠基系统 Darwin Gödel Machine 把 SWE-bench 从 20.0% 自动迭代到 50.0% [15]；RSI-Env 在无基准反馈下把 GPQA Diamond 从 65.2% 提到 73.2% [16]。
+5. **产业已经进场**：2026-11-09 百度文心首次披露自动研究系统 **ERNIE Evolve**，采用 Director/Selector/Executor/Evaluator/Reviewer 五智能体双层循环，已用于文心 5.5 Flash 的推理优化，在昆仑芯 P800 低时延场景把生成速度提升至基线的 **623.6%**（厂商口径）[51][52]；OpenAI、Anthropic、腾讯、智谱等均被点名在布局 RSI。
+6. **终态判断**：WSP 目前只在**小网络 / 高度局部化的缺陷**上可靠，且无法「证明网络正确」；RSI 的收益在跨能力、跨代际时仍容易丢失。主流收敛形态不是「放任模型自我改写」，而是**「廉价门控 + 昂贵执行器」「独立验证器 + 硬性保留门禁 + 人工发布批准」的受治理自我改进（governed self-improvement）**。本报告基于 **53 篇参考文献**（其中 40+ 篇 arXiv 编号、2 篇 Nature DOI 均经 export.arxiv.org / Crossref 逐一核实），系统梳理源流、概念边界、机制、审计怀疑论、系统谱系、产业落地与安全治理，并给出工程 Checklist。
+
+> **热度佐证**：2026-11 第一周，arXiv 仅标题/摘要涉及 "weight-space programming" 与 "recursive self-improvement" 的新论文即各有十余篇；知乎专栏出现《一天造 300 万个沙盒，10 万张卡自己写系统：2026 年国产 RSI 到底有多野？》《RSI 当前进展梳理》等专题；IT之家、量子位、36 氪 11 月密集报道。需要提醒：**部分二手报道把相关论文误标为「MIT CSAIL」，经核对一手项目页，WSP-Scope 一文的实际署名机构为上海人工智能实验室、同济大学、复旦大学（详见第 9.4 节证据审计）**，本报告一切以一手元数据为准。
+
+## 目录
+
+1. 为什么是现在：从「训练模型」到「模型被模型改写」
+2. 概念地图：WSP / WSL / RSI 的定义与五条边界
+3. 思想源流（2003–2026）：从哥德尔机到手写权重
+4. 权重空间学习（WSL）：把权重当作「数据」
+5. 权重空间编程（WSP）：LLM 直接读写权重的六大实证
+6. 「读权重」怀疑论：2026-11 的能力审计与方法论
+7. 递归自我改进（RSI）：系统级双循环与谱系
+8. 产业落地：以百度 ERNIE Evolve 为样本
+9. 安全、治理与「该不该启动 RSI」
+10. 评测体系与开放问题
+11. 工程落地 Checklist
+12. 结语
+- 参考文献
+
+---
+
+## 1. 为什么是现在：从「训练模型」到「模型被模型改写」
+
+### 1.1 一个被默认了十年的前提正在松动
+
+现代深度学习有一条近乎不言自明的工作分工：**人（或人写的训练脚本）是改变模型的主体，梯度下降是改变模型的手段**。要让一个神经网络变好，你需要三样东西——一个可微的损失函数、一批数据、一条反向传播链。模型本身是被动的「被优化对象」。
+
+2026 年出现的新现象挑战的正是这条分工。多个独立团队报告：当前最强的一批推理模型（GPT-6 Astra、Claude Opus 5.5 等）展现出一种此前只存在于理论中的能力——
+
+- **读（read）**：把一个神经网络的全部权重以纯文本形式喂给模型，不提供任何工具、前向传播、数据集名称，模型能推断出这个网络训练在什么数据上、被优化了几步、哪一层存在缺陷；
+- **写/编辑（write/edit）**：模型直接输出对权重张量的修改（往往只动极少量参数），在没有梯度更新的情况下修复缺陷、提升基准成绩；
+- **从零书写（program from scratch）**：模型仅凭一份「期望计算」的规格说明，手工设定一个前馈网络的**每一个权重**，全程没有训练数据、没有梯度下降；
+- **递归（recurse）**：把上述能力接进闭环，让每一代被验证更好的系统去修改自己的代码、harness 乃至「改进算法本身」，下一代继续改进。
+
+这套能力的激进之处在于：它把「改模型」从一个**数值优化问题**，变成一种由 LLM 执行的、符号化的**「编程」行为**。权重不再只是训练的终点产物，而成为一种可以被阅读和书写的源代码。
+
+### 1.2 三个标志性节点
+
+- **2025-05-29，Darwin Gödel Machine（DGM）[15]**：Sakana AI 等把 2003 年 Schmidhuber 的「哥德尔机」思想工程化。系统维护一个不断生长的「编码智能体档案库」，迭代地修改自己的代码（从而也改进「修改代码」的能力），并用编码基准对每一次改动做经验验证。SWE-bench 从 20.0% 自动演化到 50.0%。这是「自我改进」从理论走向可运行系统的转折点。
+- **2026 年，权重空间学习的理论与表征成熟 [9][10][11]**：综述首次把「把权重当数据」统一为 Weight Space Learning，提出理解（WSU）/表征（WSR）/生成（WSG）三维分类；图元网络（graph metanetworks）解决了 Transformer 权重更丰富的对称群问题；跨架构通用权重编码器（UWE）在 1,200 个 Transformer、100 种架构上实现可扩展的权重理解。
+- **2026-11 第一周，WSP 与 RSI 论文同时爆发 [1][2][3][4][5][6][7]**：仅一周内，WSP-Scope 给出 16 轨迹系统研究、游戏阶梯给出零样本能力天花板、临床/机器人团队给出领域修复实证，而两篇严格审计同周对「读权重」能力提出系统性质疑——**能力主张与怀疑论几乎同时成熟，正是一个方向值得严肃对待的标志**。
+
+### 1.3 热度证据：知乎、媒体与 arXiv 的三重共振
+
+- **arXiv 论文密度**：以 2026-11-01 至 11-07 一周计，标题或摘要明确涉及 weight-space programming 的新论文至少 7 篇（2611.05341 / 06598 / 07103 / 07319 / 08070 / 09271 / 09376 / 09382 / 09559），涉及 recursive self-improvement 的新论文十余篇（2611.01736 / 02839 / 04035 / 06049 / 06321 / 07469 / 08946 / 09318 / 09218 / 00463 / 10261 等）。
+- **中文社区**：知乎热榜的大众条目仍以社会/娱乐话题为主（2026-11-10 镜像榜单上 AI 直接相关的多为英伟达股价、GPU 盗窃案、AI 内容「塑料感」等），但**技术圈的热度集中在知乎专栏长文**，如《迈向长程智能体：Long-Horizon Agent 综述》《一天造 300 万个沙盒，10 万张卡自己写系统：2026 年国产 RSI 到底有多野？》《RSI 当前进展梳理（2026-06→10）》。
+- **媒体与产业**：IT之家 2026-11-09 报道百度 ERNIE Evolve；量子位 11 月初报道「GPT-6 Astra 直接修改 Qwen 权重」；36 氪刊出《当 AI 开始造 AI：递归自我改进的 2026 年》。腾讯云开发者社区《2026 年 5 月 AI 论文盘点》已将「推理内化 / Agent 爆发」列为当月主线 [53]。
+
+> ![](diagrams/1-concept-map.html)
+> **图 1 · 概念地图**：WSL（把权重当数据的学术领域）是底座；WSP（LLM 直接读写/手写权重）是其最激进的能力形态；RSI（递归改进能力与改进过程本身）是把 WSP/WSL 接进系统级闭环后的产物。
+
+## 2. 概念地图：WSP / WSL / RSI 的定义与五条边界
+
+### 2.1 三个核心术语
+
+| 术语 | 定义（据一手论文） | 改变对象 | 是否需要梯度/数据 |
+|---|---|---|---|
+| **Weight Space Learning（WSL）** | 把神经网络权重的全体可能取值（weight space）视为一个有结构、含对称性、可嵌入/比较/生成的领域来建模 [9] | 用「元模型」处理一批网络的权重 | 元模型本身通常仍需训练 |
+| **Weight-Space Programming（WSP）** | 由推理智能体直接**检查并修改**（或从规格**手工设定全部**）网络参数，作为梯度式适应的替代 [1][4] | 目标网络的权重 | **不需要**梯度下降；可无数据、无前向传播 |
+| **Recursive Self-Improvement（RSI）** | AI 系统设计并产生更好的 AI 系统、后者再设计更好的系统，循环往复；改进不仅作用于能力，还作用于产生能力的过程 [24][23] | 模型 + harness + 改进程序 | 可含训练，也可纯符号编辑；关键在「递归」 |
+
+三者关系是嵌套而非并列：**WSL 是最宽的学术范畴，WSP 是 WSL 中「由 LLM 直接操作权重」的一种实践，RSI 则是把任何自我修改能力（含 WSP、harness 编辑、经验沉淀）组织成代际递归闭环的系统范式。**
+
+### 2.2 与相邻概念的边界
+
+- **vs 微调（Fine-Tuning）/ LoRA**：微调是在数据上用优化算法更新权重，目标是统计意义上的拟合；WSP 是模型对权重做**符号化、可解释、有界的手工编辑**，一次改动往往对应一条明确诊断。一个很有说明性的对照是临床审计实验：用协议标注数据微调也能修复每个网络，但「几乎改动了每一个参数」，而 WSP 每处中位只改 3 个参数 [5]。
+- **vs 知识编辑（Knowledge Editing，ROME/MEMIT）[37][38]**：经典知识编辑仍依赖一套**基于因果追踪的定位算法 + 闭式更新公式**，需要人先推导编辑规则；WSP 试图让 LLM **自己完成定位与修复的推理**，不预设编辑公式。前者是「人设计的编辑算子」，后者是「模型执行的编辑行为」。
+- **vs 提示工程 / 上下文工程**：提示与上下文工程改变的是**输入**（窗口里的 token），模型权重不变；WSP 改变的是**权重本身**。本知识库《上下文工程》报告管理 token 全生命周期，与本方向正交。
+- **vs Agentic RL / 强化学习**：RL 需要奖励信号与梯度反传，优化的是一条参数化策略；WSP 可以完全无梯度，RSI 则可能包含 RL，但本质特征是「被改进的系统接管改进过程」。
+- **vs 自我改进式 prompting（Self-Refine / Reflexion / Promptbreeder）[40][41][43]**：这些方法在**文本/程序空间**里迭代，权重始终冻结；WSP 第一次把迭代对象推进到**数值权重空间**。
+
+### 2.3 三条技术能力轴
+
+无论 WSP 还是 RSI，都可以沿三条轴分解：
+
+1. **读（Weight Reading / Understanding）**：从权重推断功能、数据、缺陷——对应 WSL 中的 WSU/WSR。
+2. **写（Weight Editing / Generation）**：从局部编辑到从零生成整个权重集合——对应 WSG。
+3. **递归（Recursion / Process Improvement）**：让改进作用于「改进过程」本身并跨代积累——RSI 的独有维度。
+
+> 一个贯穿全篇的判断也从这三条轴导出：**目前「写」的局部修复能力比「读」的整体理解能力更被实证支持，而「递归」的收益最容易在跨代际时丢失。** 第 6 章将专门处理「读」的怀疑论。
+
+### 2.4 与本知识库已有报告的去重分界线
+
+本知识库 models 分类已有 31 个话题，本报告与它们的边界如下：
+
+- **《Test-Time Scaling》《大模型推理优化》**：回答「推理时如何分配算力 / 如何降低成本」，优化对象是推理过程与系统；本报告回答「谁来改变模型、能否不靠梯度直接改权重」。
+- **《Agent Harness》《上下文工程》《主动式 Agent》**：聚焦 harness、token 生命周期与干预时机，权重默认不变；本报告把「harness 自身被递归改写」作为 RSI 的一个核心组件，但视角是模型/权重的自我修改。
+- **《Agentic RL》《大模型强化学习算法》《Muon 优化器》**：仍在「梯度 + 优化器」范式内；WSP 的标志性特征恰恰是**无梯度**。
+- **《合成数据》《反思式提示进化 GEPA》**：在数据层与语言程序层改进；本报告进入权重层。
+- **《AI Scientist》**：编排科研流程，产物是论文/实验；本报告的 RSI 产物是「更好的、可继承的模型系统本身」。
+
+知识库里没有任何一篇以「权重作为可被 LLM 直接读写的对象 / 递归自我改进」为主题，故不构成重复。
+
+## 3. 思想源流（2003–2026）：从哥德尔机到手写权重
+
+自我改进并非 2026 年凭空出现。理解它需要三条原本分离的思想脉络在 2025–2026 年合流。
+
+> ![](diagrams/2-timeline.html)
+> **图 2 · 三脉合流时间线**：理论脉（哥德尔机）、学习科学脉（学习如何学习 / 超网络 / MAML）、权重科学脉（知识编辑 / 权重空间学习）最终在 Darwin Gödel Machine 与 WSP 处汇合。
+
+### 3.1 理论脉：哥德尔机与「可证明有益的自我改写」
+
+- **Gödel Machine（Schmidhuber, 2003）[35]**：最早形式化「自我指涉、可证明最优地自我改进」的通用问题求解器。它不断搜索对自身代码（含证明搜索策略本身）的修改，**只有当它能形式化证明新代码在期望效用上更优时才接受**。其思想高度优雅，但致命弱点是：实践中几乎不可能对大多数改动证明「净有益」。这正是后来 Darwin Gödel Machine 用「经验验证」替代「形式化证明」的原因 [15]。
+- **RSI 概念的长期抽象性**：正如 Conitzer 在《Is Recursive Self-Improvement Safe?》中指出，RSI「长期以来一直是抽象、未来主义的概念——直到最近」；当前前沿模型在编程、数学、研究、工具使用与长时程连贯工作上的一组能力，才让它第一次显得可行 [24]。
+
+### 3.2 学习科学脉：学习如何学习、超网络与元学习
+
+- **HyperNetworks（Ha, Dai, Le, 2016）[33]**：用一个网络（超网络）为另一个网络生成权重，最早系统性地把「权重当作另一个模型的输出」。
+- **Learning to learn by gradient descent by gradient descent（Andrychowicz et al., 2016）[34]**：让一个学习器学习优化算法本身——「改进过程」第一次成为可学习对象，是 RSI 中「改进改进器」思想的先声。
+- **MAML（Finn et al., 2017）[32]**：模型无关的元学习，学习一个「易于快速适应」的初始化，把适应本身压缩为少数几步。
+- **Voyager（Wang et al., 2023）[36]**：在开放世界中以「技能库 + 自动课程 + 迭代提示」实现开放式探索，展示了 Agent 自动积累可复用能力的形态。
+
+这条脉络提供了 RSI 的两大核心机制原型：**权重由模型生成**（超网络）与**学习过程本身可学习**（元学习）。
+
+### 3.3 权重科学脉：知识编辑与权重空间学习
+
+- **ROME（Meng et al., 2022）[37]**：定位并编辑 GPT 中的事实关联，揭示了知识在 MLP 层的局部可编辑性。
+- **MEMIT（Meng et al., 2022）[38]**：把直接编辑扩展到大规模、多条目记忆修改。
+- **STaR（Zelikman et al., 2022）[39]**：用「推理引导推理」的自举，让模型从自身正确的推理轨迹中学习，是「自我改进训练」的早期闭环。
+- **Weight Space Learning 综述（2026-03）[9]**：正式把权重空间确立为一个有结构的研究对象（详见第 4 章）。
+
+### 3.4 LLM 时代的自我改进文本派（权重冻结）
+
+2023–2024 年，一批方法在**不触碰权重**的前提下实现了「自我改进」，它们是 WSP 的直接前导，也划定了 WSP 的突破点：
+
+- **Reflexion（Shinn et al., 2023）[41]**：用自然语言的自我反思作为「言语强化」，跨回合改进。
+- **Self-Refine（Madaan et al., 2023）[40]**：同一模型对自己的输出反复反馈与修改。
+- **Promptbreeder（Fernando et al., 2023）[43]**：自我指涉的提示进化，连「进化提示的提示」也一起进化——这是文本空间里最接近哥德尔机递归结构的工作。
+- **TextGrad（Yuksekgonul et al., 2024）[42]**：用自然语言反馈实现自动「微分」，把分析性批评当作梯度。
+- **FunSearch（Romera-Paredes et al., Nature 2024）[31]**：以 LLM 提议程序、自动评估打分、进化搜索的方式发现新数学结果（cap set、在线装箱等），首次让 LLM 在可验证问题上发现「人类未知」的新构造。
+- **AlphaEvolve（DeepMind, 2025）[29]**：面向科学与算法发现的编码智能体，把进化式程序搜索用于矩阵乘法等真实科学问题，改进了矩阵乘法指数等经典结果 [30]。
+
+**从这张谱系可以精确定位 WSP 的历史位置：Reflexion/Promptbreeder/TextGrad 在文本与程序空间自我改进，超网络在权重空间由「专用小模型」生成权重；WSP 第一次让一个通用前沿 LLM 直接在权重空间里完成「读懂—诊断—编辑/书写」的完整闭环。**
+
+## 4. 权重空间学习（WSL）：把权重当作「数据」
+
+### 4.1 为什么权重空间难以处理
+
+把权重当作数据面临两个深层困难：
+
+1. **对称性（symmetry）**：同一功能可由无穷多组权重实现。对一个网络做神经元置换（neuron permutation），计算功能完全不变，但权重的数值表示完全改变。一个「读懂权重」的元模型必须对这些对称变换**等变/不变**，否则它学到的是数值坐标的偶然排列，而非功能。
+2. **规模与异构（scale & heterogeneity）**：现代网络权重动辄数十亿；不同深度、宽度、架构的网络张量形状各异，难以用一个固定编码器处理。
+
+### 4.2 WSL 三维分类学
+
+2026-03 的综述 [9] 给出首个统一分类：
+
+- **Weight Space Understanding（WSU，理解）**：研究权重的几何与对称性，如不同模型在权重空间如何组织、相似性如何度量。
+- **Weight Space Representation（WSR，表征）**：学习网络权重的嵌入（embedding），使功能相近的模型在嵌入空间相近，支持模型检索、聚类、比较。
+- **Weight Space Generation（WSG，生成）**：通过超网络或生成模型合成新权重，用于少样本迁移、架构搜索、无数据重构。
+
+### 4.3 对称性建模：从 MLP 到 Transformer
+
+- **图元网络（Graph Metanetworks, 2026-10）[10]**：指出现有等变元网络多针对 MLP，而 **Transformer 的权重空间具有更丰富的对称群**——除神经元置换外，注意力矩阵还具有连续的一般线性（general-linear）对称性，以及整个注意力头（head）的置换对称性；token embedding 等语言模型特有组件也需处理。该工作形式化了完整 decoder-only 语言模型的权重对称群，并给出对其不变的图构造，在「训练语料预测」「微调检测」等新任务上显著超越基线。
+- **跨架构通用权重编码器 UWE（2026-10）[11]**：围绕「共享坐标置换动作」组织类型图，节点 interface 代表必须联合置换的坐标空间，模块 module 构成类型化超边；编译器可从 PyTorch 模型自动导出该图。少量的 interface 使全局注意力变得可行，**单一编码器即可处理不同架构**。在含 1,200 个 Transformer、100 种架构的新模型动物园上，UWE 在未见架构（乃至比训练时更大的架构）中排序网络的能力优于基线，且更省内存。
+
+### 4.4 权重生成：从模型动物园到 LLM 权重
+
+- **LLM Zoo 与流匹配生成（2026-11）[8]**：为把权重空间学习从视觉/任务模型扩展到 LLM，作者系统训练了一个模型动物园——在 51M / 124M / 355M 三档 GPT-2（每档 N=100）上系统改变 web 文本、书籍、数学、代码、法语五种数据混合比例。通过余弦相似度、功能多样性、留一混合建模与方差分解，证明动物园的变化由训练混合结构化。随后在 Gram-PCA 压缩的权重空间中训练**数据条件化的流匹配（flow matching）生成器**，可对留出的新数据混合零样本生成完整预训练权重，且生成模型在困惑度与通用能力基准上与动物园模型接近——即「无中生有（ex nihilo）」地产生功能可用的 LLM 权重。
+- **行为信息率（2026-11）[12]**：从信息论侧刻画「微调到底需要写入多少信息」。作者定义行为率 R* 为「重载进冻结基座后仍保留固定比例微调增益的、被压缩适配器的最小序列化体积」。两个反直觉发现：其一，微调可压缩性是**数据集—接收者对**的属性，而非数据集单独的属性（同一数据集在不同基座上 R* 甚至会重排）；其二，压缩有显著去噪效果——在故意污染数据上训练的适配器远低于基座，但压缩后反而高于基座（GSM8K 从 23.7% 升到 82.9%，而冻结 Qwen2.5-7B 为 77.6%），因为损伤集中在适配器的少数主导奇异方向，压缩恰好将其滤除。
+
+> ![](diagrams/3-wsl.html)
+> **图 3 · 权重空间学习的三维与对称性**：WSU/WSR/WSG 三维，叠加「神经元置换 / 注意力 GL 对称 / 头置换」构成的对称群；元模型必须沿对称群等变。
+
+## 5. 权重空间编程（WSP）：LLM 直接读写权重的六大实证
+
+本章按「读—局部编辑—从零书写—反馈闭环」的能力递进，梳理六个代表性实证。**所有数字均标注为作者口径。**
+
+### 5.1 系统研究：WSP-Scope 的 16 条轨迹 [1]
+
+这是迄今最系统的 WSP 能力研究（16 条编辑轨迹、7 个基准、Qwen3.5-0.8B 与 9B 两种规模），三个核心发现：
+
+1. **高度局部化干预带来大幅增益**：完整留出集上，MATH-500 最多 +29.45、GPQA Diamond +4.42、IFEval +36.72、SciBench +17.11 个百分点；其中**仅修改 1,023 个参数即获得 MATH-500 的 29.45 分提升**。
+2. **跨任务泛化可观但不均匀**：一个在数学上编辑出的检查点，未经进一步编辑即使 GPQA Diamond / IFEval / SciBench 分别再提升 3.03 / 12.18 / 20.10 分，但 SciCode 不变。
+3. **编辑仍困难且不一致**：结果在轨迹间差异很大，**16 条轨迹中有 6 条在候选改进无法被可靠验证时保留了原始权重**——这其实是「验证门禁有效」的正面信号。
+
+### 5.2 从零手写权重：游戏难度阶梯 [4]
+
+该工作把 WSP 推到最严格形态：**从期望计算的显式规格出发，手工设定前馈网络的每一个权重，全程无梯度、无任何训练数据**。作者设计了四级难度阶梯（Nim、井字棋、两种规模的 Connect Four、一个国际象棋残局），并在每一级用一个结构无关的游戏构建第二个独立网络，以区分「难度级效应」与「单游戏偶然性」。共构建并独立验证 10 个网络，其中 6 个具备针对独立 oracle 的完整、非统计正确性证明。
+
+关键的负面发现同样重要：象棋残局级在「正确性廉价」处（走法合法性、一层将死检测）精确（84.1–100%），但在「正确性昂贵」处（组合多步成杀计划）崩溃——完整对抗中成功率掉到 0.57–9.13%。通过固定手设评估权重、只加浅层搜索，作者证明**剩余差距是架构天花板而非工程努力问题**，且这种精确性崩溃在两个结构无关游戏上复现。
+
+### 5.3 临床审计与修复 [5]
+
+针对放疗中的小网络（433–4,801 参数，用于按四条规则筛查头颈部计划请求），作者通过训练数据植入缺陷（隐藏每条规则的混杂因素、cord 阈值偏移 3 Gy、隐藏触发器）。Claude Opus 5.5 在**无工具、无数据、无代码执行**条件下盲审，每条主张与修复都在约 42 万个请求上测试：
+
+- 在 18 个有缺陷网络中命名出 16 个出错规则（95% CI 67%–97%），含全部 15 个混杂/阈值偏移网络；
+- 对这 16 个全部修复，**每处中位改 3 个参数**；
+- 在 5 个健康网络中正确放行 2 个、在 3 个触发器中发现 1 个。
+
+结论克制而精确：在小网络上，WSP 能定位并修复「压制某个输入 / 偏移某个阈值」类缺陷，**但尚不能证明一个网络是正确的**。
+
+### 5.4 机器人策略的词汇修复 [6]
+
+把 WSP 带到机器人基础策略：GPT-6 Astra 读取 π0.5 的权重，使用 CPU 工作区与有预算的模拟器反馈，无梯度更新、无新演示。三次独立会话全部改善 765 条留出转述指令，最佳一次成功率从 86.3% 升到 92.0%（48 处修复、4 处回退，p=1.31×10⁻¹⁰）；在含被编辑 token 的 335 条指令上，成功率从 74.3% 升到 87.5%，其余 430 个 episode 结果零变化；匹配的随机方向编辑无效。
+
+作者同样强调边界：证据支持**精确的词汇（lexical）修复**，而非「普遍获得缺失的机器人能力」；在另外 13 个机器人会话中，编辑器拒绝了 12 个候选，唯一保留的编辑也没有显著留出增益。
+
+### 5.5 运筹优化中的手写评分网络 [7]
+
+检验 WSP 能否改进精确运筹算法所依赖的廉价评分规则。LLM 写出小型 MLP，用于带时间窗车辆路径的列生成选弧/选邻域，以及 SCIP 分支定界中的分支变量选择。算法无论权重如何都保持精确，坏网络只会浪费时间。结果是混合的：列生成中没有杠杆带来实质增益；分支上，手写网络在合成独立集实例上以 0.37 倍时间求解（p<10⁻⁵），但在 39 个 MIPLIB 2017 实例上只解出 19 个（默认规则 24 个）；在亚特兰大 MARTA 真实公交乘务调度上，LLM 规则以 0.63 倍时间求解（p<10⁻⁴），**但 SCIP 自带的简单伪代价规则表现几乎一样好（0.99，p=0.19）**。作者诚实总结：这些场景里收益来自「规则本身廉价」，而非「LLM 写出了什么特别的东西」。
+
+### 5.6 反馈闭环：WeightLoop [13]
+
+WeightLoop 把 WSP 与 RSI 式反馈结合：GPT-6 Astra 检查任务规格与模型实现，写出一个**有界、可复用的参数编辑程序**；当新测量到达时，程序识别预测差异、用观测结果验证候选编辑，并把选定改动写回原模型。**编辑器固定、预测器演化**，因此无需再次调用 LLM 或梯度重训即可反复更新，同时保持原有推理接口。离线回放中，定向编辑在 8 个端点预算设置中的 7 个改善了平均排序效用（对照随机编辑为 0/8），并在三个顺序任务上改善最终发现。它让「实验证据」成为模型变化的直接驱动，是 WSP 走向持续部署的关键一环。
+
+## 6. 「读权重」怀疑论：2026-11 的能力审计与方法论
+
+一个健康方向的标志，是夸大主张与严格审计几乎同时出现。2026-11 有三篇工作系统性地给「LLM 真的读懂权重了吗」降温，它们是本报告最重要的方法论部分。
+
+### 6.1 是「权重流推理」还是「局部算术 + 数据集记忆」[2]
+
+该研究在约 12.5 万参数的小型卷积网络（五种图像数据集训练）上测试 Claude Opus 5.5，把每个权重以纯文本提供，**不给工具、不给前向传播、不给数据集或类别名**。
+
+- **局部计算确实准确**：模型能由批归一化统计推断出「网络在三次更新后停止」时约三个优化器步；能由输出层符号模式恢复 CIFAR-10 的车辆/动物划分。
+- **但语义判断依赖熟悉数据集的记忆**：它对 CIFAR-10 网络能叫出 CIFAR-10，却也把三个快餐数据集网络统统叫成 CIFAR-10、把 KMNIST 重标为 MNIST、把一个 99.57% 准确的 SAT-6 网络读成「CIFAR-10 动物照片」。
+- **决定性的标签置换测试**：置换 CIFAR-10 的标签后，输出划分在新索引上保持，但模型解读的每一对类别**全部错误**——说明它依赖的是被记住的标签顺序，而非从权重推出的功能。
+
+作者结论：该模型的零样本权重阅读，更应被描述为**局部算术 + 数据集先验**，而非权重流追踪；并给出一套审计未来 WSP 主张的协议。
+
+### 6.2 黑盒与白盒一样好：起作用的是计算，不是权重访问 [3]
+
+这项研究把「读原始权重」与「跑代码」严格分离。在 105–38,401 个权重的 Tanh 网络（模拟蛛网膜下腔出血患者队列，植入或不植入关系，含一个在亚组中低报死亡的网络）上：
+
+- **无工具时**：Astra 在 353 权重网络能恢复植入关系，但到 3,457 权重就不可靠；默认指令下它把 21 个审计/修复任务中的 17 个以「不可识别」拒绝（显式指令可消除拒绝）。
+- **有工具时**：在最多 38,401 权重网络的全部 39 次运行中恢复植入关系，在 21 次空网络运行中零误报，6/6 找到有偏亚组。
+- **最关键的对照**：**黑盒访问（只给网络预测）与白盒访问（暴露全部权重）表现一样好**；一个设计良好的脚本也能匹敌对照模型的审计与最佳 LLM 修复。
+
+结论直接挑战 WSP 的核心卖点：对这类审计，**重要的是计算与引导（elicitation），而非对权重的访问**。
+
+### 6.3 「标准暴露」之害：具身自我改进中的 Criteria Exposure [14]
+
+第三篇审计针对 RSI 训练过程：许多近期工作把基准的成功标准直接暴露给学习智能体（Criteria Exposure, CE）。这些为验证模仿学习而写的标准，往往比对应语言指令要求更多，因此验证器给的分数未必忠实反映「指令任务是否完成」。受控实验发现：有 CE 时，智能体很快写出在给定标准下成功率更高的代码，但**标准一旦在不背离原指令的前提下轻微改变，优势即消失**；在 CE 下发展出的技能跨任务迁移很差。作者提出「指令忠实标准」，认为它更能反映 Agent 生成程序的真实表现。
+
+### 6.4 方法论沉淀：评估 WSP/RSI 的四条纪律
+
+综合三篇审计，可提炼出评估此类能力时必须遵守的纪律：
+
+1. **分离读与算**：严格区分「纯文本读权重（无工具/无前向）」与「借助代码执行」，否则无法归因能力来源；
+2. **置换/随机化测试**：用标签置换、随机方向编辑等反事实干预，检验模型是在推理还是在调用记忆；
+3. **黑盒—白盒对照**：若只看预测就能做到同样好，就不应把功劳归于权重访问；
+4. **独立 oracle 与留出隐藏测试**：每条主张由独立验证器在隐藏测试上判定，候选无法可靠验证时宁可不改（WSP-Scope 6/16 保留原权即是范例）。
+
+> ![](diagrams/4-rsi-loop.html)
+> **图 4 · RSI 双循环与治理门禁**：内层更新能力（策略/模型/记忆/技能），外层更新「产生能力的过程」（课程/奖励/验证器/harness/研究程序）；独立验证器 + 硬门禁 + 人工发布构成治理层。
+
+## 7. 递归自我改进（RSI）：系统级双循环与谱系
+
+### 7.1 核心区分：学习者（learner）与改进者（improver）
+
+Physical-AI RSI 综述 [23] 给出一个关键的功能区分：
+
+- **学习者更新（learner updates）**：从部署经验更新策略、世界模型、技能、可执行程序——改变的是**能力**；
+- **改进者（improver）**：修订并复用「数据采集、反馈或学习程序」本身——改变的是**产生能力的过程**。
+
+只有当经验改变了「产生能力的过程」，才引入真正的递归。该综述提出 **L0–L3 分级**：L0 任务局部适应 → L1 持久能力增益 → L2 继承式过程修订 → L3 经验证的改进者增益。判定增益能否在持续部署中积累，取决于接触有效性（contact validity）、可恢复性（recovery）、保留性（retention）与资源成本。
+
+### 7.2 奠基系统：Darwin Gödel Machine [15]
+
+DGM 用**经验验证**绕开哥德尔机「证明净有益不可能」的难题：
+
+- 维护一个不断生长的编码智能体**档案库（archive）**，从中采样一个智能体，用基础模型创造一个「新的、有趣的」版本，形成一棵持续生长、多样化的智能体树，支持并行探索多条路径；
+- 每次自我修改都在编码基准上经验验证，只有更好的版本被保留；
+- 系统自动改进了代码编辑工具、长上下文窗口管理、同行评审机制等，**SWE-bench 20.0%→50.0%、Polyglot 14.2%→30.7%**，并显著优于无自我改进/无开放式探索的基线；全程在沙箱与人工监督下进行。
+
+### 7.3 开放式环境与基准
+
+- **RSI-Env（2026-11）[16]**：持久化的模型—harness 协同改进环境，支持自主训练、harness 修改与研究状态保留；一个独立的 Host Controller 管理服务、评测与版本。在 Self 设定下，每一个被接受的模型—harness 版本接管下一轮改进。三种设定（Open-General / Capability-Directed / Benchmark-Guided）下，从 Qwen3.8-27B 与最小 harness 起步：**无基准反馈时 Open-General Self 把 GPQA Diamond 从 65.2% 提到 73.2%、AIME 2026 从 53.3% 提到 56.7%**；Knowledge Self 跨系统更新持续改进，SimpleQA 82.0%→85.0%→88.0%。同时也暴露「跨能力保留增益」的难题。
+- **Flex-RSI（2026-11）[17]**：固定预算下对前沿 Agent 做 RSI 基准。每轮 executor 改进任务解（仅当留出验证分更高才保留），improver 再修订 harness（含 executor 与它自身）；每次运行从同一通用 harness 起步，最终解在隐藏测试上评分。跨感知、推理、机器人动作、3D 重建、视觉创作与基础设施等任务发现：自我改进在「Agent 自建解」时帮助最大；只记录成功/失败的反馈会拖累开放权重模型；开放权重模型在「输出须通过物理稳定性或精确正确性严格检查」处落后最多；配对运行证明**编辑 harness 本身**对增益有贡献。
+
+### 7.4 运行时架构：把优化折叠进任务执行
+
+- **Exo（2026-10）[18]**：面向运行时安全自我改进的 Agent 运行时，把优化循环**折叠进任务执行**，允许 Agent 在工作中修订 harness 与进一步改进的策略；一个最小的受保护机制层保存执行历史并治理策略激活，harness 通过可检查的代码改动演化。在开放世界游戏长任务中，相对 Codex/Pi 单独运行降低模型成本 12–53%、迁移运行降低 45–82%，任务完成率相当；在 AppWorld/SREGym 上相对「不能编辑策略」的同起点策略降低留出模型成本 35–61%。
+- **BOXBOX（2026-11）[19]**：研究长时程性能优化中的递归 harness 自我改进，支持 Agent 触发的 harness 修订与内核管理的热重载，同时保留执行上下文。在 PerfRace 基准匹配测试预算下，Speedup@4h 达 1.70×，强于冻结 harness、离线 harness 进化与 harness scaling（1.54×）。
+
+### 7.5 领域专用 RSI：科研、客服、记忆、对话与物理域
+
+RSI 正在沿应用纵深铺开，且普遍采用「双循环 + 验证门禁」结构：
+
+- **Recursa（2026-11）[20]**：无人类专家、无更强教师，靠知识库（领域技能 + 适用时机 + 过往记忆与反思）递归自我改进；并行学习器执行任务并综合局部改进，验证后并入知识库。在 Harvey LAB Firm Knowledge 基准上，DeepSeek-V4.1-Flash 全过率 30.0%→55.0%，Qwen3.8-Flash 35.0%→46.0%。
+- **CARE（2026-11）[21]**：面向生产客服的「接地 RSI」。7×24 检查流程以证据盲化、独立复核判定失败；归因把模型错误与 Skills/工具/harness 缺陷分离；对模型可归因轨迹截断在首个错误决策并配经验证的修复，再以**同模型作教师的 on-policy 自蒸馏（OPSD）**更新；晋升需通过由最新 SOP 编译并冻结的可执行仿真、离线检查、与在线对照及人工批准。目标是以持续学习的中型内部模型替代前沿专有在任系统。
+- **Reglos（2026-11）[22]**：免训练的个人记忆 Agent。记忆随对话追加、新偏好取代旧偏好；harness 通过 RSI 改进——编码 Agent 从失败轨迹提补丁，**来自第二个模型族的 critic 筛查「基准投机（benchmark gaming）」**，harness 冻结后由固定评估器决定接受哪些补丁。Qwen3.8-27B 在 PersonaMem-v2 / LongMemEval-S 达 61.3% / 84.0%，GPT-5.6 Luna 达 57.5% / 87.2%，优于 Mem0/MemOS/EverOS。
+- **角色扮演对话 RSI（2026-11）[25]**：有界 RSI 修订原创角色记忆、稳定人设指令与逐轮提示构造策略，修复结果反过来更新更新器自身的诊断规则。50 个原创角色 × 5 模型 × 各两次 100 轮对话：坏回复率 14.00%→4.94%（相对降 64.71%）；600 次盲化人评中胜率（非平局计）71.19%。
+- **科学/物理域**：EnzymeRSI [26] 以双循环（外层演化 harness、内层发展算法）+ 云实验室闭合干湿回路，湿实验中 KOD-E 聚合酶在改性底物上催化效率达亲本 31.1 倍；MoLRSI [27] 在抗生素发现中实验命中率 15.9%（对照专家流程 8.7%）；AudioRSI [28] 让每个改进模型成为训练后继者的 critic，在 MMAU/MMSU 等音频推理基准领先；外骨骼 RSI [44] 通过人在回路反馈把肱二/肱三头肌激活降低 29.4%/35.2%；电磁频谱 Agent [45] 在持续自主运行中跨轮积累能力。
+
+### 7.6 权限与身份：自我修改种群的安全继承
+
+自我修改带来一个被传统安全忽视的问题：当 Agent 能 replace / fork / rollback 带身份的软件时，如何防止权限在后代中被复制、叠加或「祖先被砍却仍然存活」。2026-09 的《Authorization for Self-Modifying AI Agent Populations》[46] 提出**授权继承（authorization succession）**：把每一代绑定到清单、根、唯一父代、完整谱系与全新种群序列；分期预留冻结前任残余权限，分区 fork 校验完整子代，每次提交原子地围栏前任并激活后继；祖先切割使依赖后代失效，回滚产生新一代而不恢复已消耗权限，新根需独立授权。该工作在 32 个注册决策上形式化证明了种群安全的继承、fork 守恒、撤销闭合、原子交接、回滚不重铸与排除自我认证等性质，并在 OurArk 与 Darwin Gödel Machine 的真实变异上复现。这是把「自我改进」纳入可审计权限体系的重要一步。
+
+## 8. 产业落地：以百度 ERNIE Evolve 为样本
+
+### 8.1 为什么第一个落点是「推理基础设施」
+
+一个值得注意的产业事实是：无论百度还是多数厂商，RSI 的**第一个生产落点都不是直接让模型改写自己的核心权重，而是让自动研究系统优化推理/训练基础设施**。原因很实际——基础设施优化有明确、可自动化测量的目标（延迟、吞吐、解码速度），反馈闭环短、正确性易压测，风险远低于直接编辑模型能力。正如百度技术博客所言，推理基础设施优化是「RSI 在真实研发中的第一个落点」，未来同一闭环才延伸到训练系统、模型能力与评测体系 [52]。
+
+### 8.2 ERNIE Evolve 的五智能体双层循环
+
+据 IT之家 2026-11-09 报道与百度技术博客 [51][52]：
+
+- **双层循环**：外层结合历史实验结果与已有知识提出新研究方向、安排多条研究线并行；内层针对具体方向持续做代码修改、效果评测与经验沉淀。
+- **五智能体分工**：**Director** 选研究方向，**Selector** 确定每轮实验目标与代码起点，**Executor** 修改代码生成新版本，独立评测程序 **Evaluator** 评测性能与结果，**Reviewer** 检查是否偏离目标、是否存在评测漏洞；**只有通过评测与复核的改进才保留**。每轮代码改动、结果与经验均记录供后续参考。
+- **公开任务成绩**：在 NanoChat AutoResearch 与 NanoGPT Speedrun 两项任务的三个指标上取得当时公开验证的 SOTA。
+
+### 8.3 生产环境三项收益（厂商口径）
+
+接入文心 5.5 Flash 真实推理优化后（以下均为**厂商口径**，经其压测与正确性检查）：
+
+| 场景 | 耗时/轮次 | 关键动作 | 结果 |
+|---|---|---|---|
+| 昆仑芯 P800 低时延 | 约 168 小时 / 4 轮方向探索 | 原生融合算子 + 投机解码，再优化主机调度同步与通信路径 | 生成速度至基线 **623.6%** |
+| 确定性推理吞吐 | 3 天 / 3 方向 | 确定性采样、开关与算子并行策略 | 吞吐至 **133.7%**；每 token 时间 −26%；首 token 延迟 −12% |
+| 极致解码速度 | 累计 7 方向（3 个有效） | MoE/mHC 算子、矩阵乘调度、草稿模型关键路径 | 推理性能至 **114.9%**，精度与基线一致 |
+
+### 8.4 产业图景与「国产 RSI」叙事
+
+- **共同布局者**：IT之家报道点名 OpenAI、Anthropic、腾讯、智谱等都在探索把 RSI 引入模型研发 [51]；中文社区的「国产 RSI」叙事更强调大规模自动化基础设施——知乎专栏以「一天造 300 万个沙盒、10 万张卡自己写系统」形容国内厂商以海量并行实验环境支撑自动研究。
+- **开源底座配套**：百度于 2026-11-05 开源文心 5.5 Flash Base，称其在知识、推理、数学、代码、多语言与长上下文基准上取得同尺寸 SOTA，为 RSI 闭环提供可迭代的开放底座 [51]。
+- **需要冷静的两点**：其一，上述 623.6% 等数字是**特定低时延基线**上的优化倍数，属厂商口径，不应外推为通用「6 倍提速」；其二，产业 RSI 目前严格限定在「目标、权限、资源边界内 + 持续安全评估 + 人工监督」，与「模型自主决定进化方向」的流行想象仍有本质距离。
+
+## 9. 安全、治理与「该不该启动 RSI」
+
+### 9.1 RSI 为什么是安全议题，而不只是效率议题
+
+普通的模型改进是「外部、可控、可回滚」的；RSI 把改进的主体搬进系统内部并跨代加速，带来三个传统范式没有的风险：
+
+1. **目标漂移（goal drift）**：跨代优化中，系统可能在评测分数不降的情况下偏离原始意图（第 6.3 的 Criteria Exposure 即是微观机理）；
+2. **速度与不对称**：自我改进的速度可能超过人类审查速度，形成「监督滞后于系统」；
+3. **不可恢复性**：若错误版本接管了改进过程，错误会被「继承」而非被纠正。
+
+### 9.2 Conitzer 的博弈论追问 [24]
+
+《Is Recursive Self-Improvement Safe?》没有给出技术方案，而是提出更前置的问题：我们甚至**还没有清晰的框架来思考 RSI 的可能后果**。作者做了一个简化博弈论分析——当「是否启动 RSI」成为多个竞争方的同时选择时，单方克制可能因他方推进而处于劣势，这会把各方推向「即使担忧也启动」的均衡。因此 RSI 治理本质上是一个**协调问题**，而非单方技术选择，需要在「什么条件下可以启动」上形成跨方共识。
+
+### 9.3 受治理的自我改进：正在收敛的工程范式
+
+综合 CARE、Reglos、Tantular Cyber、授权继承等工作，一个「受治理自我改进（governed self-improvement）」范式正在收敛，其要素高度一致：
+
+- **干预阶梯（intervention ladder）**：按成本从低到高依次尝试——改提示 → 改数据/技能 → LoRA → 权重空间编辑，优先用最廉价手段 [47]；
+- **独立验证器 + 硬性保留门禁**：改进仅当在独立、冻结、隐藏的验证上严格不劣于在任版本时才保留；无法可靠验证则不改；
+- **跨模型族 critic 防 benchmark gaming**：用与执行者不同模型族的批评者筛查「只骗过评测」的补丁 [22]；
+- **证据盲化与独立复核**：失败判定与修复审核对模型输出盲化、由独立方复核 [21]；
+- **权限守恒与可回滚**：权限跨代不膨胀、可撤销、可回滚到全新一代 [46]；
+- **人工发布批准**：无论自动验证多强，发布到生产仍需人工批准 [21][47]。
+
+### 9.4 证据审计：关于「MIT CSAIL」的误传
+
+本报告在调研中发现一处需要明确纠正的二手信息偏差：
+
+- 部分中文社交媒体/自媒体在转述「GPT-6 Astra 直接修改 Qwen 权重、MATH-500 从约 7.9% 提升到约 48.1%」时，称该研究来自 **MIT CSAIL**。
+- 经核对该工作的一手项目主页（wsp-scope.github.io）与 arXiv:2611.09382 的署名，**《Exploring Weight-Space Programming: Capabilities, Generalization, and Limitations》的署名机构为上海人工智能实验室（Shanghai Artificial Intelligence Laboratory）、同济大学、复旦大学**，作者为 Junru Hu、Cheng Tang、Wei Li 等；arXiv 元数据中并无 MIT CSAIL 机构信息。
+- 因此本报告将该成果归属于上述中国机构，并将「MIT CSAIL」说法标注为**未经一手证据支持的二手误传**。其报告的核心数字（1,023 参数 → MATH-500 +29.45）以一手论文为准，而「7.9%→48.1%」「改 0.016% 参数」等更夸张的转述数字未在该论文摘要中出现，本报告不予采信。
+
+这一审计也提示方法论：**前沿热点在传播中极易发生机构与数字的漂移，技术报告必须回到一手元数据。**
+
+## 10. 评测体系与开放问题
+
+### 10.1 评测的三个层次
+
+1. **能力层**：MATH-500、GPQA Diamond、IFEval、SciBench、SciCode 等基准上的留出成绩 [1]；
+2. **过程/递归层**：跨代增益保留率、harness 编辑的独立贡献、改进者（improver）是否真被修订（L0–L3）[17][23]；
+3. **治理层**：验证器抗 gaming、权限守恒、回滚有效性、人工批准的实际拦截率 [22][46]。
+
+### 10.2 关键开放问题
+
+- **规模天花板**：WSP 的可靠证据集中在数千至十余万参数的小网络；在数十亿/万亿参数上，纯文本读权重是否仍可行，尚无可靠证据（第 6.2 显示 3,457 权重即开始不可靠）。
+- **「读」与「写」的不对称**：局部编辑（写）的实证强于整体理解（读），我们尚不清楚「不理解整体却能有效局部修复」的边界在哪。
+- **跨代增益保留**：RSI-Env 已显示某一能力上的增益可能以其他能力退化为代价；如何避免「拆东墙补西墙」是核心难题 [16]。
+- **验证器强度与共进化**：当被验证系统与验证器共同进化时，如何防止二者「合谋」给出虚高分数，仍待解决。
+- **协调与治理**：在竞争格局下如何形成「启动条件」的跨方共识，是超越技术的制度问题 [24]。
+
+## 11. 工程落地 Checklist
+
+若要在真实系统中引入权重编辑或自我改进，建议至少满足以下条件：
+
+1. **先问是否必要**：能否用改提示 / 改检索 / 改技能等更廉价手段解决？把权重编辑放在干预阶梯最后一档。
+2. **严格隔离读与算**：明确记录每次改动是来自「纯读权重」还是「借助执行」，避免能力归因错误。
+3. **有界编辑**：限制单次可改参数数量与张量范围（如只允许指定 embedding 行），禁止无界全权重改写。
+4. **独立冻结验证**：用独立、冻结、隐藏的测试集与 oracle 判定；候选无法可靠验证时宁可不改。
+5. **反事实检验**：用随机方向编辑、标签置换等对照，排除「随机扰动也有效 / 模型在背答案」。
+6. **跨模型族 critic**：用不同模型族的批评者筛查 benchmark gaming。
+7. **回归监控**：同时监控目标能力与其他关键能力，防止跨能力退化。
+8. **版本与谱系**：为每次修改记录唯一父代、完整谱系与 diff，支持审计。
+9. **权限最小化与守恒**：编辑进程最小权限；权限跨代不膨胀、可撤销。
+10. **原子切换与可回滚**：新版本原子激活，异常可回滚到全新一代而非恢复已消耗权限。
+11. **人工发布批准**：生产发布必须有人工批准，自动闭环只在沙箱/ staging 内运行。
+12. **资源与时限**：为自动实验设定算力、时长与轮次上限，防止开放式失控消耗。
+
+## 12. 结语
+
+2026 年 11 月，我们可能正站在一个微妙的分界线上：**「训练模型」第一次不再是改变模型的唯一方式，模型本身开始成为模型的读者与作者。** 权重空间编程让权重从训练的终点变成可被书写的源代码，递归自我改进则让「改进」成为可以被自身改进的对象。
+
+但同样清楚的是，今天的 WSP 仍是一种**小网络上的、局部的、需要严格外部验证的**能力，而 RSI 的收益仍脆弱、其治理仍在形成。真正值得关注的或许不是「AI 会不会瞬间改写自己」的戏剧性叙事，而是一个更朴素、更工程化的事实：**最可靠的自我改进系统，都把最大的自由度关进了最小的笼子——独立验证、硬性门禁、权限守恒与人工批准。** 如何在「让 AI 参与生产 AI」的效率与「保留人类对方向的最终控制」之间设计这套笼子，将是未来几年大模型领域最重要、也最需要跨学科协作的课题。
+
+---
+
+## 参考文献
+
+> 说明：arXiv 编号、标题、日期均经 export.arxiv.org 官方 API（2026-11-10）逐一核实；Nature 论文经 Crossref 核实 DOI。厂商数据标注「厂商口径」。
+
+[1] Hu, J., Tang, C., Li, W., et al. *Exploring Weight-Space Programming: Capabilities, Generalization, and Limitations.* arXiv:2611.09382 (2026-11-06). https://arxiv.org/abs/2611.09382
+
+[2] Ahmed, N. S. *Can an LLM Actually Reason and Program about Neural Network's Weights or is it just memorization on steroids? Exploring "Weight-Space Programming".* arXiv:2611.08070 (2026-11-05). https://arxiv.org/abs/2611.08070
+
+[3] *Computation, not weight access: large language models as auditors of clinical prediction networks.* arXiv:2611.07847 (2026-11-05). https://arxiv.org/abs/2611.07847
+
+[4] Garrido-Merchán, E. C. *Zero-Shot Weight-Space Programming Across a Difficulty-Graded Ladder of Two-Player Games.* arXiv:2611.09271 (2026-11-06). https://arxiv.org/abs/2611.09271
+
+[5] Nusrat, H., Nusrat, O. *Weight-space programming for auditing clinical decision networks.* arXiv:2611.05341 (2026-11-03). https://arxiv.org/abs/2611.05341
+
+[6] Zhang, J., Wang, K., Lin, L. *Can LLMs Debug Robots by Editing Their Weights?* arXiv:2611.09376 (2026-11-06). https://arxiv.org/abs/2611.09376
+
+[7] Butkeraites, R. *Can a Language Model Write the Weights? An Empirical Study of LLM-Written Scoring Networks for Column Generation and MILP Branching.* arXiv:2611.09559 (2026-11-06). https://arxiv.org/abs/2611.09559
+
+[8] Biggs, S., Soro, B., Gupta, S., Andreis, B., Hwang, S. J. *A Night at the LLM Zoo: Data Conditioned Flow Matching for Generating Pretrained LLM Weights.* arXiv:2611.07103 (2026-11-04). https://arxiv.org/abs/2611.07103
+
+[9] *A Survey of Weight Space Learning: Understanding, Representation, and Generation.* arXiv:2603.10090 (2026-03-10). https://arxiv.org/abs/2603.10090
+
+[10] Wolanowsky, Y., Bar-Shalom, G., Frasca, F., Maron, H. *Graph Metanetworks for Transformer Based Language Models.* arXiv:2610.18471 (2026-10-13). https://arxiv.org/abs/2610.18471
+
+[11] *Interfaces and Modules: A Scalable Representation for Weight-Space Learning across Architectures.* arXiv:2610.21995 (2026-10-15). https://arxiv.org/abs/2610.21995
+
+[12] David, J., Caillon, P., Allauzen, A. *The Behavioral Rate of Fine-Tuning: Compression as a Measure of Useful Information.* arXiv:2611.06598 (2026-11-04). https://arxiv.org/abs/2611.06598
+
+[13] Li, M., Li, B., Zhao, W., et al. *WeightLoop: Weight-Space Programming with Experimental Feedback.* arXiv:2611.07319 (2026-11-05). https://arxiv.org/abs/2611.07319
+
+[14] *Learning the Task or Learning the Verifier? Rethinking Criteria Exposure in Embodied Self-Improvement.* arXiv:2611.08318 (2026-11-05). https://arxiv.org/abs/2611.08318
+
+[15] *Darwin Godel Machine: Open-Ended Evolution of Self-Improving Agents.* arXiv:2505.22954 (2025-05-29). https://arxiv.org/abs/2505.22954
+
+[16] Qu, W., Fan, Z., Liu, J., et al. *RSI-Env: An Open-Ended Environment for Recursive Self-Improvement of Agents.* arXiv:2611.01736 (2026-11-01). https://arxiv.org/abs/2611.01736
+
+[17] Zhang, J., Wang, J., Yu, Z., et al. *Flex-RSI: Benchmarking Recursive Self-Improvement of Frontier Agents.* arXiv:2611.08946 (2026-11-06). https://arxiv.org/abs/2611.08946
+
+[18] *Exo: An Architecture for Self-Improving Systems at Runtime.* arXiv:2611.00463 (2026-10-30). https://arxiv.org/abs/2611.00463
+
+[19] *BOXBOX: Recursive Harness Self-Improvement for Long-Running Performance Optimization.* arXiv:2611.09218 (2026-11-06). https://arxiv.org/abs/2611.09218
+
+[20] Zhu, E., Lin, Y., Shi, X., Lin, X., Zhou, J. *Recursa: Toward Recursively Self-Improving Foundation Model Systems.* arXiv:2611.04035 (2026-11-02). https://arxiv.org/abs/2611.04035
+
+[21] Jiang, Y., Lei, C., Gao, R., et al. *CARE: Grounded Recursive Self-Improvement for Production Customer-Service Agents.* arXiv:2611.02839 (2026-11-02). https://arxiv.org/abs/2611.02839
+
+[22] Yang, S., Lin, J., Huang, Z., Liu, W. *Reglos: A Self-Evolving Personal Memory Agent with Recursive Self-Improvement.* arXiv:2611.06049 (2026-11-04). https://arxiv.org/abs/2611.06049
+
+[23] Han, X., Luo, K., Fu, Z., et al. *Recursive Self-Improvement in Physical AI: Mechanisms, Evidence, and Evaluation.* arXiv:2610.38266 (2026-10-28). https://arxiv.org/abs/2610.38266
+
+[24] Conitzer, V. *Is Recursive Self-Improvement Safe?* arXiv:2611.10261 (2026-11-06). https://arxiv.org/abs/2611.10261
+
+[25] Li, Y. L., Wu, Y. H. *Recursive Self-Improvement for Long-Horizon Role-Playing Dialogue.* arXiv:2611.07469 (2026-11-05). https://arxiv.org/abs/2611.07469
+
+[26] Genoria AI Team, et al. *EnzymeRSI: A dual-loop recursive self-improvement system for enzyme design.* arXiv:2611.06321 (2026-11-04). https://arxiv.org/abs/2611.06321
+
+[27] Zhang, Y., Cheng, X., Yuan, M., et al. *MoLRSI: A Recursive Self-Improving AI agent for Molecular Discovery.* arXiv:2610.39714 (2026-10-29). https://arxiv.org/abs/2610.39714
+
+[28] *AudioRSI: Recursively Self-Improving Audio Reasoners.* arXiv:2610.36578 (2026-10-27). https://arxiv.org/abs/2610.36578
+
+[29] *AlphaEvolve: A coding agent for scientific and algorithmic discovery.* arXiv:2506.13131 (2025-06-16). https://arxiv.org/abs/2506.13131
+
+[30] *Improving the matrix multiplication exponent with modern optimization and AlphaEvolve.* arXiv:2608.16884 (2026-08-17). https://arxiv.org/abs/2608.16884
+
+[31] Romera-Paredes, B., et al. *Mathematical discoveries from program search with large language models.* Nature 625, 468–475 (2024). DOI: 10.1038/s41586-023-06924-6. https://doi.org/10.1038/s41586-023-06924-6
+
+[32] Finn, C., Abbeel, P., Levine, S. *Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks.* arXiv:1703.03400 (2017-03-09). https://arxiv.org/abs/1703.03400
+
+[33] Ha, D., Dai, A., Le, Q. V. *HyperNetworks.* arXiv:1609.09106 (2016-09-27). https://arxiv.org/abs/1609.09106
+
+[34] Andrychowicz, M., et al. *Learning to learn by gradient descent by gradient descent.* arXiv:1606.04474 (2016-06-14). https://arxiv.org/abs/1606.04474
+
+[35] Schmidhuber, J. *Goedel Machines: Self-Referential Universal Problem Solvers Making Provably Optimal Self-Improvements.* arXiv:cs/0309048 (2003-09-25). https://arxiv.org/abs/cs/0309048
+
+[36] Wang, G., et al. *Voyager: An Open-Ended Embodied Agent with Large Language Models.* arXiv:2305.16291 (2023-05-25). https://arxiv.org/abs/2305.16291
+
+[37] Meng, K., et al. *Locating and Editing Factual Associations in GPT.* arXiv:2202.05262 (2022-02-10). https://arxiv.org/abs/2202.05262
+
+[38] Meng, K., et al. *Mass-Editing Memory in a Transformer.* arXiv:2210.07229 (2022-10-13). https://arxiv.org/abs/2210.07229
+
+[39] Zelikman, E., et al. *STaR: Bootstrapping Reasoning With Reasoning.* arXiv:2203.14465 (2022-03-28). https://arxiv.org/abs/2203.14465
+
+[40] Madaan, A., et al. *Self-Refine: Iterative Refinement with Self-Feedback.* arXiv:2303.17651 (2023-03-30). https://arxiv.org/abs/2303.17651
+
+[41] Shinn, N., et al. *Reflexion: Language Agents with Verbal Reinforcement Learning.* arXiv:2303.11366 (2023-03-20). https://arxiv.org/abs/2303.11366
+
+[42] Yuksekgonul, M., et al. *TextGrad: Automatic "Differentiation" via Text.* arXiv:2406.07496 (2024-06-11). https://arxiv.org/abs/2406.07496
+
+[43] Fernando, C., et al. *Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution.* arXiv:2309.16797 (2023-09-28). https://arxiv.org/abs/2309.16797
+
+[44] *Recursive Self-Improvement of Exoskeleton Assistance Policies through Human-in-the-Loop Feedback.* arXiv:2611.01581 (2026-11-01). https://arxiv.org/abs/2611.01581
+
+[45] Chong, B., Xu, D., Wang, Q., Zhou, F., Wu, Q. *Recursively Self-Improving Electromagnetic Spectrum Agents: Architecture and Operation.* arXiv:2611.09318 (2026-11-06). https://arxiv.org/abs/2611.09318
+
+[46] *Authorization for Self-Modifying AI Agent Populations: Conserving Authority across Replacement, Forking, and Rollback.* arXiv:2610.00347 (2026-09-29). https://arxiv.org/abs/2610.00347
+
+[47] Ghifiardi, R., Rachman, R. *Governed Self-Improvement for a Local-First Security Analyzer: Baseline Measurements and a Preregistered Evaluation Protocol for Tantular Cyber.* arXiv:2611.10425 (2026-11-07). https://arxiv.org/abs/2611.10425
+
+[48] *A Survey on Self-Evolution of Large Language Models.* arXiv:2404.14387 (2024-04-22). https://arxiv.org/abs/2404.14387
+
+[49] *Beyond Individual Intelligence: Surveying Collaboration, Failure Attribution, and Self-Evolution in LLM-based Multi-Agent Systems.* arXiv:2605.14892 (2026-05-14). https://arxiv.org/abs/2605.14892
+
+[50] *Recursive Self-Improvement in AI: A Survey.* Preprints (2026-09). https://www.preprints.org/manuscript/202609.2680
+
+[51] IT之家.《百度文心首次披露 RSI 进展：ERNIE Evolve 已用于最新模型研发，文心 5.5 Flash 或将近期发布》(2026-11-09). https://www.ithome.com/1/024/368.htm
+
+[52] 百度文心技术博客.《ERNIE Evolve》(2026-11). https://ernie.baidu.com/zh/research/posts/ernie-evolve/
+
+[53] 腾讯云开发者社区（heidsoft）.《2026 年 5 月 AI 论文盘点：Agent 爆发、推理内化、原生多模态三大趋势》(2026-07-02). https://developer.cloud.tencent.com/article/2701996

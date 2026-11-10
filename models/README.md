@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **31 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **32 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -75,6 +75,12 @@
 「后 Adam」优化器方向：把权重矩阵的动量做极分解正交化（奇异值谱拉平为满数值秩），用 Newton–Schulz 5 次迭代廉价近似。Moonlight 论文补入解耦 weight decay 与 consistent update RMS 两个规模化关键，缩放定律测得 Muon 达到 AdamW 同等性能仅需约 52% FLOPs（约 2× 算力效率）；万亿参数 Kimi K2 用 MuonClip（QK-Clip，τ=100）约束注意力 logits，15.5T tokens 零 loss spike。报告还梳理 NorMuon/Dion3/Hierarchical/Turbo-Muon/Muon^p 等百变体、收敛性反例，并严格区分 token/FLOPs 效率与 wall-clock 效率（标准 Muon 优化器步可达 26× AdamW）。
 
 📅 2026-11-26 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](muon-optimizer/report.md)
+
+### [当 AI 开始改写自己：权重空间编程 WSP 与递归自我改进 RSI](https://ckirchhoff2021.github.io/knowledge-base/models/self-improving-ai/report.html)
+
+2026-11 单周十余篇新论文集中爆发的新范式：以「概念地图（WSL 底座 × WSP 能力形态 × RSI 系统闭环）」统摄，梳理 Gödel Machine × MAML/超网络 × ROME/MEMIT 三脉合流；权重空间学习 WSU/WSR/WSG 三维与权重对称群（神经元置换、注意力 GL 对称、头置换；图元网络 Graph Metanetwork、UWE 跨架构编码）；WSP 三大支柱（读 / 局部编辑 / 从零手工设定权重，WSP-Scope 仅改 1023 参数使 MATH-500 +29.45 分）与同周成熟的怀疑论（局部算术+数据集记忆、计算而非权重访问、架构天花板）；RSI 双循环与 L0–L3 分级、Darwin Gödel Machine（SWE-bench 20→50%）、运行时自改进 Exo/BOXBOX、产业落地百度 ERNIE Evolve（昆仑芯 P800 生成速度 623.6%）、Conitzer 安全博弈与权限守恒，附 14 条落地 Checklist。
+
+📅 2026-11-10 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](self-improving-ai/report.md)
 
 ---
 

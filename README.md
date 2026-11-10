@@ -48,6 +48,7 @@
 | [合成数据与修正缩放定律](https://ckirchhoff2021.github.io/knowledge-base/models/synthetic-data/report.html) | 模型崩溃与合成数据方法 | 2026-10-19 |
 | [反思式提示进化 GEPA](https://ckirchhoff2021.github.io/knowledge-base/models/reflective-prompt-evolution/report.html) | 提示作为可学习程序/免梯度语言程序优化 | 2026-10-28 |
 | [Muon 优化器：矩阵正交化](https://ckirchhoff2021.github.io/knowledge-base/models/muon-optimizer/report.html) | 后 Adam 优化器 / 2× FLOPs 效率 / MuonClip | 2026-11-26 |
+| [当 AI 改写自己：WSP × RSI](https://ckirchhoff2021.github.io/knowledge-base/models/self-improving-ai/report.html) | 权重空间编程 / 递归自我改进双循环 | 2026-11-10 |
 
 **Jev 决策模型**
 
