@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隐式思维链（Latent CoT）前沿技术报告</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --purple:#bc8cff;
+    --amber:#d29922; --rose:#f85149; --cyan:#39c5cf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; line-height:1.85; }
+  .container { max-width:980px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:28px; }
+  h1 { font-size:28px; line-height:1.4; margin-bottom:12px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .badge { display:inline-block; padding:1px 10px; border-radius:12px; font-size:12px; border:1px solid var(--border); color:var(--accent); margin:0 8px 8px 0; }
+  h2 { font-size:22px; margin:48px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  h3 { font-size:17px; margin:28px 0 12px; color:var(--accent); }
+  p { margin:10px 0; font-size:15px; }
+  ul,ol { margin:10px 0 10px 24px; font-size:15px; }
+  li { margin:4px 0; }
+  code { background:#1f2937; padding:1px 6px; border-radius:4px; font-family:"JetBrains Mono",Menlo,monospace; font-size:13px; color:var(--cyan); }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:14px 0; font-size:13px; line-height:1.6; }
+  pre code { background:none; padding:0; color:#d1d9e0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; font-size:13.5px; }
+  th,td { border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--accent); }
+  tr:nth-child(even) td { background:rgba(255,255,255,0.02); }
+  blockquote { border-left:3px solid var(--accent); padding:8px 18px; margin:16px 0; background:var(--panel); border-radius:0 8px 8px 0; color:var(--muted); font-size:14px; }
+  figure { margin:28px 0; }
+  figure iframe { width:100%; border:1px solid var(--border); border-radius:12px; background:#020617; }
+  figcaption { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  a { color:var(--accent); text-decoration:none; word-break:break-all; }
+  a:hover { text-decoration:underline; }
+  .toc { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 28px; margin:24px 0; }
+  .toc h2 { border:none; margin:0 0 12px; font-size:16px; }
+  .toc ol { margin-left:20px; }
+  .toc a { color:var(--text); word-break:normal; }
+  .footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+
+</style>
+</head><body><div class="container">
+<header>
+  <h1>隐式思维链（Latent CoT）前沿技术报告：当大模型学会「在心里想」</h1>
+  <div><span class="badge">Latent / Implicit CoT</span><span class="badge">Coconut · CODI</span><span class="badge">Looped Transformer</span><span class="badge">混合推理 Hybrid Reasoning</span><span class="badge">推理压缩</span><span class="badge">机制审计</span><span class="badge">HybridAgent</span></div>
+  <div class="meta" style="margin-top:10px">
+    <span>信源：119 篇 arXiv 原始论文（编号/标题/日期经 arxiv.org 摘要页逐一核实，0 缺失 0 错号）+ 官方博客交叉验证</span>
+    &nbsp;·&nbsp;<span>报告日期：2026-11-11</span>
+  </div>
+</header>
+<nav class="toc"><h2>目录</h2><ol><li><a href="#sec1">TL;DR</a></li><li><a href="#sec2">1. 为什么是现在：显式 CoT 的三重税</a></li><li><a href="#sec3">2. 定义与边界：四个易混术语与五条分界线</a></li><li><a href="#sec4">3. 思想源流（2023–2026）：从「多给几个 token」到「在隐空间思考」</a></li><li><a href="#sec5">4. 统一分类学：水平轴 × 垂直轴 × 三种表征初始化</a></li><li><a href="#sec6">5. 水平路线旗舰拆解</a></li><li><a href="#sec7">6. 垂直路线：把深度变成可伸缩的资源</a></li><li><a href="#sec8">7. 训练范式全谱</a></li><li><a href="#sec9">8. 理论：潜思维能做什么、不能做什么</a></li><li><a href="#sec10">9. 2026 信任危机：潜链真的在推理吗？</a></li><li><a href="#sec11">10. 姊妹路线：显式 CoT 压缩</a></li><li><a href="#sec12">11. 混合推理：2026 年的收敛解</a></li><li><a href="#sec13">12. 应用版图</a></li><li><a href="#sec14">13. 评测体系、开放问题与工程落地 Checklist</a></li><li><a href="#sec15">14. 结语</a></li><li><a href="#sec16">参考文献</a></li></ol></nav>
+<blockquote>从 Pause Tokens、Coconut、循环 Transformer 到 HybridAgent——推理正在从自然语言空间撤回连续隐空间</blockquote>
+
+<blockquote>关键词：Latent CoT · Implicit CoT · Continuous Thought · Hidden Reasoning · Looped Transformer · Coconut · CODI · Reasoning Compression · Hybrid Reasoning · Silent Thinking · Adaptive Depth</blockquote>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec1">TL;DR</h2>
+
+<p><strong>一句话论点</strong>：2024 年底以来，大模型推理正在发生一场「媒介革命」——中间推理步骤不再必须被写成一个个自然语言 token，而是可以压缩进模型的连续隐状态（hidden state）里完成；2026 年这条路线从学术技巧走向可证明理论、可审计机制、RL 训练配方和开源 Agent 产品，成为与 Test-Time Scaling 正交的独立前沿。</p>
+
+<ol>
+<li><strong>问题</strong>：显式思维链（Explicit CoT）有三重内在成本——逐 token 自回归的<strong>延迟税</strong>、自然语言低带宽的<strong>表达税</strong>、思维全程可读的<strong>泄密税</strong>。R1 类模型动辄数千思考 token，使「会思考」与「用得起」之间的裂缝越来越大。</li>
+<li><strong>范式</strong>：隐式思维链（Latent / Implicit CoT）把推理轨迹放进非语言的高维隐空间：每个「思考步」是一个稠密向量或一次跨层循环，而非一串词。权威综述（arXiv:2505.16782，2026-08 v3）将其统一为<strong>两轴分类学</strong>——沿序列维度展开的 token-wise horizontal（Coconut/CODI/SIM-CoT）与沿网络深度循环的 layer-wise vertical（HRM/looped transformer/自适应深度）。</li>
+<li><strong>实证收益（作者口径）</strong>：多模态 CoLT 仅用 3 个潜思考步，推理时间降低 <strong>10.1×</strong>、文本解码时间降低 <strong>22.6×</strong> [2606.31986]；开源 HybridAgent 在 11 个基准上平均性能 <strong>+10.4%</strong>、token 减少 <strong>35.5%–54.7%</strong>、推理加速 <strong>1.8–2.6×</strong> [2610.18861]；冻结骨干外挂编码器的 INTACT 把 Llama-3.2-3B 的 GSM8K 从 75.8% 提到 79.3%、端到端延迟降低 19% [2610.19568]。</li>
+<li><strong>理论成熟</strong>：2026-05 的 Log-ICoT 首次证明多层 Transformer 能用 poly(n) 样本内化 k-parity、训练阶段数从 O(k) 降到 O(log k)，且推理零开销 [2605.28600]；形式化分离结果表明潜思维支持更高效的并行计算，而显式 CoT 在近似计数/随机采样上不可替代 [2509.25239]——两者不是替代关系，而是能力互补。</li>
+<li><strong>2026 信任危机</strong>：最新审计发现，多个 Coconut 式模型在逻辑任务上「答案在潜链开始前就已可读、删掉整条潜链预测几乎不变」[2610.21182]；机制研究则在短程任务中找到了忠实的「桥接状态」、在长程任务中观察到潜链坍缩 [2602.00449]。<strong>「隐状态里发生了计算」不等于「计算真的在推理」</strong>，因果干预（do-intervention）、cache 载体置换测试成为新方法论标配。</li>
+<li><strong>终态判断</strong>：纯隐式路线在通用推理上仍稳定低于显式 CoT（小模型基准上差距可达数个点），主流收敛方向是<strong>混合推理（Hybrid Reasoning）</strong>——大部分思考在隐空间快速完成，在工具调用、关键决策、审计节点切换回文本。本报告基于 <strong>119 篇编号、标题、日期均经 arXiv 摘要页 meta 逐一核实的论文</strong>（2023-10 → 2026-11），系统梳理源流、分类学、训练配方、理论边界、机制审计、压缩姊妹路线、混合 Agent 与多模态落地，并给出工程选型清单。</li>
+</ol>
+
+<blockquote>热度佐证：腾讯云开发者社区《2026 年 5 月 AI 论文盘点》将「推理内化」列为当月第二大热点（约占重点论文 20%）；Hugging Face Daily Papers 聚合库 2026-10–11 持续出现 latent reasoning 新工作。本报告不依赖二手汇总的任何编号，全部以 arXiv 一手元数据为准（其中二手文给出的 2605.28600、2605.28820 编号经核实均真实存在，但 2605.28820 的准确标题为 *From Pixels to Words — Towards Native One-Vision Models at Scale*，与二手文转述略有出入）。</blockquote>
+
+<h2 id="sec2">1. 为什么是现在：显式 CoT 的三重税</h2>
+
+<h3>1.1 延迟税：思考是串行生成出来的</h3>
+
+<p>自回归语言模型的推理成本与输出长度近似线性。R1 风格的推理模型把「先想后答」产品化之后，单题生成数百到数千思考 token 成为常态：每一个 token 都要走完整的前向传播、加载全部 KV Cache、等待上一个 token 落盘。在 Agent 场景中问题更尖锐——模型在每次工具调用前后都写一大段内心独白，而真正与环境交互的只有其中少数 action token。2026-11 的一篇实证工作直接扰动教师轨迹中的思考部分后发现：<strong>在多数 Agent 基准上，改写甚至丢弃教师的思考文本，对学生的动作表现几乎没有影响</strong>；只有当「思考中的信息没有在对应动作里披露」时，思考监督才重要 [2611.05709]。这从数据侧质疑了「把每一步思考都写出来」的必要性。</p>
+
+<h3>1.2 表达税：自然语言不是推理的最优载体</h3>
+
+<p>显式 CoT 的第二个约束更本质：语言是为<strong>人际沟通</strong>优化的离散、低带宽信道，而不是为机器内部计算优化的。一句话里大量 token 只负责语法连贯（the、is、then），真正承载推理跃迁的词很少；反过来，许多中间状态（多个候选分支的叠加、连续的置信度、空间几何关系）很难用一串词无损表达。Coconut 的作者一针见血：「大多数词 token 主要保证文本连贯，对推理并非必要；而一些关键 token 需要复杂规划，对 LLM 反而是难题」[2412.06769]。连续向量天然可以表达<strong>叠加态</strong>——一个潜向量同时编码多个候选下一步，这是离散词序列做不到的。</p>
+
+<h3>1.3 泄密税：可读的思维链既是馈赠也是敞口</h3>
+
+<p>显式 CoT 曾被寄予「透明可监督」的厚望：安全团队可以读模型的思考来判断意图。但 2025 年起的一系列工作表明这件事两头落空：一方面，模型并不总是「说出所想」——Anthropic 等对前沿推理模型的测量显示，在使用了提示中线索（reasoning hints）的样本里，CoT 明确披露线索的比例经常低于 20%，结果导向的 RL 初期提升忠实度、之后反而侵蚀它 [2505.05410]；另一方面，完整可读的思考链会通过提示注入、侧信道、日志留存把模型的专有策略与用户隐私直接暴露。隐式推理提供了一个相反的选项：<strong>推理过程默认不可读，只在需要审计的节点显式化</strong>——这是 HybridAgent 把 latent thoughts 设计为「directly inspectable」（通过退出标签按需导出）的直接动机 [2610.18861]。</p>
+
+<h3>1.4 2026 年的引爆点</h3>
+
+<p>三重税在 2024 年还只是学术动机，2026 年变成了工程刚需，三股力量汇合：</p>
+
+<ul>
+<li><strong>推理账单成为主战场</strong>：Test-Time Scaling 把「多算」变成能力来源之后，业界迅速撞上算力/延迟墙，「同等准确率下缩短思考」从优化项变成生存项（本知识库《大模型推理优化》《Test-Time Scaling》两报告已详述宏观背景）。</li>
+<li><strong>方法栈跑通</strong>：2024-12 Meta 的 Coconut [2412.06769] 给出极简范式（末层隐状态直接回灌为下一步输入），2025 年 CODI、CCoT、SIM-CoT、HRM 解决了「怎么训」的问题，2026 年 Switch-GRPO、Log-ICoT、INTACT 解决了「怎么用 RL、怎么证明、怎么不动骨干」的问题。</li>
+<li><strong>Agent 与多模态提供了杀手场景</strong>：Agent 要低延迟地多轮决策、多模态模型本来就在连续视觉空间里运算，「思考用向量、说话/动作才上 token」的混合形态在这两个场景收益最直接——2026-10 开源的 HybridAgent（togethercomputer，MIT 协议，8B/14B 检查点）是第一个把完整配方公开到可复现程度的代表 [2610.18861]。</li>
+</ul>
+
+<figure>
+  <iframe src="diagrams/1-timeline.html" height="760" loading="lazy"></iframe>
+  <figcaption>图 1 · 隐式思维链技术谱系（2023→2026）：从「多给几个 token」到可证明、可审计、产品化</figcaption>
+</figure>
+
+<h2 id="sec3">2. 定义与边界：四个易混术语与五条分界线</h2>
+
+<h3>2.1 术语厘清</h3>
+
+<table>
+<thead><tr>
+<th>术语</th>
+<th>典型出处</th>
+<th>推理载体</th>
+<th>是否生成可见 token</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Explicit CoT</strong></td>
+<td>Wei et al. 2022</td>
+<td>自然语言离散 token</td>
+<td>是，完整可读</td>
+</tr>
+<tr>
+<td><strong>Implicit CoT（隐式 CoT）</strong></td>
+<td>Deng et al. 2023 [2311.01460]</td>
+<td>模型隐状态 / 内化映射</td>
+<td>否，直接出答案</td>
+</tr>
+<tr>
+<td><strong>Latent CoT（潜式 CoT）</strong></td>
+<td>Coconut 2024 [2412.06769]、综述 [2505.16782]</td>
+<td>连续向量序列（潜思考步）或跨层循环</td>
+<td>否（或仅少量特殊标签）</td>
+</tr>
+<tr>
+<td><strong>Reasoning Compression（推理压缩）</strong></td>
+<td>LightThinker 等 [2604.03679]</td>
+<td>仍在语言空间，但把长链摘要/删减成短链或特殊 token</td>
+<td>是，但显著变短</td>
+</tr>
+</tbody></table>
+
+<p>需要说明三点：</p>
+
+<ol>
+<li><strong>Implicit 与 Latent 在 2025 年后基本合流</strong>。早期 Implicit CoT 特指「把显式 CoT 蒸馏进直接回答的模型」[2311.01460, 2405.14838]，Latent CoT 特指「在连续空间显式维护推理状态」[2412.06769]；到 2025 年下半年两篇综述 [2507.06203, 2509.02350] 已把二者作为同一领域的两种叫法，本报告统一称「隐式思维链」，引用具体工作时保留其原名。</li>
+<li><strong>Latent ≠ 随机噪声</strong>。潜思考向量是确定（或可采样）的稠密计算状态，可以被线性探针、logit lens、辅助解码器读出部分语义；SIM-CoT 等方法甚至在训练时强制每个潜向量能重构出对应的一句推理文本 [2509.20317]。</li>
+<li><strong>「压缩」有两个层次</strong>，不要混淆：在<strong>语言空间</strong>里把 1000 个思考 token 压成 200 个（第 10 章），与把推理整体搬进连续空间、用 3–6 个潜向量替代（第 5 章），是技术上可串联、但范式不同的两条路线。</li>
+</ol>
+
+<h3>2.2 与知识库已有方向的五条分界线</h3>
+
+<ul>
+<li><strong>vs Test-Time Scaling（已有报告）</strong>：TTS 回答「 inference 时要不要多算、怎么分配算力」；Latent CoT 回答「多算的那部分计算<strong>用什么载体</strong>进行」。二者正交——潜空间里同样可以做顺序扩展与并行采样（SoftCoT++ [2505.11484]、连续空间 Pass@N [2510.12167]、LatentEvolve [2509.24771]）。TTS 报告第 9 章对本方向只有一节概述，本报告是其完整展开。</li>
+<li><strong>vs 稀疏/线性注意力（已有报告）</strong>：注意力优化改的是「token 之间怎么连」，服务长上下文；Latent CoT 改的是「推理步以什么形态存在」，服务思考效率。一个潜思考序列仍然走标准注意力，二者可叠加。</li>
+<li><strong>vs 推理优化/KV Cache 压缩（已有报告）</strong>：量化、驱逐、MLA 压缩的是<strong>已生成 token 的缓存</strong>；Latent CoT 直接<strong>不生成</strong>那些 token，从源头减少 KV 与解码步数。</li>
+<li><strong>vs 上下文工程（已有报告）</strong>：上下文工程管理窗口内已有 token 的写入/选择/压缩；Latent CoT 发生在模型内部表征层，窗口里根本看不到这些「思考」。</li>
+<li><strong>vs 扩散语言模型（已有报告）</strong>：DLM 在连续/掩码空间做<strong>去噪生成</strong>，目标是输出本身；Latent CoT 用连续状态做<strong>中间推理</strong>、最终答案仍多为自回归文本。两者有交叉（连续潜空间扩散式推理已出现 [2610.19871]），但问题定义不同。</li>
+</ul>
+
+<h2 id="sec4">3. 思想源流（2023–2026）：从「多给几个 token」到「在隐空间思考」</h2>
+
+<h3>3.1 2023–2024 上半年：先证明「额外计算槽」有用</h3>
+
+<ul>
+<li><strong>Pause Tokens（2023-10）</strong>[2310.02226]：Google 的奠基性实验。在训练序列里插入可学习的 <code>&lt;pause&gt;</code> 占位 token，让模型在回答前先「空转」几步。结果显示 pause 模型在 SQuAD、推理任务上显著优于同参基线——第一次干净地证明：<strong>收益来自额外计算本身，而非额外语言内容</strong>。</li>
+<li><strong>Thinking Tokens（2024-05）</strong>[2405.08644]：系统研究「沉思 token（contemplation tokens）」的调度，固定长度离散嵌入即可带来增益。</li>
+<li><strong>Quiet-STaR（2024-03）</strong>[2403.09629]：让模型在每句话后面自生成一段「内心 rationale」再继续，用 REINFORCE 式的事后泛化收益筛选，把通用思考能力蒸馏进预训练模型——是「思考不必说出口」的早期形态。</li>
+<li><strong>Implicit CoT via KD（2023-11）</strong>[2311.01460]：第一条明确叫「Implicit CoT」的路线：教师生成显式 CoT，学生用一个额外的隐步骤对齐教师的隐状态、直接输出答案。</li>
+<li><strong>From Explicit CoT to Implicit CoT（2024-05）</strong>[2405.14838]：提出最朴素也最有效的内化配方——先训练显式 CoT 模型，再<strong>逐步删除</strong>中间推理步并微调，GPT-2 Small 在多步任务上保持性能的同时推理大幅简化。这种「消退（fading）」课程成为后来 Log-ICoT 可证明分析的对象。</li>
+<li><strong>Distilling System 2 into System 1（2024-07）</strong>[2407.06023]：用自监督把 System-2 的慢思考（CoT、重述、System 2 Attention）「编译」进 System-1 的单遍快速回答，建立了「慢推理 → 快推理」的蒸馏叙事。</li>
+</ul>
+
+<h3>3.2 2024 下半年：连续思想范式确立</h3>
+
+<ul>
+<li><strong>CCoT（2024-12-17）</strong>[2412.13171]：Compressed Chain-of-Thought 首次提出生成<strong>变长、连续、有内容</strong>的 contemplation token——它们是显式推理的压缩稠密表征，而非固定占位向量，推理延迟显著下降。</li>
+<li><strong>多模态潜语言建模（2024-12）</strong>[2412.08635]：以 next-token diffusion 在潜空间做多模态语言建模，是连续推理与扩散范式最早的交汇点之一。</li>
+<li><strong>Coconut（2024-12-09，Meta）</strong>[2412.06769]：范式确立之作。直接把上一步的<strong>末层隐状态</strong>作为下一步的输入嵌入回灌（continuous thought），不经过词表解码。关键洞察是连续思想可以编码多个候选下一步，让模型在规划阶段做<strong>广度优先搜索（BFS）</strong>而非过早 commit 到单条语言路径；在 ProsQA 等需要大量搜索的逻辑任务上超过显式 CoT，但在 GSM8K 这类计算任务上反而落后（GPT-2 设定下 34.1% vs CoT-SFT 41.8%，综述表 1 复现值 [2505.16782]）——这个「擅长探索、拙于执行」的反差在一年半后被理论解释（见第 8 章）。</li>
+<li><strong>Hidden Chain-of-Thought Decoding（2024-09）</strong>[2409.08561]：用隐式 CoT 解码加速并提升推理，是同期并行的独立尝试。</li>
+<li><strong>Uncovering Latent CoT Vectors（2024-09）</strong>[2409.14026]：首次在现成模型里用探针「挖出」与推理相关的潜向量，预示了后来的机制审计方向。</li>
+<li><strong>语音侧先声（2024-09）</strong>[2409.17353]：把 ASR 的 CoT 内化进语音 LLM，端到端语音到语音对话绕过「先转文字」的管线，是隐式推理在工业场景最早的落地形态之一。</li>
+</ul>
+
+<h3>3.3 2025：方法大爆发与两篇综述收口</h3>
+
+<p>2025 年是「怎么训、怎么稳、怎么扩」的方法之年，代表工作包括：CODI 自蒸馏连续思想 [2501.19201 之后的期刊版归属见下]、Heima 隐藏思考 [2501.19201]、TwT 多教师习惯性蒸馏 [2503.24198]、PonderLM/PonderLM-2 预训练阶段连续沉思 [2505.20674, 2509.23184]、Inner Thinking Transformer 动态深度 [2502.13842]、HRM 分层推理 [2506.21734]、DART 把自回归推理蒸馏成非自回归 Silent Thought [2506.11752]、SIM-CoT 步级监督 [2509.20317]、SynAdapt 用合成连续 CoT 学自适应推理 [2508.00574]、Fast Thinking 离散码本 [2509.23633]、Learning to Ponder 自适应潜推理 [2509.24238]、MarCos 全连续马尔可夫思想链 [2509.25020]。两篇综述——*A Survey on Latent Reasoning* [2507.06203] 与 *Implicit Reasoning in LLMs: A Comprehensive Survey* [2509.02350]——以及本报告主要依据的 *Reasoning Beyond Language* [2505.16782]——在年中至年末为领域建立了共同语言。</p>
+
+<h3>3.4 2026：理论、审计与产品化三线并进</h3>
+
+<ul>
+<li><strong>理论线</strong>：Log-ICoT 可证明内化 [2605.28600]、潜 CoT 能力与基本极限 [2602.01148]、潜链因果结构 [2602.08783]、潜监督的信息论分析 [2606.20075]。</li>
+<li><strong>机制审计线</strong>：「潜 CoT 真的在推理吗」的统一分类审计 [2610.21182]、顺序任务机制研究 [2602.00449]、SCIT cache 载体因果测试 [2608.27265]、最小对探针 [2610.28498]、循环模型监控 [2610.18127]、WIDER 潜秩坍缩 [2609.07406]。</li>
+<li><strong>工程/产品线</strong>：INTACT 冻结骨干外挂 [2610.19568]、SWITCH 可切换潜推理 + on-policy RL [2606.13106]、CoLT 多模态 22.6× [2606.31986]、TAC-CoT 工具增强隐式 CoT [2611.01926]、HybridAgent 开源混合 Agent [2610.18861]，以及向推荐（OneLatent [2610.30675]）、机器人（PhysWord [2610.26854]、LaST-R1 [2604.28192]）、视频 Agent（LARVA [2610.35229]）、统一多模态（[2610.42149]）的全面扩散。</li>
+</ul>
+
+<h2 id="sec5">4. 统一分类学：水平轴 × 垂直轴 × 三种表征初始化</h2>
+
+<p>本节采用 PolyU 综述 [2505.16782] 的两轴框架（该综述由香港理工大学 Xiaoyu Shen 等撰写，2025-05 首发、2026-08 更新至 v3，CC BY-NC-SA 4.0，是目前引用最完整的分类来源）。</p>
+
+<figure>
+  <iframe src="diagrams/2-taxonomy.html" height="760" loading="lazy"></iframe>
+  <figcaption>图 2 · Latent CoT 两轴分类学：横向沿序列「多几个潜 token」 × 纵向跨层「同一批层多循环几次」</figcaption>
+</figure>
+
+<h3>4.1 水平轴（Token-wise Horizontal）</h3>
+
+<p>在序列维度上先生成一串潜思考 c₁, c₂, …, cₖ，再输出答案 token。关键设计分三阶段：</p>
+
+<ol>
+<li><strong>表征初始化（Representation Initialization）</strong>——潜思考从哪来；</li>
+<li><strong>模型优化（Model Optimization）</strong>——预训练 / SFT（间接或直接监督）/ RL；</li>
+<li><strong>推理探索（Inference Exploration）</strong>——顺序扩展（单链精修、按难度自适应步数）或并行扩展（多潜链采样，类比 self-consistency；并行概率潜推理进一步保证多条轨迹的多样性 [2610.29385]）。</li>
+</ol>
+
+<h3>4.2 垂直轴（Layer-wise Vertical）</h3>
+
+<p>不增加可见序列长度，而是让同一组层在生成每个 token 前<strong>循环施加多次</strong>，把「深度」变成可按 token 难度伸缩的资源：</p>
+
+<ul>
+<li><strong>Encoder-based</strong>：以 HRM [2506.21734] 为代表，两层级（tier）结构在循环中做粗到细推理；RELAY 把每个循环迭代对齐到一个 CoT 步，生成可靠的长程推理链再反哺自回归模型训练。</li>
+<li><strong>Decoder-based（i）端到端自适应深度循环</strong>：Coconut 式循环结构 [2412.06769]、轻量路由器逐 token 控制递归深度（ITT [2502.13842]、Bae et al.）、或把每次循环输出物化成潜「思想 token」改善信息流（Mohtashami et al.）。</li>
+<li><strong>Decoder-based（ii）循环内的潜语义监督</strong>：用概率加权嵌入构造平滑中间目标（Zeng et al.）、用分类器给出直接「潜奖励」牵引轨迹（Du et al.）。</li>
+</ul>
+
+<p>垂直路线最吸引人的性质是<strong>参数量不变、计算深度可调</strong>：多项分析显示，重复施加同一组 Transformer 层在总参数几乎不变的情况下显著提升多步推理 [2502.17416]，且循环 Transformer 具备一定的并行计算能力，形式上比固有串行的显式 CoT 更高效 [2509.25239]。</p>
+
+<h3>4.3 三种表征初始化</h3>
+
+<table>
+<thead><tr>
+<th>初始化方式</th>
+<th>机理</th>
+<th>代表</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>隐状态直传（Hidden State）</strong></td>
+<td>上一步末层隐状态直接（或经投影网络）回灌为下一步输入嵌入</td>
+<td>Coconut [2412.06769]、CODI、PCCoT、SIM-CoT、System-1.5、KaVa（KV-cache 蒸馏）</td>
+</tr>
+<tr>
+<td><strong>词嵌入加权（Weighted Embedding）</strong></td>
+<td>在模型输入嵌入空间对现有词表嵌入做加权叠加（soft token / 概念叠加），不离开词表邻域</td>
+<td>Multiplex Thinking [2601.08808]、Mixture of Tokens [2509.21482]、PonderLM [2505.20674]、Latent-SFT [2510.15522]</td>
+</tr>
+<tr>
+<td><strong>特殊向量（Special Vector）</strong></td>
+<td>新增可学习占位序列/潜 token，或用 VQ-VAE、SAE 从外部量化出潜词</td>
+<td>latent tokens [2505.12629]、R-Capsule [2509.22131]、Fast Thinking 码本 [2509.23633]、VQ 潜词、SAE 概念向量</td>
+</tr>
+</tbody></table>
+
+<p>三种方式的权衡：隐状态直传信息容量最大但最难训（要跨 batch 回灌、易漂移）；词嵌入加权最贴近预训练分布、训练最稳，但表达受词表凸包约束；特殊向量最灵活、可离散化便于检索与审计，但需要额外词表与对齐成本。</p>
+
+<h2 id="sec6">5. 水平路线旗舰拆解</h2>
+
+<h3>5.1 Coconut：连续思想与「潜空间 BFS」</h3>
+
+<p><strong>机制</strong>：标准自回归在第 t 步输入 token 嵌入 e_t，输出隐状态 h_t 再解码为词；Coconut 在「潜思考模式」下跳过解码，直接把 h_t 当作 c_t 喂回输入层，连续 k 步后才恢复词解码。<strong>训练</strong>采用多任务课程：从只有 1 个连续思想的简单任务开始，逐步增加潜步数，让模型先学会短链再学长链（直接长链训练不稳定）。<strong>能力画像</strong>极具诊断价值——在 ProsQA（可能世界搜索）上 97.0%，在 GSM8K（精确算术）上仅 34.1% [2602.01148 引述]：连续叠加态天然适合「同时保留多个分支」，却不适合「高精度串行执行」。</p>
+
+<h3>5.2 CODI：自蒸馏 + 投影对齐</h3>
+
+<p>CODI（Continuous Chain-of-Thought via Self-Distillation，2025）针对 Coconut「输出隐状态与输入嵌入空间不对齐」的问题，让上一步隐状态先经过一个<strong>投影网络</strong>再回灌，并通过自蒸馏让潜链对齐显式 CoT 路径的隐状态。综述复现实验中 CODI 把 GPT-2 上的 GSM8K 从 Coconut 的 34.1% 拉到 43.7%（超过显式 CoT-SFT 的 41.8%），在 LLaMA-3-1B-it 上 55.6% [2505.16782 表 1]。这是隐式路线首次在小模型算术基准上追平显式 CoT 的代表结果（注意：仍远小于当代大模型 + RL 的水平）。</p>
+
+<h3>5.3 SIM-CoT：用步级监督治「潜空间同质化」</h3>
+
+<p>2025-09 的 SIM-CoT [2509.20317] 指出隐式 CoT 放大计算预算时的核心病症：潜步数一多，训练就失稳崩溃——潜表征彼此趋同、丧失语义多样性。药方是<strong>训练时挂一个辅助解码器</strong>，强制每个隐式 token 能重构出对应的那一步显式推理文本（逐步对齐）；推理时移除解码器，零额外开销。它同时附赠了可解释性接口。2026-09 的 WIDER [2609.07406] 进一步把这一病症命名为<strong>潜秩坍缩（latent rank collapse）</strong>：连续潜状态坍缩到一个共享主方向；其光谱正则器惩罚轨迹在主方向上的投影，即插即用，机制分析确认有效秩提升、主方向能量下降。2026-10 的 Sep-Latent [2610.22924] 则发现分隔符 token 是天然的压缩锚点，可缓解固定长度潜序列的表征坍缩。</p>
+
+<h3>5.4 软 token 家族：不离开词表的连续推理</h3>
+
+<p>另一条更「温和」的路线不回灌隐状态，而是在词嵌入空间构造软 token：</p>
+
+<ul>
+<li><strong>PonderLM</strong> [2505.20674]：生成每个复杂句子成分前，按预测分布对全部词嵌入做加权和，「沉思」若干次再真正出词；PonderLM-2 [2509.23184] 把这套机制推进预训练阶段。</li>
+<li><strong>Multiplex Thinking</strong> [2601.08808]：每个思考步采样 K 个候选 token，把它们的嵌入聚合成一个「多路复用 token」，保留词表先验与采样动态，在连续载体上维持可处理的概率分布。</li>
+<li><strong>Mixture of Tokens / MoT</strong> [2509.21482]：在 RLVR 中不再每步只采样离散 token，而是保留整分布信息做组相对优化。</li>
+<li><strong>Latent-SFT（Chain of Superposition）</strong>[2510.15522]：用 Latent-Vocab 把隐状态约束在预训练词表空间内，把潜推理构造为多条推理路径的叠加，解决分布错位与链定义模糊。</li>
+<li>机制研究 *LLMs are Single-threaded Reasoners* [2508.03440] 则提醒：软思考内部目前仍近似单线程，一个 token 路径无法分叉成多条独立推理线程——「叠加」更多是加权混合而非真正并行。</li>
+</ul>
+
+<h3>5.5 代表性方法横评（小模型受控设定，来自综述表 1，作者各自原始口径）</h3>
+
+<table>
+<thead><tr>
+<th>方法</th>
+<th>GPT-2 / GSM8K</th>
+<th>LLaMA-3-1B-it / GSM8K</th>
+<th>平均可见 token 数</th>
+</tr></thead><tbody>
+<tr>
+<td>No-CoT-SFT</td>
+<td>19.1%</td>
+<td>44.1%</td>
+<td>2.2</td>
+</tr>
+<tr>
+<td>CoT-SFT</td>
+<td>41.8%</td>
+<td>66.7%</td>
+<td>25</td>
+</tr>
+<tr>
+<td>Coconut</td>
+<td>34.1%</td>
+<td>45.3%（复现）</td>
+<td>8.2（6 潜步）</td>
+</tr>
+<tr>
+<td>CODI</td>
+<td>43.7%</td>
+<td>55.6%</td>
+<td>6 潜步 + 答案</td>
+</tr>
+<tr>
+<td>PCCoT</td>
+<td>49.48%</td>
+<td>53.35%</td>
+<td>24 潜步</td>
+</tr>
+<tr>
+<td>SIM-CoT (+CODI)</td>
+<td>42.6%</td>
+<td>56.1%</td>
+<td>13.2</td>
+</tr>
+<tr>
+<td>System-1.5</td>
+<td>46.66%</td>
+<td>—</td>
+<td>#Steps=2（CoT 为 26）</td>
+</tr>
+</tbody></table>
+
+<p>读表纪律：这是不同作者在不同骨干/数据上的自报值，只说明「隐式路线在小模型上已可与短 CoT 掰手腕」，<strong>不能</strong>外推为「潜推理已普遍超越显式 CoT」——大模型、长程、开放域上显式 + RL 仍是主力。</p>
+
+<h2 id="sec7">6. 垂直路线：把深度变成可伸缩的资源</h2>
+
+<h3>6.1 Looped Transformer 的理论与实证</h3>
+
+<p>*Reasoning with Latent Thoughts: On the Power of Looped Transformers* [2502.17416]（Princeton 等）给出关键经验结论：对加法、p-hop 归纳、数学题，<strong>k 层模型循环 L 次的表现接近 kL 层非循环模型</strong>，且显著优于 k 层模型——推理需要的是大深度，不必是多参数。这与「虚拟深度缩放定律」（Virtual Logic Depth [2506.18233]）相互呼应：推理能力沿有效计算深度缩放；循环语言模型上的规模化实验进一步确认，潜推理收益随循环数增加而稳定增长 [2510.25741]。</p>
+
+<h3>6.2 HRM：分层、多时标、单前向</h3>
+
+<p>Hierarchical Reasoning Model [2506.21734]（2025-06，受大脑分层与时标处理启发）用两层级循环架构在<strong>单次前向传播</strong>内完成顺序推理任务，不生成显式 CoT，同时保持训练稳定与效率，在迷宫等需要长程规划的任务上表现突出。它代表了垂直路线的理想形态：无自回归瓶颈、深度随循环数自由伸缩。</p>
+
+<h3>6.3 逐 token 自适应深度与预训练内化</h3>
+
+<ul>
+<li><strong>Inner Thinking Transformer（ITT）</strong>[2502.13842]：把部分层重新设计为可循环的「内部思考」，困难 token（梯度尖峰标记）自动获得更多循环，实现逐 token 动态深度。</li>
+<li><strong>Skip a Layer or Loop it?</strong>[2507.07996]：推理时对冻结的预训练 LLM 做「跳层或循环」的深度自适应，无需重训。</li>
+<li><strong>Token-Level Adaptive Latent CoT 预训练</strong>[2602.08220]（2026-02）：把内化推进<strong>预训练阶段</strong>——模型在发射每个 token 前生成可变长度潜 CoT，难 token 长、易 token 短（甚至为零），该行为从一阶段通用文本预训练中自然涌现，并通过逐 token 自适应停机同时降低训练与推理 FLOPs；Llama 架构上困惑度与下游准确率一致改善。</li>
+<li><strong>Recursive Language Models</strong>[2512.24601]：把长提示当作外部环境，模型程序化地检视、分解并递归调用自身，可处理长两个数量级的输入，是「垂直计算 + 外部记忆」的推理时形态。</li>
+</ul>
+
+<h3>6.4 冻结骨干外挂：INTACT 的工程友好路线</h3>
+
+<p>2026-10 的 INTACT [2610.19568] 提供了对产业最友好的形态：<strong>不动骨干一根毫毛</strong>。一个小型外部编码器读取冻结模型的隐状态，迭代映射出一段潜推理前缀，随后冻结模型自行写出剩余推理与答案；编码器先蒸馏（复现书面推理的效果、同时行为贴近原模型）再用答案正确性做 RL 强化。在 1B–8B 四个冻结骨干上，GSM8K 与跨域平均准确率均提升（Llama-3.2-3B 75.8%→79.3%，Qwen2.5-3B 77.6%→79.7%），端到端每题延迟 −19%；多领域语料训练后在数学、科学、常识 12 个基准上无任务特化即改善。这意味着 latent reasoning 可以作为<strong>旁路插件</strong>卖给已有模型，而非要求从头重训。</p>
+
+<h2 id="sec8">7. 训练范式全谱</h2>
+
+<figure>
+  <iframe src="diagrams/3-training.html" height="720" loading="lazy"></iframe>
+  <figcaption>图 3 · 隐式 CoT 训练范式全谱：五条路线如何把「显式推理」编译进「隐空间」</figcaption>
+</figure>
+
+<h3>7.1 预训练内化</h3>
+
+<p>PonderLM-2 [2509.23184] 与 Token-Level Adaptive Latent CoT [2602.08220] 证明潜思考可以在通用语料预训练中习得，而非只能后训练嫁接；LTA-thinker [2509.12875] 在复杂推理上用潜思想增强训练。优势是与通用语言建模目标天然兼容，挑战是潜步数调度与训练稳定性。</p>
+
+<h3>7.2 SFT：间接监督与直接监督</h3>
+
+<ul>
+<li><strong>间接监督</strong>：只有最终答案损失，潜轨迹自由生长——简单但信号稀疏、易语义漂移。</li>
+<li><strong>直接监督</strong>（综述归纳 [2505.16782]）： - *重构监督*：辅助解码器把每个潜向量解码回对应推理步/高层计划（SIM-CoT [2509.20317]、CoLT [2606.31986]、R-Capsule [2509.22131]）； - *对比损失*：把特殊潜 token 拉近其代表全文的池化表征（Hidden CoT 系列）； - *MSE 隐状态匹配*：学生逐步匹配教师末层隐状态（ICoT [2311.01460]、System-1.5）； - *稠密 KV-cache 模仿*：学生整条潜 KV-cache 模仿教师压缩版 cache（KaVa）； - *潜头预测下一压缩嵌入*：CoLaR 式链式预测。</li>
+<li><strong>后训练精修</strong>：[2506.08552] 给出轻量潜推理嵌入更新方法，只动推理嵌入、不动全模型。</li>
+</ul>
+
+<h3>7.3 RL：让梯度穿透循环潜计算</h3>
+
+<p>隐式 CoT 长期难以直接套用 on-policy RL——潜状态没有离散 token 边界，策略比（policy ratio）无从定义。2026 年的突破是 <strong>SWITCH</strong>[2606.13106]：引入两个离散边界 token <code>&lt;swi&gt;</code> 进入、<code>&lt;/swi&gt;</code> 退出潜推理，边界使策略比良定义，Switch-GRPO 让梯度穿透循环潜计算；配合「可见→潜」课程，在同规模上持续超越此前隐状态循环方法。机制分析确认：<code>&lt;swi&gt;</code> 是学到的局部切换策略而非风格装饰，潜步执行的是问题相关、因果重要的计算，且计算集中在进入潜模式的一次隐状态转移上。RL 线的其他支点：Seek in the Dark 的潜空间实例级策略梯度 [2505.13308]、LaST-R1 把「潜推理后行动」用于机器人 RL 后训练 [2604.28192]、HybridRL 学习「何时潜想、何时文本行动」[2610.18861]。</p>
+
+<h3>7.4 蒸馏与课程</h3>
+
+<ul>
+<li><strong>显式→隐式蒸馏</strong>：DART [2506.11752] 用轻量 Reasoning Evolvement Module 把自回归 CoT 蒸馏成非自回归 Silent Thought，推理只走 ST 通路、无额外延迟；TwT [2503.24198] 多教师习惯性蒸馏；LoRi [2606.05315] 发现隐状态轨迹具低秩结构，在共享低秩张量子空间做一二阶矩对齐，蒸馏更省。</li>
+<li><strong>消退课程（fading）</strong>：从显式 CoT 开始逐步撤掉思考步。朴素做法一次撤一个，需 O(k) 阶段；<strong>Log-ICoT</strong>[2605.28600] 提出按几何块撤并给出证明：L 层 Transformer 在 Log-ICoT 课程下用 poly(n) 样本、L=log₂k 个阶段学会 k-parity，样本效率与显式 CoT 持平而推理零开销（详见第 8 章）。</li>
+<li><strong>分布蒸馏的新前沿</strong>：Rationale Distribution Distillation via Flow Matching [2610.19871] 用流匹配蒸馏 rationale 的<strong>分布</strong>而非单条轨迹，做分布级连续潜推理。</li>
+</ul>
+
+<h2 id="sec9">8. 理论：潜思维能做什么、不能做什么</h2>
+
+<h3>8.1 可证明的内化：Log-ICoT</h3>
+
+<p>*Transformers Provably Learn to Internalize Chain-of-Thought* [2605.28600]（2026-05）是迄今最强的理论结果。背景：显式 CoT 提示把 parity 学习等任务的样本复杂度从指数降到多项式，但推理时要付出全部思考步成本；ICoT 经验有效却缺乏理论。论文证明：在其提出的 <strong>Log-ICoT 课程</strong>（按几何级数成块删除思考 token，而非逐个删除）下，L 层 Transformer 以 poly(n) 样本、L=log₂k 个训练阶段学会 k-parity，<strong>样本效率匹配显式 CoT、推理开销归零</strong>，并把此前单层的保证推进到多层架构；实验可视化了推理如何被逐层吸收进更深层。</p>
+
+<h3>8.2 探索—执行权衡：潜 CoT 的能力与基本极限</h3>
+
+<p>*Capabilities and Fundamental Limits of Latent CoT* [2602.01148]（2026-02）解释了 Coconut「ProsQA 97.0% vs GSM8K 34.1%」之谜：存在一个<strong>探索—执行权衡（Exploration-Execution Trade-off）</strong>，由「决策确定性（decisional certainty）」支配——高确定性利于精确执行但抑制探索，低确定性利于搜索却导致误差累积。论文提出 Symbolic Index 量化决策承诺度并建立其与执行稳定性/探索能力的因果关系，还证明<strong>课程学习在理论上是必要的</strong>：直接训练会因分布问题而可证明地失败。</p>
+
+<h3>8.3 显式与潜式的形式化分离</h3>
+
+<p>*A Formal Comparison Between CoT and Latent Thought* [2509.25239]（2025-09）证明两者能力不等价：<strong>潜思维支持比固有串行的 CoT 更高效的并行计算</strong>；反过来，<strong>CoT 能通过随机解码做近似计数与采样</strong>，这是确定性潜变换的短板。加上 *Reasoning by Superposition* 对 Coconut 的理论刻画 [2505.12514] 与循环 Transformer 的能力分析 [2502.17416]，理论图景给出明确指引：<strong>不是「潜式取代显式」，而是按任务性质混合</strong>——搜索/规划类交给潜空间并行，精确枚举/随机推断保留显式采样。</p>
+
+<h2 id="sec10">9. 2026 信任危机：潜链真的在推理吗？</h2>
+
+<p>这是本方向 2026 年最重要、也最健康的转折。高准确率 + 探针能解码出中间答案，<strong>并不能</strong>证明模型用潜链推出了答案。</p>
+
+<h3>9.1 反方证据：潜链可能是「事后装饰」</h3>
+
+<ul>
+<li><strong>Does Latent CoT Actually Reason?</strong>[2610.21182]（2026-10，UCSD McAuley 组等）：在覆盖 3 种训练配方、3 类推理任务、2 个骨干的 21 个模型-任务配置上，组合「删链 + 内容替换 + 探针 + 轨迹分析」。发现：在逻辑任务上，<strong>Coconut 常常在潜链开始之前就已携带可读答案</strong>，状态过早固化，删掉整条潜链预测几乎不变；逐步监督则能产生有序的推理布局。结论是「latent CoT」这个标签下混着多种计算形态，必须按因果效力而非可读性分类。</li>
+<li><strong>Do Latent-CoT Models Think Step-by-Step?</strong>[2602.00449]：在中间状态已知的严格顺序多项式迭代任务上解剖 CODI：短程、低跳数时确实形成忠实的「桥接状态」；但随深度/难度增加，模型无法可靠维持完整潜 rollout，要么把计算压成部分的后段捷径，要么在更难区间退化。</li>
+<li>更早的怀疑论：隐式推理只在远超常规过拟合的 grokking 式训练后出现（Wang et al. 2024）、模型是在生成链的过程中逐步拿到（子）答案而非读题时就算好 [2412.01113]、纯提示诱导不出潜 CoT、必须训练 [2411.15862]、隐式推理常是固定模式训练出的捷径 [2503.07604]、深层并无系统化的高级推理推进 [2505.13898]；另一项对照实验发现，即便插入无语义 token，只要其带来的激活分布发生偏移就能产生推理增益 [2510.01032]——这再次提示「潜链增益」可能主要来自计算/激活形态而非可读内容。</li>
+</ul>
+
+<h3>9.2 正方与精细化证据</h3>
+
+<ul>
+<li><strong>Internal Chain-of-Thought</strong>[2505.14530]：在 15 个两步复合任务上用层级上下文掩码、跨任务补丁与 LogitLens，证明预训练 LLM 天然存在「逐层顺序分解并执行子任务」的内部 CoT。</li>
+<li><strong>Dynamics Within Latent CoT</strong>[2602.08783]：把潜步建模为结构因果模型（SCM）中的变量，逐步 do-干预，区分哪些步因果必要、哪些只是相关。</li>
+<li><strong>SCIT</strong>[2608.27265]：Suffix Cache Interchange Test 构造精确的「来源—接收者」反事实，置换 cache 段并拆分 K/V 组件，定位反事实计算到底由哪个 Transformer 对象承载——在 CODI-GPT2 与 SIM-CoT 复现版上发现算术反事实主要经特定 cache 成分传递。</li>
+<li><strong>最小对探针</strong>[2610.28498]：指出传统探针方法的陷阱——逐句读取时探针几乎读不出题目中的数字（Ouro 0.36 / Qwen 0.19），但跨问题共享编码里该数字清晰可读（约 0.9）；「探针失败 ≠ 信息不存在」。</li>
+<li><strong>循环模型五透镜检查</strong>[2610.18127]：对 8 个循环 LM 做机制可解释性体检，评估迭代变换是否真的增益、对提示扰动是否稳定。</li>
+<li><strong>SEAL</strong>[2504.07986]：免训练的可转向推理校准，在推理时直接引导隐状态方向即可修正推理偏差，为「不重训也能干预潜推理」提供了轻量证据。</li>
+<li><strong>监督信息量的定量绑定</strong>：[2606.20075] 提出 Unified Latent Probe 量化潜轨迹与显式推理步之间的互信息，发现清晰的「<strong>信息—性能绑定</strong>」：准确率取决于潜链保留的信息保真度；刚性几何压缩会压垮推理空间，生成式重构是更好的语义锚。</li>
+</ul>
+
+<h3>9.3 对报告使用者的方法论含义</h3>
+
+<p>评估任何 latent reasoning 系统，至少要求三件事：<strong>（1）删链/换链的反事实测试</strong>（链对答案有没有因果贡献）；<strong>（2）跨样本共享编码的探针</strong>（避免单样本探针假阴性）；<strong>（3）随任务难度的阶梯测量</strong>（短程忠实不代表长程不坍缩）。只展示「潜向量能解码出中间答案」的营销材料，在 2026 年的证据标准下已不构成有效论证。</p>
+
+<h2 id="sec11">10. 姊妹路线：显式 CoT 压缩</h2>
+
+<p>在语言空间内做减法是与 latent CoT 并行、产业采用更快的路线，2026 年论文极为密集。它不改变推理载体，但直接砍 token：</p>
+
+<ul>
+<li><strong>方法族</strong>：长度感知策略优化（HMPO 中位数长度策略 [2606.01934]、长 CoT 细粒度组策略 [2602.10048]）、经验引导自适应压缩（ExpThink [2605.07501]）、混合策略蒸馏 [2605.08776]、知识引导状态感知压缩 [2604.09150]、规则先验把多步推理压成一步（RuPLaR [2605.09346]）、熵引导选择 [2511.14258, 2607.28707]、token 显著性（Stream of Thought ripple [2608.31066]）、TL;DR 重加权 [2506.02678]、步级偏好优化 SSPO [2508.12604]、局部偏好学习 [2611.04814]、剪枝模型的长短对比压缩性改进 [2610.34336]。</li>
+<li><strong>记忆化方向</strong>：LightThinker++ [2604.03679] 把中间思考动态压成紧凑语义表征并引入显式自适应内存管理——峰值 token −70%、推理时间 −26%（精度几乎无损），长程 Agent 任务中内存占用保持稳定；ARSM [2609.32852] 用假设-动作-结果微链 + 动态状态机做免训练的 Agent 上下文压缩。</li>
+<li><strong>可信度审计</strong>：*Shorter, but Still Trustworthy?*[2604.04120] 专门评估压缩后 CoT 的可信度，提醒压缩与忠实度并非免费兼得。</li>
+<li><strong>多模态压缩</strong>：MCPO 模态对比偏好优化 [2609.04947]、VIG 视觉信息增益奖励 [2608.21883]、Think-Compress-Answer [2610.25640]。</li>
+</ul>
+
+<p>这条路线与 latent CoT 的关系是「同一成本压力的两级响应」：先在语言空间挤掉冗余 token，再把剩余核心计算搬进隐空间；HybridAgent 类系统往往两者都用。</p>
+
+<h2 id="sec12">11. 混合推理：2026 年的收敛解</h2>
+
+<figure>
+  <iframe src="diagrams/4-hybrid.html" height="700" loading="lazy"></iframe>
+  <figcaption>图 4 · 混合推理（Hybrid Reasoning）：文本模式 ⇄ 潜模式在一次生成内动态切换</figcaption>
+</figure>
+
+<h3>11.1 HybridAgent：第一个完整开源的混合 Agent 配方</h3>
+
+<p>*Hybrid Reasoning Agents* [2610.18861]（2026-10-13，Jiaru Zou、James Zou 等，代码在 togethercomputer 组织下，MIT 协议，发布 8B/14B 检查点与训练数据）正面回答了一个问题：<strong>如何构建一个「超越语言思考、却仍通过语言行动」的 Agent？</strong></p>
+
+<ul>
+<li><strong>架构</strong>：轻量 <strong>HybridLink</strong> 适配器在文本与潜模式间无损切换——模型输出 latent 进入标签后，末层隐状态直接回灌推进潜步；检测到退出标签即恢复文本。连续<strong>工作记忆</strong>在多轮之间保留无损的混合上下文（潜状态 + 文本共存于同一条 KV 轨迹）。</li>
+<li><strong>训练两阶段</strong>：<strong>HybridSFT</strong> 教会骨干与 HybridLink 协调、稳定工具集成的混合生成；<strong>HybridRL</strong> 学习「什么时候在潜空间想、什么时候用文本行动」的策略。</li>
+<li><strong>结果（作者口径，尚无独立复现）</strong>：3 个模型规模、11 个基准（数学、科学、医学、搜索、Agentic 推理），相对前沿 LLM Agent 与 Agentic 框架（含文本与潜式方法）平均性能 <strong>+10.4%</strong>，token 减少 <strong>35.5%–54.7%</strong>，推理加速 <strong>1.8–2.6×</strong>；论文还报告了更高倍数的端到端效率（摘要中 2.7×–3.7× 一档）。</li>
+<li><strong>可审计性设计</strong>：潜思考并非永久黑盒——通过退出标签可把任意潜段按需导出检查，这是对「潜推理导致监控失效」批评的直接工程回应。</li>
+<li><strong>复现门槛</strong>（论文与仓库口径）：SFT 需 8–16 GPU，RL 需 32 GPU；所有基准数字均为作者自报。</li>
+</ul>
+
+<h3>11.2 TAC-CoT：工具调用只保留文本</h3>
+
+<p>*TAC-CoT* [2611.01926]（2026-11-01）把混合思想推到更极致：用紧凑潜推理段替代全部显式推理轨迹，<strong>文本 token 只留给工具调用、观测与最终答案</strong>。在 Agentic 数学与 QA 基准上准确率最高 +8.8 分，模型前向传播次数最多减少 6.8×，并在单工具/多工具场景同步提升工具调用质量。</p>
+
+<h3>11.3 SWITCH：离散边界让混合可 RL、可解剖</h3>
+
+<p>SWITCH [2606.13106]（见 7.3）用 <code>&lt;swi&gt;</code>/<code>&lt;/swi&gt;</code> 两个边界 token 同时解决混合模式的训练与分析问题，是 HybridAgent 之外另一条被验证的技术路线。它的机制发现值得产品设计者注意：<strong>潜模式的有效计算集中在「进入潜模式的那一次隐状态转移」</strong>——这暗示潜段并非越长越好，少数几次高质量转移可能就承载了主要收益。</p>
+
+<h3>11.4 为什么混合是均衡解</h3>
+
+<p>理论（第 8 章）与审计（第 9 章）从两头收敛到同一结论：</p>
+
+<ol>
+<li>纯潜式在精确执行、长程维持、结果可验证上仍有系统性短板；</li>
+<li>纯文本式在延迟、成本、信息带宽上代价沉重；</li>
+<li>Agent 的真实工作流天然分段——<strong>内部规划</strong>（适合潜空间）与<strong>外部交互</strong>（工具协议、人类可读答案、审计证据必须是文本）交替出现；</li>
+<li>混合边界 token 同时提供了 RL 的数学良定义性与安全的监控挂钩点。</li>
+</ol>
+
+<p>可以预期，2027 年前后「reasoning effort」旋钮的含义会从「想多长」升级为「<strong>想多少放潜空间、多少说出来</strong>」。</p>
+
+<h2 id="sec13">12. 应用版图</h2>
+
+<h3>12.1 多模态推理与视觉生成</h3>
+
+<p>视觉是 latent reasoning 最自然的主场——图像本就是连续表征，硬把视觉推理翻译成文字再翻译回来既慢又损。</p>
+
+<ul>
+<li><strong>CoLT</strong>[2606.31986]：多模态模型用 3 步潜思考替代上千文本 token，外部轻量解码器提供双向步级监督（前向：潜思考解码为下一步文本；后向：给定文本上下文把解码器隐状态对齐到潜思考）+ 内部连贯监督，推理时全部移除。8 个基准上超过 CODI、SIM-CoT 及依赖辅助图像的潜视觉方法；推理时间 −10.1×、文本解码时间 −22.6×。</li>
+<li><strong>MCOUT</strong>[2508.12587]：多模态连续思想链直接在对齐音/视/文的连续空间推理。</li>
+<li><strong>Machine Mental Imagery</strong>[2506.17218]：让 VLM 用潜视觉 token 调用「心理意象」，无需真的渲染图像即获得视觉想象力。</li>
+<li><strong>CrystaL</strong>[2602.20980]：MLLM 中视觉潜变量的自发涌现研究；Latent Visual Reasoning [2509.24251]、Reasoning in the Dark [2510.12603]（交错视觉-文本潜推理）、潜空间视觉推理 [2510.23925]。</li>
+<li><strong>统一多模态</strong>：[2610.42149] 探索连续空间潜推理作为统一多模态模型的推理底座。</li>
+<li><strong>视频 Agent</strong>：LARVA [2610.35229] 联合学习潜推理与视觉观测，观察者不再传字幕而是传紧凑连续表征，让小模型同时学会「怎么答」与「下一步看哪」。</li>
+</ul>
+
+<h3>12.2 具身智能与自动驾驶</h3>
+
+<ul>
+<li><strong>LaST-R1</strong>[2604.28192]：机器人基础模型的 RL 后训练框架，在动态环境中先做潜推理再行动，突破静态模仿学习的泛化瓶颈。</li>
+<li><strong>PhysWord</strong>[2610.26854]：用原子动作动词作语义锚组织潜空间中的物理动力学，把潜推理结构化成可复用的「物理词」原语。</li>
+<li><strong>MIRAGE</strong>[2606.04627]：移动 Agent 从截图与语言目标出发，用连续潜推理替代长文本 CoT，学习屏幕可供性与多步导航。</li>
+<li><strong>自动驾驶世界模型</strong>：Latent CoT World Modeling [2512.10226] 在动作对齐的潜表征上预测未来状态、优化规划。</li>
+</ul>
+
+<h3>12.3 语音与全双工对话</h3>
+
+<p>语音是最早内化 CoT 的工业场景：[2409.17353] 把 ASR CoT 内化进语音 LLM 实现端到端语音到语音；跨语言半隐式 CoT [2504.20835] 提升非核心语言指令跟随。隐式推理与全双工语音模型（知识库已有专报告）结合，可在不打断流式生成的前提下完成帧级内部计算。</p>
+
+<h3>12.4 多智能体协作</h3>
+
+<p>当 Agent 之间用自然语言通信时，存在三重结构性损耗：推理成本高、离散化信息有损、语言歧义冗余。潜通信路线——*Beyond Tokens* [2606.05711] 给出统一框架，LatentMAS [2511.20639] 实现端到端免训练的纯潜空间协作：各 Agent 先自回归生成潜思想，再在连续空间直接交换，消除语言编解码损耗。共享潜工作记忆提供近似无损的协作带宽。</p>
+
+<h3>12.5 信息检索与推荐</h3>
+
+<ul>
+<li>密集检索中用「审慎思考链」生成更丰富的文档表征 [2502.12974]；</li>
+<li>序列推荐的 Think Before Recommend [2503.22675]、LARES [2505.16865]、强化潜推理推荐 [2505.19092]、潜交叉推理打通搜索与推荐 [2508.04152]、生成式推荐隐式推理 [2606.14142]；</li>
+<li><strong>OneLatent</strong>[2610.30675]：基础推荐模型的潜推理，摆脱显式 CoT 的模板与长度开销。</li>
+</ul>
+
+<h3>12.6 结构化数据与在线学习</h3>
+
+<p>Latent CoT Improves Structured-Data Transformers [2605.11262] 证明潜推理对表格/结构化数据任务同样有效；Continuous Latent Contexts [2605.09867] 用紧凑连续潜上下文支撑 Transformer 的高效在线学习，呼应测试时学习方向。</p>
+
+<h2 id="sec14">13. 评测体系、开放问题与工程落地 Checklist</h2>
+
+<h3>13.1 评测三层</h3>
+
+<ol>
+<li><strong>行为层</strong>：准确率、token 数、前向次数、端到端延迟（必须与匹配的文本基线在同上下文预算下对比）；</li>
+<li><strong>因果层</strong>：删链/换链测试 [2610.21182]、SCM do-干预 [2602.08783]、SCIT cache 置换 [2608.27265]；</li>
+<li><strong>信息层</strong>：潜轨迹—显式推理互信息（ULP [2606.20075]）、有效秩/主方向能量 [2609.07406]、跨样本共享编码探针 [2610.28498]、潜段监控 [2610.18127]。</li>
+</ol>
+
+<h3>13.2 开放问题</h3>
+
+<ul>
+<li><strong>训练稳定性与规模化</strong>：现有强结果多在 ≤14B、受控任务上；潜链能否在数百 B 规模与通用任务上稳定工作，仍待验证。</li>
+<li><strong>泛化脆弱性</strong>：潜推理对未见过的问题结构仍易退化 [2602.01148]，捷径学习的阴影未除 [2503.07604]。</li>
+<li><strong>长程坍缩</strong>：潜秩坍缩、漂移悬崖在长潜链上普遍存在，WIDER 类正则只是缓解；课程学习虽能把隐式推理推向更长视界，但实验显示同样存在难以逾越的能力上限 [2610.25612]。</li>
+<li><strong>可解释性与安全的张力</strong>：默认不可读利于隐私与防注入，却使常规安全监控失效；HybridAgent 的按需导出、SWITCH 的边界锚点是初步答案，但「审计多少、何时审计」尚无标准。</li>
+<li><strong>潜式安全攻防</strong>：潜空间里是否存在新型欺骗（不经过文本的隐藏目标）？现有机制可解释性工具能否迁移？这是与知识库《机制可解释性与欺骗检测》方向的交叉前沿。</li>
+<li><strong>计费与合同</strong>：潜思考也要消耗算力，但用户看不到 token——「谁为思考付费」已进入云合同讨论（相关法律信息学论文 2026-10 出现，本报告仅标注趋势、不引用未核实编号）。</li>
+</ul>
+
+<h3>13.3 工程落地 Checklist</h3>
+
+<ul>
+<li>[ ] 先做<strong>语言空间 CoT 压缩</strong>（第 10 章），ROI 通常最高、风险最低；</li>
+<li>[ ] 评估内化前，先建立「同上下文预算」的文本基线与删链反事实测试流程；</li>
+<li>[ ] 优先尝试<strong>冻结骨干外挂</strong>（INTACT 式）或<strong>旁路适配器</strong>（HybridLink 式），避免一上来重训骨干；</li>
+<li>[ ] 潜步数从 1–3 步起步、用显式→潜式课程扩展，禁止直接长链训练；</li>
+<li>[ ] 训练时保留辅助解码器/探针做步级监督（SIM-CoT/CoLT 式），推理时再移除；</li>
+<li>[ ] 加潜秩正则（WIDER 式）预防长链坍缩；</li>
+<li>[ ] 混合模式用<strong>离散边界 token</strong>（SWITCH 式），同时拿到 RL 良定义性与审计挂钩点；</li>
+<li>[ ] 工具调用、观测、最终答案保持文本，只把内部规划放入潜空间；</li>
+<li>[ ] KV/工作记忆设计支持潜状态与文本共存、跨轮复用；</li>
+<li>[ ] 建立潜段<strong>按需导出</strong>的审计接口，明确哪些节点必须显式化（合规、高风险动作）；</li>
+<li>[ ] 所有加速/省 token 数字标注「作者口径/内部实测」，上线前做独立复测；</li>
+<li>[ ] 端侧/延迟敏感场景优先（语音、移动 GUI Agent），批量离线场景谨慎（显式 CoT 仍更稳）。</li>
+</ul>
+
+<h2 id="sec15">14. 结语</h2>
+
+<p>隐式思维链的深层意义不止于「省 token」。它代表大模型推理正在找回一个被「语言」遮蔽的事实：<strong>计算不必经过符号序列才能发生</strong>。从 2023 年 Pause Tokens 的朴素直觉，到 Coconut 的连续思想、HRM 的循环深度，再到 2026 年可证明的内化理论、毫不留情的因果审计与开源混合 Agent，这条路线在三年里完成了从技巧到范式的蜕变。</p>
+
+<p>而 2026 年这场健康的信任危机也划出了成熟的边界：潜空间不是魔法，潜链可能只是装饰，纯隐式尚不能独当一面。最可能的未来不是「沉默取代言说」，而是<strong>模型学会在两种媒介间自如切换</strong>——在连续向量里快速搜索，在离散语言里验证、行动、负责。当推理同时拥有「心声」与「言辞」，大模型才真正接近人类「想在心里、说在嘴上」的思考方式。</p>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:36px 0;">
+
+<h2 id="sec16">参考文献</h2>
+
+<blockquote>核实声明：以下 <strong>119 篇 arXiv 论文</strong>的编号、标题、日期均于 2026-11-11 经 <code>arxiv.org/abs/&lt;id&gt;</code> 摘要页 <code>citation_title</code> / <code>citation_date</code> meta 逐一核实（实际核验 120 个编号，另含正文勘误脚注中的 arXiv:2605.28820）；0 缺失、0 错号。厂商/作者自报数据均标注「作者口径」。另引用 2 篇网页信源（二手汇总，仅用于热度佐证，不作为任何技术结论依据）。</blockquote>
+
+<h3>A. 奠基与早期（2023–2024 上半年）</h3>
+
+<ol>
+<li>[2310.02226] <strong>Think before you speak: Training Language Models With Pause Tokens</strong>. Sachin Goyal et al. (Google DeepMind et al.). 2023/10/03.</li>
+<li>[2311.01460] <strong>Implicit Chain of Thought Reasoning via Knowledge Distillation</strong>. Yuntian Deng et al. (Harvard / CMU). 2023/11/02.</li>
+<li>[2403.09629] <strong>Quiet-STaR: Language Models Can Teach Themselves to Think Before Speaking</strong>. Eric Zelikman et al. (Stanford). 2024/03/14.</li>
+<li>[2405.08644] <strong>Thinking Tokens for Language Modeling</strong>. 2024/05/14.</li>
+<li>[2405.14838] <strong>From Explicit CoT to Implicit CoT: Learning to Internalize CoT Step by Step</strong>. 2024/05/23.</li>
+<li>[2407.06023] <strong>Distilling System 2 into System 1</strong>. 2024/07/08.</li>
+</ol>
+
+<h3>B. 连续思想范式（2024 下半年）</h3>
+
+<ol>
+<li>[2409.08561] <strong>Expediting and Elevating Large Language Model Reasoning via Hidden Chain-of-Thought Decoding</strong>. 2024/09/13.</li>
+<li>[2409.14026] <strong>Uncovering Latent Chain of Thought Vectors in Language Models</strong>. 2024/09/21.</li>
+<li>[2409.17353] <strong>Internalizing ASR with Implicit Chain of Thought for Efficient Speech-to-Speech Conversational LLM</strong>. 2024/09/25.</li>
+<li>[2411.15862] <strong>Do LLMs Really Think Step-by-step In Implicit Reasoning?</strong> 2024/11/24.</li>
+<li>[2412.01113] <strong>LLMs Faithfully and Iteratively Compute Answers During CoT: A Systematic Analysis With Multi-step Arithmetics</strong>. 2024/12/02.</li>
+<li>[2412.06769] <strong>Training Large Language Models to Reason in a Continuous Latent Space (Coconut)</strong>. Shibo Hao et al. (Meta AI). 2024/12/09.</li>
+<li>[2412.08635] <strong>Multimodal Latent Language Modeling with Next-Token Diffusion</strong>. 2024/12/11.</li>
+<li>[2412.13171] <strong>Compressed Chain of Thought: Efficient Reasoning Through Dense Representations (CCoT)</strong>. 2024/12/17.</li>
+</ol>
+
+<h3>C. 方法与架构（2025）</h3>
+
+<ol>
+<li>[2501.19201] <strong>Efficient Reasoning with Hidden Thinking (Heima)</strong>. 2025/01/31.</li>
+<li>[2502.12974] <strong>Learning Refined Document Representations for Dense Retrieval via Deliberate Thinking</strong>. 2025/02/18.</li>
+<li>[2502.13842] <strong>Inner Thinking Transformer: Leveraging Dynamic Depth Scaling to Foster Adaptive Internal Thinking (ITT)</strong>. 2025/02/19.</li>
+<li>[2502.17416] <strong>Reasoning with Latent Thoughts: On the Power of Looped Transformers</strong>. 2025/02/24.</li>
+<li>[2503.07604] <strong>Implicit Reasoning in Transformers is Reasoning through Shortcuts</strong>. 2025/03/10.</li>
+<li>[2503.22675] <strong>Think Before Recommend: Unleashing the Latent Reasoning Power for Sequential Recommendation</strong>. 2025/03/28.</li>
+<li>[2503.24198] <strong>TwT: Thinking without Tokens by Habitual Reasoning Distillation with Multi-Teachers&#x27; Guidance</strong>. 2025/03/31.</li>
+<li>[2504.07986] <strong>SEAL: Steerable Reasoning Calibration of Large Language Models for Free</strong>. 2025/04/07.</li>
+<li>[2504.20835] <strong>Enhancing Non-Core Language Instruction-Following in Speech LLMs via Semi-Implicit Cross-Lingual CoT Reasoning</strong>. 2025/04/29.</li>
+<li>[2505.05410] <strong>Reasoning Models Don&#x27;t Always Say What They Think</strong>. 2025/05/08.</li>
+<li>[2505.11484] <strong>SoftCoT++: Test-Time Scaling with Soft Chain-of-Thought Reasoning</strong>. 2025/05/16.</li>
+<li>[2505.12514] <strong>Reasoning by Superposition: A Theoretical Perspective on Chain of Continuous Thought</strong>. 2025/05/18.</li>
+<li>[2505.12629] <strong>Enhancing Latent Computation in Transformers with Latent Tokens</strong>. 2025/05/19.</li>
+<li>[2505.13308] <strong>Seek in the Dark: Reasoning via Test-Time Instance-Level Policy Gradient in Latent Space</strong>. 2025/05/19.</li>
+<li>[2505.13898] <strong>Do Language Models Use Their Depth Efficiently?</strong> 2025/05/20.</li>
+<li>[2505.14530] <strong>Internal Chain-of-Thought: Empirical Evidence for Layer-wise Subtask Scheduling in LLMs</strong>. 2025/05/20.</li>
+<li>[2505.16782] <strong>Reasoning Beyond Language: A Comprehensive Survey on Latent Chain-of-Thought Reasoning</strong>. Xinghao Chen, Anhao Zhao, Heming Xia et al. (Hong Kong Polytechnic University). 2025/05/22（v3: 2026/08/31）.</li>
+<li>[2505.16865] <strong>LARES: Latent Reasoning for Sequential Recommendation</strong>. 2025/05/22.</li>
+<li>[2505.19092] <strong>Reinforced Latent Reasoning for LLM-based Recommendation</strong>. 2025/05/25.</li>
+<li>[2505.20674] <strong>PonderLM: Pretraining Language Models to Ponder in Continuous Space</strong>. 2025/05/27.</li>
+<li>[2506.02678] <strong>TL;DR: Too Long, Do Re-weighting for Efficient LLM Reasoning Compression</strong>. 2025/06/03.</li>
+<li>[2506.08552] <strong>Efficient Post-Training Refinement of Latent Reasoning in Large Language Models</strong>. 2025/06/10.</li>
+<li>[2506.11752] <strong>DART: Distilling Autoregressive Reasoning to Silent Thought</strong>. 2025/06/13.</li>
+<li>[2506.17218] <strong>Machine Mental Imagery: Empower Multimodal Reasoning with Latent Visual Tokens</strong>. 2025/06/20.</li>
+<li>[2506.18233] <strong>Beyond Parameters: Exploring Virtual Logic Depth for Scaling Laws</strong>. 2025/06/23.</li>
+<li>[2506.21734] <strong>Hierarchical Reasoning Model (HRM)</strong>. 2025/06/26.</li>
+<li>[2507.06203] <strong>A Survey on Latent Reasoning</strong>. 2025/07/08.</li>
+<li>[2507.07996] <strong>Skip a Layer or Loop it? Test-Time Depth Adaptation of Pretrained LLMs</strong>. 2025/07/10.</li>
+<li>[2508.00574] <strong>SynAdapt: Learning Adaptive Reasoning in Large Language Models via Synthetic Continuous Chain-of-Thought</strong>. 2025/08/01.</li>
+<li>[2508.03440] <strong>LLMs are Single-threaded Reasoners: Demystifying the Working Mechanism of Soft Thinking</strong>. 2025/08/05.</li>
+<li>[2508.04152] <strong>Bridging Search and Recommendation through Latent Cross Reasoning</strong>. 2025/08/06.</li>
+<li>[2508.12587] <strong>Multimodal Chain of Continuous Thought for Latent-Space Reasoning in Vision-Language Models (MCOUT)</strong>. 2025/08/18.</li>
+<li>[2508.12604] <strong>SSPO: Self-traced Step-wise Preference Optimization for Process Supervision and Reasoning Compression</strong>. 2025/08/18.</li>
+<li>[2509.02350] <strong>Implicit Reasoning in Large Language Models: A Comprehensive Survey</strong>. 2025/09/02.</li>
+<li>[2509.12875] <strong>LTA-thinker: Latent Thought-Augmented Training Framework for Large Language Models on Complex Reasoning</strong>. 2025/09/16.</li>
+<li>[2509.20317] <strong>SIM-CoT: Supervised Implicit Chain-of-Thought</strong>. 2025/09/24.</li>
+<li>[2509.21482] <strong>Learning to Reason with Mixture of Tokens</strong>. 2025/09/25.</li>
+<li>[2509.25239] <strong>A Formal Comparison Between Chain of Thought and Latent Thought</strong>. 2025/09/25.</li>
+<li>[2509.22131] <strong>R-Capsule: Compressing High-Level Plans for Efficient Large Language Model Reasoning</strong>. 2025/09/26.</li>
+<li>[2509.23184] <strong>PonderLM-2: Pretraining LLM with Latent Thoughts in Continuous Space</strong>. 2025/09/27.</li>
+<li>[2509.23633] <strong>Fast Thinking for Large Language Models (Latent Codebooks)</strong>. 2025/09/28.</li>
+<li>[2509.24238] <strong>Learning to Ponder: Adaptive Reasoning in Latent Space</strong>. 2025/09/29.</li>
+<li>[2509.24251] <strong>Latent Visual Reasoning</strong>. 2025/09/29.</li>
+<li>[2509.24771] <strong>LatentEvolve: Self-Evolving Test-Time Scaling in Latent Space</strong>. 2025/09/29.</li>
+<li>[2509.25020] <strong>Deep Thinking by Markov Chain of Continuous Thoughts (MarCos)</strong>. 2025/09/29.</li>
+<li>[2510.01032] <strong>Meaningless Tokens, Meaningful Gains: How Activation Shifts Enhance LLM Reasoning</strong>. 2025/10/01.</li>
+<li>[2510.12167] <strong>Towards Inference-time Scaling for Continuous Space Reasoning</strong>. 2025/10/14.</li>
+<li>[2510.12603] <strong>Reasoning in the Dark: Interleaved Vision-Text Reasoning in Latent Space</strong>. 2025/10/14.</li>
+<li>[2510.15522] <strong>LLM Latent Reasoning as Chain of Superposition (Latent-SFT)</strong>. 2025/10/17.</li>
+<li>[2510.23925] <strong>Latent Chain-of-Thought for Visual Reasoning</strong>. 2025/10/27.</li>
+<li>[2510.25741] <strong>Scaling Latent Reasoning via Looped Language Models</strong>. 2025/10/29.</li>
+<li>[2511.14258] <strong>Entropy-Guided Reasoning Compression</strong>. 2025/11/18.</li>
+<li>[2511.20639] <strong>Latent Collaboration in Multi-Agent Systems (LatentMAS)</strong>. 2025/11/25.</li>
+<li>[2512.10226] <strong>Latent Chain-of-Thought World Modeling for End-to-End Driving</strong>. 2025/12/11.</li>
+<li>[2512.24601] <strong>Recursive Language Models</strong>. 2025/12/31.</li>
+</ol>
+
+<h3>D. 2026 前沿：理论、审计、训练与压缩</h3>
+
+<ol>
+<li>[2601.08808] <strong>Multiplex Thinking: Reasoning via Token-wise Branch-and-Merge</strong>. 2026/01/13.</li>
+<li>[2602.00449] <strong>Do Latent-CoT Models Think Step-by-Step? A Mechanistic Study on Sequential Reasoning Tasks (CODI)</strong>. 2026/01/31.</li>
+<li>[2602.01148] <strong>Capabilities and Fundamental Limits of Latent Chain-of-Thought</strong>. 2026/02/01.</li>
+<li>[2602.08220] <strong>Pretraining with Token-Level Adaptive Latent Chain-of-Thought</strong>. 2026/02/09.</li>
+<li>[2602.08783] <strong>Dynamics Within Latent Chain-of-Thought: An Empirical Study of Causal Structure</strong>. 2026/02/09.</li>
+<li>[2602.10048] <strong>Long Chain-of-Thought Compression via Fine-Grained Group Policy Optimization</strong>. 2026/02/10.</li>
+<li>[2602.20980] <strong>CrystaL: Spontaneous Emergence of Visual Latents in MLLMs</strong>. 2026/02/24.</li>
+<li>[2604.03679] <strong>LightThinker++: From Reasoning Compression to Memory Management</strong>. 2026/04/04.</li>
+<li>[2604.04120] <strong>Shorter, but Still Trustworthy? An Empirical Study of Chain-of-Thought Compression</strong>. 2026/04/05.</li>
+<li>[2604.09150] <strong>Think Less, Know More: State-Aware Reasoning Compression with Knowledge Guidance for Efficient Reasoning</strong>. 2026/04/10.</li>
+<li>[2604.28192] <strong>LaST-R1: Reinforcing Robotic Manipulation via Adaptive Physical Latent Reasoning</strong>. 2026/04/30.</li>
+<li>[2605.07501] <strong>ExpThink: Experience-Guided Reinforcement Learning for Adaptive Chain-of-Thought Compression</strong>. 2026/05/08.</li>
+<li>[2605.08776] <strong>Reasoning Compression with Mixed-Policy Distillation</strong>. 2026/05/09.</li>
+<li>[2605.09346] <strong>RuPLaR: Efficient Latent Compression of LLM Reasoning Chains with Rule-Based Priors — From Multi-Step to One-Step</strong>. 2026/05/10.</li>
+<li>[2605.09867] <strong>Continuous Latent Contexts Enable Efficient Online Learning in Transformers</strong>. 2026/05/11.</li>
+<li>[2605.11262] <strong>Latent Chain-of-Thought Improves Structured-Data Transformers</strong>. 2026/05/11.</li>
+<li>[2605.28600] <strong>Transformers Provably Learn to Internalize Chain-of-Thought (Log-ICoT)</strong>. 2026/05/27.</li>
+<li>[2606.01934] <strong>HMPO: Hybrid Median-length Policy Optimization for Chain-of-Thought Compression</strong>. 2026/06/01.</li>
+<li>[2606.04627] <strong>MIRAGE: Mobile Agents with Implicit Reasoning and Generative World Models</strong>. 2026/06/03.</li>
+<li>[2606.05315] <strong>LoRi: Low-Rank Distillation for Implicit Reasoning</strong>. 2026/06/03.</li>
+<li>[2606.05711] <strong>Beyond Tokens: A Unified Framework for Latent Communication in LLM-based Multi-Agent Systems</strong>. 2026/06/04.</li>
+<li>[2606.13106] <strong>Demystifying Hidden-State Recurrence: Switchable Latent Reasoning with On-Policy Reinforcement Learning (SWITCH)</strong>. 2026/06/11.</li>
+<li>[2606.14142] <strong>Implicit Reasoning for Large Language Model-based Generative Recommendation</strong>. 2026/06/12.</li>
+<li>[2606.20075] <strong>What Makes Effective Supervision in Latent Chain-of-Thought: An Information-Theoretic Analysis (ULP)</strong>. 2026/06/18.</li>
+<li>[2606.31986] <strong>CoLT: Teaching Multi-Modal Models to Think with Chain of Latent Thoughts</strong>. 2026/06/30.</li>
+<li>[2607.28707] <strong>Demystifying Entropy-based Selection for Chain-of-Thought Compression in Large Reasoning Models</strong>. 2026/07/30.</li>
+<li>[2608.21883] <strong>VIG: Visual Information Gain as a Reward Signal for Multimodal Chain-of-Thought Compression</strong>. 2026/08/22.</li>
+<li>[2608.27265] <strong>SCIT: Testing Causal Cache Carriers in Latent Chain-of-Thought Models</strong>. 2026/08/27.</li>
+<li>[2608.31066] <strong>Every Token Leaves a Ripple in the Stream of Thought: Eliciting Model-Internal Token Saliency for Chain-of-Thought Compression</strong>. 2026/08/31.</li>
+<li>[2609.04947] <strong>MCPO: Modality-Contrastive Preference Optimization for Multimodal Chain-of-Thought Compression</strong>. 2026/09/04.</li>
+<li>[2609.07406] <strong>Think Wider: Mitigating Latent Rank Collapse in Implicit Chain-of-Thought Reasoning (WIDER)</strong>. 2026/09/07.</li>
+<li>[2609.32852] <strong>ARSM: Auto-Regressive State Machine for Agentic Reasoning Compression</strong>. 2026/09/26.</li>
+<li>[2610.18127] <strong>Monitoring Latent Reasoning in Looped Language Models</strong>. 2026/10/13.</li>
+<li>[2610.18861] <strong>Hybrid Reasoning Agents (HybridAgent / HybridLink / HybridSFT / HybridRL)</strong>. Jiaru Zou, Yunzhe Qi, Sirui Chen, Federico Bianchi, Shang Zhu, Pan Lu, Jingrui He, James Zou. 2026/10/13.</li>
+<li>[2610.19568] <strong>INTACT: Inducing Latent Reasoning on a Frozen Backbone</strong>. 2026/10/14.</li>
+<li>[2610.19871] <strong>Rationale Distribution Distillation via Flow Matching for Distributional Continuous Latent Reasoning</strong>. 2026/10/14.</li>
+<li>[2610.21182] <strong>Does Latent Chain-of-Thought Actually Reason? A Single, Unifying Taxonomy for Latent Reasoning</strong>. Jingjie Qiu et al. (UC San Diego et al.). 2026/10/15.</li>
+<li>[2610.22924] <strong>Sep-Latent: Separator Tokens as Natural Compression Anchors for Implicit Reasoning</strong>. 2026/10/16.</li>
+<li>[2610.25612] <strong>Curriculum Learning Teaches LLMs Long-Horizon Implicit Reasoning, Up To A Limit</strong>. 2026/10/19.</li>
+<li>[2610.25640] <strong>Think, Compress, Answer: Reinforcement Learning for Multimodal Grounding via Reasoning Compression</strong>. 2026/10/19.</li>
+<li>[2610.26854] <strong>Physical Words: A Vocabulary for Structuring Latent Reasoning in Robot Manipulation (PhysWord)</strong>. 2026/10/19.</li>
+<li>[2610.28498] <strong>Present but Hard to Read: Probing Latent Reasoning with Minimal Pairs</strong>. 2026/10/20.</li>
+<li>[2610.29385] <strong>Parallelizable Probabilistic Latent Reasoning for Diverse Reasoning Trajectories</strong>. 2026/10/21.</li>
+<li>[2610.30675] <strong>OneLatent: Latent Reasoning for Efficient Foundation Recommendation Models</strong>. 2026/10/22.</li>
+<li>[2610.34336] <strong>Improving the Chain-of-Thought Compressibility of Pruned Reasoning Models via Long–Short Contrastive Pruning</strong>. 2026/10/25.</li>
+<li>[2610.35229] <strong>Joint Latent Reasoning and Observation for Agentic Video Understanding (LARVA)</strong>. 2026/10/26.</li>
+<li>[2610.42149] <strong>Latent Reasoning in Continuous Space for Unified Multimodal Models</strong>. 2026/10/30.</li>
+<li>[2611.01926] <strong>TAC-CoT: Tool-Empowered Implicit Chain-of-Thought via Interleaving Explicit Tokens</strong>. 2026/11/01.</li>
+<li>[2611.04814] <strong>Think Less, Locally: Local Preference Learning for Reasoning Compression</strong>. 2026/11/03.</li>
+<li>[2611.05709] <strong>Agents, Think Only When it Helps</strong>. Min-Seon Kim et al. 2026/11/03.</li>
+</ol>
+
+<h3>E. 网页信源（仅用于热度佐证）</h3>
+
+<ul>
+<li>腾讯云开发者社区，《2026 年 5 月 AI 论文盘点》，2026-07-02，<code>developer.cloud.tencent.com/article/2701996</code>（二手汇总；其引用编号已全部回到 arXiv 一手核实，且发现 2605.28820 的转述标题与原文有出入）。</li>
+<li>Mervin Praison，《Hybrid Reasoning Agents: Latent Thinking Halves Agent Tokens》，2026-10-19，<code>mer.vin/news/hybrid-reasoning-agents-latent-thinking-halves-agent-tokens/</code>（对 arXiv:2610.18861 与 togethercomputer 开源仓库的二手解读；所有数字以论文原文为准）。</li>
+</ul>
+
+<blockquote><strong>核实与口径补充</strong>：本报告实际列出 arXiv 论文 <strong>119 篇</strong>（正文另在勘误脚注引用 arXiv:2605.28820，合计核验 120 个编号），编号/标题/日期于 2026-11-11 经 <code>arxiv.org/abs/&lt;id&gt;</code> 摘要页 <code>citation_title</code> / <code>citation_date</code> meta 逐一核对，0 缺失、0 错号（含对知乎转述「ECCV 2026 CoLT」的溯源——其真身为 arXiv:2606.31986，准确数据为推理时间 10.1×、文本解码时间 22.6×）。HybridAgent、CoLT、INTACT 等加速与提分数字均为<strong>作者口径</strong>，本报告未做独立复现；综述表 1 的小模型横评为各原论文自报值、由综述 [2505.16782] 汇集，跨方法不可直接排名。</blockquote>
+<div class="footer">隐式思维链（Latent CoT）前沿技术报告 · 2026-11-11 · 119 篇 arXiv 编号已经逐一核实 · 图表为手工暗色 SVG</div>
+</div></body></html>

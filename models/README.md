@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **32 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **33 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -81,6 +81,12 @@
 2026-11 单周十余篇新论文集中爆发的新范式：以「概念地图（WSL 底座 × WSP 能力形态 × RSI 系统闭环）」统摄，梳理 Gödel Machine × MAML/超网络 × ROME/MEMIT 三脉合流；权重空间学习 WSU/WSR/WSG 三维与权重对称群（神经元置换、注意力 GL 对称、头置换；图元网络 Graph Metanetwork、UWE 跨架构编码）；WSP 三大支柱（读 / 局部编辑 / 从零手工设定权重，WSP-Scope 仅改 1023 参数使 MATH-500 +29.45 分）与同周成熟的怀疑论（局部算术+数据集记忆、计算而非权重访问、架构天花板）；RSI 双循环与 L0–L3 分级、Darwin Gödel Machine（SWE-bench 20→50%）、运行时自改进 Exo/BOXBOX、产业落地百度 ERNIE Evolve（昆仑芯 P800 生成速度 623.6%）、Conitzer 安全博弈与权限守恒，附 14 条落地 Checklist。
 
 📅 2026-11-10 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](self-improving-ai/report.md)
+
+### [隐式思维链 Latent CoT](https://ckirchhoff2021.github.io/knowledge-base/models/latent-cot/report.html)
+
+当大模型学会「在心里想」：显式 CoT 的延迟/表达/泄密三重税，Pause Tokens→Coconut→HRM 三年源流，token-wise 水平 × layer-wise 垂直两轴分类学与三种表征初始化；拆解 Coconut 潜空间 BFS、CODI 投影对齐、SIM-CoT 步级监督、looped transformer、HRM、INTACT 冻结外挂；训练五范式与 Log-ICoT 可证明内化、探索—执行权衡、显式/潜式形式化分离；2026 信任危机与删链反事实/do 干预/SCIT/最小对探针因果审计；显式 CoT 压缩姊妹路线；HybridAgent/TAC-CoT/SWITCH 混合推理收敛解与多模态/具身/语音/多智能体/推荐应用，附 12 条落地 Checklist。
+
+📅 2026-11-11 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](latent-cot/report.md)
 
 ---
 

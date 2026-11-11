@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>图1 · 隐式思维链技术谱系时间线</title>
+<style>
+html,body{margin:0;padding:0;background:#0d1117}
+svg{display:block;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+</style></head><body>
+<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="700" fill="#0d1117"/>
+<defs>
+<marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#58a6ff"/></marker>
+</defs>
+<text x="50" y="40" fill="#e6edf3" font-size="21" font-weight="700">图 1 · 隐式思维链技术谱系（2023 → 2026）：从「多给几个 token」到可证明、可审计、产品化</text>
+<text x="50" y="65" fill="#8b949e" font-size="12.5">蓝＝额外计算槽直觉 · 绿＝连续思想范式 · 紫＝方法/架构 · 橙＝理论/审计 · 红＝混合产品化（编号均经 arXiv 核实）</text>
+
+<line x1="70" y1="360" x2="1132" y2="360" stroke="#30363d" stroke-width="3"/>
+<line x1="70" y1="360" x2="1128" y2="360" stroke="#58a6ff" stroke-width="2" marker-end="url(#ar)"/>
+
+<g font-size="13" font-weight="700" text-anchor="middle">
+<rect x="70" y="92" width="225" height="28" rx="14" fill="#0d2238" stroke="#58a6ff"/><text x="182" y="111" fill="#58a6ff">2023H2–2024H1 · 计算槽</text>
+<rect x="320" y="92" width="200" height="28" rx="14" fill="#0d2d1c" stroke="#3fb950"/><text x="420" y="111" fill="#3fb950">2024H2 · 连续思想</text>
+<rect x="560" y="92" width="230" height="28" rx="14" fill="#241b33" stroke="#bc8cff"/><text x="675" y="111" fill="#bc8cff">2025 · 方法爆发+综述</text>
+<rect x="830" y="92" width="300" height="28" rx="14" fill="#3d1a1a" stroke="#f85149"/><text x="980" y="111" fill="#f85149">2026 · 理论 / 审计 / 混合产品化</text>
+</g>
+
+<!-- 阶段1 蓝 -->
+<g font-size="11" fill="#e6edf3">
+<line x1="135" y1="360" x2="135" y2="170" stroke="#58a6ff" stroke-dasharray="3,3"/>
+<circle cx="135" cy="360" r="6" fill="#58a6ff"/>
+<rect x="72" y="140" width="148" height="50" rx="8" fill="#161b22" stroke="#58a6ff"/>
+<text x="82" y="159" font-weight="700" fill="#58a6ff">Pause Tokens</text>
+<text x="82" y="175">可学习占位 token</text>
+<text x="82" y="188" fill="#8b949e">2310.02226 · 2023-10</text>
+
+<line x1="255" y1="360" x2="255" y2="250" stroke="#58a6ff" stroke-dasharray="3,3"/>
+<circle cx="255" cy="360" r="6" fill="#58a6ff"/>
+<rect x="190" y="200" width="150" height="50" rx="8" fill="#161b22" stroke="#58a6ff"/>
+<text x="200" y="219" font-weight="700" fill="#58a6ff">Implicit CoT(KD)</text>
+<text x="200" y="235">教师隐状态对齐</text>
+<text x="200" y="248" fill="#8b949e">2311.01460 · 2023-11</text>
+
+<rect x="72" y="382" width="150" height="52" rx="8" fill="#161b22" stroke="#58a6ff"/>
+<text x="82" y="401" font-weight="700" fill="#58a6ff">Quiet-STaR</text>
+<text x="82" y="417">每句后内心 rationale</text>
+<text x="82" y="431" fill="#8b949e">2403.09629 · 2024-03</text>
+<line x1="135" y1="360" x2="135" y2="382" stroke="#58a6ff" stroke-dasharray="3,3"/>
+
+<rect x="190" y="450" width="160" height="52" rx="8" fill="#161b22" stroke="#58a6ff"/>
+<text x="200" y="469" font-weight="700" fill="#58a6ff">Explicit→Implicit</text>
+<text x="200" y="485">逐步删除思考步（fading）</text>
+<text x="200" y="499" fill="#8b949e">2405.14838 · 2024-05</text>
+<line x1="255" y1="360" x2="255" y2="450" stroke="#58a6ff" stroke-dasharray="3,3"/>
+</g>
+
+<!-- 阶段2 绿 -->
+<g font-size="11" fill="#e6edf3">
+<line x1="370" y1="360" x2="370" y2="170" stroke="#3fb950" stroke-dasharray="3,3"/>
+<circle cx="370" cy="360" r="6" fill="#3fb950"/>
+<rect x="300" y="140" width="150" height="50" rx="8" fill="#161b22" stroke="#3fb950"/>
+<text x="310" y="159" font-weight="700" fill="#3fb950">CCoT</text>
+<text x="310" y="175">变长连续沉思 token</text>
+<text x="310" y="188" fill="#8b949e">2412.13171 · 2024-12</text>
+
+<line x1="470" y1="360" x2="470" y2="250" stroke="#3fb950" stroke-dasharray="3,3"/>
+<circle cx="470" cy="360" r="7" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<rect x="395" y="200" width="160" height="50" rx="8" fill="#0d2d1c" stroke="#3fb950" stroke-width="1.6"/>
+<text x="405" y="219" font-weight="700" fill="#3fb950">Coconut（Meta）</text>
+<text x="405" y="235">隐状态回灌 · 潜空间 BFS</text>
+<text x="405" y="248" fill="#8b949e">2412.06769 · 2024-12</text>
+
+<rect x="300" y="382" width="160" height="52" rx="8" fill="#161b22" stroke="#3fb950"/>
+<text x="310" y="401" font-weight="700" fill="#3fb950">Hidden CoT Decoding</text>
+<text x="310" y="417">隐式解码加速推理</text>
+<text x="310" y="431" fill="#8b949e">2409.08561 · 2024-09</text>
+<line x1="370" y1="360" x2="370" y2="382" stroke="#3fb950" stroke-dasharray="3,3"/>
+
+<rect x="395" y="450" width="170" height="52" rx="8" fill="#161b22" stroke="#3fb950"/>
+<text x="405" y="469" font-weight="700" fill="#3fb950">语音内化 ASR-CoT</text>
+<text x="405" y="485">端到端 speech-to-speech</text>
+<text x="405" y="499" fill="#8b949e">2409.17353 · 2024-09</text>
+<line x1="470" y1="360" x2="470" y2="450" stroke="#3fb950" stroke-dasharray="3,3"/>
+</g>
+
+<!-- 阶段3 紫 -->
+<g font-size="11" fill="#e6edf3">
+<line x1="600" y1="360" x2="600" y2="160" stroke="#bc8cff" stroke-dasharray="3,3"/>
+<circle cx="600" cy="360" r="6" fill="#bc8cff"/>
+<rect x="535" y="130" width="140" height="50" rx="8" fill="#161b22" stroke="#bc8cff"/>
+<text x="545" y="149" font-weight="700" fill="#bc8cff">Looped Transformer</text>
+<text x="545" y="165">k层循环L次≈kL层</text>
+<text x="545" y="178" fill="#8b949e">2502.17416</text>
+
+<line x1="690" y1="360" x2="690" y2="230" stroke="#bc8cff" stroke-dasharray="3,3"/>
+<circle cx="690" cy="360" r="6" fill="#bc8cff"/>
+<rect x="625" y="190" width="135" height="50" rx="8" fill="#161b22" stroke="#bc8cff"/>
+<text x="635" y="209" font-weight="700" fill="#bc8cff">HRM</text>
+<text x="635" y="225">分层循环 · 单前向</text>
+<text x="635" y="238" fill="#8b949e">2506.21734</text>
+
+<line x1="780" y1="360" x2="780" y2="160" stroke="#bc8cff" stroke-dasharray="3,3"/>
+<circle cx="780" cy="360" r="6" fill="#bc8cff"/>
+<rect x="715" y="130" width="140" height="50" rx="8" fill="#161b22" stroke="#bc8cff"/>
+<text x="725" y="149" font-weight="700" fill="#bc8cff">SIM-CoT</text>
+<text x="725" y="165">步级监督治同质化</text>
+<text x="725" y="178" fill="#8b949e">2509.20317</text>
+
+<rect x="530" y="382" width="150" height="52" rx="8" fill="#161b22" stroke="#bc8cff"/>
+<text x="540" y="401" font-weight="700" fill="#bc8cff">PonderLM / ITT</text>
+<text x="540" y="417">软嵌入沉思 / 动态深度</text>
+<text x="540" y="431" fill="#8b949e">2505.20674 / 2502.13842</text>
+<line x1="600" y1="360" x2="600" y2="382" stroke="#bc8cff" stroke-dasharray="3,3"/>
+
+<rect x="620" y="450" width="160" height="52" rx="8" fill="#161b22" stroke="#bc8cff"/>
+<text x="630" y="469" font-weight="700" fill="#bc8cff">DART / MarCos</text>
+<text x="630" y="485">Silent Thought / 全连续</text>
+<text x="630" y="499" fill="#8b949e">2506.11752 / 2509.25020</text>
+<line x1="690" y1="360" x2="690" y2="450" stroke="#bc8cff" stroke-dasharray="3,3"/>
+
+<rect x="715" y="522" width="150" height="44" rx="8" fill="#241b33" stroke="#bc8cff" stroke-width="1.5"/>
+<text x="725" y="541" font-weight="700" fill="#bc8cff">三篇综述建立分类学</text>
+<text x="725" y="558" fill="#c9b8f0">2505.16782 等</text>
+<line x1="780" y1="360" x2="780" y2="522" stroke="#bc8cff" stroke-dasharray="3,3"/>
+</g>
+
+<!-- 阶段4 红/橙 -->
+<g font-size="11" fill="#e6edf3">
+<line x1="880" y1="360" x2="880" y2="150" stroke="#d29922" stroke-dasharray="3,3"/>
+<circle cx="880" cy="360" r="6" fill="#d29922"/>
+<rect x="815" y="120" width="155" height="56" rx="8" fill="#161b22" stroke="#d29922"/>
+<text x="825" y="140" font-weight="700" fill="#d29922">Log-ICoT 可证明内化</text>
+<text x="825" y="156">poly(n) 样本 · O(log k) 阶段</text>
+<text x="825" y="170" fill="#8b949e">2605.28600 · 2026-05</text>
+
+<line x1="985" y1="360" x2="985" y2="210" stroke="#d29922" stroke-dasharray="3,3"/>
+<circle cx="985" cy="360" r="6" fill="#d29922"/>
+<rect x="920" y="186" width="170" height="52" rx="8" fill="#161b22" stroke="#d29922"/>
+<text x="930" y="205" font-weight="700" fill="#d29922">信任危机审计</text>
+<text x="930" y="221">删链/换链/SCIT/最小对探针</text>
+<text x="930" y="235" fill="#8b949e">2610.21182 · 2608.27265</text>
+
+<line x1="1090" y1="360" x2="1090" y2="130" stroke="#f85149" stroke-dasharray="3,3"/>
+<circle cx="1090" cy="360" r="7" fill="#f85149" stroke="#0d1117" stroke-width="2"/>
+<rect x="1010" y="120" width="160" height="56" rx="8" fill="#3d1a1a" stroke="#f85149" stroke-width="1.6"/>
+<text x="1020" y="140" font-weight="700" fill="#f85149">CoLT 多模态</text>
+<text x="1020" y="156">3 潜步 · 解码 −22.6×</text>
+<text x="1020" y="170" fill="#8b949e">2606.31986 · 2026-06</text>
+
+<rect x="810" y="382" width="165" height="56" rx="8" fill="#161b22" stroke="#d29922"/>
+<text x="820" y="401" font-weight="700" fill="#d29922">SWITCH / WIDER</text>
+<text x="820" y="417">边界 token + Switch-GRPO</text>
+<text x="820" y="431" fill="#8b949e">2606.13106 / 2609.07406</text>
+<line x1="880" y1="360" x2="880" y2="382" stroke="#d29922" stroke-dasharray="3,3"/>
+
+<rect x="920" y="452" width="170" height="56" rx="8" fill="#161b22" stroke="#d29922"/>
+<text x="930" y="471" font-weight="700" fill="#d29922">INTACT 冻结骨干外挂</text>
+<text x="930" y="487">GSM8K ↑ · 延迟 −19%</text>
+<text x="930" y="501" fill="#8b949e">2610.19568 · 2026-10</text>
+<line x1="985" y1="360" x2="985" y2="452" stroke="#d29922" stroke-dasharray="3,3"/>
+
+<rect x="1000" y="522" width="180" height="58" rx="8" fill="#3d1a1a" stroke="#f85149" stroke-width="1.8"/>
+<text x="1010" y="542" font-weight="700" fill="#f85149">HybridAgent（开源 MIT）</text>
+<text x="1010" y="558">+10.4% · token −35.5~54.7%</text>
+<text x="1010" y="572" fill="#8b949e">2610.18861 · 2026-10</text>
+<line x1="1090" y1="360" x2="1090" y2="522" stroke="#f85149" stroke-dasharray="3,3"/>
+</g>
+
+<!-- 底部规律条 -->
+<rect x="70" y="610" width="1060" height="66" rx="10" fill="#161b22" stroke="#30363d"/>
+<text x="90" y="635" fill="#e6edf3" font-size="13" font-weight="700">三年主线：</text>
+<text x="170" y="635" fill="#8b949e" font-size="12">收益来自「额外计算」本身（2023） → 计算搬进连续隐空间（2024） → 解决怎么训/怎么稳/怎么扩（2025） → 可证明、可审计、可 RL、可产品化（2026）</text>
+<text x="90" y="660" fill="#d29922" font-size="12">收敛判断：纯隐式尚不稳定低于显式 CoT → 2026 主流转向「潜空间思考 + 文本行动/审计」的混合推理</text>
+</svg>
+</body></html>
