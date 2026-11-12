@@ -43,6 +43,7 @@
 | 报告 | 说明 | 更新时间 |
 |---|---|---|
 | [Post-Training 后训练](https://ckirchhoff2021.github.io/knowledge-base/models/post-training/report.html) | SFT / RLHF / DPO / GRPO 全景 | 2026-09-24 |
+| [持续预训练 CPT](https://ckirchhoff2021.github.io/knowledge-base/models/continued-pretraining/report.html) | 领域续训 / 遗忘与 Stability Gap / 数据配比与调度 | 2026-11-12 |
 | [大模型强化学习算法](https://ckirchhoff2021.github.io/knowledge-base/models/llm-rl-algorithms/report.html) | PPO 与 GRPO 家族详解 | 2026-09-30 |
 | [Agentic RL 智能体强化学习](https://ckirchhoff2021.github.io/knowledge-base/models/agentic-rl/report.html) | 多轮环境下的强化学习 | 2026-10-10 |
 | [合成数据与修正缩放定律](https://ckirchhoff2021.github.io/knowledge-base/models/synthetic-data/report.html) | 模型崩溃与合成数据方法 | 2026-10-19 |

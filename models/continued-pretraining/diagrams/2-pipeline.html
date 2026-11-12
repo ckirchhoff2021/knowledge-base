@@ -1,0 +1,96 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf"><title>CPT Pipeline</title>
+<style>html,body{margin:0;background:#0b0e14;overflow:hidden}svg{display:block}</style></head><body>
+<svg viewBox="0 0 1200 720" width="1200" height="720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#141a26" stroke-width="1"/>
+    </pattern>
+    <marker id="arr2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="720" fill="#0b0e14"/>
+  <rect width="1200" height="720" fill="url(#grid)"/>
+
+  <text x="60" y="62" fill="#e6edf3" font-size="30" font-weight="700" font-family="sans-serif">图 2 · CPT 端到端工程流水线</text>
+  <text x="60" y="94" fill="#8b949e" font-size="16" font-family="sans-serif">六段式：数据采集 → 清洗去重 → 质量选择与配比 → 打包分词 → 训练 → 三组评测；数据质量比 token 数量更重要</text>
+
+  <!-- six stage chips -->
+  <g font-family="sans-serif">
+    <rect x="60" y="150" width="156" height="92" rx="12" fill="#141b2c" stroke="#2a3550"/>
+    <text x="78" y="186" fill="#7fb0ff" font-size="16" font-weight="700">① 数据采集</text>
+    <text x="78" y="214" fill="#8b949e" font-size="13">文档/代码/书籍</text>
+    <text x="78" y="234" fill="#8b949e" font-size="13">网页/合成语料</text>
+
+    <rect x="248" y="150" width="156" height="92" rx="12" fill="#141b2c" stroke="#2a3550"/>
+    <text x="266" y="186" fill="#7fb0ff" font-size="16" font-weight="700">② 清洗去重</text>
+    <text x="266" y="214" fill="#8b949e" font-size="13">解析/MinHash</text>
+    <text x="266" y="234" fill="#8b949e" font-size="13">过滤/去污染</text>
+
+    <rect x="436" y="150" width="156" height="92" rx="12" fill="#1c1730" stroke="#8b7cf6" stroke-width="2"/>
+    <text x="454" y="186" fill="#b5a9ff" font-size="16" font-weight="700">③ 选择配比</text>
+    <text x="454" y="214" fill="#a9b0c0" font-size="13">SLM/ESLM 选择</text>
+    <text x="454" y="234" fill="#a9b0c0" font-size="13">α 领域占比</text>
+
+    <rect x="624" y="150" width="156" height="92" rx="12" fill="#141b2c" stroke="#2a3550"/>
+    <text x="642" y="186" fill="#7fb0ff" font-size="16" font-weight="700">④ 打包分词</text>
+    <text x="642" y="214" fill="#8b949e" font-size="13">seamless packing</text>
+    <text x="642" y="234" fill="#8b949e" font-size="13">长度/掩码对齐</text>
+
+    <rect x="812" y="150" width="156" height="92" rx="12" fill="#10241a" stroke="#3fb950" stroke-width="2"/>
+    <text x="830" y="186" fill="#3fb950" font-size="16" font-weight="700">⑤ 训练</text>
+    <text x="830" y="214" fill="#9fc3a8" font-size="13">全参 / LoRA</text>
+    <text x="830" y="234" fill="#9fc3a8" font-size="13">小 LR + 退火</text>
+
+    <rect x="1000" y="150" width="140" height="92" rx="12" fill="#141b2c" stroke="#2a3550"/>
+    <text x="1018" y="186" fill="#7fb0ff" font-size="16" font-weight="700">⑥ 评测</text>
+    <text x="1018" y="214" fill="#8b949e" font-size="13">三组指标</text>
+    <text x="1018" y="234" fill="#8b949e" font-size="13">全程跟踪</text>
+  </g>
+  <g stroke="#8b949e" stroke-width="2.5">
+    <line x1="218" y1="196" x2="244" y2="196" marker-end="url(#arr2)"/>
+    <line x1="406" y1="196" x2="432" y2="196" marker-end="url(#arr2)"/>
+    <line x1="594" y1="196" x2="620" y2="196" marker-end="url(#arr2)"/>
+    <line x1="782" y1="196" x2="808" y2="196" marker-end="url(#arr2)"/>
+    <line x1="970" y1="196" x2="996" y2="196" marker-end="url(#arr2)"/>
+  </g>
+
+  <!-- mixture panel -->
+  <g font-family="sans-serif">
+    <rect x="60" y="300" width="520" height="200" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="84" y="338" fill="#e6edf3" font-size="19" font-weight="700">数据配比：领域注入 + 通用回放</text>
+
+    <rect x="84" y="368" width="300" height="40" rx="8" fill="#10241a"/>
+    <rect x="84" y="368" width="210" height="40" rx="8" fill="#1d4a2e"/>
+    <text x="100" y="395" fill="#3fb950" font-size="15" font-weight="700">领域语料 α（注入知识）</text>
+    <text x="398" y="395" fill="#8b949e" font-size="15">通用回放 1−α</text>
+
+    <text x="84" y="446" fill="#8b949e" font-size="14">α 过高：领域强，通用 / 对齐能力退化</text>
+    <text x="84" y="476" fill="#8b949e" font-size="14">α 过低：注入慢、预算浪费；常见区间 0.3–0.9</text>
+
+    <rect x="620" y="300" width="520" height="200" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="644" y="338" fill="#e6edf3" font-size="19" font-weight="700">token 预算与质量选择</text>
+    <text x="644" y="376" fill="#8b7cf6" font-size="15">RHO-1：教师会、学生不会 → 高价值 token</text>
+    <text x="644" y="406" fill="#8b949e" font-size="14">ESLM：风险厌恶式选择，防噪声带偏</text>
+    <text x="644" y="436" fill="#8b949e" font-size="14">预算：轻量 10^8–10^9；专家 10^10–10^11</text>
+    <text x="644" y="466" fill="#8b949e" font-size="14">大规模中训：10^11–10^12+ token</text>
+  </g>
+
+  <!-- eval three cards -->
+  <g font-family="sans-serif">
+    <rect x="60" y="540" width="340" height="120" rx="14" fill="#10241a" stroke="#2f5c40"/>
+    <text x="84" y="578" fill="#3fb950" font-size="17" font-weight="700">领域指标</text>
+    <text x="84" y="610" fill="#9fc3a8" font-size="14">领域 QA / 术语 / 专业推理</text>
+    <text x="84" y="638" fill="#9fc3a8" font-size="14">业务指标 / 领域 benchmark</text>
+
+    <rect x="430" y="540" width="340" height="120" rx="14" fill="#2a1f10" stroke="#5c452f"/>
+    <text x="454" y="578" fill="#f5a623" font-size="17" font-weight="700">通用指标</text>
+    <text x="454" y="610" fill="#c9b089" font-size="14">MMLU / GPQA / 通用 NLU</text>
+    <text x="454" y="638" fill="#c9b089" font-size="14">多语言能力（监控遗忘）</text>
+
+    <rect x="800" y="540" width="340" height="120" rx="14" fill="#1c1730" stroke="#453a6b"/>
+    <text x="824" y="578" fill="#b5a9ff" font-size="17" font-weight="700">对齐 / 安全指标</text>
+    <text x="824" y="610" fill="#a9a0c9" font-size="14">指令遵循 / 拒答 / 有用性</text>
+    <text x="824" y="638" fill="#a9a0c9" font-size="14">格式稳定性 / 安全红线</text>
+  </g>
+</svg></body></html>

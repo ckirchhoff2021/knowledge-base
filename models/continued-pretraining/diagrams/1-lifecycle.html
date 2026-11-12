@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><title>CPT 生命周期</title>
+<style>html,body{margin:0;background:#0b0e14;overflow:hidden}svg{display:block}</style></head><body>
+<svg viewBox="0 0 1200 720" width="1200" height="720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#141a26" stroke-width="1"/>
+    </pattern>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="720" fill="#0b0e14"/>
+  <rect width="1200" height="720" fill="url(#grid)"/>
+
+  <text x="60" y="70" fill="#e6edf3" font-size="30" font-weight="700" font-family="sans-serif">图 1 · CPT 在模型训练生命周期中的位置</text>
+  <text x="60" y="102" fill="#8b949e" font-size="16" font-family="sans-serif">架构全程不变；CPT 注入「知识与分布」，SFT 塑造「格式与行为」，RL 对齐「价值观与可验证奖励」</text>
+
+  <!-- four stage cards -->
+  <!-- PreTraining -->
+  <g>
+    <rect x="60" y="170" width="240" height="190" rx="16" fill="#141b2c" stroke="#2a3550" stroke-width="1.5"/>
+    <rect x="60" y="170" width="240" height="52" rx="16" fill="#1b2740"/>
+    <text x="84" y="205" fill="#7fb0ff" font-size="20" font-weight="700" font-family="sans-serif">① 原始预训练</text>
+    <text x="84" y="252" fill="#e6edf3" font-size="15" font-family="sans-serif">万亿级通用 token</text>
+    <text x="84" y="282" fill="#8b949e" font-size="14" font-family="sans-serif">目标：通用基座</text>
+    <text x="84" y="312" fill="#8b949e" font-size="14" font-family="sans-serif">损失：LM 交叉熵</text>
+    <text x="84" y="342" fill="#8b949e" font-size="14" font-family="sans-serif">产物：L_base</text>
+  </g>
+
+  <!-- CPT highlighted -->
+  <g>
+    <rect x="340" y="160" width="240" height="210" rx="16" fill="#10241a" stroke="#3fb950" stroke-width="2.5"/>
+    <rect x="340" y="160" width="240" height="52" rx="16" fill="#163524"/>
+    <text x="364" y="195" fill="#3fb950" font-size="20" font-weight="700" font-family="sans-serif">② CPT / 中训</text>
+    <text x="364" y="244" fill="#e6edf3" font-size="15" font-family="sans-serif">领域 · 语言 · 长上下文</text>
+    <text x="364" y="274" fill="#8b949e" font-size="14" font-family="sans-serif">注入知识与分布</text>
+    <text x="364" y="304" fill="#8b949e" font-size="14" font-family="sans-serif">通用回放保能力</text>
+    <text x="364" y="334" fill="#8b949e" font-size="14" font-family="sans-serif">小 LR + 退火</text>
+    <text x="364" y="360" fill="#3fb950" font-size="13" font-weight="700" font-family="sans-serif">产物：L_cpt</text>
+  </g>
+
+  <!-- SFT -->
+  <g>
+    <rect x="620" y="170" width="240" height="190" rx="16" fill="#141b2c" stroke="#2a3550" stroke-width="1.5"/>
+    <rect x="620" y="170" width="240" height="52" rx="16" fill="#1b2740"/>
+    <text x="644" y="205" fill="#7fb0ff" font-size="20" font-weight="700" font-family="sans-serif">③ 监督微调</text>
+    <text x="644" y="252" fill="#e6edf3" font-size="15" font-family="sans-serif">指令 → 理想回答</text>
+    <text x="644" y="282" fill="#8b949e" font-size="14" font-family="sans-serif">格式化输出行为</text>
+    <text x="644" y="312" fill="#8b949e" font-size="14" font-family="sans-serif">多任务头 / 对话</text>
+    <text x="644" y="342" fill="#8b949e" font-size="14" font-family="sans-serif">产物：L_sft</text>
+  </g>
+
+  <!-- RL -->
+  <g>
+    <rect x="900" y="170" width="240" height="190" rx="16" fill="#141b2c" stroke="#2a3550" stroke-width="1.5"/>
+    <rect x="900" y="170" width="240" height="52" rx="16" fill="#1b2740"/>
+    <text x="924" y="205" fill="#7fb0ff" font-size="20" font-weight="700" font-family="sans-serif">④ RL / 对齐</text>
+    <text x="924" y="252" fill="#e6edf3" font-size="15" font-family="sans-serif">偏好 / 可验证奖励</text>
+    <text x="924" y="282" fill="#8b949e" font-size="14" font-family="sans-serif">RLHF · DPO · RLVR</text>
+    <text x="924" y="312" fill="#8b949e" font-size="14" font-family="sans-serif">价值观与风格</text>
+    <text x="924" y="342" fill="#8b949e" font-size="14" font-family="sans-serif">产物：L_rl</text>
+  </g>
+
+  <!-- arrows -->
+  <line x1="302" y1="265" x2="334" y2="265" stroke="#8b949e" stroke-width="3" marker-end="url(#arr)"/>
+  <line x1="582" y1="265" x2="614" y2="265" stroke="#8b949e" stroke-width="3" marker-end="url(#arr)"/>
+  <line x1="862" y1="265" x2="894" y2="265" stroke="#8b949e" stroke-width="3" marker-end="url(#arr)"/>
+
+  <!-- feedback loop -->
+  <path d="M460,372 C460,430 1020,430 1020,364" fill="none" stroke="#f5a623" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arr)"/>
+  <text x="640" y="424" fill="#f5a623" font-size="14" font-family="sans-serif">CPT 后若对齐/行为退化 → 恢复性 SFT（常见回流）</text>
+
+  <!-- bottom cards -->
+  <g font-family="sans-serif">
+    <rect x="60" y="500" width="340" height="150" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="84" y="538" fill="#3fb950" font-size="17" font-weight="700">边界一 · 架构不变</text>
+    <text x="84" y="572" fill="#8b949e" font-size="14">层数 / 参数 / 分类头结构保持</text>
+    <text x="84" y="600" fill="#8b949e" font-size="14">仅可调整 RoPE 基频与上下文长度</text>
+    <text x="84" y="628" fill="#8b949e" font-size="14">因此 CPT 不能替代 SFT 学格式</text>
+
+    <rect x="430" y="500" width="340" height="150" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="454" y="538" fill="#8b7cf6" font-size="17" font-weight="700">边界二 · 目标分工</text>
+    <text x="454" y="572" fill="#8b949e" font-size="14">CPT：知识 / 术语 / 分布内化</text>
+    <text x="454" y="600" fill="#8b949e" font-size="14">SFT：指令遵循 / 输出格式</text>
+    <text x="454" y="628" fill="#8b949e" font-size="14">顺序：CPT → SFT → RL</text>
+
+    <rect x="800" y="500" width="340" height="150" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="824" y="538" fill="#f5a623" font-size="17" font-weight="700">边界三 · JEV 用法</text>
+    <text x="824" y="572" fill="#8b949e" font-size="14">CPT 让评判模型「读懂」对话</text>
+    <text x="824" y="600" fill="#8b949e" font-size="14">choice/nlu/score 头在 SFT 接</text>
+    <text x="824" y="628" fill="#8b949e" font-size="14">CPT 保持纯 LM 目标更干净</text>
+  </g>
+</svg></body></html>

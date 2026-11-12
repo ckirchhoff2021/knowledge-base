@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **33 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **34 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -45,6 +45,12 @@
 后训练全景：SFT、RLHF(PPO)、奖励模型、DPO 家族（IPO/KTO/ORPO/SimPO）、RLAIF 与 RFT/STaR，以及 DeepSeek-R1「冷启动—大规模 RL—蒸馏」范式，含 Loss 与伪代码。
 
 📅 2026-09-24 ｜ 🖼 架构图 ×3 ｜ 📄 [Markdown](post-training/report.md)
+
+### [持续预训练 CPT：让基座长出领域能力](https://ckirchhoff2021.github.io/knowledge-base/models/continued-pretraining/report.html)
+
+讲清 CPT（Continued/Continual Pre-Training）与 DAPT/TAPT/Mid-training 的边界，以及「CPT 学知识分布、SFT 学格式行为」的分工；覆盖六段式数据流水线、领域占比 α 与通用回放、token 预算、LR Restart/WSD/Annealing、RHO-1 式 token 选择与 KL 锚定损失，并深入灾难性遗忘与 Stability Gap 的机理和缓解谱系，含 2020→2026 演进时间线、落地 Checklist 及 JEV 用法。
+
+📅 2026-11-12 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](continued-pretraining/report.md)
 
 ### [大模型强化学习算法](https://ckirchhoff2021.github.io/knowledge-base/models/llm-rl-algorithms/report.html)
 

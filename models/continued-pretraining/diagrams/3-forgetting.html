@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf"><title>Forgetting &amp; Stability Gap</title>
+<style>html,body{margin:0;background:#0b0e14;overflow:hidden}svg{display:block}</style></head><body>
+<svg viewBox="0 0 1200 720" width="1200" height="720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid3" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#141a26" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="720" fill="#0b0e14"/>
+  <rect width="1200" height="720" fill="url(#grid3)"/>
+
+  <text x="60" y="62" fill="#e6edf3" font-size="30" font-weight="700" font-family="sans-serif">图 3 · 灾难性遗忘与稳定性鸿沟（Stability Gap）</text>
+  <text x="60" y="94" fill="#8b949e" font-size="16" font-family="sans-serif">CPT 初期性能先下凹再恢复；纯领域训练通用能力被冲走，通用回放 + 小 LR 让下凹更浅、恢复更稳</text>
+
+  <!-- axes -->
+  <line x1="130" y1="180" x2="130" y2="500" stroke="#3a4456" stroke-width="2"/>
+  <line x1="130" y1="500" x2="700" y2="500" stroke="#3a4456" stroke-width="2"/>
+  <text x="92" y="170" fill="#8b949e" font-size="14" font-family="sans-serif">性能</text>
+  <text x="610" y="536" fill="#8b949e" font-size="14" font-family="sans-serif">CPT 训练步数 →</text>
+  <text x="130" y="150" fill="#8b949e" font-size="13" font-family="sans-serif">基座初始水平</text>
+  <line x1="130" y1="180" x2="700" y2="180" stroke="#263040" stroke-width="1.5" stroke-dasharray="6 6"/>
+
+  <!-- CPT start marker -->
+  <line x1="180" y1="180" x2="180" y2="500" stroke="#f5a623" stroke-width="1.5" stroke-dasharray="4 5"/>
+  <text x="150" y="525" fill="#f5a623" font-size="13" font-family="sans-serif">CPT 开始</text>
+
+  <!-- no replay curve: deep dip, partial recovery, below base for general ability -->
+  <path d="M130,250 L178,250 C210,430 250,452 300,430 C360,400 420,350 700,330"
+        fill="none" stroke="#f85149" stroke-width="3.5"/>
+  <text x="470" y="318" fill="#f85149" font-size="15" font-weight="700" font-family="sans-serif">纯领域 / 大 LR：深下凹，通用能力长期低于基座</text>
+
+  <!-- with replay curve: shallow dip, recover and exceed -->
+  <path d="M130,250 L178,250 C210,330 250,345 300,320 C360,285 430,230 700,205"
+        fill="none" stroke="#3fb950" stroke-width="3.5"/>
+  <text x="432" y="196" fill="#3fb950" font-size="15" font-weight="700" font-family="sans-serif">通用回放 + 小 LR：浅下凹，恢复后超越</text>
+
+  <!-- stability gap bracket -->
+  <g stroke="#f5a623" stroke-width="2" fill="none">
+    <line x1="186" y1="470" x2="300" y2="470"/>
+    <line x1="186" y1="462" x2="186" y2="478"/>
+    <line x1="300" y1="462" x2="300" y2="478"/>
+  </g>
+  <text x="186" y="494" fill="#f5a623" font-size="14" font-family="sans-serif">Stability Gap（临时塌陷，可恢复）</text>
+
+  <!-- legend -->
+  <g font-family="sans-serif">
+    <rect x="830" y="180" width="22" height="6" rx="3" fill="#f85149"/>
+    <text x="864" y="188" fill="#c9d1d9" font-size="14">无回放：遗忘风险高</text>
+    <rect x="830" y="216" width="22" height="6" rx="3" fill="#3fb950"/>
+    <text x="864" y="224" fill="#c9d1d9" font-size="14">有回放 + KL：更稳</text>
+  </g>
+
+  <!-- bottom cards -->
+  <g font-family="sans-serif">
+    <rect x="60" y="560" width="340" height="120" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="84" y="596" fill="#f85149" font-size="17" font-weight="700">灾难性遗忘</text>
+    <text x="84" y="626" fill="#8b949e" font-size="14">通用 benchmark / 其他语言退化</text>
+    <text x="84" y="654" fill="#8b949e" font-size="14">已对齐模型指令与安全回退</text>
+
+    <rect x="430" y="560" width="340" height="120" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="454" y="596" fill="#f5a623" font-size="17" font-weight="700">Stability Gap</text>
+    <text x="454" y="626" fill="#8b949e" font-size="14">训练初期临时塌陷，多可恢复</text>
+    <text x="454" y="654" fill="#8b949e" font-size="14">关键在监控而非立刻放弃</text>
+
+    <rect x="800" y="560" width="340" height="120" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="824" y="596" fill="#3fb950" font-size="17" font-weight="700">缓解手段</text>
+    <text x="824" y="626" fill="#8b949e" font-size="14">通用回放 · KL 锚定 · 间隔复习</text>
+    <text x="824" y="654" fill="#8b949e" font-size="14">小 LR + 退火 · 无缝打包</text>
+  </g>
+</svg></body></html>

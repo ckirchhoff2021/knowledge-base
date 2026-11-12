@@ -1,0 +1,77 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf"><title>LR Schedules</title>
+<style>html,body{margin:0;background:#0b0e14;overflow:hidden}svg{display:block}</style></head><body>
+<svg viewBox="0 0 1200 720" width="1200" height="720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid4" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#141a26" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="720" fill="#0b0e14"/>
+  <rect width="1200" height="720" fill="url(#grid4)"/>
+
+  <text x="60" y="62" fill="#e6edf3" font-size="30" font-weight="700" font-family="sans-serif">图 4 · CPT 三种常用学习率调度对比</text>
+  <text x="60" y="94" fill="#8b949e" font-size="16" font-family="sans-serif">CPT 峰值 LR 显著低于原始预训练（常见 1/10–1/3）；学习率过大是早期崩溃与遗忘的首要元凶</text>
+
+  <!-- panel 1: cosine restart -->
+  <g font-family="sans-serif">
+    <rect x="60" y="140" width="340" height="330" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="84" y="180" fill="#7fb0ff" font-size="18" font-weight="700">① Cosine Restart</text>
+    <text x="84" y="208" fill="#8b949e" font-size="13">LR 重启 + 余弦再衰减</text>
+
+    <line x1="92" y1="250" x2="92" y2="420" stroke="#3a4456"/>
+    <line x1="92" y1="420" x2="372" y2="420" stroke="#3a4456"/>
+    <!-- two cosine cycles -->
+    <path d="M92,255 L112,255 C180,258 242,414 300,416" fill="none" stroke="#8b7cf6" stroke-width="3"/>
+    <path d="M300,416 C312,300 322,262 340,258 C352,258 360,260 372,262" fill="none" stroke="#8b7cf6" stroke-width="3" stroke-dasharray="2 4"/>
+    <text x="92" y="446" fill="#8b949e" font-size="13">峰值为原预训练 1/10–1/3</text>
+  </g>
+
+  <!-- panel 2: WSD -->
+  <g font-family="sans-serif">
+    <rect x="430" y="140" width="340" height="330" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="454" y="180" fill="#3fb950" font-size="18" font-weight="700">② WSD</text>
+    <text x="454" y="208" fill="#8b949e" font-size="13">Warmup-Stable-Decay（MiniCPM）</text>
+
+    <line x1="462" y1="250" x2="462" y2="420" stroke="#3a4456"/>
+    <line x1="462" y1="420" x2="742" y2="420" stroke="#3a4456"/>
+    <!-- warmup, long stable, short decay -->
+    <path d="M462,416 L492,262 L660,262 C700,266 724,380 742,416" fill="none" stroke="#3fb950" stroke-width="3"/>
+    <text x="496" y="248" fill="#8b949e" font-size="12">warmup</text>
+    <text x="556" y="248" fill="#8b949e" font-size="12">长 stable 平台</text>
+    <text x="666" y="248" fill="#8b949e" font-size="12">短 decay</text>
+    <text x="462" y="446" fill="#8b949e" font-size="13">平台期持续注入，随时可衰减出模型</text>
+  </g>
+
+  <!-- panel 3: annealing -->
+  <g font-family="sans-serif">
+    <rect x="800" y="140" width="340" height="330" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="824" y="180" fill="#f5a623" font-size="18" font-weight="700">③ Annealing</text>
+    <text x="824" y="208" fill="#8b949e" font-size="13">末期退火（OLMo 2 / SmolLM2）</text>
+
+    <line x1="832" y1="250" x2="832" y2="420" stroke="#3a4456"/>
+    <line x1="832" y1="420" x2="1112" y2="420" stroke="#3a4456"/>
+    <!-- stable then steep anneal -->
+    <path d="M832,280 L1000,280 C1050,284 1086,382 1112,416" fill="none" stroke="#f5a623" stroke-width="3"/>
+    <rect x="1000" y="250" width="112" height="22" rx="6" fill="#2a2110"/>
+    <text x="1012" y="267" fill="#f5a623" font-size="12" font-weight="700">高价值数据</text>
+    <text x="832" y="446" fill="#8b949e" font-size="13">退火期集中喂高质量/目标数据，ROI 最高</text>
+  </g>
+
+  <!-- bottom cards -->
+  <g font-family="sans-serif">
+    <rect x="60" y="520" width="340" height="130" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="84" y="558" fill="#8b7cf6" font-size="17" font-weight="700">何时选 Restart</text>
+    <text x="84" y="590" fill="#8b949e" font-size="14">一次性、边界清晰的 CPT 任务</text>
+    <text x="84" y="618" fill="#8b949e" font-size="14">希望 LR 明确归零收尾</text>
+
+    <rect x="430" y="520" width="340" height="130" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="454" y="558" fill="#3fb950" font-size="17" font-weight="700">何时选 WSD</text>
+    <text x="454" y="590" fill="#8b949e" font-size="14">持续 / 滚动注入、需多版本产出</text>
+    <text x="454" y="618" fill="#8b949e" font-size="14">天然适配 continual 场景</text>
+
+    <rect x="800" y="520" width="340" height="130" rx="14" fill="#141926" stroke="#2a3140"/>
+    <text x="824" y="558" fill="#f5a623" font-size="17" font-weight="700">何时选 Annealing</text>
+    <text x="824" y="590" fill="#8b949e" font-size="14">末期需集中强化目标分布</text>
+    <text x="824" y="618" fill="#8b949e" font-size="14">常与 Restart/WSD 叠加使用</text>
+  </g>
+</svg></body></html>
