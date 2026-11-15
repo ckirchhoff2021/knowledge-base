@@ -81,6 +81,7 @@
 | [主动式智能体 Proactive Agent](https://ckirchhoff2021.github.io/knowledge-base/models/proactive-agent/report.html) | 无提示主动行动/干预时机/打断成本 | 2026-11-01 |
 | [上下文工程 Context Engineering](https://ckirchhoff2021.github.io/knowledge-base/models/context-engineering/report.html) | token 全生命周期/Context Rot/Governance Decay | 2026-11-02 |
 | [SkillOpt 技能优化](https://ckirchhoff2021.github.io/knowledge-base/models/skillopt/report.html) | 文本空间技能优化器 | 2026-09-22 |
+| [长程智能体 Long-Horizon Agents](https://ckirchhoff2021.github.io/knowledge-base/models/long-horizon-agents/report.html) | 数小时无人值守/密集奖励评测/状态外部化/durable runtime | 2026-11-15 |
 
 ## 🌱 生活方法论
 

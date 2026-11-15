@@ -1,0 +1,54 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}body{background:#0d1117;display:flex;justify-content:center}
+svg{max-width:100%;height:auto}</style></head><body>
+<svg viewBox="0 0 1200 640" width="1200" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L7,3 L0,6 Z" fill="#8b949e"/></marker></defs>
+<text x="600" y="44" fill="#e6edf3" font-size="22" text-anchor="middle" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>图 1 · 长程智能体：把「智能体循环」沿时间轴拉长后的新瓶颈</text>
+<rect x="70" y="110" width="120" height="64" rx="10" fill="#161b22" stroke="#39c5cf" stroke-width="1.5"/>
+<text x="130" y="148" fill="#39c5cf" font-size="15" text-anchor="middle" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>观察 Observe</text>
+<rect x="220" y="110" width="120" height="64" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
+<text x="280" y="148" fill="#bc8cff" font-size="15" text-anchor="middle" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>思考 Think</text>
+<rect x="370" y="110" width="120" height="64" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+<text x="430" y="148" fill="#3fb950" font-size="15" text-anchor="middle" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>行动 Act</text>
+<line x1="190" y1="142" x2="218" y2="142" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="340" y1="142" x2="368" y2="142" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="430" y1="172" x2="130" y2="205" stroke="#8b949e" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#ar)"/>
+<text x="150" y="232" fill="#8b949e" font-size="13" text-anchor="middle" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>LLM-in-a-loop（AutoGPT 起的核心思想）</text>
+<line x1="470" y1="150" x2="600" y2="150" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#ar)"/>
+<text x="620" y="120" fill="#58a6ff" font-size="16" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>沿时间轴拉长 →</text>
+<line x1="620" y1="150" x2="1150" y2="150" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#ar)"/>
+<circle cx="650" cy="150" r="5" fill="#58a6ff"/>
+<text x="650" y="182" fill="#8b949e" font-size="13" text-anchor="middle" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>分钟级</text>
+<circle cx="830" cy="150" r="5" fill="#58a6ff"/>
+<text x="830" y="182" fill="#8b949e" font-size="13" text-anchor="middle" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>数十分钟</text>
+<circle cx="1010" cy="150" r="5" fill="#58a6ff"/>
+<text x="1010" y="182" fill="#8b949e" font-size="13" text-anchor="middle" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>数小时 / 跨会话</text>
+<rect x="600" y="230" width="560" height="330" rx="10" fill="#0a0e14" stroke="bd" stroke-width="1"/>
+<text x="620" y="262" fill="#d29922" font-size="14" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>长程完成率随步数衰减（示意，数据锚点见正文 LHTB）</text>
+<line x1="660" y1="510" x2="1120" y2="510" stroke="#8b949e" stroke-width="1.5"/>
+<line x1="660" y1="510" x2="660" y2="290" stroke="#8b949e" stroke-width="1.5"/>
+<text x="650" y="285" fill="#8b949e" font-size="12" text-anchor="end" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>成功率</text>
+<text x="1130" y="530" fill="#8b949e" font-size="12" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>执行步数 / 时长 →</text>
+<path d="M660,300 C820,310 900,360 1120,470" fill="none" stroke="#f85149" stroke-width="3"/>
+<path d="M660,300 C820,305 950,330 1120,380" fill="none" stroke="#3fb950" stroke-width="3" stroke-dasharray="7,5"/>
+<text x="1000" y="455" fill="#f85149" font-size="13" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>无长程机制：超时/漂移</text>
+<text x="980" y="365" fill="#3fb950" font-size="13" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>+状态外置/压缩/恢复</text>
+<text x="670" y="500" fill="#d29922" font-size="12.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>局部推理仍对，但长程完成崩塌</text>
+<rect x="60" y="585" width="250" height="44" rx="8" fill="#0a0e14" stroke="#39c5cf" stroke-width="1.2"/>
+<text x="74" y="604" fill="#39c5cf" font-size="13.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>数百轮交互</text>
+<text x="74" y="623" fill="#e6edf3" font-size="12.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>episodes≈231</text>
+<rect x="340" y="585" width="250" height="44" rx="8" fill="#0a0e14" stroke="#bc8cff" stroke-width="1.2"/>
+<text x="354" y="604" fill="#bc8cff" font-size="13.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>上下文爆炸</text>
+<text x="354" y="623" fill="#e6edf3" font-size="12.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>均 9.9M tokens</text>
+<rect x="620" y="585" width="250" height="44" rx="8" fill="#0a0e14" stroke="#d29922" stroke-width="1.2"/>
+<text x="634" y="604" fill="#d29922" font-size="13.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>小时级预算</text>
+<text x="634" y="623" fill="#e6edf3" font-size="12.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>均 85.3 分钟</text>
+<rect x="900" y="585" width="250" height="44" rx="8" fill="#0a0e14" stroke="#f85149" stroke-width="1.2"/>
+<text x="914" y="604" fill="#f85149" font-size="13.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>部分得分</text>
+<text x="914" y="623" fill="#e6edf3" font-size="12.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>最强 pass@1 仅 15.2%</text>
+<text x="180" y="300" fill="#3fb950" font-size="14" text-anchor="middle" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>短程 benchmark</text>
+<text x="180" y="326" fill="#8b949e" font-size="12.5" text-anchor="middle" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>考「单步对不对」</text>
+<text x="180" y="380" fill="#d29922" font-size="14" text-anchor="middle" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>长程 benchmark</text>
+<text x="180" y="406" fill="#8b949e" font-size="12.5" text-anchor="middle" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>考「能否持续推进、</text>
+<text x="180" y="426" fill="#8b949e" font-size="12.5" text-anchor="middle" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>预算内收尾」</text></svg></body></html>

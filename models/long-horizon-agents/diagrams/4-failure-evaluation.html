@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}body{background:#0d1117;display:flex;justify-content:center}
+svg{max-width:100%;height:auto}</style></head><body>
+<svg viewBox="0 0 1260 780" width="1260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L7,3 L0,6 Z" fill="#8b949e"/></marker></defs>
+<text x="630" y="40" fill="#e6edf3" font-size="20" text-anchor="middle" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>图 4 · 为什么「局部对」却「长程崩」：六类失败模式与评测范式迁移</text>
+<rect x="60" y="80" width="540" height="128" rx="10" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
+<text x="78" y="112" fill="#f85149" font-size="16" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>① 预算耗尽 / 超时</text>
+<text x="78" y="142" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>LHTB 中 79% 失败源于时间预算耗尽；在不必要的验证循环上空转、重复已完成步骤</text>
+<text x="78" y="166" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif></text>
+<rect x="620" y="80" width="540" height="128" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+<text x="638" y="112" fill="#bc8cff" font-size="16" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>② 上下文爆炸与压缩失真</text>
+<text x="638" y="142" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>历史涨到百万 token；摘要式 compaction 丢失关键信息，「清洗历史反而有害」</text>
+<text x="638" y="166" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif></text>
+<rect x="60" y="230" width="540" height="128" rx="10" fill="#161b22" stroke="#39c5cf" stroke-width="1.6"/>
+<text x="78" y="262" fill="#39c5cf" font-size="16" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>③ 驻留 ≠ 可检索</text>
+<text x="78" y="292" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>所需 token 99% 仍在 KV，定义到使用间隔 2K→90K 时准确率 93%→64%</text>
+<text x="78" y="316" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>（PACE）</text>
+<rect x="620" y="230" width="540" height="128" rx="10" fill="#161b22" stroke="#d29922" stroke-width="1.6"/>
+<text x="638" y="262" fill="#d29922" font-size="16" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>④ 虚假完成 / 不会停</text>
+<text x="638" y="292" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>过公开测试即宣称完成（False Finish, R≥0.75）；死胡同里过度坚持（Evid</text>
+<text x="638" y="316" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>ence-Action Gap）</text>
+<rect x="60" y="380" width="540" height="128" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+<text x="78" y="412" fill="#58a6ff" font-size="16" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>⑤ 过程漂移 / 不循规</text>
+<text x="78" y="442" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>长无人值守运行偏离一次性声明的 SOP；人格/约束在长决策中不持久（THEATRON/FSM</text>
+<text x="78" y="466" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>）</text>
+<rect x="620" y="380" width="540" height="128" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+<text x="638" y="412" fill="#3fb950" font-size="16" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>⑥ 世界已变 / 状态过期</text>
+<text x="638" y="442" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>早期错误沿决策链累积；行动时世界状态已改，需选择性再校验与执行态遗忘/重放</text>
+<text x="638" y="466" fill="#e6edf3" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif></text>
+<rect x="60" y="540" width="1140" height="200" rx="12" fill="#0a0e14" stroke="bd" stroke-width="1.4"/>
+<text x="80" y="574" fill="#3fb950" font-size="16" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>评测范式迁移：从「最终二元判定」到「过程密集进度」</text>
+<text x="90" y="606" fill="#d29922" font-size="13" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>评分</text>
+<text x="180" y="606" fill="#8b949e" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>pass/fail 二元（完成 90% 与 5% 都记 0）</text>
+<text x="640" y="606" fill="#3fb950" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>子任务加权密集奖励 / 进度阶梯（R∈[0,1]）</text>
+<text x="90" y="638" fill="#d29922" font-size="13" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>时长</text>
+<text x="180" y="638" fill="#8b949e" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>分钟级、一次性</text>
+<text x="640" y="638" fill="#3fb950" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>90 分钟 → 3 小时(LHTB2) → 24 小时(Infrathon)</text>
+<text x="90" y="670" fill="#d29922" font-size="13" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>指标</text>
+<text x="180" y="670" fill="#8b949e" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>只看最终 pass@1</text>
+<text x="640" y="670" fill="#3fb950" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>pass@1 + 平均奖励 + VCR + Model-Harness Fit</text>
+<text x="90" y="702" fill="#d29922" font-size="13" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>归因</text>
+<text x="180" y="702" fill="#8b949e" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>分数=模型能力</text>
+<text x="640" y="702" fill="#3fb950" font-size="12.8" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>模型×harness 联合归因；一次成功≠跨运行可靠</text></svg></body></html>

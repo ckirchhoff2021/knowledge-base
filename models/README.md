@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **34 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **35 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -221,3 +221,9 @@ MCP、A2A 与 AGENTS.md 三大互联标准的分层关系：工具接入、Agent
 当 Agent 的主战场从「写提示」转向「管理 token 全生命周期」：提示工程只写指令，上下文工程决定运行每一步窗口里的全部 token。以「标称窗口≠有效窗口」为切入点，深度拆解 Context Rot（Chroma 18 模型、完美检索仍退化；位置/难度/字面重合三股独立力量）、Write/Select/Compress/Isolate 四杠杆与中毒/分心/混淆/冲突四失败的映射、Compaction 可逆性三分（掩码/卸载/摘要）与 Prompt Cache 经济学、ACE 生成→反思→策展三阶段自改进闭环（编码 +10.6% / 金融 +8.6%）、静态 AGENTS.md 之争（Gloaguen −3% vs Lulla 运行时 −28.64%）、Governance Decay（压缩静默删除合规约束；约束存活 0% 违规 vs 被删 38%）与带外策略层，以及「压缩后约束恢复率」评测和 12 条落地 Checklist。
 
 📅 2026-11-02 ｜ 🖼 架构图 ×6 ｜ 📄 [Markdown](context-engineering/report.md)
+
+### [长程智能体 Long-Horizon Agents](https://ckirchhoff2021.github.io/knowledge-base/models/long-horizon-agents/report.html)
+
+当 AI 开始数小时无人值守地完成任务：把「LLM-in-a-loop」沿时间轴拉长到数百轮、数十分钟到 3 小时乃至 24 小时后，瓶颈从「局部推理」转向「长程完成」。以 LHTB 为核心证据（46 任务/15 前沿模型，最强 pass@1 仅 15.2%、跨模型均值 4.3%，平均 9.9M tokens/231 episodes/85.3 分钟；LHTB 2.0 延至 3 小时、二元分 0.221 vs 密集进度分 0.653），梳理 ReAct→AutoGPT→编码 harness→长程一等公民四年谱系与六层参考架构（模型/循环控制/上下文治理/外置状态/编排/持久运行时），深拆七大子问题（compaction 与「驻留≠可检索」PACE 93%→64%、文件系统外挂记忆、规划与过程 FSM、自我终止与 Evidence-Action Gap、清理历史的因果审计、子代理编排、durable runtime 再校验/遗忘/结算）、密集奖励评测革命与 VCR/Model-Harness Fit 归因、长程 RL 信用分配（HCAPO/BEACON/AgentPRM/TRCA）与 RiseHarness/Terminal-RSI 自进化，并对「第三次范式」等说法做证据审计，附 12 条落地 Checklist。
+
+📅 2026-11-15 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](long-horizon-agents/report.md)

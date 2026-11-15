@@ -1,0 +1,33 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}body{background:#0d1117;display:flex;justify-content:center}
+svg{max-width:100%;height:auto}</style></head><body>
+<svg viewBox="0 0 1200 720" width="1200" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L7,3 L0,6 Z" fill="#8b949e"/></marker></defs>
+<text x="600" y="42" fill="#e6edf3" font-size="21" text-anchor="middle" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>图 2 · 长程智能体参考架构：把易失状态从「上下文」搬到「外部系统」</text>
+<rect x="70" y="90" width="1060" height="74" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+<text x="92" y="120" fill="#58a6ff" font-size="16.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>① 模型核心 Model（冻结 / 策略）</text>
+<text x="92" y="146" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>单步推理 · 工具调用 · 局部推理能力</text>
+<rect x="70" y="180" width="1060" height="74" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+<text x="92" y="210" fill="#bc8cff" font-size="16.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>② 循环与控制 Loop Control</text>
+<text x="92" y="236" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>规划/子目标分解 · 预算管理 · 自我终止判据 · 过程 FSM 约束</text>
+<rect x="70" y="270" width="1060" height="74" rx="10" fill="#161b22" stroke="#39c5cf" stroke-width="1.6"/>
+<text x="92" y="300" fill="#39c5cf" font-size="16.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>③ 上下文治理 Context</text>
+<text x="92" y="326" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>Compaction/折叠(Folio) · KV 驻留与可检索(PACE) · 软 token 压缩(ASTC) · 子代理隔离</text>
+<rect x="70" y="360" width="1060" height="74" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.6"/>
+<text x="92" y="390" fill="#3fb950" font-size="16.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>④ 外置状态 Externalized State</text>
+<text x="92" y="416" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>虚拟文件系统(Deep Agents) · 分层记忆 L1/L2/L3 · 任务账本/进度追踪 · 证据链</text>
+<rect x="70" y="450" width="1060" height="74" rx="10" fill="#161b22" stroke="#d29922" stroke-width="1.6"/>
+<text x="92" y="480" fill="#d29922" font-size="16.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>⑤ 编排 Orchestration</text>
+<text x="92" y="506" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>Orchestrator–Worker · 并行子代理(3–5) · 规划/验证分工 · 多智能体协作</text>
+<rect x="70" y="540" width="1060" height="74" rx="10" fill="#161b22" stroke="#f85149" stroke-width="1.6"/>
+<text x="92" y="570" fill="#f85149" font-size="16.5" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>⑥ 持久运行时 Durable Runtime</text>
+<text x="92" y="596" fill="#e6edf3" font-size="13.5" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>检查点/快照 · 断点续跑(resume) · 动作结算/重放(replay) · 选择性再校验 · 异步后台</text>
+<line x1="600" y1="164" x2="600" y2="180" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="600" y1="254" x2="600" y2="270" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="600" y1="344" x2="600" y2="360" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="600" y1="434" x2="600" y2="450" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="600" y1="524" x2="600" y2="540" stroke="#8b949e" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="70" y="630" width="1060" height="66" rx="10" fill="#0a0e14" stroke="bd" stroke-width="1.2"/>
+<text x="92" y="658" fill="#e6edf3" font-size="14" text-anchor="start" font-weight="700" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>⑦ 环境 / 工具世界：Shell · 浏览器 · MCP 工具 · 代码仓库 · 数据库 · 人工审批（状态会被外部改变 → 需再校验）</text>
+<text x="92" y="682" fill="#d29922" font-size="13" text-anchor="start" font-weight="400" font-family:-apple-system,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif>关键转变：模型权重不变，可靠性来自 harness/状态系统 ——「Agent = Model + Harness」，时间越长后者权重越大</text></svg></body></html>
