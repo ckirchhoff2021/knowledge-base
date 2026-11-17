@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **35 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **36 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -93,6 +93,12 @@
 当大模型学会「在心里想」：显式 CoT 的延迟/表达/泄密三重税，Pause Tokens→Coconut→HRM 三年源流，token-wise 水平 × layer-wise 垂直两轴分类学与三种表征初始化；拆解 Coconut 潜空间 BFS、CODI 投影对齐、SIM-CoT 步级监督、looped transformer、HRM、INTACT 冻结外挂；训练五范式与 Log-ICoT 可证明内化、探索—执行权衡、显式/潜式形式化分离；2026 信任危机与删链反事实/do 干预/SCIT/最小对探针因果审计；显式 CoT 压缩姊妹路线；HybridAgent/TAC-CoT/SWITCH 混合推理收敛解与多模态/具身/语音/多智能体/推荐应用，附 12 条落地 Checklist。
 
 📅 2026-11-11 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](latent-cot/report.md)
+
+### [测试时智能 Test-Time Intelligence](https://ckirchhoff2021.github.io/knowledge-base/models/test-time-intelligence/report.html)
+
+当模型在部署现场「越用越聪明」：以 2026-09 综述（arXiv:2609.01679）为锚点，把部署期自我改进统一为 TTL（更新可写状态：归一化统计 / Prompt / LoRA / 全权重 / 外部记忆）× TTS（冻结状态、追加推理算力）二维框架，并指出二者在 Test-Time RL 合流。梳理四条谱系——视觉 TTA（TTT/TENT/SHOT/CoTTA/EATA/SAR）、推理时扩展（Self-Consistency/ToT/GoT/Snell/Monkeys）、神经记忆架构（TTT-Linear/Titans/MIRAS/ATLAS/Nested Learning/端到端 TTT）、Test-Time RL 与智能体记忆（TTRL/T3RL/TTRV/SEAL/TT-SI/DGM/Dynamic Cheatsheet/ReasoningBank/TAME/Evo-Memory/睡眠时计算）；给出「反馈信号 × 更新对象 × 时间尺度」设计空间、外部记忆 vs 神经记忆选型原则、无标签奖励构造与污染/遗忘/奖励 hacking/对抗投毒护栏，并逐条划清与 test-time-scaling、continued-pretraining、agent-memory、self-improving-ai、linear-attention 五个既有话题的边界，附工程落地建议。
+
+📅 2026-11-17 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](test-time-intelligence/report.md)
 
 ---
 

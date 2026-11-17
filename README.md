@@ -51,6 +51,7 @@
 | [Muon 优化器：矩阵正交化](https://ckirchhoff2021.github.io/knowledge-base/models/muon-optimizer/report.html) | 后 Adam 优化器 / 2× FLOPs 效率 / MuonClip | 2026-11-26 |
 | [当 AI 改写自己：WSP × RSI](https://ckirchhoff2021.github.io/knowledge-base/models/self-improving-ai/report.html) | 权重空间编程 / 递归自我改进双循环 | 2026-11-10 |
 | [隐式思维链 Latent CoT](https://ckirchhoff2021.github.io/knowledge-base/models/latent-cot/report.html) | 推理撤回隐空间 / Coconut / 混合推理 | 2026-11-11 |
+| [测试时智能 TTI](https://ckirchhoff2021.github.io/knowledge-base/models/test-time-intelligence/report.html) | 部署期反馈驱动状态更新 / TTL×TTS / Test-Time RL / 神经记忆 | 2026-11-17 |
 
 **Jev 决策模型**
 
