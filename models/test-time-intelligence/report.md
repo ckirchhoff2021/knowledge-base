@@ -402,7 +402,7 @@ TTI 让「一个模型一个分数」的评测失效：同一个模型，处理�
 
 ## 参考文献
 
-> 全部 arXiv 编号已于 2026-11-15 经 arxiv.org 摘要页逐一核实（标题 + 提交日期）。产业信源标注访问日期。
+> 全部 arXiv 编号已于 2026-11-17 经 arxiv.org 摘要页逐一核实（标题 + 提交日期）。产业信源标注访问日期。
 
 1. Sun et al. **A Survey on Self-Improving Test-Time Intelligence: Feedback-Driven Adapting, Learning, and Scaling at Inference.** arXiv:2609.01679, 2026-09. 配套文献库：https://github.com/mr-eggplant/awesome_test_time_intelligence
 2. Sun et al. **Learning to (Learn at Test Time): RNNs with Expressive Hidden States (TTT-Linear).** arXiv:2407.04620, 2024-07.
