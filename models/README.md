@@ -1,6 +1,6 @@
 # 🧠 大模型技术报告
 
-大模型与后训练方向的论文分析，共 **36 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
+大模型与后训练方向的论文分析，共 **37 个话题**。每个话题为自包含文件夹（`.md` 源文件 + 精排 `.html` + `diagrams/`），按方向分为四组。
 
 ---
 
@@ -233,3 +233,9 @@ MCP、A2A 与 AGENTS.md 三大互联标准的分层关系：工具接入、Agent
 当 AI 开始数小时无人值守地完成任务：把「LLM-in-a-loop」沿时间轴拉长到数百轮、数十分钟到 3 小时乃至 24 小时后，瓶颈从「局部推理」转向「长程完成」。以 LHTB 为核心证据（46 任务/15 前沿模型，最强 pass@1 仅 15.2%、跨模型均值 4.3%，平均 9.9M tokens/231 episodes/85.3 分钟；LHTB 2.0 延至 3 小时、二元分 0.221 vs 密集进度分 0.653），梳理 ReAct→AutoGPT→编码 harness→长程一等公民四年谱系与六层参考架构（模型/循环控制/上下文治理/外置状态/编排/持久运行时），深拆七大子问题（compaction 与「驻留≠可检索」PACE 93%→64%、文件系统外挂记忆、规划与过程 FSM、自我终止与 Evidence-Action Gap、清理历史的因果审计、子代理编排、durable runtime 再校验/遗忘/结算）、密集奖励评测革命与 VCR/Model-Harness Fit 归因、长程 RL 信用分配（HCAPO/BEACON/AgentPRM/TRCA）与 RiseHarness/Terminal-RSI 自进化，并对「第三次范式」等说法做证据审计，附 12 条落地 Checklist。
 
 📅 2026-11-15 ｜ 🖼 架构图 ×4 ｜ 📄 [Markdown](long-horizon-agents/report.md)
+
+### [多智能体 LLM 系统：当「更多智能体」遇到祛魅](https://ckirchhoff2021.github.io/knowledge-base/models/multi-agent-systems/report.html)
+
+2023 年以来最流行也最被滥用的 Agent 架构，在 2026-11 迎来最硬的反常识证据与机制化「再发现」：以 516 种配置的元分析为锚（样本/算力对齐后多智能体平均 −0.042、74% 对比≤基线），讲清形态学（控制拓扑×通信 5W×同构异构）、祛魅三证据（记账错误/委派无增益/15× token 经济学）、MAST 3 类 14 种失败与 CoLFA 归因、冲突证据为何在委派边界「消失」（检索 50.2→68.7% 但检出 16.2→13.2%）、只在多智能体时出现的组合安全破防（Claude Code/Codex 未修改即破、SwarmSafe-Delta、OWASP 框架评测、Agentic Sleeper），以及再发现（OPSD4MAS token 级信用 +20pp、LEAD-RL 主子联合 RL、DecArena 去中心化 100K+ 工具、MULTILOOP harness 进化、ConvRSI）；给出资源向量×baseline 四档评测法、选型决策树与 14 条 Checklist。
+
+📅 2026-11-19 ｜ 🖼 架构图 ×5 ｜ 📄 [Markdown](multi-agent-systems/report.md)
